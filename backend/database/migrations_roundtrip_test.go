@@ -230,7 +230,7 @@ func TestMigrationsRoundTripStepByStepOnSeededDatabase(t *testing.T) {
 
 // Rows written under an older schema must survive the migrations that follow it.
 func TestMigrationsUpKeepsRowsSeededAtOlderVersions(t *testing.T) {
-	for _, start := range []uint{12, 20, 23} {
+	for _, start := range []uint{12, 20, 23, 24} {
 		t.Run(fmt.Sprintf("from_v%d", start), func(t *testing.T) {
 			db := openMigrationDB(t)
 			migrateTo(t, db, start)

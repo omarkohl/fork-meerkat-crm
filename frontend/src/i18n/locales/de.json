@@ -814,6 +814,38 @@
       "confirm": "Widerrufen"
     }
   },
+  "icsFeed": {
+    "title": "Kalender-Feed (ICS)",
+    "description": "Abonniere deine Geburtstage und Erinnerungen in jeder Kalender-App. Jeder, der die Feed-URL kennt, kann den Feed lesen, halte sie daher geheim.",
+    "inactive": "Noch kein Kalender-Feed.",
+    "active": "Feed aktiv seit {{date}}.",
+    "generateButton": "Feed-URL erzeugen",
+    "regenerateButton": "URL neu erzeugen",
+    "revokeButton": "Feed widerrufen",
+    "loadError": "Kalender-Feed konnte nicht geladen werden",
+    "createError": "Kalender-Feed konnte nicht erstellt werden",
+    "revokeError": "Kalender-Feed konnte nicht widerrufen werden",
+    "revokeSuccess": "Kalender-Feed widerrufen",
+    "copyError": "Kopieren in die Zwischenablage fehlgeschlagen",
+    "createdDialog": {
+      "title": "Kalender-Feed-URL",
+      "warning": "Diese URL wird nicht erneut angezeigt. Kopiere sie jetzt und füge sie in deiner Kalender-App als Abo hinzu.",
+      "urlLabel": "Feed-URL",
+      "copy": "Kopieren",
+      "copied": "Kopiert!",
+      "done": "Fertig, ich habe sie gespeichert"
+    },
+    "regenerateDialog": {
+      "title": "Feed-URL neu erzeugen",
+      "message": "Die aktuelle URL funktioniert sofort nicht mehr. Kalender, die sie abonniert haben, müssen mit der neuen URL aktualisiert werden.",
+      "confirm": "Neu erzeugen"
+    },
+    "revokeDialog": {
+      "title": "Kalender-Feed widerrufen",
+      "message": "Die Feed-URL funktioniert sofort nicht mehr. Du kannst später eine neue erzeugen.",
+      "confirm": "Widerrufen"
+    }
+  },
   "users": {
     "title": "Benutzerverwaltung",
     "loadError": "Benutzer konnten nicht geladen werden",

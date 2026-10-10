@@ -93,7 +93,10 @@ func main() {
 	go contactSyncTask()
 	s.Start()
 
-	r := gin.Default()
+	// gin.Default() equivalent, except that gin's access log skips requests whose path
+	// holds a secret (the ICS feed token); LoggingMiddleware logs those redacted.
+	r := gin.New()
+	r.Use(gin.LoggerWithConfig(gin.LoggerConfig{Skip: middleware.IsSecretPath}), gin.Recovery())
 
 	// Limit multipart form memory to 10MB to prevent DoS via large request bodies
 	r.MaxMultipartMemory = 10 << 20 // 10 MB

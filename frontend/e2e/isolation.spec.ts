@@ -10,16 +10,14 @@ const USER_B = {
 };
 
 test.describe('Multi-user isolation', () => {
-  test('a user cannot see another user\'s contacts', async ({ page }) => {
+  test("a user cannot see another user's contacts", async ({ page }) => {
     // Sanity: the seeded user (userA, via the shared storageState) can see Alice.
     const ownView = await page.request.get(
-      `${API_BASE_URL}/contacts?search=${encodeURIComponent('Alice Johnson')}&limit=10`
+      `${API_BASE_URL}/contacts?search=${encodeURIComponent('Alice Johnson')}&limit=10`,
     );
     expect(ownView.ok()).toBeTruthy();
     const own = await ownView.json();
-    expect(
-      (own.contacts || []).some((c: any) => c.firstname === 'Alice' && c.lastname === 'Johnson')
-    ).toBeTruthy();
+    expect((own.contacts || []).some((c: any) => c.firstname === 'Alice' && c.lastname === 'Johnson')).toBeTruthy();
 
     // userB gets a clean API context with no shared cookies.
     const ctx = await request.newContext();
@@ -32,16 +30,59 @@ test.describe('Multi-user isolation', () => {
       expect(login.ok(), 'userB login should succeed').toBeTruthy();
 
       // userB must not see any of userA's seeded contacts.
-      const search = await ctx.get(
-        `${API_BASE_URL}/contacts?search=${encodeURIComponent('Alice Johnson')}&limit=10`
-      );
+      const search = await ctx.get(`${API_BASE_URL}/contacts?search=${encodeURIComponent('Alice Johnson')}&limit=10`);
       expect(search.ok()).toBeTruthy();
       const result = await search.json();
-      expect(
-        (result.contacts || []).some((c: any) => c.firstname === 'Alice' && c.lastname === 'Johnson')
-      ).toBeFalsy();
+      expect((result.contacts || []).some((c: any) => c.firstname === 'Alice' && c.lastname === 'Johnson')).toBeFalsy();
     } finally {
       await ctx.dispose();
+    }
+  });
+
+  test("a calendar feed only contains its owner's birthdays", async ({ page }) => {
+    // userA's contact with a birthday, created through the shared storageState.
+    const created = await page.request.post(`${API_BASE_URL}/contacts`, {
+      data: { firstname: 'E2E-IcsIsolationA', lastname: 'Owner', birthday: '1980-02-03' },
+    });
+    expect(created.ok()).toBeTruthy();
+    const contactA = (await created.json()).contact;
+
+    const ctx = await request.newContext();
+    try {
+      await ctx.post(`${API_BASE_URL}/register`, { data: USER_B }).catch(() => {});
+      const login = await ctx.post(`${API_BASE_URL}/login`, {
+        data: { identifier: USER_B.username, password: USER_B.password },
+      });
+      expect(login.ok(), 'userB login should succeed').toBeTruthy();
+
+      const own = await ctx.post(`${API_BASE_URL}/contacts`, {
+        data: { firstname: 'E2E-IcsIsolationB', lastname: 'Owner', birthday: '1981-04-05' },
+      });
+      expect(own.ok()).toBeTruthy();
+      const contactB = (await own.json()).contact;
+
+      const feedResponse = await ctx.post(`${API_BASE_URL}/ics-feed`);
+      expect(feedResponse.status()).toBe(201);
+      const { token } = await feedResponse.json();
+
+      // The feed is fetched without any session: the token alone selects the user.
+      const anonymous = await request.newContext();
+      try {
+        const feed = await anonymous.get(`${API_BASE_URL}/ics/${token}.ics`);
+        expect(feed.status()).toBe(200);
+        const body = await feed.text();
+        expect(body).toContain('E2E-IcsIsolationB');
+        expect(body).not.toContain('E2E-IcsIsolationA');
+        expect(body).not.toContain('Alice');
+      } finally {
+        await anonymous.dispose();
+      }
+
+      await ctx.delete(`${API_BASE_URL}/ics-feed`);
+      await ctx.delete(`${API_BASE_URL}/contacts/${contactB.ID}`);
+    } finally {
+      await ctx.dispose();
+      await page.request.delete(`${API_BASE_URL}/contacts/${contactA.ID}`).catch(() => {});
     }
   });
 });

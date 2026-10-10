@@ -814,6 +814,38 @@
       "confirm": "Revoke"
     }
   },
+  "icsFeed": {
+    "title": "Calendar feed (ICS)",
+    "description": "Subscribe to your birthdays and reminders from any calendar app. Anyone who has the feed URL can read it, so keep it private.",
+    "inactive": "No calendar feed yet.",
+    "active": "Feed active since {{date}}.",
+    "generateButton": "Generate feed URL",
+    "regenerateButton": "Regenerate URL",
+    "revokeButton": "Revoke feed",
+    "loadError": "Failed to load the calendar feed",
+    "createError": "Failed to create the calendar feed",
+    "revokeError": "Failed to revoke the calendar feed",
+    "revokeSuccess": "Calendar feed revoked",
+    "copyError": "Could not copy to the clipboard",
+    "createdDialog": {
+      "title": "Calendar feed URL",
+      "warning": "This URL will not be shown again. Copy it now and add it to your calendar app as a subscription.",
+      "urlLabel": "Feed URL",
+      "copy": "Copy",
+      "copied": "Copied!",
+      "done": "Done, I saved it"
+    },
+    "regenerateDialog": {
+      "title": "Regenerate feed URL",
+      "message": "The current URL will stop working immediately. Calendars subscribed to it must be updated with the new URL.",
+      "confirm": "Regenerate"
+    },
+    "revokeDialog": {
+      "title": "Revoke calendar feed",
+      "message": "The feed URL will stop working immediately. You can generate a new one later.",
+      "confirm": "Revoke"
+    }
+  },
   "users": {
     "title": "User Management",
     "loadError": "Failed to load users",
