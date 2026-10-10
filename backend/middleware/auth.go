@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	"gorm.io/gorm"
 )
 
@@ -68,7 +68,12 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 				return nil, fmt.Errorf("unexpected signing method")
 			}
 			return []byte(cfg.JWTSecretKey), nil
-		})
+		},
+			// Tokens are only issued as HS256 with an exp claim (UserService).
+			jwt.WithValidMethods([]string{"HS256"}),
+			jwt.WithExpirationRequired(),
+			jwt.WithIssuedAt(), // v4 rejected a future iat by default; v5 needs this
+		)
 
 		if err != nil {
 			if errors.Is(err, jwt.ErrTokenExpired) {

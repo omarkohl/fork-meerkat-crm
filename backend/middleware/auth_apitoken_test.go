@@ -17,6 +17,9 @@ import (
 	"gorm.io/gorm"
 )
 
+// jwtTestSecret is the JWT signing key shared by the auth middleware tests.
+const jwtTestSecret = "test-secret-key-32-chars-minimum!"
+
 func setupAuthTestRouter() (*gorm.DB, *gin.Engine) {
 	gin.SetMode(gin.ReleaseMode)
 
@@ -31,7 +34,7 @@ func setupAuthTestRouter() (*gorm.DB, *gin.Engine) {
 		panic("failed to seed user")
 	}
 
-	cfg := &config.Config{JWTSecretKey: "test-secret-key-32-chars-minimum!"}
+	cfg := &config.Config{JWTSecretKey: jwtTestSecret}
 
 	router := gin.New()
 	router.Use(func(c *gin.Context) {

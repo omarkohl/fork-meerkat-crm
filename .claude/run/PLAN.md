@@ -43,7 +43,7 @@ Read first: `.claude/AUTONOMOUS-RUNS.md`, `README-developer.md`, `IMPROVEMENTS.m
       bundler ecosystems with grouped minor/patch; `govulncheck` and npm audit job.
 - [x] 5. **Replace `nfnt/resize` (6.4)** with `golang.org/x/image/draw`; photo tests
       prove output sizes unchanged.
-- [ ] 6. **`golang-jwt` v4 to v5 (6.2)**; auth tests cover the migration.
+- [x] 6. **`golang-jwt` v4 to v5 (6.2)**; auth tests cover the migration.
 - [ ] 7. **`gocron` v1 to v2 (6.3)**; scheduler tests still pass.
 - [ ] 8. **ICS feed export (feature)**: token-protected subscribable URL for
       birthdays and reminders; migration, controller, API client, settings UI,

@@ -2,7 +2,7 @@
 
 ## Next step
 
-6. `golang-jwt` v4 to v5.
+7. `gocron` v1 to v2.
 
 ## Stack
 
@@ -11,7 +11,8 @@
 - 2: `first-sprint/02-golangci-lint`, PR #5 (base `first-sprint/01-sqlite-pragmas`)
 - 3: `first-sprint/03-frontend-ci-gates`, PR #6 (base `first-sprint/02-golangci-lint`)
 - 4: `first-sprint/04-dependabot-govulncheck`, PR #7 (base `first-sprint/03-frontend-ci-gates`)
-- 5: `first-sprint/05-replace-nfnt-resize`, PR pending (base `first-sprint/04-dependabot-govulncheck`)
+- 5: `first-sprint/05-replace-nfnt-resize`, PR #8 (base `first-sprint/04-dependabot-govulncheck`)
+- 6: `first-sprint/06-jwt-v5`, PR pending (base `first-sprint/05-replace-nfnt-resize`)
 
 ## Log
 
@@ -50,8 +51,24 @@
   48x48 JPEG data URL); they passed on nfnt, then again after the swap. Both call sites
   use a small `resizeTo` helper over `draw.CatmullRom.Scale` (`draw.Src`); tests also check the centre pixel colour (±10); `go mod tidy` dropped
   nfnt/resize. `golangci-lint` 0 issues, `go test ./...` green.
+- Step 6 (golang-jwt v5): new `middleware/auth_jwt_test.go` (valid, expired, wrong
+  secret, tampered signature, alg none, non-HMAC alg, malformed, missing `user_id`) passed
+  on v4, then on v5.3.1; the tightening tests (no/string `exp`, HS384, future `iat`) were
+  red first. Only the import path changed in `middleware/auth.go`,
+  `services/user_service.go` and its test; `jwt.Parse`, `MapClaims`, `ErrTokenExpired`,
+  `ErrTokenMalformed`, `ErrSignatureInvalid` are the same in v5. `go mod tidy`,
+  `golangci-lint` (0 issues), `make precommit` and `make test-e2e` (28, login included)
+  green.
 
 ## Decisions
+
+- Step 6: the only issuer (`services/user_service.go`) signs HS256 and always sets `exp`,
+  so the parser is tightened with `WithValidMethods(["HS256"])` and
+  `WithExpirationRequired()` (the HMAC key-func check stays). `WithIssuedAt()` restores
+  v4's rejection of a future `iat`, which v5 only applies when asked. Rejected tokens all
+  answer 401 with "Invalid token" except expired, malformed and bad signature, which keep
+  their specific messages; tests pin these, including no `exp`, string `exp`, HS384, future
+  `iat`. Existing sessions are unaffected (their tokens are HS256 with `exp`).
 
 - Step 5: `x/image/draw` has no Lanczos kernel, so CatmullRom (bicubic) is used; output
   sizes are identical, pixels differ slightly. The helper is duplicated in `controllers`
@@ -103,6 +120,8 @@
 
 ## Questions
 
+- `middleware/auth.go` still accepts `int`/`uint` `user_id` claim types that a JSON-decoded
+  token can never contain (only `float64`); candidate for simplification, left alone.
 - Most Dockerfile base image tags float (`golang:alpine`, `node:lts-alpine`,
   `alpine:latest`, `nginxinc/nginx-unprivileged:alpine`), so Dependabot's docker
   ecosystem only sees the few pinned ones (`node:22-alpine`, `alpine:3.20`). Pinning was
