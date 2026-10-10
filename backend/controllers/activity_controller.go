@@ -143,7 +143,7 @@ func GetActivities(c *gin.Context) {
 		baseQuery = baseQuery.
 			Select("DISTINCT activities.*").
 			Joins("LEFT JOIN activity_contacts ON activity_contacts.activity_id = activities.id").
-			Joins("LEFT JOIN contacts ON contacts.id = activity_contacts.contact_id AND contacts.user_id = ?", userID).
+			Joins("LEFT JOIN contacts ON contacts.id = activity_contacts.contact_id AND contacts.user_id = ? AND contacts.deleted_at IS NULL", userID).
 			Where(searchClause)
 	}
 

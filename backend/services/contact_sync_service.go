@@ -845,6 +845,15 @@ func (r *contactSyncRun) applyRemoteChange(obj *remoteObject, link *models.CardD
 
 	switch {
 	case contact == nil:
+		if !r.pushEnabled() {
+			// Pull-only: a purged contact leaves its link behind as the
+			// record of a local deletion the server never learns about, so
+			// the remote object must not be imported again.
+			link.RemoteETag = obj.ETag
+			r.saveLink(link)
+			r.stats.Skipped++
+			return
+		}
 		// Link points at a vanished row; recreate from remote.
 		r.pullCreate(obj, link)
 	case contact.DeletedAt.Valid:
@@ -856,10 +865,12 @@ func (r *contactSyncRun) applyRemoteChange(obj *remoteObject, link *models.CardD
 			r.stats.Skipped++
 			return
 		}
-		// Edit beats delete: restore the contact with the remote data.
-		// UpdateColumn skips the Contact hooks, which would run on a model
-		// without a primary key here.
-		if err := r.db.Unscoped().Model(&models.Contact{}).Where("id = ?", contact.ID).UpdateColumn("deleted_at", nil).Error; err != nil {
+		// Edit beats delete: restore the contact, with the notes, reminders and
+		// relationships that were deleted with it, then apply the remote data.
+		if err := r.db.Transaction(func(tx *gorm.DB) error {
+			_, err := restoreTrashedContactTx(tx, contact.UserID, contact.ID)
+			return err
+		}); err != nil {
 			r.recordItemError(err, "Failed to restore deleted contact", map[string]string{"path": obj.Path})
 			return
 		}
@@ -1104,7 +1115,7 @@ func (r *contactSyncRun) reconcileRemoteDeletions() {
 			// Pull is necessarily enabled here: the case above covers every
 			// push-only path. Deleted remotely, so soft-delete locally.
 			if err := r.db.Transaction(func(tx *gorm.DB) error {
-				if err := tx.Delete(&models.Contact{}, contact.ID).Error; err != nil {
+				if err := models.TrashContact(tx, contact.UserID, contact.ID); err != nil {
 					return err
 				}
 				return tx.Delete(link).Error

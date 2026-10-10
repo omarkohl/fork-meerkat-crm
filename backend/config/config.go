@@ -57,6 +57,7 @@ type Config struct {
 	CardDAVSyncIntervalHours int    // Interval in hours for the scheduled CardDAV contact sync job
 	CardDAVBlockPrivateURLs  bool   // Block contact sync requests to private/loopback addresses (defaults to CALDAV_BLOCK_PRIVATE_URLS)
 	MonicaBlockPrivateURLs   bool   // Block Monica import requests to private/loopback addresses (useful for cloud deployments)
+	TrashRetentionDays       int    // Days a deleted contact stays in the trash before it is purged for good
 	OIDC                     OIDCConfig
 }
 
@@ -114,6 +115,11 @@ func LoadConfig() *Config {
 	if cfg.CardDAVSyncIntervalHours < 1 {
 		log.Println("WARN: CARDDAV_SYNC_INTERVAL_HOURS must be at least 1, using 1")
 		cfg.CardDAVSyncIntervalHours = 1
+	}
+	cfg.TrashRetentionDays = getIntEnv("TRASH_RETENTION_DAYS", 30)
+	if cfg.TrashRetentionDays < 1 {
+		log.Println("WARN: TRASH_RETENTION_DAYS must be at least 1, using 30")
+		cfg.TrashRetentionDays = 30
 	}
 	cfg.CardDAVBlockPrivateURLs = getBoolEnv("CARDDAV_BLOCK_PRIVATE_URLS", cfg.CalDAVBlockPrivateURLs)
 

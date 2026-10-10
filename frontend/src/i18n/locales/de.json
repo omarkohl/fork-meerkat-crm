@@ -10,6 +10,7 @@
     "activities": "Aktivitäten",
     "notes": "Notizen",
     "network": "Netzwerk",
+    "trash": "Papierkorb",
     "reminders": "Erinnerungen",
     "settings": "Einstellungen",
     "profile": "Profil",
@@ -282,7 +283,7 @@
     "female": "Weiblich",
     "other": "Andere",
     "deleteContact": "Kontakt löschen",
-    "confirmDeleteContact": "Möchten Sie {{name}} wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden und löscht auch alle Notizen, Aktivitäten und Erinnerungen, die mit diesem Kontakt verbunden sind.",
+    "confirmDeleteContact": "Möchten Sie {{name}} wirklich löschen? Der Kontakt wird mit seinen Notizen, Aktivitäten und Erinnerungen in den Papierkorb verschoben. Dort können Sie ihn wiederherstellen, bis er endgültig gelöscht wird.",
     "deleteContactError": "Kontakt konnte nicht gelöscht werden. Bitte versuchen Sie es erneut.",
     "updateError": "Kontakt konnte nicht aktualisiert werden. Bitte überprüfen Sie Ihre Eingabe und versuchen Sie es erneut.",
     "firstNameRequired": "Vorname ist erforderlich",
@@ -844,6 +845,38 @@
       "title": "Kalender-Feed widerrufen",
       "message": "Die Feed-URL funktioniert sofort nicht mehr. Du kannst später eine neue erzeugen.",
       "confirm": "Widerrufen"
+    }
+  },
+  "trash": {
+    "title": "Papierkorb",
+    "contactsTitle": "Gelöschte Kontakte",
+    "description_one": "Gelöschte Kontakte bleiben {{count}} Tag hier. Danach werden sie samt Notizen, Erinnerungen und Foto endgültig gelöscht.",
+    "description_other": "Gelöschte Kontakte bleiben {{count}} Tage hier. Danach werden sie samt Notizen, Erinnerungen und Foto endgültig gelöscht.",
+    "empty": "Der Papierkorb ist leer.",
+    "deletedOn": "Gelöscht am {{date}}",
+    "purgedOn": "Wird am {{date}} endgültig gelöscht",
+    "restore": "Wiederherstellen",
+    "purge": "Endgültig löschen",
+    "restoreAria": "{{name}} wiederherstellen",
+    "purgeAria": "{{name}} endgültig löschen",
+    "restoreSuccess": "{{name}} wiederhergestellt",
+    "restoreError": "Kontakt konnte nicht wiederhergestellt werden",
+    "purgeSuccess": "{{name}} endgültig gelöscht",
+    "purgeError": "Kontakt konnte nicht endgültig gelöscht werden",
+    "emptyButton": "Papierkorb leeren",
+    "emptySuccess_one": "{{count}} Kontakt endgültig gelöscht",
+    "emptySuccess_other": "{{count}} Kontakte endgültig gelöscht",
+    "emptyError": "Papierkorb konnte nicht geleert werden",
+    "purgeDialog": {
+      "title": "Endgültig löschen",
+      "message": "{{name}} endgültig löschen? Der Kontakt samt Notizen, Erinnerungen und Foto kann nicht wiederhergestellt werden.",
+      "confirm": "Endgültig löschen"
+    },
+    "emptyDialog": {
+      "title": "Papierkorb leeren",
+      "message_one": "{{count}} Kontakt endgültig löschen? Das kann nicht rückgängig gemacht werden.",
+      "message_other": "Alle {{count}} Kontakte endgültig löschen? Das kann nicht rückgängig gemacht werden.",
+      "confirm": "Papierkorb leeren"
     }
   },
   "users": {

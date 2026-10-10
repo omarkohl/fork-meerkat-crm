@@ -336,8 +336,10 @@ func (b *Backend) DeleteAddressObject(ctx context.Context, urlPath string) error
 		return fmt.Errorf("contact not found")
 	}
 
-	// Soft delete
-	return db.Delete(&contact).Error
+	// Soft delete, with the dependants, like deleting in the UI
+	return db.Transaction(func(tx *gorm.DB) error {
+		return models.TrashContact(tx, userID, contact.ID)
+	})
 }
 
 // contactToAddressObject converts a Contact to a CardDAV AddressObject
