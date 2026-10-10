@@ -57,17 +57,19 @@ func TestWebhookDeliveryCountsResults(t *testing.T) {
 	db := webhookDB(t)
 	fail := `meerkat_webhook_deliveries_total{result="failure"}`
 	ok := `meerkat_webhook_deliveries_total{result="success"}`
-	f0, s0 := series(t, fail), series(t, ok)
+	dead := `meerkat_outbox_dead_total{kind="webhook"}`
+	f0, s0, d0 := series(t, fail), series(t, ok), series(t, dead)
 
 	msg := "boom"
-	saveDelivery(db, 1, "x", "{}", nil, &msg, 1, nil)
-	code := 500
-	saveDelivery(db, 1, "x", "{}", &code, &msg, 2, nil)
-	code = 204
-	saveDelivery(db, 1, "x", "{}", &code, nil, 1, nil)
+	d := models.WebhookDelivery{WebhookID: 1, Attempts: 0}
+	finishWebhookDelivery(db, d, 1, nil, &msg, false)
+	finishWebhookDelivery(db, d, maxOutboxAttempts, nil, &msg, false)
+	code := 204
+	finishWebhookDelivery(db, d, 1, &code, nil, false)
 
 	assert.Equal(t, f0+2, series(t, fail))
 	assert.Equal(t, s0+1, series(t, ok))
+	assert.Equal(t, d0+1, series(t, dead), "only the last failure is a dead letter")
 }
 
 func TestSendEmailCountsResults(t *testing.T) {
@@ -84,4 +86,21 @@ func TestSendEmailCountsResults(t *testing.T) {
 	require.NoError(t, SendEmail(config.Config{}, EmailMessage{To: "a@example.com", Subject: "s"}))
 	assert.Equal(t, f0+1, series(t, fail))
 	assert.Equal(t, s0, series(t, ok))
+}
+
+func TestOutboxGauges(t *testing.T) {
+	db := emailDB(t)
+	reg := metrics.NewRegistry()
+	RegisterOutboxMetrics(reg, db)
+	require.NoError(t, db.Create(&models.WebhookDelivery{WebhookID: 1, Status: models.OutboxDead}).Error)
+	require.NoError(t, db.Create(&models.WebhookDelivery{WebhookID: 1, Status: models.OutboxPending}).Error)
+	require.NoError(t, db.Create(&models.EmailOutbox{ToAddr: "a", Subject: "s", HTML: "h", Status: models.OutboxPending, NextAttemptAt: time.Now()}).Error)
+
+	var sb strings.Builder
+	reg.Write(&sb)
+	out := sb.String()
+	assert.Contains(t, out, `meerkat_outbox_pending{kind="webhook"} 1`)
+	assert.Contains(t, out, `meerkat_outbox_pending{kind="email"} 1`)
+	assert.Contains(t, out, `meerkat_outbox_dead{kind="webhook"} 1`)
+	assert.Contains(t, out, `meerkat_outbox_dead{kind="email"} 0`)
 }

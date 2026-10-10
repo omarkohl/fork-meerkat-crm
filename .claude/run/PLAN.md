@@ -99,7 +99,7 @@ context is above 200k at the end of a step, then start a new one. Reviewer is al
 - [x] 18. **Prometheus metrics**: `/metrics` (off by default, optional bearer token or separate
       listener), request latency, job results from `job_execution`, webhook and email failures;
       docs with an example scrape config and Grafana-free alert hints.
-- [ ] 19. **Outbox for webhooks and email**: table-backed queue with retries and backoff, survives
+- [x] 19. **Outbox for webhooks and email**: table-backed queue with retries and backoff, survives
       restarts, delivery status visible on the webhook page, dead-letter after N tries.
 - [ ] 20. **Keep-in-touch cadence**: per contact and per circle ("every N days"), overdue list on
       the dashboard from the last activity, snooze, reminder email digest option.

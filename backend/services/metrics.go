@@ -42,3 +42,28 @@ func RegisterJobMetrics(r *metrics.Registry, db *gorm.DB) {
 			return out
 		})
 }
+
+// RegisterOutboxMetrics adds gauges read on every scrape: how many outbox entries wait for
+// their (next) try and how many are dead, per kind. A growing dead count means a receiver
+// or the mail server has been failing for longer than the retries cover.
+func RegisterOutboxMetrics(r *metrics.Registry, db *gorm.DB) {
+	count := func(table, status string) float64 {
+		var n int64
+		if err := db.Table(table).Where("status = ?", status).Count(&n).Error; err != nil {
+			logger.Warn().Err(err).Str("table", table).Msg("Could not count outbox entries for metrics")
+		}
+		return float64(n)
+	}
+	for _, g := range []struct{ name, help, status string }{
+		{"meerkat_outbox_pending", "Outbox entries waiting for their first try or a retry.", models.OutboxPending},
+		{"meerkat_outbox_dead", "Outbox entries that gave up (dead letter) and are still stored.", models.OutboxDead},
+	} {
+		g := g
+		r.GaugeFunc(g.name, g.help, []string{"kind"}, func() []metrics.Sample {
+			return []metrics.Sample{
+				{Labels: []string{"webhook"}, Value: count("webhook_deliveries", g.status)},
+				{Labels: []string{"email"}, Value: count("email_outbox", g.status)},
+			}
+		})
+	}
+}

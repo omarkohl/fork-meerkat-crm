@@ -57,7 +57,7 @@ func NewScheduler(cfg *config.Config, t SchedulerTasks) (*Scheduler, error) {
 		register(s, JobReminders,
 			gocron.DailyJob(1, gocron.NewAtTimes(gocron.NewAtTime(uint(hour), uint(minute), 0))), t.Reminders) //nolint:gosec // validated HH:MM
 	}
-	register(s, JobWebhookRetries, gocron.DurationJob(5*time.Minute), t.WebhookRetries, startNow)
+	register(s, JobWebhookRetries, gocron.DurationJob(time.Minute), t.WebhookRetries, startNow)
 	register(s, JobCalendarSync, gocron.DurationJob(time.Duration(cfg.CalDAVSyncIntervalHours)*time.Hour), t.CalendarSync, startNow)
 	register(s, JobContactSync, gocron.DurationJob(time.Duration(cfg.CardDAVSyncIntervalHours)*time.Hour), t.ContactSync, startNow)
 	register(s, JobTrashPurge, gocron.DailyJob(1, gocron.NewAtTimes(gocron.NewAtTime(3, 30, 0))), t.TrashPurge)

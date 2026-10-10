@@ -2,7 +2,7 @@
 
 ## Next step
 
-19.
+20.
 
 ## Stack
 
@@ -24,6 +24,7 @@
 - 16: second-sprint/16-fts-search (PR set by the orchestrator)
 - 17: second-sprint/17-thumbnails (PR set by the orchestrator)
 - 18: second-sprint/18-metrics (PR set by the orchestrator)
+- 19: second-sprint/19-outbox (PR set by the orchestrator)
 
 ## Log
 
@@ -155,8 +156,11 @@
 
 - 18: Prometheus metrics. New dependency-free package `backend/metrics` (counters, histograms, scrape-time gauges, text format 0.0.4; Prometheus client_golang is not in go.mod and the handful of series do not justify it). `METRICS_ENABLED` (default false: no route), `METRICS_TOKEN` (bearer, constant-time compare), `METRICS_ADDR` (separate listener serving only `/metrics`; then the main port has no such route). Without token and address a startup warning says it is open. Series: `meerkat_http_requests_total{method,route,status}` and `meerkat_http_request_duration_seconds` (route = gin pattern, `unmatched` without a route, unknown methods `OTHER`, so no cardinality from URLs/ids/ICS token; the middleware is first, so recovered panics count as 500), `meerkat_job_last_success_timestamp_seconds{job}` and `meerkat_job_running{job}` read from `job_executions` at scrape time, `meerkat_job_runs_total{job,result}` (reminders, trash-purge, backup; the sync jobs report per-connection errors in their own rows and logs, not a job result), `meerkat_webhook_deliveries_total{result}` (counted in `saveDelivery`, so retries and blocked targets count), `meerkat_emails_total{result}` (after all channels were tried; no-op sends are not counted), Go goroutines/heap and process start. Tests: exposition format, escaping, token, route labels, config, route on/off/separate listener, job gauges, webhook and email counters. Docs: deployment.md "Monitoring with Prometheus" (scrape config, alert ideas), env tables, `.env.example`, api-reference (`/metrics`; the route test enables metrics). No UI change, so no E2E run.
 
+- 19: outbox. Migration 31: `webhook_deliveries` gains `status` (pending, delivered, dead) and `locked_at`, old rows are mapped (waiting for a retry -> pending, failed without retry -> dead, rest delivered), new table `email_outbox`. Webhooks: `TriggerWebhooks` writes one pending row per event and webhook before any HTTP call, claims it (atomic UPDATE on `locked_at`) and sends in the background; the row is updated on every try (before: a new row per try). `ProcessWebhookOutbox` (job `webhook-retries`, now every minute, also at startup) sends all due rows, so a restart resumes them; a claim older than 5 minutes is taken over (at-least-once). Backoff 1 min, 5 min, 30 min, 2 h, dead after the 5th failed try (was 3 tries, 5 and 15 min); a blocked private target and a deleted or disabled webhook are dead at once. Email: `QueueEmail` (reminders and password reset) writes the row, tries at once in the background; `ProcessEmailOutbox` retries with the same backoff, waits without counting a try while no channel is configured; sent rows are purged after 7 days, dead ones after 30 (daily job); `DeleteUser` removes the user's rows. UI: delivery chip shows delivered (status code), retrying (with next try) or gave up, five locales, Vitest. Metrics: `meerkat_outbox_pending/dead{kind}` gauges and `meerkat_outbox_dead_total{kind}`. Docs: deployment.md "Delivery queue", api-reference. Tests: migration up/down with data, claim exclusivity and stale takeover, backoff to dead, restart resume, queue-before-send, inactive webhook, email send/backoff/dead/wait/purge, user deletion, password reset with a down mail server.
+
 ## Decisions
 
+- Step 19: `webhook_deliveries` is the webhook queue (no second table), one table `email_outbox` for email. Constants, not settings: 5 tries, backoff 1 min/5 min/30 min/2 h, 5 min lock timeout. The password reset request now answers 200 when the mail server is down (the email is queued), instead of 500; the reminder is marked emailed at queue time. `TriggerWebhooks` is still called with `go` by the controllers, so an event is lost only if the process dies in the microseconds before the row is written. There is no "retry dead entry" button or admin view of dead emails (metrics and logs only).
 - Step 18: `/metrics` is not versioned and not proxied by the bundled nginx (it only proxies /api, /health, /carddav), so exposing it needs a deliberate choice; the metrics middleware is only installed when enabled.
 
 - Step 17: the legacy column is kept (not cleared) after export so that a rollback of the migration or the binary loses nothing; this means the database file does not shrink until a later migration drops `photo_thumbnail` (see Questions). The API field name `photo_thumbnail` stays but holds a URL now, so the frontend `src` code is unchanged; the URL is root-relative (`/api/v1/...`), which assumes the web app and API share an origin (or `REACT_APP_API_URL`, handled by `thumbnailSrc`). Thumbnails need the login cookie like everything else (no public image URLs). The export runs synchronously at startup, because list queries no longer read the blob and a contact without a file shows no thumbnail; for 20k contacts it is a few seconds once.

@@ -36,6 +36,8 @@ func TestDeleteUser_RemovesTokensAndFeed(t *testing.T) {
 		wh := models.Webhook{UserID: u.ID}
 		require.NoError(t, db.Create(&wh).Error)
 		require.NoError(t, db.Create(&models.WebhookDelivery{WebhookID: wh.ID}).Error)
+		uid := u.ID
+		require.NoError(t, db.Create(&models.EmailOutbox{UserID: &uid, ToAddr: u.Email, Subject: "s", HTML: "h", Status: models.OutboxPending, NextAttemptAt: time.Now()}).Error)
 	}
 	var victimWebhook models.Webhook
 	require.NoError(t, db.Where("user_id = ?", victim.ID).First(&victimWebhook).Error)
@@ -58,6 +60,10 @@ func TestDeleteUser_RemovesTokensAndFeed(t *testing.T) {
 	}
 	db.Unscoped().Model(&models.WebhookDelivery{}).Where("webhook_id = ?", victimWebhook.ID).Count(&n)
 	assert.Zero(t, n, "webhook deliveries must be gone")
+	db.Model(&models.EmailOutbox{}).Where("user_id = ?", victim.ID).Count(&n)
+	assert.Zero(t, n, "queued emails of the deleted user must be gone")
+	db.Model(&models.EmailOutbox{}).Where("user_id = ?", bystander.ID).Count(&n)
+	assert.Equal(t, int64(1), n, "other users' queued emails stay")
 
 	// Other users keep theirs.
 	db.Model(&models.ApiToken{}).Where("user_id = ?", bystander.ID).Count(&n)

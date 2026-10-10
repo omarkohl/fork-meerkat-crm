@@ -326,6 +326,28 @@ func TestRequestPasswordReset_Succeeds(t *testing.T) {
 	}
 }
 
+func TestRequestPasswordReset_QueuesEmail(t *testing.T) {
+	cfg := config.Config{FrontendURL: "http://localhost:3000", UseSMTP: true, SMTPHost: "127.0.0.1", SMTPPort: 1, SMTPFromEmail: "from@example.com"}
+	db, router := setupRouter()
+	hashed, _ := services.HashPassword(strongPassword)
+	user := models.User{Username: "resetq", Email: "resetq@example.com", Password: hashed}
+	db.Create(&user)
+	router.POST("/password-reset/request", func(c *gin.Context) {
+		c.Set("validated", &models.PasswordResetRequestInput{Email: "resetq@example.com"})
+		RequestPasswordReset(c, &cfg)
+	})
+	req, _ := http.NewRequest("POST", "/password-reset/request", nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code, "a down mail server must not fail the request: the outbox retries")
+	var row models.EmailOutbox
+	if assert.NoError(t, db.Where("to_addr = ?", "resetq@example.com").First(&row).Error) {
+		assert.Equal(t, &user.ID, row.UserID)
+		assert.Contains(t, row.HTML, "reset")
+	}
+}
+
 func TestConfirmPasswordReset_Succeeds(t *testing.T) {
 	db, router := setupRouter()
 

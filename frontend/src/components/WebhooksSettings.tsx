@@ -344,8 +344,16 @@ export default function WebhooksSettings() {
                               <Box key={d.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                                 <Chip
                                   size="small"
-                                  label={d.status_code ?? 'err'}
-                                  color={d.status_code && d.status_code < 300 ? 'success' : 'error'}
+                                  label={
+                                    d.status === 'pending'
+                                      ? t('settings.webhooks.deliveryRetrying')
+                                      : d.status === 'dead'
+                                        ? t('settings.webhooks.deliveryGaveUp')
+                                        : (d.status_code ?? 'ok')
+                                  }
+                                  color={
+                                    d.status === 'delivered' ? 'success' : d.status === 'pending' ? 'warning' : 'error'
+                                  }
                                   sx={{ height: 18, fontSize: '0.7rem', minWidth: 36 }}
                                 />
                                 <Typography variant="caption" color="text.secondary">
@@ -354,6 +362,13 @@ export default function WebhooksSettings() {
                                 <Typography variant="caption" color="text.secondary">
                                   {new Date(d.created_at).toLocaleString()}
                                 </Typography>
+                                {d.status === 'pending' && d.next_retry_at && (
+                                  <Typography variant="caption" color="text.secondary">
+                                    {t('settings.webhooks.deliveryNextRetry', {
+                                      time: new Date(d.next_retry_at).toLocaleString(),
+                                    })}
+                                  </Typography>
+                                )}
                                 {d.error && (
                                   <Typography variant="caption" color="error.main" sx={{ ml: 0.5 }}>
                                     {d.error}
