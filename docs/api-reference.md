@@ -110,8 +110,8 @@ Deleting a contact moves it to the trash: the contact and its notes, reminders a
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/trash/contacts` | List the trash, newest deletion first: `{"contacts": [{"id", "firstname", "lastname", "nickname", "email", "photo_thumbnail", "deleted_at", "purge_at"}], "retention_days": 30}` |
-| `POST` | `/trash/contacts/:id/restore` | Restore a contact with the notes, reminders and relationships deleted with it. `404` if it is not in the user's trash |
-| `DELETE` | `/trash/contacts/:id` | Delete a trashed contact permanently, with its dependants and photo files. `404` if it is not in the user's trash (live contacts cannot be purged here) |
+| `POST` | `/trash/contacts/:id/restore` | Restore a contact with the notes, reminders and relationships deleted with it, and fire the `contact.restored` webhook event (payload: the contact, like `contact.created`). `404` if it is not in the user's trash |
+| `DELETE` | `/trash/contacts/:id` | Delete a trashed contact permanently, with its dependants and photo files. `404` if it is not in the user's trash (live contacts cannot be purged here). No webhook event: `contact.deleted` fired when the contact went to the trash. A CardDAV link of the contact is kept as a tombstone: pull-only connections never import the remote card again, connections that push delete it on the server at the next sync |
 | `DELETE` | `/trash/contacts` | Empty the user's trash: `{"message": ..., "purged": <count>}` |
 
 ### Relationships

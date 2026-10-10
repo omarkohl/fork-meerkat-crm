@@ -218,9 +218,9 @@ func purgeContacts(db *gorm.DB, candidates []models.Contact, photoDir string) (i
 
 // purgeChunkTx hard-deletes the candidates that are still trashed with the same
 // deletion time, and everything that belongs to them. It returns those contacts.
-// CardDAV links are kept on purpose: the sync engine uses a link whose contact
-// is gone to delete the remote object (two-way, push) or to never import it
-// again (pull-only), and drops the link itself when it is done.
+// CardDAV links are kept on purpose and marked purged (a tombstone): the sync
+// engine uses them to delete the remote object (two-way, push) or to never import
+// it again (pull-only), and drops the link itself when it is done.
 func purgeChunkTx(tx *gorm.DB, chunk []models.Contact) ([]models.Contact, error) {
 	byUser := map[uint][]models.Contact{}
 	for _, c := range chunk {
@@ -262,6 +262,11 @@ func purgeChunkTx(tx *gorm.DB, chunk []models.Contact) ([]models.Contact, error)
 		if err := tx.Unscoped().Model(&models.Relationship{}).
 			Where("related_contact_id IN ? AND user_id = ?", ids, userID).
 			UpdateColumn("related_contact_id", nil).Error; err != nil {
+			return nil, err
+		}
+		if err := tx.Model(&models.CardDAVContactLink{}).
+			Where("contact_id IN ? AND user_id = ? AND purged_at IS NULL", ids, userID).
+			UpdateColumn("purged_at", time.Now()).Error; err != nil {
 			return nil, err
 		}
 		if err := tx.Unscoped().Where("id IN ? AND user_id = ? AND deleted_at IS NOT NULL", ids, userID).

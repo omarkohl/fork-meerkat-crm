@@ -844,17 +844,24 @@ func (r *contactSyncRun) applyRemoteChange(obj *remoteObject, link *models.CardD
 	}
 
 	switch {
-	case contact == nil:
+	case contact == nil && link.PurgedAt != nil:
+		// The contact was purged from the trash: a tombstone, never imported again.
 		if !r.pushEnabled() {
-			// Pull-only: a purged contact leaves its link behind as the
-			// record of a local deletion the server never learns about, so
-			// the remote object must not be imported again.
+			// Pull-only never tells the server, so the link is kept as the
+			// record of the deletion.
 			link.RemoteETag = obj.ETag
 			r.saveLink(link)
 			r.stats.Skipped++
 			return
 		}
-		// Link points at a vanished row; recreate from remote.
+		if err := r.client.RemoveAll(r.ctx, link.RemotePath); err != nil && !errors.Is(err, ErrContactSyncNotFound) {
+			r.recordItemError(err, "Failed to delete contact on server", map[string]string{"path": link.RemotePath})
+			return
+		}
+		r.dropLink(link)
+		r.stats.PushedDeleted++
+	case contact == nil:
+		// Link points at a vanished row that was not purged; recreate from remote.
 		r.pullCreate(obj, link)
 	case contact.DeletedAt.Valid:
 		if !r.pushEnabled() {
@@ -996,7 +1003,7 @@ func (r *contactSyncRun) pullCreate(obj *remoteObject, link *models.CardDAVConta
 		link.RemoteETag = obj.ETag
 		link.LocalHash = hash
 		link.SyncedAt = &now
-		return tx.Save(link).Error
+		return tx.Omit("PurgedAt").Save(link).Error
 	})
 	if err != nil {
 		r.recordItemError(err, "Failed to import remote contact", map[string]string{"path": obj.Path})
@@ -1027,7 +1034,7 @@ func (r *contactSyncRun) pullUpdate(obj *remoteObject, link *models.CardDAVConta
 		link.RemoteETag = obj.ETag
 		link.LocalHash = hash
 		link.SyncedAt = &now
-		return tx.Save(link).Error
+		return tx.Omit("PurgedAt").Save(link).Error
 	})
 	if err != nil {
 		r.recordItemError(err, "Failed to update contact from remote", map[string]string{"path": obj.Path})
@@ -1243,7 +1250,7 @@ func (r *contactSyncRun) pushContact(contact *models.Contact, link *models.CardD
 	link.RemoteETag = etag
 	link.LocalHash = canonicalVCardHash(card)
 	link.SyncedAt = &now
-	if err := r.db.Save(link).Error; err != nil {
+	if err := r.db.Omit("PurgedAt").Save(link).Error; err != nil {
 		r.recordItemError(err, "Failed to record pushed contact", map[string]string{"path": link.RemotePath})
 		return
 	}
@@ -1257,8 +1264,11 @@ func (r *contactSyncRun) pushContact(contact *models.Contact, link *models.CardD
 	}
 }
 
+// saveLink writes the sync-owned columns of a link. PurgedAt is owned by the trash
+// purge and is never written back: a purge between loading the links and saving
+// one must not turn the tombstone into a live link again.
 func (r *contactSyncRun) saveLink(link *models.CardDAVContactLink) {
-	if err := r.db.Save(link).Error; err != nil {
+	if err := r.db.Omit("PurgedAt").Save(link).Error; err != nil {
 		r.recordItemError(err, "Failed to save contact link", map[string]string{"path": link.RemotePath})
 	}
 }

@@ -215,6 +215,8 @@ func TestPurgeKeepsCardDAVLinks(t *testing.T) {
 	require.NoError(t, err)
 	// The link is the only record that the remote object still has to be deleted.
 	assert.EqualValues(t, 1, count(t, db, &models.CardDAVContactLink{}, "contact_id = ?", f.contact.ID))
+	// ... and it is marked as a tombstone so the sync can tell a purge from a vanished row.
+	assert.EqualValues(t, 1, count(t, db, &models.CardDAVContactLink{}, "contact_id = ? AND purged_at IS NOT NULL", f.contact.ID))
 }
 
 func TestPurgeIsScopedToUserAndTrash(t *testing.T) {

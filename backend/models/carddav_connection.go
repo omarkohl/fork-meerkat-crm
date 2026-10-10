@@ -61,6 +61,10 @@ type CardDAVContactLink struct {
 	RemoteETag   string     `gorm:"column:remote_etag" json:"remote_etag"`
 	LocalHash    string     `json:"-"`
 	SyncedAt     *time.Time `json:"synced_at"`
+	// PurgedAt is set when the contact was purged from the trash. The link then
+	// is a tombstone: pull-only syncs never import the remote object again,
+	// syncs that push delete it remotely and drop the link.
+	PurgedAt *time.Time `json:"-"`
 }
 
 // TableName overrides GORM's default (card_dav_contact_links) to match the migration.

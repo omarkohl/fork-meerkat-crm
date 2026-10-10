@@ -46,17 +46,10 @@ func TestIcsFeedsMigrationUpAndDown(t *testing.T) {
 	if err := sqlDB.QueryRow("SELECT COUNT(*) FROM ics_feeds").Scan(&n); err != nil || n != 0 {
 		t.Errorf("feed rows after user delete = %d (err %v), want 0", n, err)
 	}
-	sqlDB.Close()
-
-	if err := MigrateDown(path); err != nil {
-		t.Fatal(err)
-	}
-	after, err := sql.Open("sqlite", sqliteDSN(path, false))
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer after.Close()
-	if tableExists(t, after, "ics_feeds") {
+	// Roll back to just before the migration that created ics_feeds.
+	migrateTo(t, sqlDB, 23)
+	if tableExists(t, sqlDB, "ics_feeds") {
 		t.Fatal("ics_feeds still present after down")
 	}
+	sqlDB.Close()
 }
