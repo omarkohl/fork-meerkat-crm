@@ -244,7 +244,18 @@ func processAndSavePhoto(file *multipart.FileHeader, uploadDir string) (string, 
 	if err != nil {
 		return "", "", err
 	}
-	if err := photofile.CheckDimensions(all); err != nil {
+	if contentType == "image/heic" || contentType == "image/heif" {
+		// The brand "mif1" has no registered decoder, so read the header explicitly.
+		cfg, err := heic.DecodeConfig(bytes.NewReader(all))
+		if err == nil {
+			err = photofile.CheckSize(cfg.Width, cfg.Height)
+		} else {
+			err = fmt.Errorf("%w: %w", photofile.ErrUnreadable, err)
+		}
+		if err != nil {
+			return "", "", fmt.Errorf("%w: %w", errInvalidPhoto, err)
+		}
+	} else if err := photofile.CheckDimensions(all); err != nil {
 		return "", "", fmt.Errorf("%w: %w", errInvalidPhoto, err)
 	}
 	reader := bytes.NewReader(all)

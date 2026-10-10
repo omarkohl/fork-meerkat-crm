@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -361,6 +362,18 @@ func DeleteUser(c *gin.Context) {
 			return err
 		}
 		if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.Webhook{}).Error; err != nil {
+			return err
+		}
+
+		// The row stays (soft delete), so release what is unique on it: the person must be
+		// able to register or log in again (OIDC) as a new account. The partial unique
+		// index on (oidc_subject, oidc_provider) ignores NULLs.
+		if err := tx.Unscoped().Model(&models.User{}).Where("id = ?", userID).Updates(map[string]any{
+			"email":         fmt.Sprintf("deleted+%d@deleted.invalid", userID),
+			"username":      fmt.Sprintf("deleted-%d", userID),
+			"oidc_subject":  nil,
+			"oidc_provider": nil,
+		}).Error; err != nil {
 			return err
 		}
 

@@ -9,8 +9,6 @@ import (
 	"meerkat/models"
 	"meerkat/services"
 	"net/http"
-	"net/url"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -116,10 +114,12 @@ func UpdateCalendarSubscription(c *gin.Context) {
 		return
 	}
 
-	// The stored password was entered for the old server: it does not follow a URL
-	// change to another host (the user can enter a new one in the same request).
-	if !sameHost(subscription.URL, input.URL) {
-		subscription.PasswordEncrypted = ""
+	// The stored password was entered for the old server and must not follow a URL
+	// change to another one (host, port or scheme): ask for it again instead of
+	// silently dropping it.
+	if subscription.PasswordEncrypted != "" && input.Password == "" && !input.ClearPassword && !sameServer(subscription.URL, input.URL) {
+		apperrors.AbortWithError(c, apperrors.ErrInvalidInput("password", "password required when the server address changes"))
+		return
 	}
 
 	subscription.Name = input.Name
@@ -273,11 +273,4 @@ func toCalendarResponses(subs []models.CalendarSubscription) []models.CalendarSu
 		out[i] = toCalendarResponse(sub)
 	}
 	return out
-}
-
-// sameHost reports whether two URLs point at the same host name (case-insensitive).
-func sameHost(a, b string) bool {
-	ua, errA := url.Parse(a)
-	ub, errB := url.Parse(b)
-	return errA == nil && errB == nil && ua.Hostname() != "" && strings.EqualFold(ua.Hostname(), ub.Hostname())
 }

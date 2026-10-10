@@ -2,7 +2,6 @@ package services
 
 import (
 	"bytes"
-	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/json"
@@ -15,6 +14,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -27,6 +27,14 @@ var (
 	deliveryClient = &http.Client{Timeout: 15 * time.Second}
 	// semaphore limits concurrent outbound webhook HTTP calls
 	deliverySem = make(chan struct{}, 10)
+)
+
+var (
+	errWebhookUnreachable    = errors.New("webhook host could not be resolved")
+	errWebhookPrivateAddress = errors.New("webhook URL resolves to a private or loopback address")
+
+	blockingClientOnce sync.Once
+	blockingClient     *http.Client
 )
 
 var retryDelays = []time.Duration{5 * time.Minute, 15 * time.Minute}
@@ -60,31 +68,12 @@ func isBlockedIP(ip net.IP) bool {
 // redirects to internal hosts and DNS rebinding (a name that resolves to a public
 // address for the pre-check and to a private one for the connection).
 func blockingDeliveryClient() *http.Client {
-	dialer := &net.Dialer{Timeout: 10 * time.Second}
-	return &http.Client{
-		Timeout: deliveryClient.Timeout,
-		Transport: &http.Transport{
-			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
-				host, port, err := net.SplitHostPort(addr)
-				if err != nil {
-					return nil, err
-				}
-				ips, err := net.DefaultResolver.LookupIPAddr(ctx, host)
-				if err != nil {
-					return nil, err
-				}
-				for _, ip := range ips {
-					if isBlockedIP(ip.IP) {
-						return nil, errors.New("webhook URL resolves to a private or loopback address")
-					}
-				}
-				if len(ips) == 0 {
-					return nil, errors.New("no address for host")
-				}
-				return dialer.DialContext(ctx, network, net.JoinHostPort(ips[0].IP.String(), port))
-			},
-		},
-	}
+	blockingClientOnce.Do(func() {
+		transport := http.DefaultTransport.(*http.Transport).Clone()
+		transport.DialContext = newPrivateBlockingDialContext(errWebhookUnreachable, errWebhookPrivateAddress)
+		blockingClient = &http.Client{Timeout: deliveryClient.Timeout, Transport: transport}
+	})
+	return blockingClient
 }
 
 // returns true if the URL resolves to a loopback, private, or link-local address
@@ -159,7 +148,7 @@ func TestWebhookDelivery(db *gorm.DB, cfg config.Config, wh models.Webhook) mode
 
 func deliverWebhook(db *gorm.DB, cfg config.Config, wh models.Webhook, eventType string, body []byte, attempt int) models.WebhookDelivery {
 	if cfg.WebhookBlockPrivateURLs && isPrivateURL(wh.URL) {
-		errStr := "webhook URL resolves to a private or loopback address"
+		errStr := errWebhookPrivateAddress.Error()
 		return saveDelivery(db, wh.ID, eventType, string(body), nil, &errStr, attempt, nil)
 	}
 
@@ -180,6 +169,11 @@ func deliverWebhook(db *gorm.DB, cfg config.Config, wh models.Webhook, eventType
 	resp, err := client.Do(req)
 	if err != nil {
 		errStr := err.Error()
+		if errors.Is(err, errWebhookPrivateAddress) {
+			// A blocked target stays blocked: record it as failed without retries, like the pre-check.
+			errStr = errWebhookPrivateAddress.Error()
+			return saveDelivery(db, wh.ID, eventType, string(body), nil, &errStr, attempt, nil)
+		}
 		return saveDelivery(db, wh.ID, eventType, string(body), nil, &errStr, attempt, retryAt(attempt))
 	}
 	defer func() {

@@ -15,6 +15,7 @@
 - 7: second-sprint/07-supply-chain (PR #22)
 - 8: second-sprint/08-test-infra (PR #23)
 - 9: second-sprint/09-fuzz (PR #24)
+- 10: second-sprint/10-untested-logic (PR #25)
 
 ## Log
 
@@ -107,10 +108,10 @@
   graph, import and admin users (non-admin refused on every route, own/last admin guards). Bugs found and fixed:
   1. Webhooks with `WEBHOOK_BLOCK_PRIVATE_URLS`: only the URL was checked, so a redirect or a DNS rebinding reached internal
      hosts, and `0.0.0.0` was allowed. The delivery client now checks the resolved address at dial time; unspecified addresses count.
-  2. Mailer: a line break in recipient or subject could add SMTP headers; `SendEmail` now refuses it.
+  2. Mailer: `SendEmail` refuses a line break in recipient or subject (defence in depth: `net/smtp` already rejects CR/LF in RCPT and the subject is Q-encoded, so this was probably not exploitable).
   3. OIDC auto-provisioning failed with a unique-constraint error when the derived username belonged to a soft-deleted user.
   4. Photo upload: unsupported/corrupt/empty files answered 500 (now 400), and the decoders allocated from the header
-     dimensions (a 10 MB file could ask for gigabytes): `photofile.CheckDimensions` (40 MP) guards the upload, `SaveContactPhoto`
+     dimensions (a 10 MB file could ask for gigabytes): `photofile.CheckDimensions` (100 MP) guards the upload, `SaveContactPhoto`
      (CardDAV, VCF import) and so the fuzz target too.
   5. Graph: relationships and activities involving archived contacts produced edges (and activity nodes) pointing at nodes that
      are not drawn.
@@ -121,6 +122,7 @@
 
 ## Decisions
 
+- Step 10 review fixes: (a) webhook blocking client is one package-level client cloned from `http.DefaultTransport` using the shared `newPrivateBlockingDialContext`, which now tries every safe address; a mixed answer (public + private) connects only to the public one. A dial-time block is recorded failed without retry, like the pre-check. (b) `DeleteUser` rewrites the soft-deleted row's email (`deleted+<id>@deleted.invalid`) and username (`deleted-<id>`) and sets `oidc_subject`/`oidc_provider` to NULL (the partial unique index ignores NULL), so the person can log in again as a new account; the username count error in provisioning is no longer ignored. (c) `photofile.MaxPixels` is 100 MP (48/50 MP phones). The header check now fails closed for formats with a registered decoder (an unreadable JPEG/PNG/GIF/HEIC header is refused) and passes unregistered formats to the decoder. HEIC: valid photos still pass (tested with the decoder's `test8.heic`, brands heic and mif1); the `mif1` brand has no registered decoder, so the upload path calls `heic.DecodeConfig` directly and fails closed. (d) A server change with a stored password is a 400 (field `password`) instead of a silent drop; the UI hint says so in all five locales and the dialogs show a translated error. (e) One `sameServer` helper (scheme with webcal as https, lowercase host, default-normalised port) for calendars, CardDAV update and Discover.
 - Step 9: the fuzz targets live next to the code as `*_fuzz_test.go` and run over their seeds in every `go test`;
   seed files in `testdata/fuzz` are a handful of hand-written edge cases. The workflow does not run on pull requests.
   Fuzzing does not cover the DB-backed `ParseVCF`/`GenerateCSVPreview` (they call the fuzzed parsers and mappers).
@@ -140,7 +142,7 @@
 
 ## For review
 
-- Step 10: behaviour changes besides pure fixes: a CalDAV/CardDAV password is dropped when the host changes (users re-enter it); another user's import session id is 404 instead of 401; photo uploads over 40 megapixels are refused.
+- Step 10: behaviour changes besides pure fixes: changing the CalDAV/CardDAV server (host, port or scheme) with a stored password answers 400 until a new password (or clear) is sent; another user's import session id is 404 instead of 401; photo uploads over 100 megapixels are refused.
 - Step 9: the first scheduled run of `Fuzz` is the check of the workflow (matrix, artifact collection with `git ls-files --others`). A nightly red run means a new input crashed a parser: download the artifact, add it under `testdata/fuzz`, fix.
 - Step 8: Radicale runs via `docker run` after checkout, not as a `services:` container, because it needs `docker/radicale` mounted as config (service containers start before checkout). Image `tomsquest/docker-radicale:3.8.3.0` (also pinned in `docker-compose.carddav-test.yml`, was `latest`): the tag and the compatibility of `docker/radicale/config` with Radicale 3.8 could not be checked from here, and the job has never run. Fix the tag if the first CI run says it does not exist.
 - Step 8: the frontend coverage is low (17% of statements, only 9 test files; the UI is covered by Playwright). No threshold is enforced, numbers are informational.

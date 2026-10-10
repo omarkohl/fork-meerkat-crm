@@ -260,3 +260,36 @@ func TestGetProfilePictureIsScopedAndSafe(t *testing.T) {
 		assert.NotContains(t, w.Body.String(), "secret")
 	}
 }
+
+func fileHeaderFromBytes(t *testing.T, name string, content []byte) *multipart.FileHeader {
+	t.Helper()
+	var body bytes.Buffer
+	mw := multipart.NewWriter(&body)
+	hdr := textproto.MIMEHeader{}
+	hdr.Set("Content-Disposition", `form-data; name="photo"; filename="`+name+`"`)
+	part, err := mw.CreatePart(hdr)
+	require.NoError(t, err)
+	_, _ = part.Write(content)
+	require.NoError(t, mw.Close())
+	form, err := multipart.NewReader(&body, mw.Boundary()).ReadForm(10 << 20)
+	require.NoError(t, err)
+	return form.File["photo"][0]
+}
+
+// Valid HEIC photos (brands heic and mif1) must still be accepted by the fail-closed
+// header check; a truncated one is refused.
+func TestProcessAndSavePhotoHEIC(t *testing.T) {
+	data, err := os.ReadFile("testdata/test8.heic")
+	require.NoError(t, err)
+	mif1 := append([]byte(nil), data...)
+	copy(mif1[8:12], "mif1")
+
+	for name, content := range map[string][]byte{"heic": data, "mif1": mif1} {
+		t.Run(name, func(t *testing.T) {
+			_, _, err := processAndSavePhoto(fileHeaderFromBytes(t, "p.heic", content), t.TempDir())
+			require.NoError(t, err)
+		})
+	}
+	_, _, err = processAndSavePhoto(fileHeaderFromBytes(t, "p.heic", data[:40]), t.TempDir())
+	assert.ErrorIs(t, err, errInvalidPhoto)
+}

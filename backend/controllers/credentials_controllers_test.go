@@ -71,7 +71,7 @@ func TestCalendarSubscriptionRejectsOtherSchemesAndOtherUsersRows(t *testing.T) 
 
 // A stored password belongs to the server it was entered for. Pointing the subscription at another
 // host without entering a password must not send the old one there.
-func TestCalendarSubscriptionPasswordDoesNotFollowAUrlChangeToAnotherHost(t *testing.T) {
+func TestCalendarSubscriptionPasswordDoesNotFollowAUrlChangeToAnotherServer(t *testing.T) {
 	db, router, me := credentialRouter(t)
 	require.Equal(t, http.StatusCreated, doJSON(router, "POST", "/calendars",
 		map[string]any{"name": "Work", "url": "https://cal.example.com/a.ics", "username": "u", "password": "hunter2"}).Code)
@@ -84,9 +84,21 @@ func TestCalendarSubscriptionPasswordDoesNotFollowAUrlChangeToAnotherHost(t *tes
 	require.NoError(t, db.First(&sub, sub.ID).Error)
 	assert.NotEmpty(t, sub.PasswordEncrypted)
 
-	// Other host: it is dropped.
+	// Other host, scheme downgrade or other port: refused, the stored password is kept untouched.
+	for _, target := range []string{"https://attacker.example.net/b.ics", "http://cal.example.com/b.ics", "https://cal.example.com:8443/b.ics"} {
+		w := doJSON(router, "PUT", "/calendars/"+itoa(sub.ID),
+			map[string]any{"name": "Work", "url": target, "username": "u"})
+		require.Equal(t, http.StatusBadRequest, w.Code, target)
+		assert.Contains(t, w.Body.String(), "password required")
+		require.NoError(t, db.First(&sub, sub.ID).Error)
+		assert.Equal(t, "https://CAL.example.com/b.ics", sub.URL)
+		assert.NotEmpty(t, sub.PasswordEncrypted)
+	}
+	// With a new password (or clearing it) the change goes through.
 	require.Equal(t, http.StatusOK, doJSON(router, "PUT", "/calendars/"+itoa(sub.ID),
-		map[string]any{"name": "Work", "url": "https://attacker.example.net/b.ics", "username": "u"}).Code)
+		map[string]any{"name": "Work", "url": "https://other.example.net/b.ics", "username": "u", "password": "new"}).Code)
+	require.Equal(t, http.StatusOK, doJSON(router, "PUT", "/calendars/"+itoa(sub.ID),
+		map[string]any{"name": "Work", "url": "http://third.example.net/b.ics", "username": "u", "clear_password": true}).Code)
 	require.NoError(t, db.First(&sub, sub.ID).Error)
 	assert.Empty(t, sub.PasswordEncrypted)
 }
@@ -122,11 +134,18 @@ func TestCardDAVConnectionPasswordHandling(t *testing.T) {
 	require.NoError(t, db.Where("user_id = ?", me.ID).First(&conn).Error)
 	assert.NotEmpty(t, conn.PasswordEncrypted)
 
-	// Another server: the stored password is not carried along.
+	// Another server, a downgrade to http or another port: refused, the stored password stays.
+	for _, target := range []string{"https://evil.example.net/dav", "http://dav.example.com/dav", "https://dav.example.com:8443/dav"} {
+		w := doJSON(router, "PUT", "/carddav/connection",
+			map[string]any{"base_url": target, "address_book_path": "/books/b/", "username": "u"})
+		require.Equal(t, http.StatusBadRequest, w.Code, target)
+		assert.Contains(t, w.Body.String(), "password required")
+		require.NoError(t, db.Where("user_id = ?", me.ID).First(&conn).Error)
+		assert.NotEmpty(t, conn.PasswordEncrypted)
+		assert.Equal(t, "https://dav.example.com/other", conn.BaseURL)
+	}
 	require.Equal(t, http.StatusOK, doJSON(router, "PUT", "/carddav/connection",
-		map[string]any{"base_url": "https://evil.example.net/dav", "address_book_path": "/books/b/", "username": "u"}).Code)
-	require.NoError(t, db.Where("user_id = ?", me.ID).First(&conn).Error)
-	assert.Empty(t, conn.PasswordEncrypted)
+		map[string]any{"base_url": "https://evil.example.net/dav", "address_book_path": "/books/b/", "username": "u", "password": "new"}).Code)
 }
 
 func TestCardDAVSwitchingAddressBookDropsLinks(t *testing.T) {

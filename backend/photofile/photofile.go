@@ -5,6 +5,7 @@ package photofile
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"image"
 	_ "image/gif" // registers the GIF decoder for image.DecodeConfig
 	"image/jpeg"
@@ -53,22 +54,36 @@ func write(path string, fill func(*os.File) error) (err error) {
 }
 
 // MaxPixels bounds the size of an image that is decoded. Decoders allocate from the
-// dimensions in the header, so a few hundred bytes can ask for gigabytes.
-const MaxPixels = 40_000_000
+// dimensions in the header, so a few hundred bytes can ask for gigabytes. 100 megapixels
+// leaves room for the largest phone sensors (48 to 50 MP, 200 MP only as binned output)
+// while an RGBA decode stays at 400 MB at most.
+const MaxPixels = 100_000_000
 
 // ErrTooLarge is returned for an image with more than MaxPixels pixels.
 var ErrTooLarge = errors.New("image dimensions are too large")
 
-// CheckDimensions reads only the header of data and refuses images over MaxPixels.
-// Data in a format without a registered decoder, or with an unreadable header, passes
-// (the real decode reports that).
-func CheckDimensions(data []byte) error {
-	cfg, _, err := image.DecodeConfig(bytes.NewReader(data))
-	if err != nil {
-		return nil
-	}
-	if int64(cfg.Width)*int64(cfg.Height) > MaxPixels {
+// ErrUnreadable is returned when the header of a known image format cannot be read.
+var ErrUnreadable = errors.New("image header cannot be read")
+
+// CheckSize refuses dimensions over MaxPixels.
+func CheckSize(width, height int) error {
+	if int64(width)*int64(height) > MaxPixels {
 		return ErrTooLarge
 	}
 	return nil
+}
+
+// CheckDimensions reads only the header of data and refuses images over MaxPixels.
+// A header that cannot be read in a format with a registered decoder is refused too
+// (fail closed: the decoder would fail on it as well). Data in a format without a
+// registered decoder passes; the real decode reports that.
+func CheckDimensions(data []byte) error {
+	cfg, _, err := image.DecodeConfig(bytes.NewReader(data))
+	if err != nil {
+		if errors.Is(err, image.ErrFormat) {
+			return nil
+		}
+		return fmt.Errorf("%w: %w", ErrUnreadable, err)
+	}
+	return CheckSize(cfg.Width, cfg.Height)
 }

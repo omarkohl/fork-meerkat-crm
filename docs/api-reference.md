@@ -229,7 +229,7 @@ Import events of a CalDAV or iCalendar URL as activities. Stored passwords are e
 |---|---|---|
 | `GET` | `/calendars` | List the user's subscriptions: `{"calendars": [...]}` |
 | `POST` | `/calendars` | Create a subscription. Body: `{"name", "url", "username", "password", "sync_enabled", "past_days", "future_days"}` (`201`) |
-| `PUT` | `/calendars/:id` | Update a subscription. `clear_password: true` removes the stored password |
+| `PUT` | `/calendars/:id` | Update a subscription. `clear_password: true` removes the stored password. If the URL moves to another server (other host, port or scheme) while a password is stored, the request needs a new `password` (or `clear_password`): otherwise `400` with field `password` |
 | `DELETE` | `/calendars/:id` | Delete a subscription |
 | `POST` | `/calendars/:id/sync` | Sync now: `{"message", "created", "updated", "skipped"}` |
 
@@ -242,9 +242,9 @@ Syncs contacts with an external CardDAV server (Nextcloud, Radicale, ...). Each 
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/carddav/connection` | Get the user's connection (`404` if none) |
-| `PUT` | `/carddav/connection` | Create (`201`) or update (`200`) the connection. Body: `{"base_url", "address_book_path", "address_book_name", "username", "password", "clear_password", "direction", "sync_enabled"}` with `direction` one of `two_way`, `pull`, `push` |
+| `PUT` | `/carddav/connection` | Create (`201`) or update (`200`) the connection. Body: `{"base_url", "address_book_path", "address_book_name", "username", "password", "clear_password", "direction", "sync_enabled"}` with `direction` one of `two_way`, `pull`, `push`. On update, an empty `password` keeps the stored one only while the server stays the same (host, port and scheme); a change of server without a new `password` (or `clear_password`) answers `400` with field `password` |
 | `DELETE` | `/carddav/connection` | Remove the connection and its links |
-| `POST` | `/carddav/discover` | Body `{"base_url", "username", "password"}`. Lists the address books on the server: `{"address_books": [...]}`. An empty `password` reuses the stored one, but only when `base_url` has the same host as the saved connection |
+| `POST` | `/carddav/discover` | Body `{"base_url", "username", "password"}`. Lists the address books on the server: `{"address_books": [...]}`. An empty `password` reuses the stored one, but only when `base_url` has the same host, port and scheme as the saved connection |
 | `POST` | `/carddav/connection/sync` | Start a sync in the background (`202`) |
 
 ### API Tokens
@@ -290,7 +290,7 @@ Content:
 | `GET` | `/admin/users` | List all users |
 | `GET` | `/admin/users/:id` | Get a user |
 | `PATCH` | `/admin/users/:id` | Update a user (e.g. set admin flag) |
-| `DELETE` | `/admin/users/:id` | Delete a user. Their data, API tokens, calendar feed, CardDAV connection, calendar subscriptions and webhooks are removed and their sessions end immediately (`401`) |
+| `DELETE` | `/admin/users/:id` | Delete a user. Their data, API tokens, calendar feed, CardDAV connection, calendar subscriptions and webhooks are removed and their sessions end immediately (`401`). The account stays soft-deleted, but its email, username and OIDC identity are released: the person can register or log in via OIDC again and gets a new, empty account |
 | `GET` | `/admin/backups` | List the server backups, newest first, with the schedule: `{"backups": [{"name", "size", "created_at"}], "enabled", "time", "retention_count", "directory"}` |
 | `POST` | `/admin/backups` | Create a backup now (`201`, `{"name", "size", "created_at"}`) and prune to `BACKUP_RETENTION_COUNT` |
 | `GET` | `/admin/backups/:name` | Download a backup (`.tar.gz`, `Cache-Control: no-store`) |

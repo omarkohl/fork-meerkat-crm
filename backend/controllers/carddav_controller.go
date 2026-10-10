@@ -76,10 +76,11 @@ func SaveCardDAVConnection(c *gin.Context) {
 	// re-pair losslessly by UID).
 	addressBookChanged := !isNew && (conn.BaseURL != baseURL || conn.AddressBookPath != input.AddressBookPath)
 
-	// The stored password was entered for the old server: it does not follow a change
-	// of host (the request can carry a new one).
-	if !isNew && !sameHost(conn.BaseURL, baseURL) {
-		conn.PasswordEncrypted = ""
+	// The stored password was entered for the old server and must not follow a change
+	// of host, port or scheme: ask for it again instead of silently dropping it.
+	if !isNew && conn.PasswordEncrypted != "" && input.Password == "" && !input.ClearPassword && !sameServer(conn.BaseURL, baseURL) {
+		apperrors.AbortWithError(c, apperrors.ErrInvalidInput("password", "password required when the server address changes"))
+		return
 	}
 
 	conn.UserID = userID
@@ -190,8 +191,7 @@ func DiscoverCardDAVAddressBooks(c *gin.Context) {
 		// re-discovering against a different server cannot carry it along.
 		var conn models.CardDAVConnection
 		if db.Where("user_id = ?", userID).First(&conn).Error == nil {
-			storedURL, urlErr := services.NormalizeCardDAVURL(conn.BaseURL)
-			if urlErr == nil && strings.EqualFold(storedURL.Hostname(), normalized.Hostname()) {
+			if sameServer(conn.BaseURL, normalized.String()) {
 				if stored, decErr := services.DecryptCredential(cfg.JWTSecretKey, conn.PasswordEncrypted); decErr == nil {
 					password = stored
 				}

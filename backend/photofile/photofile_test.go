@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"testing"
 
+	_ "github.com/gen2brain/heic" // registers the HEIC decoder like the server does
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -104,4 +105,27 @@ func TestCheckDimensionsRefusesDecompressionBombs(t *testing.T) {
 	require.NoError(t, png.Encode(&ok, image.NewGray(image.Rect(0, 0, 100, 100))))
 	assert.NoError(t, CheckDimensions(ok.Bytes()))
 	assert.NoError(t, CheckDimensions([]byte("not an image")), "unknown formats are left to the decoder")
+}
+
+func TestCheckDimensionsAcceptsPhoneSizes(t *testing.T) {
+	// 50 MP (8160x6120) header, valid PNG otherwise.
+	var small bytes.Buffer
+	require.NoError(t, png.Encode(&small, image.NewGray(image.Rect(0, 0, 1, 1))))
+	data := small.Bytes()
+	binary.BigEndian.PutUint32(data[16:], 8160)
+	binary.BigEndian.PutUint32(data[20:], 6120)
+	binary.BigEndian.PutUint32(data[29:], crc32.ChecksumIEEE(data[12:29]))
+	assert.NoError(t, CheckDimensions(data))
+}
+
+func TestCheckDimensionsRefusesUnreadableHeaders(t *testing.T) {
+	assert.ErrorIs(t, CheckDimensions([]byte("\x89PNG\r\n\x1a\n\x00\x00")), ErrUnreadable)
+	assert.ErrorIs(t, CheckDimensions([]byte{0xff, 0xd8, 0xff}), ErrUnreadable)
+}
+
+func TestCheckDimensionsReadsHEIC(t *testing.T) {
+	// A valid HEIC photo (from the decoder's test data) must pass the fail-closed check.
+	data, err := os.ReadFile("testdata/test8.heic")
+	require.NoError(t, err)
+	assert.NoError(t, CheckDimensions(data))
 }
