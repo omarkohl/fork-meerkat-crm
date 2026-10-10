@@ -911,6 +911,7 @@
     }
   },
   "users": {
+    "privateUrlsWarning": "Webhooks, calendar and contact sync and the Monica import can reach private and internal network addresses, and this instance has several users. Set {{setting}}=true in the server environment to block this.",
     "title": "User Management",
     "loadError": "Failed to load users",
     "noUsers": "No users found",

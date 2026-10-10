@@ -134,6 +134,7 @@ func LoadConfig() *Config {
 	}
 	cfg.BackupDir = getEnv("BACKUP_DIR", filepath.Join(filepath.Dir(cfg.DBPath), "backups"))
 	cfg.CardDAVBlockPrivateURLs = getBoolEnv("CARDDAV_BLOCK_PRIVATE_URLS", cfg.CalDAVBlockPrivateURLs)
+	applyBlockPrivateURLs(cfg)
 
 	// An email channel is enabled only when it is fully configured
 	cfg.UseResend = cfg.ResendAPIKey != "" && cfg.ResendFromEmail != ""
@@ -172,6 +173,32 @@ func getIntEnv(key string, fallback int) int {
 		return intValue
 	}
 	return fallback
+}
+
+// applyBlockPrivateURLs applies BLOCK_PRIVATE_URLS. When it is set to a valid boolean it
+// decides for every outbound feature (webhooks, CalDAV, CardDAV, Monica) and overrides
+// the older per-feature flags. When it is unset (or invalid) the per-feature flags keep
+// working as before. The default stays off: LAN servers are a common legitimate setup.
+func applyBlockPrivateURLs(cfg *Config) {
+	value, set := os.LookupEnv("BLOCK_PRIVATE_URLS")
+	if !set {
+		return
+	}
+	block, err := strconv.ParseBool(value)
+	if err != nil {
+		log.Printf("WARN: Invalid boolean value for BLOCK_PRIVATE_URLS: %s. Using the per-feature flags", value)
+		return
+	}
+	cfg.WebhookBlockPrivateURLs = block
+	cfg.CalDAVBlockPrivateURLs = block
+	cfg.CardDAVBlockPrivateURLs = block
+	cfg.MonicaBlockPrivateURLs = block
+}
+
+// PrivateURLsAllowed reports whether any outbound feature may still reach private,
+// loopback or link-local addresses.
+func (c Config) PrivateURLsAllowed() bool {
+	return !(c.WebhookBlockPrivateURLs && c.CalDAVBlockPrivateURLs && c.CardDAVBlockPrivateURLs && c.MonicaBlockPrivateURLs)
 }
 
 func getBoolEnv(key string, fallback bool) bool {

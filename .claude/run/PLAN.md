@@ -79,7 +79,7 @@ context is above 200k at the end of a step, then start a new one. Reviewer is al
 - [x] 11. **i18n checker and local hooks**: script that fails when a key is missing in any locale
       (frontend and backend), also detects unused/duplicate keys as warnings; CI job; `lefthook`
       config (fmt, lint, i18n on staged files) documented as optional.
-- [ ] 12. **Unified SSRF switch**: `BLOCK_PRIVATE_URLS`, CardDAV coverage, warning and admin banner,
+- [x] 12. **Unified SSRF switch**: `BLOCK_PRIVATE_URLS`, CardDAV coverage, warning and admin banner,
       docs, tests (including DNS rebinding: resolve once, dial the checked IP).
 - [ ] 13. **Security headers and CSP**: audit `security_headers.go`, `frame-ancestors`, CSP for
       the SPA (served by nginx too), report-only first then enforcing if the e2e suite passes;
