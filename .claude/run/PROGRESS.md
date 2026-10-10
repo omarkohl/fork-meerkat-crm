@@ -66,7 +66,12 @@
   `.trivyignore` for exceptions) on PRs touching Docker/backend/frontend, on main and weekly. `docs.yml` builds the
   site on PRs touching `docs/**` (no deploy; permissions moved to the jobs). Base images: `golang:1.26-alpine`,
   `node:22-alpine` (frontend was `node:lts-alpine`), `alpine:3.22` (was `latest` and `3.20`, EOL),
-  `nginx-unprivileged:1.29-alpine`. actionlint is clean. Contributing docs updated.
+  `nginx-unprivileged:1.30-alpine`. actionlint is clean. Contributing docs updated.
+  Review fixes: the `docs.yml` edit of the first commit had silently not applied (trailing whitespace in the
+  original header), so the PR trigger, concurrency group and job permissions are now really in place; the docs
+  concurrency group is per PR (`pages-<ref>`) or `pages-deploy`; build job has `pages: read`; nginx base is
+  `1.30-alpine` (1.29 is stale; existence not checkable from here, the proxy blocks Docker Hub); `.dockerignore`
+  added to the build paths; publish cache scoped per image.
 
 ## Decisions
 
@@ -86,7 +91,7 @@
 
 ## For review
 
-- Step 7: base image tags (`golang:1.26-alpine`, `alpine:3.22`, `nginx-unprivileged:1.29-alpine`) and the Trivy/docs/Docker workflows could not be tested here (no registry access, docker daemon unusable). The first PR run of `Docker build and scan` is the check: if a tag does not exist or Trivy finds fixable HIGH/CRITICAL issues in a base image, adjust the tag. Tags are minor-level, not digest-pinned (Dependabot keeps them current).
+- Step 7: base image tags (`golang:1.26-alpine`, `alpine:3.22`, `nginx-unprivileged:1.30-alpine`) and the Trivy/docs/Docker workflows could not be tested here (no registry access, docker daemon unusable). The first PR run of `Docker build and scan` is the check: if a tag does not exist or Trivy finds fixable HIGH/CRITICAL issues in a base image, adjust the tag. Tags are minor-level, not digest-pinned (Dependabot keeps them current).
 - Step 7: the Trivy job is a required-looking check on every Docker-related PR and weekly; a new advisory in Alpine/nginx can turn it red without any code change.
 - Step 6: the test allowlist has two entries, both for the CardDAV server (`/carddav/*path`, `/.well-known/carddav`): WebDAV for CardDAV clients, documented in `docs/carddav.md`, not REST. Response shapes in the new doc sections are summarised from the handlers, not exhaustive.
 - Step 2: every authenticated request now does a user lookup; confirm that cost is acceptable.

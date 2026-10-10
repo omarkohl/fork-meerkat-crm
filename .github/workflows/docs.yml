@@ -1,26 +1,28 @@
-name: Deploy docs to GitHub Pages                                                                                                                                   
-                                                                                                                                                                    
-on:                                                                                                                                                                 
-  push:                                                                                                                                                             
-    branches: ["main"]                                                                                                                                              
-    paths: ["docs/**"]                                                                                                                                              
-  workflow_dispatch:
-                                                                                                                                                                    
-permissions:                                                                                                                                                        
-  contents: read                                                                                                                                                    
-  pages: write
-  id-token: write
+name: Deploy docs to GitHub Pages
 
+on:
+  push:
+    branches: ["main"]
+    paths: ["docs/**"]
+  # Pull requests only build the site (no deploy), so a broken Jekyll build is caught before merge.
+  pull_request:
+    paths: ["docs/**", ".github/workflows/docs.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Deploys queue (never cancelled mid-deploy); each PR has its own group so it cannot block them.
 concurrency:
-  group: "pages"
-  cancel-in-progress: false
+  group: pages-${{ github.event_name == 'pull_request' && github.ref || 'deploy' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pages: write
+      pages: read
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: ruby/setup-ruby@e81a8fa391b11a595c1b7ed84177cc0fe02faf83 # v1.328.0

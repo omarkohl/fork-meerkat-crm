@@ -21,7 +21,7 @@ ENV REACT_APP_API_URL=${REACT_APP_API_URL}
 RUN if [ -f yarn.lock ]; then yarn build; else npm run build; fi
 
 # Production stage - serve with unprivileged nginx
-FROM nginxinc/nginx-unprivileged:1.29-alpine
+FROM nginxinc/nginx-unprivileged:1.30-alpine
 
 # Copy custom nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf

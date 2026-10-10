@@ -101,5 +101,5 @@ jobs:
           # Attach an SBOM and SLSA provenance to the image in the registry.
           sbom: true
           provenance: mode=max
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=publish${{ matrix.suffix }}
+          cache-to: type=gha,scope=publish${{ matrix.suffix }},mode=max
