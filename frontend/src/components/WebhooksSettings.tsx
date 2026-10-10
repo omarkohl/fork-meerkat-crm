@@ -50,6 +50,7 @@ const SUPPORTED_EVENTS = [
   'contact.created',
   'contact.updated',
   'contact.deleted',
+  'contact.restored',
   'note.created',
   'note.updated',
   'note.deleted',
@@ -133,11 +134,11 @@ export default function WebhooksSettings() {
     try {
       if (editingId !== null) {
         const updated = await updateWebhook(editingId, form);
-        setWebhooks(prev => prev.map(w => (w.id === editingId ? updated : w)));
+        setWebhooks((prev) => prev.map((w) => (w.id === editingId ? updated : w)));
         setDialogOpen(false);
       } else {
         const created = await createWebhook(form);
-        setWebhooks(prev => [created, ...prev]);
+        setWebhooks((prev) => [created, ...prev]);
         setDialogOpen(false);
         setCreatedWebhook(created);
         setSecretCopied(false);
@@ -159,7 +160,7 @@ export default function WebhooksSettings() {
     setDeleting(true);
     try {
       await deleteWebhook(webhookToDelete.id);
-      setWebhooks(prev => prev.filter(w => w.id !== webhookToDelete.id));
+      setWebhooks((prev) => prev.filter((w) => w.id !== webhookToDelete.id));
       setDeleteDialogOpen(false);
       setWebhookToDelete(null);
     } catch (err) {
@@ -171,7 +172,7 @@ export default function WebhooksSettings() {
   };
 
   const handleTest = async (wh: Webhook) => {
-    setTesting(prev => ({ ...prev, [wh.id]: true }));
+    setTesting((prev) => ({ ...prev, [wh.id]: true }));
     setSuccess('');
     setError('');
     try {
@@ -183,28 +184,28 @@ export default function WebhooksSettings() {
         setError(t('settings.webhooks.testFailed', { error: d.error || `status ${d.status_code ?? 'unknown'}` }));
       }
       // Prepend the new delivery into the cached list so it shows immediately
-      setDeliveries(prev => ({ ...prev, [wh.id]: [d, ...(prev[wh.id] || [])] }));
+      setDeliveries((prev) => ({ ...prev, [wh.id]: [d, ...(prev[wh.id] || [])] }));
       // Auto-expand deliveries so the user can see the result
-      setExpandedDeliveries(prev => ({ ...prev, [wh.id]: true }));
+      setExpandedDeliveries((prev) => ({ ...prev, [wh.id]: true }));
     } catch (err) {
       setError(err instanceof Error ? err.message : t('settings.webhooks.testFailed', { error: 'unknown' }));
     } finally {
-      setTesting(prev => ({ ...prev, [wh.id]: false }));
+      setTesting((prev) => ({ ...prev, [wh.id]: false }));
     }
   };
 
   const toggleDeliveries = async (wh: Webhook) => {
     const isOpen = expandedDeliveries[wh.id];
-    setExpandedDeliveries(prev => ({ ...prev, [wh.id]: !isOpen }));
+    setExpandedDeliveries((prev) => ({ ...prev, [wh.id]: !isOpen }));
     if (!isOpen && !deliveries[wh.id]) {
-      setLoadingDeliveries(prev => ({ ...prev, [wh.id]: true }));
+      setLoadingDeliveries((prev) => ({ ...prev, [wh.id]: true }));
       try {
         const data = await getWebhookDeliveries(wh.id);
-        setDeliveries(prev => ({ ...prev, [wh.id]: data }));
+        setDeliveries((prev) => ({ ...prev, [wh.id]: data }));
       } catch {
         // silently fail
       } finally {
-        setLoadingDeliveries(prev => ({ ...prev, [wh.id]: false }));
+        setLoadingDeliveries((prev) => ({ ...prev, [wh.id]: false }));
       }
     }
   };
@@ -224,12 +225,7 @@ export default function WebhooksSettings() {
                 {t('settings.webhooks.title')}
               </Typography>
             </Box>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<AddIcon />}
-              onClick={openCreate}
-            >
+            <Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={openCreate}>
               {t('settings.webhooks.add')}
             </Button>
           </Box>
@@ -240,8 +236,16 @@ export default function WebhooksSettings() {
               {t('settings.webhooks.description')}
             </Typography>
 
-            {error && <Alert severity="error" sx={{ py: 0 }} onClose={() => setError('')}>{error}</Alert>}
-            {success && <Alert severity="success" sx={{ py: 0 }} onClose={() => setSuccess('')}>{success}</Alert>}
+            {error && (
+              <Alert severity="error" sx={{ py: 0 }} onClose={() => setError('')}>
+                {error}
+              </Alert>
+            )}
+            {success && (
+              <Alert severity="success" sx={{ py: 0 }} onClose={() => setSuccess('')}>
+                {success}
+              </Alert>
+            )}
 
             {loading ? (
               <Typography variant="body2" color="text.secondary">
@@ -253,7 +257,7 @@ export default function WebhooksSettings() {
               </Typography>
             ) : (
               <List dense sx={{ py: 0 }}>
-                {webhooks.map(wh => (
+                {webhooks.map((wh) => (
                   <Box key={wh.id}>
                     <ListItem
                       sx={{ px: 0 }}
@@ -267,11 +271,7 @@ export default function WebhooksSettings() {
                           >
                             <PlayArrowIcon fontSize="small" />
                           </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => openEdit(wh)}
-                            title={t('settings.webhooks.edit')}
-                          >
+                          <IconButton size="small" onClick={() => openEdit(wh)} title={t('settings.webhooks.edit')}>
                             <EditIcon fontSize="small" />
                           </IconButton>
                           <IconButton
@@ -290,7 +290,9 @@ export default function WebhooksSettings() {
                         secondaryTypographyProps={{ component: 'div' }}
                         primary={
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography variant="body2" sx={{ fontWeight: 500 }}>{wh.name}</Typography>
+                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                              {wh.name}
+                            </Typography>
                             <Chip
                               size="small"
                               label={wh.is_active ? t('settings.webhooks.active') : t('settings.webhooks.inactive')}
@@ -316,7 +318,13 @@ export default function WebhooksSettings() {
                       <Button
                         size="small"
                         onClick={() => toggleDeliveries(wh)}
-                        endIcon={expandedDeliveries[wh.id] ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                        endIcon={
+                          expandedDeliveries[wh.id] ? (
+                            <ExpandLessIcon fontSize="small" />
+                          ) : (
+                            <ExpandMoreIcon fontSize="small" />
+                          )
+                        }
                         sx={{ fontSize: '0.75rem', color: 'text.secondary', textTransform: 'none', p: 0 }}
                       >
                         {t('settings.webhooks.deliveries')}
@@ -324,11 +332,15 @@ export default function WebhooksSettings() {
                       <Collapse in={expandedDeliveries[wh.id]}>
                         <Box sx={{ mt: 0.5 }}>
                           {loadingDeliveries[wh.id] ? (
-                            <Typography variant="caption" color="text.secondary">{t('settings.webhooks.loadingDeliveries')}</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {t('settings.webhooks.loadingDeliveries')}
+                            </Typography>
                           ) : (deliveries[wh.id] || []).length === 0 ? (
-                            <Typography variant="caption" color="text.secondary">{t('settings.webhooks.noDeliveries')}</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {t('settings.webhooks.noDeliveries')}
+                            </Typography>
                           ) : (
-                            (deliveries[wh.id] || []).slice(0, 5).map(d => (
+                            (deliveries[wh.id] || []).slice(0, 5).map((d) => (
                               <Box key={d.id} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                                 <Chip
                                   size="small"
@@ -336,7 +348,9 @@ export default function WebhooksSettings() {
                                   color={d.status_code && d.status_code < 300 ? 'success' : 'error'}
                                   sx={{ height: 18, fontSize: '0.7rem', minWidth: 36 }}
                                 />
-                                <Typography variant="caption" color="text.secondary">{d.event_type}</Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  {d.event_type}
+                                </Typography>
                                 <Typography variant="caption" color="text.secondary">
                                   {new Date(d.created_at).toLocaleString()}
                                 </Typography>
@@ -369,7 +383,7 @@ export default function WebhooksSettings() {
             <TextField
               label={t('settings.webhooks.name')}
               value={form.name}
-              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               size="small"
               required
               fullWidth
@@ -377,7 +391,7 @@ export default function WebhooksSettings() {
             <TextField
               label={t('settings.webhooks.url')}
               value={form.url}
-              onChange={e => setForm(f => ({ ...f, url: e.target.value }))}
+              onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))}
               size="small"
               required
               fullWidth
@@ -387,19 +401,14 @@ export default function WebhooksSettings() {
               multiple
               options={SUPPORTED_EVENTS}
               value={form.events}
-              onChange={(_, value) => setForm(f => ({ ...f, events: value }))}
+              onChange={(_, value) => setForm((f) => ({ ...f, events: value }))}
               getOptionLabel={getEventLabel}
-              renderInput={params => (
+              renderInput={(params) => (
                 <TextField {...params} label={t('settings.webhooks.events')} size="small" required />
               )}
               renderTags={(value, getTagProps) =>
                 value.map((option, index) => (
-                  <Chip
-                    {...getTagProps({ index })}
-                    key={option}
-                    label={getEventLabel(option)}
-                    size="small"
-                  />
+                  <Chip {...getTagProps({ index })} key={option} label={getEventLabel(option)} size="small" />
                 ))
               }
             />
@@ -407,7 +416,7 @@ export default function WebhooksSettings() {
               control={
                 <Switch
                   checked={form.is_active}
-                  onChange={e => setForm(f => ({ ...f, is_active: e.target.checked }))}
+                  onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
                   size="small"
                 />
               }
@@ -416,9 +425,7 @@ export default function WebhooksSettings() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>
-            {t('settings.webhooks.cancel')}
-          </Button>
+          <Button onClick={() => setDialogOpen(false)}>{t('settings.webhooks.cancel')}</Button>
           <Button
             onClick={handleSave}
             variant="contained"
@@ -476,9 +483,7 @@ export default function WebhooksSettings() {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>
-            {t('settings.webhooks.deleteDialog.cancel')}
-          </Button>
+          <Button onClick={() => setDeleteDialogOpen(false)}>{t('settings.webhooks.deleteDialog.cancel')}</Button>
           <Button onClick={handleDeleteConfirm} color="error" disabled={deleting} autoFocus>
             {t('settings.webhooks.deleteDialog.confirm')}
           </Button>

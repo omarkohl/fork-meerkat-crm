@@ -644,6 +644,7 @@
         "contact.created": "Contact Created",
         "contact.updated": "Contact Updated",
         "contact.deleted": "Contact Deleted",
+        "contact.restored": "Contact Restored",
         "note.created": "Note Created",
         "note.updated": "Note Updated",
         "note.deleted": "Note Deleted",

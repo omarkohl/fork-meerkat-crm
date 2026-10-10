@@ -55,7 +55,7 @@ context is above 200k at the end of a step, then start a new one. Reviewer is al
       `DeleteUser` removes API tokens and the ICS feed and invalidates sessions; same for admin
       disable if it exists. Simplify `user_id` claim handling to the one real type, range-checked
       helper for uint conversions (removes the G115 suppressions). Tests, isolation case.
-- [ ] 3. **Trash follow-ups**: link tombstone on purge (migration), pull-only sync skips it;
+- [x] 3. **Trash follow-ups**: link tombstone on purge (migration), pull-only sync skips it;
       `contact.restored` webhook (docs, UI event list, i18n); tests for both.
 - [ ] 4. **File and shutdown robustness**: photo dir 0750/files 0640 (existing dirs are left
       alone, documented); write-path `Close` errors checked; startup goroutines under a context and

@@ -832,6 +832,44 @@ func TestContactSyncPullOnlyPurgedContactIsNotReimported(t *testing.T) {
 	})
 }
 
+// A remote edit after a purge must not resurrect the contact in a mode that
+// pushes: the tombstone makes the sync delete the remote object instead.
+func TestContactSyncPurgedContactEditedRemotelyIsDeletedNotReimported(t *testing.T) {
+	runContactSync(t, models.CardDAVDirectionTwoWay, func(t *testing.T, env *contactSyncEnv) {
+		env.remote.putContact(t, "uid-pre", "Pre", "Remote", "pre@example.com")
+		env.sync(t)
+		var local models.Contact
+		require.NoError(t, env.db.Where("vcard_uid = ?", "uid-pre").First(&local).Error)
+		require.NoError(t, env.db.Delete(&local).Error)
+		_, err := PurgeTrashedContacts(env.db, env.user.ID, nil, "")
+		require.NoError(t, err)
+
+		env.remote.putContact(t, "uid-pre", "Pre", "Edited", "pre@example.com")
+		stats := env.sync(t)
+
+		assert.Zero(t, stats.PulledCreated)
+		assert.Empty(t, env.localContacts(t))
+		assert.Empty(t, env.links(t))
+		assert.Equal(t, 0, env.remote.count(t))
+	})
+}
+
+// A link whose contact row vanished without a purge (no tombstone) is not a
+// deletion the user made: the contact is recreated from the server.
+func TestContactSyncPullOnlyLinkWithoutTombstoneIsRecreated(t *testing.T) {
+	runContactSync(t, models.CardDAVDirectionPull, func(t *testing.T, env *contactSyncEnv) {
+		env.remote.putContact(t, "uid-van", "Van", "Ished", "van@example.com")
+		env.sync(t)
+		require.NoError(t, env.db.Unscoped().Where("vcard_uid = ?", "uid-van").Delete(&models.Contact{}).Error)
+
+		env.remote.putContact(t, "uid-van", "Van", "Edited", "van@example.com")
+		stats := env.sync(t)
+
+		assert.Equal(t, 1, stats.PulledCreated)
+		assert.Len(t, env.localContacts(t), 1)
+	})
+}
+
 func TestContactSyncRemoteDeleteTrashesDependants(t *testing.T) {
 	runContactSync(t, models.CardDAVDirectionTwoWay, func(t *testing.T, env *contactSyncEnv) {
 		env.remote.putContact(t, "uid-rem", "Rem", "Gone", "rem@example.com")
@@ -872,5 +910,31 @@ func TestContactSyncEditBeatsDeleteRestoresDependants(t *testing.T) {
 		assert.EqualValues(t, 1, n)
 		require.NoError(t, env.db.Model(&models.Note{}).Where("contact_id = ?", cid).Count(&n).Error)
 		assert.EqualValues(t, 1, n)
+	})
+}
+
+// A purge between loading the links and saving one must keep the tombstone: the
+// sync's stale copy of the link has PurgedAt unset.
+func TestContactSyncSaveLinkKeepsPurgeTombstone(t *testing.T) {
+	runContactSync(t, models.CardDAVDirectionPull, func(t *testing.T, env *contactSyncEnv) {
+		env.remote.putContact(t, "uid-race", "Race", "Remote", "race@example.com")
+		env.sync(t)
+		stale := env.links(t)[0] // loaded before the purge, PurgedAt unset
+		require.Nil(t, stale.PurgedAt)
+
+		var local models.Contact
+		require.NoError(t, env.db.Where("vcard_uid = ?", "uid-race").First(&local).Error)
+		require.NoError(t, env.db.Delete(&local).Error)
+		_, err := PurgeTrashedContacts(env.db, env.user.ID, nil, "")
+		require.NoError(t, err)
+
+		run := &contactSyncRun{db: env.db}
+		stale.RemoteETag = "changed"
+		run.saveLink(&stale)
+
+		var stored models.CardDAVContactLink
+		require.NoError(t, env.db.First(&stored, stale.ID).Error)
+		assert.NotNil(t, stored.PurgedAt, "saveLink must not clear the tombstone")
+		assert.Equal(t, "changed", stored.RemoteETag)
 	})
 }
