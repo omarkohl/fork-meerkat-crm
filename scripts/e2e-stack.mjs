@@ -2,7 +2,8 @@
 // Runs the E2E stack without Docker, for environments without it (e.g. cloud
 // agents): builds the backend and the frontend bundle, starts the backend on
 // 127.0.0.1:8081 with a fresh database, and serves the bundle on :7300 with
-// /api, /health and /carddav proxied, like docker/nginx.conf does.
+// /api, /health and /carddav proxied, like docker/nginx.conf does (with the same security
+// headers on everything it serves itself).
 //
 // Usage: node scripts/e2e-stack.mjs [-- <command to run against the stack>]
 // Without a command it keeps the stack running until Ctrl+C.
@@ -12,6 +13,7 @@ import { createReadStream, existsSync, mkdtempSync, rmSync, statSync } from 'nod
 import http from 'node:http'
 import { tmpdir } from 'node:os'
 import { extname, join, normalize, resolve } from 'node:path'
+import { loadSnippetHeaders } from './security-headers.mjs'
 
 const root = resolve(import.meta.dirname, '..')
 const backendDir = join(root, 'backend')
@@ -32,6 +34,11 @@ const TYPES = {
   '.map': 'application/json',
   '.woff2': 'font/woff2',
 }
+
+// The SPA is served with the same headers as nginx sends (frontend/security-headers.conf), so
+// the E2E run enforces the real Content-Security-Policy. nginx variables (HSTS) are skipped:
+// this server is plain HTTP.
+const SECURITY_HEADERS = Object.fromEntries(loadSnippetHeaders().filter(([, v]) => !v.startsWith('$')))
 
 function run(cmd, args, opts) {
   const r = spawnSync(cmd, args, { stdio: 'inherit', ...opts })
@@ -88,7 +95,7 @@ const server = http.createServer((req, res) => {
   if (!file.startsWith(buildDir) || !existsSync(file) || statSync(file).isDirectory()) {
     file = join(buildDir, 'index.html')
   }
-  res.writeHead(200, { 'Content-Type': TYPES[extname(file)] ?? 'application/octet-stream' })
+  res.writeHead(200, { 'Content-Type': TYPES[extname(file)] ?? 'application/octet-stream', ...SECURITY_HEADERS })
   createReadStream(file).pipe(res)
 })
 

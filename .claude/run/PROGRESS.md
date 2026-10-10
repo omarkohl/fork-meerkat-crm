@@ -2,7 +2,7 @@
 
 ## Next step
 
-13.
+14.
 
 ## Stack
 
@@ -18,6 +18,7 @@
 - 10: second-sprint/10-untested-logic (PR #25)
 - 11: second-sprint/11-i18n-check (PR #26)
 - 12: second-sprint/12-ssrf-switch (PR #27)
+- 13: (branch and PR set by the orchestrator)
 
 ## Log
 
@@ -135,8 +136,11 @@
   `/admin/system-status` gained `features`. Vitest for the banner and an e2e case (`users-banner.spec.ts`). Prettier did not force
   unrelated reformatting this time.
 
+- 13: audit: the backend sent XFO, nosniff, Referrer-Policy and HSTS (COOKIE_SECURE only); both nginx configs already had an enforcing CSP, but copied four times each (every location repeats `add_header`), no Permissions-Policy/COOP/CORP, and the server-level `add_header` was also inherited by proxied API locations, so API responses got the backend's headers and nginx's SPA CSP (duplicates). The e2e server (`scripts/e2e-stack.mjs`) sent no headers at all, so the CSP had never been tested. Now: `frontend/security-headers.conf` is the single source (included per static location in `frontend/nginx.conf` and `docker/nginx.conf`, copied to `/etc/nginx/` by both Dockerfiles); proxied locations add nothing, so the backend's API headers (new: `default-src 'none'; frame-ancestors 'none'`, Permissions-Policy, COOP same-origin, CORP same-site) pass through once. CSP gained `manifest-src`, `worker-src`, `object-src 'none'`, `base-uri`, `form-action`. HSTS: nginx via `$forwarded_proto`/`$hsts_header` maps (empty on plain HTTP, so no header), backend when COOKIE_SECURE, TLS or `X-Forwarded-Proto: https`; nginx now forwards an incoming `X-Forwarded-Proto` instead of overwriting it with its own scheme. The e2e server applies the same snippet; `fixtures.ts` `test` fails any test on a CSP violation (console message or `securitypolicyviolation`); `security-headers.spec.ts` checks the SPA and API headers and that an inline script is blocked. `scripts/security-headers.mjs` + test (run by `make i18n-check`/precommit/CI lint job) verify both configs: no stray `add_header`, include in every static location, none in proxied ones, both Dockerfiles copy the snippet, the configs differ only in the upstream. Go test for the middleware. Docs: deployment.md "Security headers". CSP is ENFORCING: all 42 e2e tests pass under it with no violation (no inline scripts in the CRA build, service worker is unregistered, no external fonts/tiles/images).
+
 ## Decisions
 
+- Step 13: enforcing, not report-only: production nginx already enforced a CSP (so report-only would have loosened it), the whole e2e suite passes under it, and report-only needs a report endpoint nobody reads. `style-src 'unsafe-inline'` stays (emotion injects style tags; a nonce is not possible with static nginx). COOP `same-origin` and CORP `same-origin` on the SPA, CORP `same-site` on the API (a SPA on a sibling subdomain can still show photos). The backend does not trust `X-Forwarded-Proto` for anything but HSTS.
 - Step 12: OIDC discovery and the SMTP host are exempt from the guard: only the administrator sets them (environment), and they are often internal. Documented in deployment.md. The warning counts non-deleted users (more than one) and fires when any of the four features is unblocked.
 - Step 11: plural keys (`_one`, `_other`, `_many`, ...) are compared by base name, because languages differ in their plural forms. "Unused" means no string literal equals the key and no literal or template prefix (`'a.b.'`, `` `a.${x}` ``) covers it, so dynamic keys are tolerated; it is a heuristic and only warns.
 - Step 10 review fixes: (a) webhook blocking client is one package-level client cloned from `http.DefaultTransport` using the shared `newPrivateBlockingDialContext`, which now tries every safe address; a mixed answer (public + private) connects only to the public one. A dial-time block is recorded failed without retry, like the pre-check. (b) `DeleteUser` rewrites the soft-deleted row's email (`deleted+<id>@deleted.invalid`) and username (`deleted-<id>`) and sets `oidc_subject`/`oidc_provider` to NULL (the partial unique index ignores NULL), so the person can log in again as a new account; the username count error in provisioning is no longer ignored. (c) `photofile.MaxPixels` is 100 MP (48/50 MP phones). The header check now fails closed for formats with a registered decoder (an unreadable JPEG/PNG/GIF/HEIC header is refused) and passes unregistered formats to the decoder. HEIC: valid photos still pass (tested with the decoder's `test8.heic`, brands heic and mif1); the `mif1` brand has no registered decoder, so the upload path calls `heic.DecodeConfig` directly and fails closed. (d) A server change with a stored password is a 400 (field `password`) instead of a silent drop; the UI hint says so in all five locales and the dialogs show a translated error. (e) One `sameServer` helper (scheme with webcal as https, lowercase host, default-normalised port) for calendars, CardDAV update and Discover.
@@ -159,6 +163,9 @@
 
 ## For review
 
+- Step 13: the nginx changes (maps, `include`, X-Forwarded-Proto forwarding) could not be run here (no nginx binary, no Docker): the check is a static test plus the e2e run against the Node server that mimics it. CI's `docker-compose.test.yml` E2E run goes through the real nginx with the new CSP guard, so it is the first real test. If it fails with a map or include error, fix `frontend/nginx.conf` and `docker/nginx.conf` together.
+- Step 13: `frontend/e2e/fixtures.ts` was reformatted by Prettier (the format check forced it).
+- Step 13: a deployment with the API on another origin (`REACT_APP_API_URL` set) needs `connect-src` relaxed; see deployment.md.
 - Step 12: the guard now also refuses 100.64.0.0/10 (CGNAT, used by Tailscale and some clouds' metadata) and multicast when blocking is on. Users who enable it and sync from a Tailscale address must keep it off or use a name outside that range.
 - Step 12: the banner is on the Users page only (admins), not on every page.
 - Step 11: the 27 "unused" warnings (e.g. `activities.deleteConfirm`, `relationships.saveFailed`) are candidates for removal from all locales; not done here.

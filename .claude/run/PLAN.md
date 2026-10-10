@@ -81,7 +81,7 @@ context is above 200k at the end of a step, then start a new one. Reviewer is al
       config (fmt, lint, i18n on staged files) documented as optional.
 - [x] 12. **Unified SSRF switch**: `BLOCK_PRIVATE_URLS`, CardDAV coverage, warning and admin banner,
       docs, tests (including DNS rebinding: resolve once, dial the checked IP).
-- [ ] 13. **Security headers and CSP**: audit `security_headers.go`, `frame-ancestors`, CSP for
+- [x] 13. **Security headers and CSP**: audit `security_headers.go`, `frame-ancestors`, CSP for
       the SPA (served by nginx too), report-only first then enforcing if the e2e suite passes;
       docs for reverse proxies.
 - [ ] 14. **Sessions and audit log**: list/revoke sessions (token version per user, "sign out

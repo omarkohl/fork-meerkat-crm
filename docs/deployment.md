@@ -27,6 +27,31 @@ server {
 }
 ```
 
+### Security headers
+
+Meerkat sets its security headers itself; a reverse proxy in front should pass them through and **not add its own** (a second `Content-Security-Policy` is combined with the first and can only make the policy stricter, a second `Strict-Transport-Security` or `X-Frame-Options` is sent twice). In nginx do not `add_header` them, in Caddy do not use `header` for them, in Traefik leave the security-headers middleware out.
+
+| Response | Headers |
+|---|---|
+| The web app (HTML, JS, CSS, images) | `Content-Security-Policy` (below), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` (no camera, microphone, geolocation, payment, USB), `Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Resource-Policy: same-origin` |
+| The API (`/api/`, `/carddav/`, calendar feeds, downloads), sent by the backend | the same, but `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'` and `Cross-Origin-Resource-Policy: same-site` |
+
+The web app policy is enforced (not report-only):
+
+```
+default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:;
+font-src 'self' data:; connect-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none';
+base-uri 'self'; form-action 'self'; frame-ancestors 'none'
+```
+
+Only the bundle may run (no inline scripts, no `eval`). `style-src 'unsafe-inline'` is needed because the UI library injects style tags at runtime; nothing else is loaded from other origins. It lives in one file, `frontend/security-headers.conf`, shared by the all-in-one image and the separate frontend image, and the E2E suite runs against it and fails on any violation.
+
+**HSTS** (`Strict-Transport-Security: max-age=31536000; includeSubDomains`) is sent only when the browser is on HTTPS: nginx looks at `X-Forwarded-Proto` (set it to `https` in your TLS proxy, as in the example above, and keep it when you chain proxies), the backend also at `COOKIE_SECURE=true` or a direct TLS connection. Plain-HTTP access never gets it, so a test setup on a LAN address is not locked to HTTPS. Browsers remember HSTS for a year: only enable HTTPS on a hostname you will keep serving over HTTPS.
+
+**Relaxing the policy** for a custom integration (an API on another origin, a self-hosted font, an embedded widget): edit `frontend/security-headers.conf` and rebuild, or mount your own copy over `/etc/nginx/security-headers.conf` in the container. Add only what you need, for example `connect-src 'self' https://api.example.com`. Do not add `'unsafe-inline'` or `'unsafe-eval'` to `script-src`. An API on another origin additionally needs `FRONTEND_URL` (CORS) and photos from it need `img-src` for that origin and, because the backend sends `Cross-Origin-Resource-Policy: same-site`, the same site. If you embed Meerkat in a page of your own, you must also change `frame-ancestors` and `X-Frame-Options` (not recommended).
+
+`make i18n-check` (which also runs `scripts/security-headers.test.mjs`) fails when one of the two nginx configs stops including the shared file, adds headers of its own, or adds them to a proxied location.
+
 ## Production Environment
 
 Set these variables in `.env` when running over HTTPS:
