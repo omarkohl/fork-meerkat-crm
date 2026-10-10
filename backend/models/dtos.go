@@ -285,7 +285,7 @@ type ApiTokenCreateResponse struct {
 type WebhookInput struct {
 	Name     string   `json:"name" validate:"required,min=1,max=200"`
 	URL      string   `json:"url" validate:"required,http_url"`
-	Events   []string `json:"events" validate:"required,min=1,dive,oneof=contact.created contact.updated contact.deleted note.created note.updated note.deleted activity.created activity.updated activity.deleted reminder.triggered birthday.occurred"`
+	Events   []string `json:"events" validate:"required,min=1,dive,oneof=contact.created contact.updated contact.deleted contact.restored note.created note.updated note.deleted activity.created activity.updated activity.deleted reminder.triggered birthday.occurred"`
 	IsActive bool     `json:"is_active"`
 }
 

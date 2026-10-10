@@ -89,6 +89,7 @@ func RestoreTrashedContact(c *gin.Context) {
 		apperrors.AbortWithError(c, apperrors.ErrDatabase("Failed to restore contact").WithError(err))
 		return
 	}
+	go services.TriggerWebhooks(db, currentConfig(c), userID, "contact.restored", contact)
 	c.JSON(http.StatusOK, gin.H{"message": "Contact restored", "id": contact.ID})
 }
 

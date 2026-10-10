@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"meerkat/config"
+	"meerkat/middleware"
 	"meerkat/models"
 
 	"github.com/gin-gonic/gin"
@@ -38,14 +39,14 @@ func newTrashEnv(t *testing.T) *trashEnv {
 	photos := t.TempDir()
 
 	routerA.Use(func(c *gin.Context) {
-		c.Set("cfg", config.Config{ProfilePhotoDir: photos, TrashRetentionDays: 30})
+		c.Set("cfg", config.Config{ProfilePhotoDir: photos, TrashRetentionDays: 30, WebhookBlockPrivateURLs: true})
 		c.Next()
 	})
 	routerB := gin.New()
 	routerB.Use(func(c *gin.Context) {
 		c.Set("db", db)
 		c.Set("userID", b.ID)
-		c.Set("cfg", config.Config{ProfilePhotoDir: photos, TrashRetentionDays: 30})
+		c.Set("cfg", config.Config{ProfilePhotoDir: photos, TrashRetentionDays: 30, WebhookBlockPrivateURLs: true})
 		c.Next()
 	})
 	for _, r := range []*gin.Engine{routerA, routerB} {
@@ -143,6 +144,26 @@ func TestRestoreFromTrashMakesContactVisibleAgain(t *testing.T) {
 	assert.Empty(t, e.trashed(t, e.routerA).Contacts)
 	// A second restore finds nothing in the trash.
 	assert.Equal(t, http.StatusNotFound, doReq(e.routerA, "POST", idPath("/trash/contacts/", c.ID, "/restore")).Code)
+}
+
+func TestRestoreFromTrashFiresContactRestoredWebhook(t *testing.T) {
+	e := newTrashEnv(t)
+	c := e.contact(t, e.userA.ID, "Alice")
+	// A private URL with blocking on is recorded as a failed delivery without any network access.
+	wh := models.Webhook{UserID: e.userA.ID, Name: "h", URL: "http://127.0.0.1/hook", Events: []string{"contact.restored"}, Secret: "s", IsActive: true}
+	require.NoError(t, e.db.Create(&wh).Error)
+	doReq(e.routerA, "DELETE", idPath("/contacts/", c.ID, ""))
+	require.Equal(t, http.StatusOK, doReq(e.routerA, "POST", idPath("/trash/contacts/", c.ID, "/restore")).Code)
+
+	assert.Eventually(t, func() bool {
+		var n int64
+		e.db.Model(&models.WebhookDelivery{}).Where("webhook_id = ? AND event_type = ?", wh.ID, "contact.restored").Count(&n)
+		return n == 1
+	}, 3*time.Second, 20*time.Millisecond)
+}
+
+func TestWebhookInputAcceptsContactRestored(t *testing.T) {
+	assert.Empty(t, middleware.ValidateStruct(models.WebhookInput{Name: "n", URL: "https://example.com", Events: []string{"contact.restored"}}))
 }
 
 func TestPurgeSingleContact(t *testing.T) {
