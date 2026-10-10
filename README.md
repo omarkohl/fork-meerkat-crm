@@ -27,6 +27,7 @@ You can find the detailed documentation here: [fbuchner.github.io/meerkat-crm/](
 ## Features
 - Contact management
     - add and search contacts
+    - deleted contacts go to a trash and can be restored
     - group contacts by circles (e.g. friends, family, work)
     - store relationships of contacts (e.g. spouses, children)
     - CardDAV server for two-way synchronization with your phone's contact list and CardDAV client to use with your own external server
@@ -42,8 +43,11 @@ You can find the detailed documentation here: [fbuchner.github.io/meerkat-crm/](
 - Integrations
     - Import data (from CSV, VCF and Monica), export data to CSV and VCF
     - Connect external calendars
+    - Subscribe to birthdays and reminders from your calendar app (ICS feed)
     - Webhooks to integrate with your own systems
     - SSO
+- Operations
+    - Built-in daily backups of the database and photos, downloadable by admins
 - Usability
     - Multiple languages (currently EN, DE, IT, ES, FR)
     - Light and dark mode

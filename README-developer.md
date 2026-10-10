@@ -17,9 +17,9 @@
 - Styling blends global CSS (App.css/index.css) with MUI theming; photo uploads land in backend static storage under `static/photos`.
 
 **Workflows**
-- Root `Makefile` runs both apps: `make install`, `make precommit` (gofmt on changed Go files, Prettier on changed frontend files, go vet, ESLint, tsc, unit tests), `make test-e2e`. `make help` lists all targets.
+- Root `Makefile` runs both apps: `make install`, `make precommit` (checks gofmt/Prettier formatting of changed files, `make format` fixes it; go vet, ESLint, tsc, unit tests; CI also runs golangci-lint, see [.github/workflows/lint.yml](.github/workflows/lint.yml), config in [backend/.golangci.yml](backend/.golangci.yml)), `make test-e2e`. `make help` lists all targets.
 - Source backend/my_environment.env to `.env` before running the server
-- Start the backend with `go run main.go` (or `make dev`) from backend/ after `go mod tidy`; migrations are embedded in the binary and auto-run on boot. Use `make migrate-up` or cmd/migrate for manual control during development.
+- Start the backend with `go run main.go` (or `make dev`, which is in `backend/Makefile`) from backend/ after `go mod tidy`; migrations are embedded in the binary and auto-run on boot. Use `make migrate-up` (from backend/) or cmd/migrate for manual control during development.
 - Frontend uses Yarn: `yarn install` then `yarn start` from frontend/; CRA proxies should point at the backend URL defined in `.env`.
 - Logs use zerolog via [backend/logger/logger.go](backend/logger/logger.go); set LOG_LEVEL and LOG_PRETTY for debugging, and rely on request IDs threaded through middleware.
 - Rate limiting is IP-based via [backend/middleware/rate_limiter.go](backend/middleware/rate_limiter.go); respect separate auth/general buckets when adding endpoints.
@@ -57,13 +57,14 @@
 - Fixtures and assertions speak CardDAV over HTTP rather than touching a backing store, so covering another server means adding a `davRemote` constructor, not new scenarios.
 
 **Data & Integrations**
-- SQLite lives at `SQLITE_DB_PATH` (default meerkat.db); migrations in [backend/database/migrations](backend/database/migrations) are embedded into the binary and auto-run on startup.
+- SQLite lives at `SQLITE_DB_PATH` (default meerkat.db) in WAL mode (`-wal`/`-shm` files next to it; local disk only, never copy it live: use the built-in backups, `BACKUP_*` variables, see [docs/deployment.md](docs/deployment.md#backups)); migrations in [backend/database/migrations](backend/database/migrations) are embedded into the binary and auto-run on startup.
 - JWT expiry, HTTP timeouts, trusted proxies, and Resend email settings are declared in [backend/config/config.go](backend/config/config.go) and loaded based on environment variables; use Config.Validate to catch misconfigurations.
 - File uploads stream through [backend/controllers/photo_controller.go](backend/controllers/photo_controller.go) and land in `static/photos`; served through protected routes to enforce auth.
 - API consumers expect consistent field casing (e.g., `Firstname` in responses vs. lower-case in queries); follow existing JSON tags in [backend/models/contact.go](backend/models/contact.go).
 - Deletions often clean up dependent entities manually (contacts remove reminders, notes, relationships, and activity links); mirror transaction patterns from [backend/controllers/contact_controller.go](backend/controllers/contact_controller.go).
 
 **Dependencies & Updates**
+- [.github/dependabot.yml](.github/dependabot.yml) opens weekly grouped update PRs (Go, npm, Actions, Docker, docs gems).
 - [.github/workflows/security.yml](.github/workflows/security.yml) runs `govulncheck` (reachable Go vulnerabilities) and `yarn audit --groups dependencies --level high` (production frontend deps) on push to main, on PRs, weekly and on demand. Both block. Build tooling such as `react-scripts` belongs in `devDependencies` so it is not audited as production code.
 
 - **Backend (Go modules)**

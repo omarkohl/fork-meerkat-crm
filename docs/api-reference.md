@@ -16,7 +16,7 @@ has_children: false
 
 Auth endpoints (`/login`, `/register`, `/logout`, `/password-reset/*`) are public. All other endpoints require authentication.
 
-Admin endpoints (`/admin/*`) additionally require the user to have the admin flag set.
+Admin endpoints (`/admin/*`) additionally require the user to have the admin flag set. API tokens are refused there, even for admins.
 
 Login sets an httpOnly JWT cookie. Subsequent requests must include it (i.e. send with `credentials: 'include'`). The cookie name and domain are configured via `COOKIE_DOMAIN` and `COOKIE_SECURE`.
 
@@ -26,7 +26,7 @@ Alternatively, API tokens can be used in the `Authorization` header:
 Authorization: Bearer meerkat_<token>
 ```
 
-API tokens are created and managed via the admin endpoints, the tokens always have normal user rights. The plaintext token is only returned once at creation time.
+API tokens are created and managed via the `/api-tokens` endpoints (see [API Tokens](#api-tokens)). Tokens always have normal user rights: they are refused on `/admin/*` endpoints. The plaintext token is only returned once at creation time.
 
 ## Error Responses
 
@@ -189,11 +189,11 @@ Deleting a contact moves it to the trash: the contact and its notes, reminders a
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/admin/api-tokens` | List all API tokens for the current user |
-| `POST` | `/admin/api-tokens` | Create an API token — returns the plaintext token once |
-| `DELETE` | `/admin/api-tokens/:id` | Revoke an API token |
+| `GET` | `/api-tokens` | List all API tokens for the current user |
+| `POST` | `/api-tokens` | Create an API token — returns the plaintext token once |
+| `DELETE` | `/api-tokens/:id` | Revoke an API token |
 
-`POST /admin/api-tokens` body:
+`POST /api-tokens` body:
 
 ```json
 { "name": "my token" }
@@ -233,6 +233,7 @@ Content:
 | `POST` | `/admin/backups` | Create a backup now (`201`, `{"name", "size", "created_at"}`) and prune to `BACKUP_RETENTION_COUNT` |
 | `GET` | `/admin/backups/:name` | Download a backup (`.tar.gz`, `Cache-Control: no-store`) |
 | `DELETE` | `/admin/backups/:name` | Delete a backup |
+| `POST` | `/admin/trigger-reminders` | Send due reminder emails for all users now |
 
 A backup contains the data of **all users** (every table, including password hashes) and all profile photos, so these endpoints are for admins only and are refused for API tokens. `:name` must be exactly a name returned by the list (`meerkat-backup-YYYYMMDD-HHMMSS.tar.gz`, optionally with a `-N` suffix); anything else answers `404`. See [Backups](deployment.md#backups).
 
