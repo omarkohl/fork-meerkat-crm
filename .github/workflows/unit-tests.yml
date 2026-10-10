@@ -74,12 +74,14 @@ jobs:
         run: |
           docker run -d --name radicale -p 5232:5232 \
             -v "$PWD/docker/radicale:/config:ro" \
-            tomsquest/docker-radicale:3.5.4.0
+            tomsquest/docker-radicale:3.8.3.0
           timeout 60 bash -c 'until curl -fs -u testuser:testpass http://127.0.0.1:5232/ >/dev/null; do sleep 1; done'
 
-      - name: Run contact sync tests against Radicale
+      # The whole package, not only TestContactSync*: the other sync tests (discovery,
+      # background start) also use the Radicale harness when the variable is set.
+      - name: Run service tests against Radicale
         working-directory: backend
-        run: go test ./services/ -run TestContactSync -v
+        run: go test ./services/ -v
         env:
           MEERKAT_CARDDAV_IT: '1'
 

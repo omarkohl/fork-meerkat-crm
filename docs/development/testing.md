@@ -23,11 +23,11 @@ The Unit Tests workflow prints the total coverage of the Go and Vitest suites in
 
 ### Migrations
 
-`TestMigrationsRoundTripOnSeededDatabase` applies all migrations, fills the main tables, rolls everything back, applies everything again and compares the schema (tables, columns, foreign keys, indexes) with the first run. Every new migration needs a working `down`, or this test fails. Add a row for a new table to `seedAllTables`.
+`TestMigrationsRoundTripStepByStepOnSeededDatabase` applies all migrations, fills the main tables, then rolls back one migration at a time (no table may lose rows, the schema of every version is recorded), checks the database is empty, and applies the migrations one at a time again, comparing each version's schema with the recorded one. `TestMigrationsUpKeepsRowsSeededAtOlderVersions` seeds databases at older versions and checks that the rows survive the migrations up to the newest. Every new migration needs a working `down`, or these tests fail. Add a statement for a new table to `seedStatements`. The one known exception is the down migration of 000008, which leaves three `contacts` columns behind (SQLite limitation); the test ignores them below version 8.
 
 ### CardDAV integration (Radicale)
 
-The contact sync tests also run against a real Radicale server when `MEERKAT_CARDDAV_IT=1` is set; CI does this in the `CardDAV sync (Radicale)` job. Locally: `docker compose -f docker-compose.carddav-test.yml up -d --wait radicale`, then `cd backend && MEERKAT_CARDDAV_IT=1 go test ./services/ -run TestContactSync -v`. The Radicale image tag is pinned in the compose file and in `unit-tests.yml`; change both together.
+The contact sync tests (and the other tests of `./services/` that use the same harness) also run against a real Radicale server when `MEERKAT_CARDDAV_IT=1` is set; CI does this in the `CardDAV sync (Radicale)` job. Locally: `docker compose -f docker-compose.carddav-test.yml up -d --wait radicale`, then `cd backend && MEERKAT_CARDDAV_IT=1 go test ./services/ -v`. The Radicale image tag is pinned in the compose file and in `unit-tests.yml`; change both together.
 
 ### Test Database
 

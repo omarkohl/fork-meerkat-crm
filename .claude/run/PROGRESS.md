@@ -13,6 +13,7 @@
 - 5: second-sprint/05-ics-last-fetched (PR #20)
 - 6: second-sprint/06-api-reference (PR #21)
 - 7: second-sprint/07-supply-chain (PR #22)
+- 8: second-sprint/08-test-infra (PR #23)
 
 ## Log
 
@@ -80,6 +81,13 @@
   New `TestMigrationsRoundTripOnSeededDatabase`: all up, seed 15 tables, all down (schema empty), all up, schema
   compared (columns, fks, indexes): it passed at once, so no down migration needed fixing. New CI job
   `CardDAV sync (Radicale)` runs `TestContactSync` with `MEERKAT_CARDDAV_IT=1`. Docs: `docs/development/testing.md`.
+  Review fixes: the migration test now steps one migration at a time (down with row-count check and schema
+  snapshot per version, then up comparing each version), plus a test that seeds at versions 12/20/23/24 and
+  migrates up keeping the rows. It found that the down of migration 8 leaves three `contacts` columns
+  (`etag`, `vcard_extra`, `vcard_uid`, documented SQLite limitation in that file); migrations are not edited and
+  a new one cannot fix a down, so the test ignores those columns below version 8 (see Questions). The Radicale job
+  runs all of `./services/` (not only `TestContactSync`), image `3.8.3.0`; `@vitest/coverage-v8` is `^3.2.4`
+  like vitest; coverage config moved above the localStorage comment; `coverage.out` and `coverage.html` ignored.
 
 ## Decisions
 
@@ -99,7 +107,7 @@
 
 ## For review
 
-- Step 8: Radicale runs via `docker run` after checkout, not as a `services:` container, because it needs `docker/radicale` mounted as config (service containers start before checkout). Image `tomsquest/docker-radicale:3.5.4.0` (also pinned in `docker-compose.carddav-test.yml`, was `latest`): the tag could not be checked against Docker Hub from here, and the job has never run. Fix the tag if the first CI run says it does not exist.
+- Step 8: Radicale runs via `docker run` after checkout, not as a `services:` container, because it needs `docker/radicale` mounted as config (service containers start before checkout). Image `tomsquest/docker-radicale:3.8.3.0` (also pinned in `docker-compose.carddav-test.yml`, was `latest`): the tag and the compatibility of `docker/radicale/config` with Radicale 3.8 could not be checked from here, and the job has never run. Fix the tag if the first CI run says it does not exist.
 - Step 8: the frontend coverage is low (17% of statements, only 9 test files; the UI is covered by Playwright). No threshold is enforced, numbers are informational.
 - Step 7: base image tags (`golang:1.26-alpine`, `alpine:3.22`, `nginx-unprivileged:1.30-alpine`) and the Trivy/docs/Docker workflows could not be tested here (no registry access, docker daemon unusable). The first PR run of `Docker build and scan` is the check: if a tag does not exist or Trivy finds fixable HIGH/CRITICAL issues in a base image, adjust the tag. Tags are minor-level, not digest-pinned (Dependabot keeps them current).
 - Step 7: the Trivy job is a required-looking check on every Docker-related PR and weekly; a new advisory in Alpine/nginx can turn it red without any code change.
@@ -111,5 +119,7 @@
 - Step 5: `IcsFeedSettings.test.tsx` and `e2e/ics-feed.spec.ts` were reformatted by Prettier (small diffs only).
 
 ## Questions
+
+- The down migration of 000008 leaves `contacts.etag`, `vcard_extra` and `vcard_uid` in place (it predates `DROP COLUMN`). Harmless, but a rollback below version 8 is not byte-identical to a fresh schema. Left as is; the migration test tolerates it.
 
 ## Blocked

@@ -2854,7 +2854,7 @@
     "@types/babel__core" "^7.20.5"
     react-refresh "^0.17.0"
 
-"@vitest/coverage-v8@3.2.7":
+"@vitest/coverage-v8@^3.2.4":
   version "3.2.7"
   resolved "https://registry.yarnpkg.com/@vitest/coverage-v8/-/coverage-v8-3.2.7.tgz#2e9ce1103445c237aaa420a7f0058125fe4a7854"
   integrity sha512-NEGWJS2XNu2PfRLQwOO3CTKj1tTETxNBdk454vDxVBhxJYhPaA/eS0nAI0c+1El1P7a60z8+i+ZrQoGESweGKg==
