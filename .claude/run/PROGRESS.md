@@ -2,7 +2,7 @@
 
 ## Next step
 
-5. Replace `nfnt/resize`.
+6. `golang-jwt` v4 to v5.
 
 ## Stack
 
@@ -10,7 +10,8 @@
 - 1: `first-sprint/01-sqlite-pragmas`, PR #4 (base `claude/workflow-clarification-kb7ca1`)
 - 2: `first-sprint/02-golangci-lint`, PR #5 (base `first-sprint/01-sqlite-pragmas`)
 - 3: `first-sprint/03-frontend-ci-gates`, PR #6 (base `first-sprint/02-golangci-lint`)
-- 4: `first-sprint/04-dependabot-govulncheck`, PR pending (base `first-sprint/03-frontend-ci-gates`)
+- 4: `first-sprint/04-dependabot-govulncheck`, PR #7 (base `first-sprint/03-frontend-ci-gates`)
+- 5: `first-sprint/05-replace-nfnt-resize`, PR pending (base `first-sprint/04-dependabot-govulncheck`)
 
 ## Log
 
@@ -43,8 +44,19 @@
   vuln.go.dev), CI is the first real run. `react-scripts` moved to devDependencies;
   `yarn audit --groups dependencies --level high` then reports 0 (it was 2 critical and
   22 high, all via react-scripts). `yarn.lock` unchanged, `--frozen-lockfile` passes.
+- Step 5 (replace nfnt/resize): characterisation tests first
+  (`controllers/photo_controller_test.go`, `carddav/photo_test.go`: photo 400x400 when
+  larger, unchanged when small, landscape/portrait cropped to the short side, thumbnail
+  48x48 JPEG data URL); they passed on nfnt, then again after the swap. Both call sites
+  use a small `resizeTo` helper over `draw.CatmullRom.Scale` (`draw.Src`); tests also check the centre pixel colour (±10); `go mod tidy` dropped
+  nfnt/resize. `golangci-lint` 0 issues, `go test ./...` green.
 
 ## Decisions
+
+- Step 5: `x/image/draw` has no Lanczos kernel, so CatmullRom (bicubic) is used; output
+  sizes are identical, pixels differ slightly. The helper is duplicated in `controllers`
+  and `carddav` (5 lines) rather than adding a shared package, since both already
+  duplicate the crop/save logic.
 
 - Step 4: both security jobs block. govulncheck is pinned `@v1.8.0` and run via `go run`
   (reports only reachable vulnerabilities; v1.1.4 failed locally with "requires newer Go

@@ -41,7 +41,7 @@ Read first: `.claude/AUTONOMOUS-RUNS.md`, `README-developer.md`, `IMPROVEMENTS.m
       and Prettier check (changed files) as CI jobs; add `gofmt` check.
 - [x] 4. **Dependabot and govulncheck (3.1, 3.3)**: npm, github-actions, docker,
       bundler ecosystems with grouped minor/patch; `govulncheck` and npm audit job.
-- [ ] 5. **Replace `nfnt/resize` (6.4)** with `golang.org/x/image/draw`; photo tests
+- [x] 5. **Replace `nfnt/resize` (6.4)** with `golang.org/x/image/draw`; photo tests
       prove output sizes unchanged.
 - [ ] 6. **`golang-jwt` v4 to v5 (6.2)**; auth tests cover the migration.
 - [ ] 7. **`gocron` v1 to v2 (6.3)**; scheduler tests still pass.

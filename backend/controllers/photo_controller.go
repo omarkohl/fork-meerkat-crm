@@ -22,7 +22,7 @@ import (
 	"github.com/gen2brain/heic"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/nfnt/resize"
+	"golang.org/x/image/draw"
 	"gorm.io/gorm"
 )
 
@@ -259,7 +259,7 @@ func processAndSavePhoto(file *multipart.FileHeader, uploadDir string) (string, 
 	bounds := img.Bounds()
 	photoImg := img
 	if bounds.Dx() > maxPhotoSize || bounds.Dy() > maxPhotoSize {
-		photoImg = resize.Resize(maxPhotoSize, maxPhotoSize, img, resize.Lanczos3)
+		photoImg = resizeTo(img, maxPhotoSize)
 	}
 	fullPhotoPath := filepath.Join(uploadDir, photoPath)
 	if err := saveImage(fullPhotoPath, photoImg); err != nil {
@@ -267,7 +267,7 @@ func processAndSavePhoto(file *multipart.FileHeader, uploadDir string) (string, 
 	}
 
 	// Create thumbnail and encode as base64 data URL
-	thumbnail := resize.Resize(48, 48, img, resize.Lanczos3)
+	thumbnail := resizeTo(img, 48)
 	var thumbnailBuf bytes.Buffer
 	if err := jpeg.Encode(&thumbnailBuf, thumbnail, &jpeg.Options{Quality: 85}); err != nil {
 		return "", "", err
@@ -342,4 +342,12 @@ func ProxyImage(c *gin.Context) {
 
 	// Return the image with appropriate content type
 	c.Data(http.StatusOK, contentType, body)
+}
+
+// resizeTo scales img to exactly size x size pixels. x/image/draw offers no
+// Lanczos kernel; CatmullRom is the closest high-quality (bicubic) choice.
+func resizeTo(img image.Image, size int) image.Image {
+	dst := image.NewRGBA(image.Rect(0, 0, size, size))
+	draw.CatmullRom.Scale(dst, dst.Bounds(), img, img.Bounds(), draw.Src, nil)
+	return dst
 }
