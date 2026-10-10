@@ -6,6 +6,7 @@ import (
 	"meerkat/logger"
 	"meerkat/middleware"
 	"meerkat/models"
+	"meerkat/search"
 	"meerkat/services"
 	"net/http"
 	"slices"
@@ -73,8 +74,22 @@ func CreateContact(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Contact created successfully", "contact": contact})
 }
 
-// filters a contacts query by a free-text term
-func applyContactSearch(query *gorm.DB, searchTerm string) *gorm.DB {
+// contactFTSMatch returns the FTS5 expression for a search term, or "" when the LIKE search
+// has to be used (no index, or nothing but punctuation was typed).
+func contactFTSMatch(db *gorm.DB, searchTerm string) string {
+	match, ok := search.MatchQuery(searchTerm)
+	if !ok || !search.Available(db, "contacts_fts") {
+		return ""
+	}
+	return match
+}
+
+// filters a contacts query by a free-text term: the FTS index (accent- and case-insensitive,
+// every word a prefix) when there is one, otherwise a LIKE search
+func applyContactSearch(query *gorm.DB, searchTerm, ftsMatch string) *gorm.DB {
+	if ftsMatch != "" {
+		return query.Joins("JOIN "+search.Hits("contacts_fts")+" AS hits ON hits.hit_id = contacts.id", ftsMatch)
+	}
 	like := "%" + searchTerm + "%"
 	return query.Where(
 		"firstname LIKE ? OR lastname LIKE ? OR nickname LIKE ? "+
@@ -157,7 +172,15 @@ func GetContacts(c *gin.Context) {
 	if includeArchived && c.Query("search") != "" {
 		query = query.Order("archived ASC")
 	}
-	if sortField == "random" {
+	searchTerm := c.Query("search")
+	ftsMatch := ""
+	if searchTerm != "" {
+		ftsMatch = contactFTSMatch(db, searchTerm)
+	}
+	// Best match first, unless the caller asked for an order
+	if ftsMatch != "" && c.Query("sort") == "" {
+		query = query.Order("hits.hit_rank").Order("contacts.id DESC")
+	} else if sortField == "random" {
 		query = query.Order("RANDOM()")
 	} else {
 		query = query.Order(sortField + " " + sortOrder)
@@ -168,8 +191,8 @@ func GetContacts(c *gin.Context) {
 	}
 
 	// Apply search filter using parameterization
-	if searchTerm := c.Query("search"); searchTerm != "" {
-		query = applyContactSearch(query, searchTerm)
+	if searchTerm != "" {
+		query = applyContactSearch(query, searchTerm, ftsMatch)
 	}
 
 	if circle := c.Query("circle"); circle != "" {
@@ -211,8 +234,8 @@ func GetContacts(c *gin.Context) {
 	}
 
 	// Apply the same search filters to the count query
-	if searchTerm := c.Query("search"); searchTerm != "" {
-		countQuery = applyContactSearch(countQuery, searchTerm)
+	if searchTerm != "" {
+		countQuery = applyContactSearch(countQuery, searchTerm, ftsMatch)
 	}
 
 	if circle := c.Query("circle"); circle != "" {
