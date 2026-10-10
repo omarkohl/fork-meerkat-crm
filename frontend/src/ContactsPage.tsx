@@ -26,6 +26,7 @@ import {
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import { ContactListSkeleton } from './components/LoadingSkeletons';
+import { thumbnailSrc } from './utils/thumbnail';
 
 export default function ContactsPage() {
   const { t } = useTranslation();
@@ -261,7 +262,7 @@ export default function ContactsPage() {
                 }}
               >
                 <Avatar
-                  src={contact.photo_thumbnail || undefined}
+                  src={thumbnailSrc(contact.photo_thumbnail)}
                   sx={{ width: 48, height: 48, mr: 1.5, bgcolor: 'primary.main' }}
                 >
                   {contact.firstname.charAt(0)}

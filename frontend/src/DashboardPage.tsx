@@ -12,7 +12,7 @@ import {
   Alert,
   IconButton,
   Tooltip,
-  Popover
+  Popover,
 } from '@mui/material';
 import CakeIcon from '@mui/icons-material/Cake';
 import ShuffleIcon from '@mui/icons-material/Shuffle';
@@ -28,6 +28,7 @@ import { Reminder, getUpcomingReminders, completeReminder, skipReminder } from '
 import { ContactListSkeleton } from './components/LoadingSkeletons';
 import { handleFetchError, handleError } from './utils/errorHandler';
 import { useDateFormat } from './DateFormatProvider';
+import { thumbnailSrc } from './utils/thumbnail';
 
 function DashboardPage() {
   const { t } = useTranslation();
@@ -51,7 +52,7 @@ function DashboardPage() {
       const [birthdayData, random, reminders] = await Promise.all([
         getUpcomingBirthdays(),
         getRandomContacts(),
-        getUpcomingReminders()
+        getUpcomingReminders(),
       ]);
 
       setBirthdays(birthdayData);
@@ -60,20 +61,20 @@ function DashboardPage() {
 
       // Build contact map from random contacts
       const newContactsMap: Record<number, Contact> = {};
-      random.forEach(c => { newContactsMap[c.ID] = c; });
+      random.forEach((c) => {
+        newContactsMap[c.ID] = c;
+      });
 
       // Fetch missing contacts for reminders (only load required fields)
-      const missingContactIds = reminders
-        .map(r => r.contact_id)
-        .filter(id => !newContactsMap[id]);
+      const missingContactIds = reminders.map((r) => r.contact_id).filter((id) => !newContactsMap[id]);
       const uniqueMissingIds = Array.from(new Set(missingContactIds));
 
       if (uniqueMissingIds.length > 0) {
         const minimalFields = ['ID', 'firstname', 'lastname', 'nickname'];
         const fetchedContacts = await Promise.all(
-          uniqueMissingIds.map(id => getContact(id, minimalFields).catch(() => null))
+          uniqueMissingIds.map((id) => getContact(id, minimalFields).catch(() => null)),
         );
-        fetchedContacts.forEach(c => {
+        fetchedContacts.forEach((c) => {
           if (c) newContactsMap[c.ID] = c;
         });
       }
@@ -123,7 +124,7 @@ function DashboardPage() {
   const isBirthdayToday = (birthday: string | undefined) => {
     if (!birthday) return false;
     // Birthday is either "YYYY-MM-DD" or "--MM-DD"; compare month and day to today
-    const parts = birthday.split('-').filter(p => p !== '');
+    const parts = birthday.split('-').filter((p) => p !== '');
     if (parts.length < 2) return false;
     const month = parseInt(parts[parts.length - 2], 10);
     const day = parseInt(parts[parts.length - 1], 10);
@@ -134,10 +135,10 @@ function DashboardPage() {
 
   const formatBirthday = (birthday: string | undefined) => {
     if (!birthday) return '';
-    
+
     // Use the date format provider's birthday formatter
     const formattedDate = formatBirthdayDate(birthday);
-    
+
     // Check if year is present to calculate age
     if (!birthday.startsWith('--')) {
       const parts = birthday.split('-');
@@ -152,7 +153,7 @@ function DashboardPage() {
         }
       }
     }
-    
+
     return formattedDate;
   };
 
@@ -161,18 +162,19 @@ function DashboardPage() {
     return `${contact.firstname} ${contact.lastname}`;
   };
 
-
   if (loading) {
     return (
       <Box sx={{ maxWidth: 1400, mx: 'auto', mt: 2, p: 2 }}>
         <Typography variant="h5" gutterBottom>
           {t('dashboard.title')}
         </Typography>
-        <Box sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
-          gap: 3
-        }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+            gap: 3,
+          }}
+        >
           <Box>
             <ContactListSkeleton count={5} />
           </Box>
@@ -201,11 +203,13 @@ function DashboardPage() {
         {t('dashboard.title')}
       </Typography>
 
-      <Box sx={{
-        display: 'grid',
-        gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
-        gap: 2
-      }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+          gap: 2,
+        }}
+      >
         {/* Column 1: Upcoming Birthdays */}
         <Box>
           <Box sx={{ mb: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -213,10 +217,7 @@ function DashboardPage() {
             <Typography variant="subtitle1" fontWeight={500}>
               {t('dashboard.upcomingBirthdays')}
             </Typography>
-            <IconButton
-              size="small"
-              onClick={(e) => setBirthdaysInfoAnchor(e.currentTarget)}
-            >
+            <IconButton size="small" onClick={(e) => setBirthdaysInfoAnchor(e.currentTarget)}>
               <InfoOutlinedIcon fontSize="small" />
             </IconButton>
           </Box>
@@ -245,55 +246,55 @@ function DashboardPage() {
                 const today = isBirthdayToday(birthday.birthday);
 
                 return (
-                <Card
-                  key={`${birthday.type}-${birthday.contact_id}-${index}`}
-                  component={Link}
-                  to={`/contacts/${birthday.contact_id}`}
-                  sx={{
-                    textDecoration: 'none',
-                    border: '1px solid',
-                    borderColor: today ? 'success.main' : 'divider',
-                    '&:hover': {
-                      boxShadow: 2,
-                      transform: 'translateY(-1px)',
-                      transition: 'all 0.2s'
-                    }
-                  }}
-                >
-                  <CardContent sx={{ py: 1.5 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <Avatar
-                        src={birthday.type === 'contact' ? birthday.photo_thumbnail : undefined}
-                        sx={{ bgcolor: 'primary.main', width: 40, height: 40 }}
-                      >
-                        {birthday.name.charAt(0)}
-                      </Avatar>
-                      <Box sx={{ flexGrow: 1 }}>
-                        <Typography variant="body2" fontWeight={500}>
-                          {birthday.name}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {formatBirthday(birthday.birthday)}
-                        </Typography>
-                      </Box>
-                      {birthday.type === 'relationship' && birthday.relationship_type && (
-                        <Box sx={{ textAlign: 'right' }}>
-                          <Chip
-                            label={birthday.relationship_type}
-                            size="small"
-                            variant="outlined"
-                            sx={{ height: 20, fontSize: '0.7rem' }}
-                          />
-                          {birthday.associated_contact_name && (
-                            <Typography variant="caption" color="text.secondary" display="block">
-                              {t('relationships.ofContact')} {birthday.associated_contact_name}
-                            </Typography>
-                          )}
+                  <Card
+                    key={`${birthday.type}-${birthday.contact_id}-${index}`}
+                    component={Link}
+                    to={`/contacts/${birthday.contact_id}`}
+                    sx={{
+                      textDecoration: 'none',
+                      border: '1px solid',
+                      borderColor: today ? 'success.main' : 'divider',
+                      '&:hover': {
+                        boxShadow: 2,
+                        transform: 'translateY(-1px)',
+                        transition: 'all 0.2s',
+                      },
+                    }}
+                  >
+                    <CardContent sx={{ py: 1.5 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Avatar
+                          src={birthday.type === 'contact' ? thumbnailSrc(birthday.photo_thumbnail) : undefined}
+                          sx={{ bgcolor: 'primary.main', width: 40, height: 40 }}
+                        >
+                          {birthday.name.charAt(0)}
+                        </Avatar>
+                        <Box sx={{ flexGrow: 1 }}>
+                          <Typography variant="body2" fontWeight={500}>
+                            {birthday.name}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {formatBirthday(birthday.birthday)}
+                          </Typography>
                         </Box>
-                      )}
-                    </Box>
-                  </CardContent>
-                </Card>
+                        {birthday.type === 'relationship' && birthday.relationship_type && (
+                          <Box sx={{ textAlign: 'right' }}>
+                            <Chip
+                              label={birthday.relationship_type}
+                              size="small"
+                              variant="outlined"
+                              sx={{ height: 20, fontSize: '0.7rem' }}
+                            />
+                            {birthday.associated_contact_name && (
+                              <Typography variant="caption" color="text.secondary" display="block">
+                                {t('relationships.ofContact')} {birthday.associated_contact_name}
+                              </Typography>
+                            )}
+                          </Box>
+                        )}
+                      </Box>
+                    </CardContent>
+                  </Card>
                 );
               })}
             </Stack>
@@ -307,10 +308,7 @@ function DashboardPage() {
             <Typography variant="subtitle1" fontWeight={500}>
               {t('dashboard.upcomingReminders')}
             </Typography>
-            <IconButton
-              size="small"
-              onClick={(e) => setRemindersInfoAnchor(e.currentTarget)}
-            >
+            <IconButton size="small" onClick={(e) => setRemindersInfoAnchor(e.currentTarget)}>
               <InfoOutlinedIcon fontSize="small" />
             </IconButton>
           </Box>
@@ -349,8 +347,8 @@ function DashboardPage() {
                       '&:hover': {
                         boxShadow: 2,
                         transform: 'translateY(-1px)',
-                        transition: 'all 0.2s'
-                      }
+                        transition: 'all 0.2s',
+                      },
                     }}
                     onClick={() => navigate(`/contacts/${reminder.contact_id}`)}
                   >
@@ -448,10 +446,7 @@ function DashboardPage() {
             <Typography variant="subtitle1" fontWeight={500}>
               {t('dashboard.randomContacts')}
             </Typography>
-            <IconButton
-              size="small"
-              onClick={(e) => setStayInTouchInfoAnchor(e.currentTarget)}
-            >
+            <IconButton size="small" onClick={(e) => setStayInTouchInfoAnchor(e.currentTarget)}>
               <InfoOutlinedIcon fontSize="small" />
             </IconButton>
           </Box>
@@ -486,14 +481,14 @@ function DashboardPage() {
                     '&:hover': {
                       boxShadow: 2,
                       transform: 'translateY(-1px)',
-                      transition: 'all 0.2s'
-                    }
+                      transition: 'all 0.2s',
+                    },
                   }}
                 >
                   <CardContent sx={{ py: 1.5 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                       <Avatar
-                        src={contact.photo_thumbnail || undefined}
+                        src={thumbnailSrc(contact.photo_thumbnail)}
                         sx={{ bgcolor: 'secondary.main', width: 40, height: 40 }}
                       >
                         {contact.firstname.charAt(0)}

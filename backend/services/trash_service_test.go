@@ -169,7 +169,7 @@ func TestPurgeRemovesContactDependantsAndPhotos(t *testing.T) {
 	f := newTrashFixture(t, db, a.ID, "Alice")
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "p.jpg"), []byte("x"), 0o600))
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "t.jpg"), []byte("x"), 0o600))
-	require.NoError(t, db.Model(&f.contact).Updates(map[string]any{"photo": "p.jpg", "photo_thumbnail": "t.jpg"}).Error)
+	require.NoError(t, db.Model(&f.contact).Updates(map[string]any{"photo": "p.jpg", "photo_thumbnail_file": "t.jpg"}).Error)
 	// Another contact's relationship that points at the purged contact.
 	other := models.Contact{UserID: a.ID, Firstname: "Other"}
 	require.NoError(t, db.Create(&other).Error)

@@ -16,6 +16,7 @@ import (
 	"meerkat/logger"
 	"meerkat/models"
 	"meerkat/photofile"
+	"meerkat/services"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -44,8 +45,16 @@ func GetProfilePicture(c *gin.Context, cfg *config.Config) {
 		return
 	}
 
-	// Find the contact in the database
-	if err := db.Where("user_id = ?", userID).First(&contact, contactID).Error; err != nil {
+	// Check if thumbnail is requested via query parameter
+	wantsThumbnail := c.Query("thumbnail") == "true"
+
+	// The trash lists avatars, so a thumbnail is also served for the user's own trashed
+	// contacts; the full photo stays reserved for live ones.
+	lookup := db
+	if wantsThumbnail {
+		lookup = db.Unscoped()
+	}
+	if err := lookup.Where("user_id = ?", userID).First(&contact, contactID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			apperrors.AbortWithError(c, apperrors.ErrNotFound("Contact"))
 			return
@@ -54,37 +63,8 @@ func GetProfilePicture(c *gin.Context, cfg *config.Config) {
 		return
 	}
 
-	// Check if thumbnail is requested via query parameter
-	wantsThumbnail := c.Query("thumbnail") == "true"
-
 	if wantsThumbnail {
-		// Serve thumbnail from database (base64 data URL)
-		if contact.PhotoThumbnail == "" {
-			apperrors.AbortWithError(c, apperrors.ErrNotFound("Thumbnail"))
-			return
-		}
-
-		// Parse and decode base64 data URL
-		// Format: data:image/jpeg;base64,<data>
-		if !strings.HasPrefix(contact.PhotoThumbnail, "data:") {
-			// Legacy file-based thumbnail - no longer supported
-			apperrors.AbortWithError(c, apperrors.ErrNotFound("Thumbnail"))
-			return
-		}
-
-		parts := strings.SplitN(contact.PhotoThumbnail, ",", 2)
-		if len(parts) != 2 {
-			apperrors.AbortWithError(c, apperrors.ErrInternal("Invalid thumbnail format"))
-			return
-		}
-
-		imageData, err := base64.StdEncoding.DecodeString(parts[1])
-		if err != nil {
-			apperrors.AbortWithError(c, apperrors.ErrInternal("Failed to decode thumbnail").WithError(err))
-			return
-		}
-
-		c.Data(http.StatusOK, "image/jpeg", imageData)
+		serveThumbnail(c, cfg, contact)
 		return
 	}
 
@@ -109,6 +89,59 @@ func GetProfilePicture(c *gin.Context, cfg *config.Config) {
 	}
 
 	c.File(filePath)
+}
+
+// serveThumbnail sends the thumbnail file with an ETag and a long private cache: the URL
+// carries the file's unique name (see models.ThumbnailURL), so a new picture is a new URL.
+// A contact whose thumbnail was not exported yet still gets the legacy database copy.
+func serveThumbnail(c *gin.Context, cfg *config.Config, contact models.Contact) {
+	name := contact.PhotoThumbnailFile
+	if name == "" {
+		serveLegacyThumbnail(c, contact.LegacyThumbnail)
+		return
+	}
+	if strings.Contains(name, "..") || filepath.IsAbs(name) || strings.ContainsAny(name, `/\`) {
+		apperrors.AbortWithError(c, apperrors.ErrValidation("Invalid thumbnail path"))
+		return
+	}
+	filePath := filepath.Join(cfg.ProfilePhotoDir, name)
+	file, err := os.Open(filePath) //nolint:gosec // name checked above, directory from config
+	if err != nil {
+		apperrors.AbortWithError(c, apperrors.ErrNotFound("Thumbnail"))
+		return
+	}
+	defer file.Close()
+	info, err := file.Stat()
+	if err != nil || !info.Mode().IsRegular() {
+		apperrors.AbortWithError(c, apperrors.ErrNotFound("Thumbnail"))
+		return
+	}
+	// The name is unique per picture, size and mtime guard against a file replaced in place.
+	etag := fmt.Sprintf(`"%s-%x-%x"`, strings.TrimSuffix(name, ".jpg"), info.Size(), info.ModTime().UnixNano())
+	c.Header("ETag", etag)
+	c.Header("Cache-Control", "private, max-age=31536000, immutable")
+	c.Header("Content-Type", "image/jpeg")
+	http.ServeContent(c.Writer, c.Request, "", info.ModTime(), file)
+}
+
+func serveLegacyThumbnail(c *gin.Context, legacy string) {
+	// Format: data:image/jpeg;base64,<data>
+	if !strings.HasPrefix(legacy, "data:") {
+		apperrors.AbortWithError(c, apperrors.ErrNotFound("Thumbnail"))
+		return
+	}
+	parts := strings.SplitN(legacy, ",", 2)
+	if len(parts) != 2 {
+		apperrors.AbortWithError(c, apperrors.ErrInternal("Invalid thumbnail format"))
+		return
+	}
+	imageData, err := base64.StdEncoding.DecodeString(parts[1])
+	if err != nil {
+		apperrors.AbortWithError(c, apperrors.ErrInternal("Failed to decode thumbnail").WithError(err))
+		return
+	}
+	c.Header("Cache-Control", "private, no-cache")
+	c.Data(http.StatusOK, "image/jpeg", imageData)
 }
 
 func AddPhotoToContact(c *gin.Context, cfg *config.Config) {
@@ -168,20 +201,21 @@ func AddPhotoToContact(c *gin.Context, cfg *config.Config) {
 		}
 		oldPhoto := contact.Photo
 		contact.Photo = photoPath
-		contact.PhotoThumbnail = thumbnailPath
+		oldThumbnail := contact.PhotoThumbnailFile
+		contact.PhotoThumbnailFile = thumbnailPath
+		contact.LegacyThumbnail = "" // the old picture's copy must not outlive it
 
 		// Save the updated contact
 		if err := db.Save(&contact).Error; err != nil {
 			// Clean up newly saved file since DB update failed
 			os.Remove(filepath.Join(cfg.ProfilePhotoDir, photoPath))
+			os.Remove(filepath.Join(cfg.ProfilePhotoDir, thumbnailPath))
 			apperrors.AbortWithError(c, apperrors.ErrDatabase("update").WithError(err))
 			return
 		}
 
 		// Delete old photo file after db update
-		if oldPhoto != "" {
-			os.Remove(filepath.Join(cfg.ProfilePhotoDir, oldPhoto))
-		}
+		services.RemoveContactPhotoFiles(cfg.ProfilePhotoDir, models.Contact{Photo: oldPhoto, PhotoThumbnailFile: oldThumbnail})
 
 		c.JSON(http.StatusOK, contact)
 		return
@@ -201,7 +235,7 @@ var errInvalidPhoto = errors.New("invalid photo")
 
 // processAndSavePhoto processes an uploaded photo and returns:
 // - photoPath: filename of the saved full-size photo
-// - thumbnailBase64: base64 data URL of the thumbnail (stored in DB)
+// - thumbnailPath: filename of the saved 48px thumbnail
 func processAndSavePhoto(file *multipart.FileHeader, uploadDir string) (string, string, error) {
 	// Open the uploaded file
 	src, err := file.Open()
@@ -293,20 +327,18 @@ func processAndSavePhoto(file *multipart.FileHeader, uploadDir string) (string, 
 	if bounds.Dx() > maxPhotoSize || bounds.Dy() > maxPhotoSize {
 		photoImg = resizeTo(img, maxPhotoSize)
 	}
-	// Create thumbnail and encode as base64 data URL
-	thumbnail := resizeTo(img, 48)
-	var thumbnailBuf bytes.Buffer
-	if err := jpeg.Encode(&thumbnailBuf, thumbnail, &jpeg.Options{Quality: 85}); err != nil {
-		return "", "", err
-	}
-	thumbnailBase64 := "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(thumbnailBuf.Bytes())
+	thumbnailPath := baseFilename + "_thumb.jpg"
 
 	fullPhotoPath := filepath.Join(uploadDir, photoPath)
 	if err := photofile.SaveJPEG(fullPhotoPath, photoImg); err != nil {
 		return "", "", err
 	}
+	if err := photofile.SaveJPEG(filepath.Join(uploadDir, thumbnailPath), resizeTo(img, 48)); err != nil {
+		os.Remove(fullPhotoPath)
+		return "", "", err
+	}
 
-	return photoPath, thumbnailBase64, nil
+	return photoPath, thumbnailPath, nil
 }
 
 // cropToSquare crops an image to a centered square

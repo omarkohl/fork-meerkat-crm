@@ -23,7 +23,7 @@ func GetUpcomingBirthdays(db *gorm.DB, userID uint, now time.Time) ([]models.Bir
 	// Birthday format is now YYYY-MM-DD or --MM-DD (ISO 8601)
 	// Month is at position LENGTH-4 (2 chars), Day is at position LENGTH-1 (2 chars)
 	var contacts []models.Contact
-	contactQuery := db.Model(&models.Contact{}).
+	contactQuery := db.Model(&models.Contact{}).Omit("photo_thumbnail").
 		Where("user_id = ?", userID).
 		Where("archived = ?", false).
 		Where("birthday IS NOT NULL AND birthday != ''").
@@ -50,7 +50,7 @@ func GetUpcomingBirthdays(db *gorm.DB, userID uint, now time.Time) ([]models.Bir
 			Type:           "contact",
 			Name:           name,
 			Birthday:       contact.Birthday,
-			PhotoThumbnail: contact.PhotoThumbnail,
+			PhotoThumbnail: models.ThumbnailURL(contact.ID, contact.PhotoThumbnailFile),
 			ContactID:      contact.ID,
 		})
 	}
@@ -83,7 +83,7 @@ func GetUpcomingBirthdays(db *gorm.DB, userID uint, now time.Time) ([]models.Bir
 	parentContacts := make(map[uint]models.Contact)
 	if len(contactIDs) > 0 {
 		var parentContactList []models.Contact
-		if err := db.Where("id IN ?", contactIDs).Find(&parentContactList).Error; err != nil {
+		if err := db.Omit("photo_thumbnail").Where("id IN ?", contactIDs).Find(&parentContactList).Error; err != nil {
 			return nil, fmt.Errorf("failed to retrieve parent contacts: %w", err)
 		}
 		for _, pc := range parentContactList {
@@ -106,7 +106,7 @@ func GetUpcomingBirthdays(db *gorm.DB, userID uint, now time.Time) ([]models.Bir
 			Type:                  "relationship",
 			Name:                  rel.Name,
 			Birthday:              rel.Birthday,
-			PhotoThumbnail:        parentContact.PhotoThumbnail,
+			PhotoThumbnail:        models.ThumbnailURL(rel.ContactID, parentContact.PhotoThumbnailFile),
 			ContactID:             rel.ContactID,
 			RelationshipType:      rel.Type,
 			AssociatedContactName: parentName,

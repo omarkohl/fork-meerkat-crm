@@ -105,8 +105,10 @@ Every request and response carries an `X-Request-ID` header created by the middl
 | `GET` | `/contacts/random` | Get five random contacts |
 | `GET` | `/contacts/birthdays` | Get upcoming birthdays |
 | `POST` | `/contacts/:id/profile_picture` | Upload a profile picture (multipart) |
-| `GET` | `/contacts/:id/profile_picture` | Get a contact's profile picture |
+| `GET` | `/contacts/:id/profile_picture` | Get a contact's profile picture. With `?thumbnail=true`: the 48px thumbnail (JPEG) with an `ETag`, `Cache-Control: private, max-age=31536000, immutable` and `304` support |
 | `GET` | `/proxy/image` | Proxy an external image URL for upload preview |
+
+The `photo_thumbnail` field of contact lists, the trash, birthdays and the graph is the URL of that thumbnail (`/api/v1/contacts/:id/profile_picture?thumbnail=true&v=<name>`, empty when the contact has none), not the image itself; `v` changes whenever the picture does, so browsers can cache it for good. It needs the same login as the API.
 
 ### Trash
 
