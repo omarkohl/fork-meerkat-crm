@@ -207,7 +207,9 @@ func FindOrProvisionUser(db *gorm.DB, claims *OIDCClaims, cfg *config.Config) (*
 	base := username
 	for i := 1; i <= 100; i++ {
 		var count int64
-		db.Model(&models.User{}).Where("username = ?", username).Count(&count)
+		if err := db.Unscoped().Model(&models.User{}).Where("username = ?", username).Count(&count).Error; err != nil {
+			return nil, fmt.Errorf("database error checking username: %w", err)
+		}
 		if count == 0 {
 			break
 		}

@@ -21,18 +21,25 @@ func newPrivateBlockingDialContext(errUnreachable, errPrivateAddress error) func
 		if err != nil {
 			return nil, fmt.Errorf("%w: could not resolve host", errUnreachable)
 		}
-		var safeIP net.IP
+		var safeIPs []net.IP
 		for _, ip := range ips {
 			if !(ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified()) {
-				safeIP = ip
-				break
+				safeIPs = append(safeIPs, ip)
 			}
 		}
-		if safeIP == nil {
+		if len(safeIPs) == 0 {
 			return nil, errPrivateAddress
 		}
 		dialer := &net.Dialer{Timeout: 10 * time.Second, KeepAlive: 10 * time.Second}
-		return dialer.DialContext(ctx, network, net.JoinHostPort(safeIP.String(), port))
+		var lastErr error
+		for _, ip := range safeIPs {
+			conn, err := dialer.DialContext(ctx, network, net.JoinHostPort(ip.String(), port))
+			if err == nil {
+				return conn, nil
+			}
+			lastErr = err
+		}
+		return nil, lastErr
 	}
 }
 

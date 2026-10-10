@@ -493,6 +493,11 @@ func SaveContactPhoto(photoData []byte, mediaType string, photoDir string) (stri
 // decodePhoto decodes untrusted image bytes (JPEG, PNG, GIF, WebP, HEIC), using the
 // media type as a hint and falling back to sniffing. It writes nothing.
 func decodePhoto(photoData []byte, mediaType string) (image.Image, error) {
+	// Decoders allocate from the dimensions in the header: refuse absurd ones first.
+	if err := photofile.CheckDimensions(photoData); err != nil {
+		return nil, err
+	}
+
 	// Detect content type if not provided
 	if mediaType == "" {
 		mediaType = http.DetectContentType(photoData)

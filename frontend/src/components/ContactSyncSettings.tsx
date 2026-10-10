@@ -43,6 +43,7 @@ import {
   CardDAVDirection,
   DiscoveredAddressBook,
 } from '../api/carddav';
+import { ApiError } from '../api/client';
 
 type DialogStep = 'server' | 'addressBook';
 
@@ -86,7 +87,7 @@ export default function ContactSyncSettings() {
         if (!quiet) setLoading(false);
       }
     },
-    [t]
+    [t],
   );
 
   useEffect(() => {
@@ -112,14 +113,10 @@ export default function ContactSyncSettings() {
         const stats = connection.last_sync_stats;
         setSuccess(
           t('settings.contactSync.syncSuccess', {
-            pulled: stats
-              ? stats.pulled_created + stats.pulled_updated + stats.pulled_deleted
-              : 0,
-            pushed: stats
-              ? stats.pushed_created + stats.pushed_updated + stats.pushed_deleted
-              : 0,
+            pulled: stats ? stats.pulled_created + stats.pulled_updated + stats.pulled_deleted : 0,
+            pushed: stats ? stats.pushed_created + stats.pushed_updated + stats.pushed_deleted : 0,
             conflicts: stats?.conflicts ?? 0,
-          })
+          }),
         );
       }
     }
@@ -159,7 +156,7 @@ export default function ContactSyncSettings() {
         password,
       });
       setBooks(found);
-      if (!found.some(book => book.path === selectedPath)) {
+      if (!found.some((book) => book.path === selectedPath)) {
         setSelectedPath(found[0]?.path || '');
       }
       setStep('addressBook');
@@ -174,7 +171,7 @@ export default function ContactSyncSettings() {
     setSaving(true);
     setDialogError('');
     setSuccess('');
-    const selectedBook = books.find(book => book.path === selectedPath);
+    const selectedBook = books.find((book) => book.path === selectedPath);
     try {
       const saved = await saveCardDAVConnection({
         base_url: baseUrl.trim(),
@@ -191,7 +188,11 @@ export default function ContactSyncSettings() {
       // Trigger the first sync right away so the user gets feedback.
       await handleSync();
     } catch (err) {
-      setDialogError(err instanceof Error ? err.message : t('settings.contactSync.saveError'));
+      if (err instanceof ApiError && err.details?.field === 'password') {
+        setDialogError(t('settings.contactSync.passwordRequiredForNewServer'));
+      } else {
+        setDialogError(err instanceof Error ? err.message : t('settings.contactSync.saveError'));
+      }
     } finally {
       setSaving(false);
     }
@@ -279,8 +280,16 @@ export default function ContactSyncSettings() {
             <Typography variant="body2" color="text.secondary">
               {t('settings.contactSync.description')}
             </Typography>
-            {error && <Alert severity="error" sx={{ py: 0 }} onClose={() => setError('')}>{error}</Alert>}
-            {success && <Alert severity="success" sx={{ py: 0 }} onClose={() => setSuccess('')}>{success}</Alert>}
+            {error && (
+              <Alert severity="error" sx={{ py: 0 }} onClose={() => setError('')}>
+                {error}
+              </Alert>
+            )}
+            {success && (
+              <Alert severity="success" sx={{ py: 0 }} onClose={() => setSuccess('')}>
+                {success}
+              </Alert>
+            )}
 
             {loading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
@@ -306,9 +315,7 @@ export default function ContactSyncSettings() {
                       {connection.address_book_name || connection.address_book_path}
                     </Typography>
                     <Chip size="small" variant="outlined" label={directionLabel(connection.direction)} />
-                    {!connection.sync_enabled && (
-                      <Chip size="small" label={t('settings.contactSync.disabled')} />
-                    )}
+                    {!connection.sync_enabled && <Chip size="small" label={t('settings.contactSync.disabled')} />}
                     {syncRunning ? (
                       <Chip
                         size="small"
@@ -332,11 +339,7 @@ export default function ContactSyncSettings() {
                         onClick={handleSync}
                         disabled={syncing || syncRunning}
                         startIcon={
-                          syncing || syncRunning ? (
-                            <CircularProgress size={16} />
-                          ) : (
-                            <SyncIcon fontSize="small" />
-                          )
+                          syncing || syncRunning ? <CircularProgress size={16} /> : <SyncIcon fontSize="small" />
                         }
                       >
                         {t('settings.contactSync.syncNow')}
@@ -363,9 +366,7 @@ export default function ContactSyncSettings() {
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>
-          {connection
-            ? t('settings.contactSync.editTitle')
-            : t('settings.contactSync.connectTitle')}
+          {connection ? t('settings.contactSync.editTitle') : t('settings.contactSync.connectTitle')}
         </DialogTitle>
         <DialogContent>
           {step === 'server' ? (
@@ -373,11 +374,15 @@ export default function ContactSyncSettings() {
               <Alert severity="info" sx={{ py: 0.5 }}>
                 {t('settings.contactSync.dialogInfo')}
               </Alert>
-              {dialogError && <Alert severity="error" sx={{ py: 0 }}>{dialogError}</Alert>}
+              {dialogError && (
+                <Alert severity="error" sx={{ py: 0 }}>
+                  {dialogError}
+                </Alert>
+              )}
               <TextField
                 label={t('settings.contactSync.serverUrl')}
                 value={baseUrl}
-                onChange={e => setBaseUrl(e.target.value)}
+                onChange={(e) => setBaseUrl(e.target.value)}
                 fullWidth
                 required
                 size="small"
@@ -388,7 +393,7 @@ export default function ContactSyncSettings() {
                 <TextField
                   label={t('settings.contactSync.username')}
                   value={username}
-                  onChange={e => setUsername(e.target.value)}
+                  onChange={(e) => setUsername(e.target.value)}
                   fullWidth
                   size="small"
                 />
@@ -396,7 +401,7 @@ export default function ContactSyncSettings() {
                   label={t('settings.contactSync.password')}
                   type="password"
                   value={clearPassword ? '' : password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={(e) => setPassword(e.target.value)}
                   fullWidth
                   size="small"
                   disabled={clearPassword}
@@ -414,25 +419,25 @@ export default function ContactSyncSettings() {
                     <Checkbox
                       size="small"
                       checked={clearPassword}
-                      onChange={e => setClearPassword(e.target.checked)}
+                      onChange={(e) => setClearPassword(e.target.checked)}
                     />
                   }
-                  label={
-                    <Typography variant="body2">
-                      {t('settings.contactSync.clearPassword')}
-                    </Typography>
-                  }
+                  label={<Typography variant="body2">{t('settings.contactSync.clearPassword')}</Typography>}
                 />
               )}
             </Stack>
           ) : (
             <Stack spacing={2} sx={{ mt: 1 }}>
-              {dialogError && <Alert severity="error" sx={{ py: 0 }}>{dialogError}</Alert>}
+              {dialogError && (
+                <Alert severity="error" sx={{ py: 0 }}>
+                  {dialogError}
+                </Alert>
+              )}
               <Typography variant="body2" color="text.secondary">
                 {t('settings.contactSync.chooseAddressBook')}
               </Typography>
-              <RadioGroup value={selectedPath} onChange={e => setSelectedPath(e.target.value)}>
-                {books.map(book => (
+              <RadioGroup value={selectedPath} onChange={(e) => setSelectedPath(e.target.value)}>
+                {books.map((book) => (
                   <FormControlLabel
                     key={book.path}
                     value={book.path}
@@ -451,14 +456,12 @@ export default function ContactSyncSettings() {
                 ))}
               </RadioGroup>
               <FormControl size="small" fullWidth>
-                <InputLabel id="carddav-direction-label">
-                  {t('settings.contactSync.directionLabel')}
-                </InputLabel>
+                <InputLabel id="carddav-direction-label">{t('settings.contactSync.directionLabel')}</InputLabel>
                 <Select
                   labelId="carddav-direction-label"
                   label={t('settings.contactSync.directionLabel')}
                   value={direction}
-                  onChange={e => setDirection(e.target.value as CardDAVDirection)}
+                  onChange={(e) => setDirection(e.target.value as CardDAVDirection)}
                 >
                   <MenuItem value="two_way">{t('settings.contactSync.direction.twoWay')}</MenuItem>
                   <MenuItem value="pull">{t('settings.contactSync.direction.pull')}</MenuItem>
@@ -471,9 +474,7 @@ export default function ContactSyncSettings() {
                 </Alert>
               )}
               <FormControlLabel
-                control={
-                  <Switch checked={syncEnabled} onChange={e => setSyncEnabled(e.target.checked)} />
-                }
+                control={<Switch checked={syncEnabled} onChange={(e) => setSyncEnabled(e.target.checked)} />}
                 label={t('settings.contactSync.autoSync')}
               />
             </Stack>
@@ -481,9 +482,7 @@ export default function ContactSyncSettings() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogOpen(false)}>{t('common.cancel')}</Button>
-          {step === 'addressBook' && (
-            <Button onClick={() => setStep('server')}>{t('common.back')}</Button>
-          )}
+          {step === 'addressBook' && <Button onClick={() => setStep('server')}>{t('common.back')}</Button>}
           {step === 'server' ? (
             <Button
               variant="contained"

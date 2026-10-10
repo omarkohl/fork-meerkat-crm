@@ -3,14 +3,24 @@ package controllers
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/binary"
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"hash/crc32"
 	"image"
 	"image/color"
 	"image/jpeg"
 	"image/png"
+	"meerkat/config"
+	"meerkat/models"
 	"mime/multipart"
+	"net/http"
+	"net/http/httptest"
 	"net/textproto"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -150,4 +160,136 @@ func TestProcessAndSavePhotoUsesPrivateModes(t *testing.T) {
 	if di.Mode().Perm()&0o007 != 0 || fi.Mode().Perm()&0o137 != 0 {
 		t.Errorf("dir %v, file %v: others must have no access, file must not be executable or group-writable", di.Mode().Perm(), fi.Mode().Perm())
 	}
+}
+
+func photoRequest(t *testing.T, router *gin.Engine, contactID uint, filename string, content []byte) *httptest.ResponseRecorder {
+	t.Helper()
+	var body bytes.Buffer
+	mw := multipart.NewWriter(&body)
+	part, err := mw.CreateFormFile("photo", filename)
+	require.NoError(t, err)
+	_, _ = part.Write(content)
+	require.NoError(t, mw.Close())
+	req := httptest.NewRequest("POST", "/contacts/"+strconv.Itoa(int(contactID))+"/photo", &body)
+	req.Header.Set("Content-Type", mw.FormDataContentType())
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	return w
+}
+
+func TestAddPhotoValidation(t *testing.T) {
+	db, router := setupRouter()
+	cfg := &config.Config{ProfilePhotoDir: t.TempDir()}
+	router.POST("/contacts/:id/photo", func(c *gin.Context) { AddPhotoToContact(c, cfg) })
+	var me, other models.User
+	require.NoError(t, db.First(&me).Error)
+	other = models.User{Username: "other", Email: "o@example.com", Password: "x"}
+	require.NoError(t, db.Create(&other).Error)
+	mine := models.Contact{UserID: me.ID, Firstname: "A"}
+	theirs := models.Contact{UserID: other.ID, Firstname: "B"}
+	require.NoError(t, db.Create(&mine).Error)
+	require.NoError(t, db.Create(&theirs).Error)
+
+	var good bytes.Buffer
+	require.NoError(t, png.Encode(&good, image.NewRGBA(image.Rect(0, 0, 10, 10))))
+
+	// Input the user can fix is a client error, not a server error.
+	for name, content := range map[string][]byte{
+		"text file":       []byte("this is not an image at all"),
+		"empty file":      {},
+		"html with image": []byte("<html><script>alert(1)</script></html>"),
+		"truncated png":   good.Bytes()[:40],
+	} {
+		w := photoRequest(t, router, mine.ID, "p.png", content)
+		assert.Equal(t, http.StatusBadRequest, w.Code, name+": "+w.Body.String())
+	}
+
+	// A header that claims a gigantic image is refused before anything is allocated.
+	bomb := append([]byte{}, good.Bytes()...)
+	binary.BigEndian.PutUint32(bomb[16:], 30000)
+	binary.BigEndian.PutUint32(bomb[20:], 30000)
+	binary.BigEndian.PutUint32(bomb[29:], crc32.ChecksumIEEE(bomb[12:29]))
+	w := photoRequest(t, router, mine.ID, "p.png", bomb)
+	assert.Equal(t, http.StatusBadRequest, w.Code, w.Body.String())
+
+	// Other users' contacts are not found, and nothing was written for rejected uploads.
+	w = photoRequest(t, router, theirs.ID, "p.png", good.Bytes())
+	assert.Equal(t, http.StatusNotFound, w.Code)
+	entries, _ := os.ReadDir(cfg.ProfilePhotoDir)
+	assert.Empty(t, entries)
+
+	// A good upload works and is stored as JPEG under a generated name.
+	w = photoRequest(t, router, mine.ID, "../../evil.php", good.Bytes())
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	entries, _ = os.ReadDir(cfg.ProfilePhotoDir)
+	require.Len(t, entries, 1)
+	assert.True(t, strings.HasSuffix(entries[0].Name(), "_photo.jpg"))
+}
+
+func TestGetProfilePictureIsScopedAndSafe(t *testing.T) {
+	db, router := setupRouter()
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "a.jpg"), []byte("jpeg-bytes"), 0o600))
+	secret := filepath.Join(filepath.Dir(dir), "secret.txt")
+	require.NoError(t, os.WriteFile(secret, []byte("secret"), 0o600))
+	cfg := &config.Config{ProfilePhotoDir: dir}
+	router.GET("/contacts/:id/photo", func(c *gin.Context) { GetProfilePicture(c, cfg) })
+
+	var me models.User
+	require.NoError(t, db.First(&me).Error)
+	other := models.User{Username: "other", Email: "o@example.com", Password: "x"}
+	require.NoError(t, db.Create(&other).Error)
+	mine := models.Contact{UserID: me.ID, Firstname: "A", Photo: "a.jpg"}
+	theirs := models.Contact{UserID: other.ID, Firstname: "B", Photo: "a.jpg"}
+	traversal := models.Contact{UserID: me.ID, Firstname: "C", Photo: "../secret.txt"}
+	absolute := models.Contact{UserID: me.ID, Firstname: "D", Photo: secret}
+	for _, c := range []*models.Contact{&mine, &theirs, &traversal, &absolute} {
+		require.NoError(t, db.Create(c).Error)
+	}
+	fetch := func(id uint) *httptest.ResponseRecorder {
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, httptest.NewRequest("GET", "/contacts/"+strconv.Itoa(int(id))+"/photo", nil))
+		return w
+	}
+
+	assert.Equal(t, "jpeg-bytes", fetch(mine.ID).Body.String())
+	assert.Equal(t, http.StatusNotFound, fetch(theirs.ID).Code, "another user's photo")
+	for _, id := range []uint{traversal.ID, absolute.ID} {
+		w := fetch(id)
+		assert.NotEqual(t, http.StatusOK, w.Code)
+		assert.NotContains(t, w.Body.String(), "secret")
+	}
+}
+
+func fileHeaderFromBytes(t *testing.T, name string, content []byte) *multipart.FileHeader {
+	t.Helper()
+	var body bytes.Buffer
+	mw := multipart.NewWriter(&body)
+	hdr := textproto.MIMEHeader{}
+	hdr.Set("Content-Disposition", `form-data; name="photo"; filename="`+name+`"`)
+	part, err := mw.CreatePart(hdr)
+	require.NoError(t, err)
+	_, _ = part.Write(content)
+	require.NoError(t, mw.Close())
+	form, err := multipart.NewReader(&body, mw.Boundary()).ReadForm(10 << 20)
+	require.NoError(t, err)
+	return form.File["photo"][0]
+}
+
+// Valid HEIC photos (brands heic and mif1) must still be accepted by the fail-closed
+// header check; a truncated one is refused.
+func TestProcessAndSavePhotoHEIC(t *testing.T) {
+	data, err := os.ReadFile("testdata/test8.heic")
+	require.NoError(t, err)
+	mif1 := append([]byte(nil), data...)
+	copy(mif1[8:12], "mif1")
+
+	for name, content := range map[string][]byte{"heic": data, "mif1": mif1} {
+		t.Run(name, func(t *testing.T) {
+			_, _, err := processAndSavePhoto(fileHeaderFromBytes(t, "p.heic", content), t.TempDir())
+			require.NoError(t, err)
+		})
+	}
+	_, _, err = processAndSavePhoto(fileHeaderFromBytes(t, "p.heic", data[:40]), t.TempDir())
+	assert.ErrorIs(t, err, errInvalidPhoto)
 }
