@@ -47,6 +47,7 @@ const (
 	// Authentication & Authorization
 	ErrCodeUnauthorized       = "UNAUTHORIZED"
 	ErrCodeInvalidCredentials = "INVALID_CREDENTIALS"
+	ErrCodeInvalidTOTPCode    = "INVALID_TOTP_CODE"
 	ErrCodeTokenExpired       = "TOKEN_EXPIRED"
 	ErrCodeTokenInvalid       = "TOKEN_INVALID"
 	ErrCodeForbidden          = "FORBIDDEN"
@@ -97,6 +98,11 @@ func ErrUnauthorized(message string) *AppError {
 // ErrInvalidCredentials returns an invalid credentials error
 func ErrInvalidCredentials() *AppError {
 	return NewError(ErrCodeInvalidCredentials, "Invalid email or password", http.StatusUnauthorized)
+}
+
+// ErrInvalidTOTPCode is the login answer for a wrong two-factor or recovery code.
+func ErrInvalidTOTPCode() *AppError {
+	return NewError(ErrCodeInvalidTOTPCode, "Invalid verification code", http.StatusUnauthorized)
 }
 
 // ErrTokenExpired returns a token expired error

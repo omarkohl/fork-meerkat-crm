@@ -52,7 +52,21 @@
     "orSeparator": "or",
     "oidcDenied": "SSO login was cancelled or denied.",
     "oidcNoAccount": "No account found for your SSO identity. Contact your administrator.",
-    "oidcError": "An error occurred during SSO login. Please try again."
+    "oidcError": "An error occurred during SSO login. Please try again.",
+    "twoFactor": {
+      "title": "Two-factor authentication",
+      "description": "Enter the 6-digit code from your authenticator app.",
+      "code": "Authentication code",
+      "recoveryDescription": "Enter one of your recovery codes. Each code works once.",
+      "recoveryCode": "Recovery code",
+      "useRecovery": "Use a recovery code",
+      "useApp": "Use the authenticator app",
+      "verify": "Verify",
+      "verifying": "Verifying...",
+      "invalid": "That code is not valid. Check the code and try again.",
+      "locked": "Too many failed attempts. Please try again later.",
+      "back": "Back to login"
+    }
   },
   "passwordReset": {
     "title": "Reset Password",
@@ -945,7 +959,19 @@
     "deleteError": "Failed to delete user",
     "triggerReminders": "Send Reminder Emails",
     "triggerRemindersSuccess": "Reminder emails sent successfully",
-    "triggerRemindersError": "Failed to send reminder emails"
+    "triggerRemindersError": "Failed to send reminder emails",
+    "twoFactor": {
+      "twoFactorChip": "2FA",
+      "resetTwoFactor": "Reset two-factor",
+      "resetDialog": {
+        "title": "Reset two-factor authentication",
+        "message": "Switch off two-factor authentication for \"{{username}}\"?",
+        "warning": "The user is signed out everywhere and can log in with the password alone, then set it up again. Do this only if you are sure the request comes from the account owner.",
+        "confirm": "Reset"
+      },
+      "resetSuccess": "Two-factor authentication was reset.",
+      "resetError": "Failed to reset two-factor authentication"
+    }
   },
   "sessions": {
     "title": "Active sessions",
@@ -999,7 +1025,12 @@
       "backup_deleted": "Backup deleted",
       "admin_user_updated": "User changed by admin",
       "admin_user_deleted": "User deleted by admin",
-      "admin_reminders_triggered": "Reminders triggered by admin"
+      "admin_reminders_triggered": "Reminders triggered by admin",
+      "totp_enabled": "Two-factor turned on",
+      "totp_disabled": "Two-factor turned off",
+      "totp_recovery_used": "Recovery code used",
+      "totp_recovery_regenerated": "New recovery codes created",
+      "admin_totp_reset": "Two-factor reset by admin"
     },
     "keys": {
       "reason": "Reason",
@@ -1020,8 +1051,58 @@
       "username": "Username",
       "email": "E-mail",
       "password": "Password",
-      "is_admin": "Admin rights"
+      "is_admin": "Admin rights",
+      "wrong_2fa_code": "Wrong two-factor code",
+      "wrong_2fa_code_locked": "Wrong two-factor code, account locked"
     },
     "userAgent": "Device"
+  },
+  "twoFactor": {
+    "title": "Two-factor authentication",
+    "description": "Ask for a code from an authenticator app (or a recovery code) in addition to your password when you log in. Single sign-on logins are not affected.",
+    "loadError": "Could not load the two-factor status.",
+    "statusOn": "Two-factor authentication is on.",
+    "statusOff": "Two-factor authentication is off.",
+    "recoveryRemaining": "Unused recovery codes: {{remaining}}",
+    "enable": "Turn on",
+    "disable": "Turn off",
+    "newCodes": "New recovery codes",
+    "setup": {
+      "title": "Set up two-factor authentication",
+      "scan": "Scan this QR code with an authenticator app (for example Aegis, 2FAS, Google Authenticator or Authy).",
+      "qrAlt": "QR code for the authenticator app",
+      "key": "Cannot scan it? Enter this key in the app:",
+      "code": "6-digit code from the app",
+      "confirm": "Turn on",
+      "confirming": "Checking...",
+      "error": "Could not start the setup.",
+      "invalid": "That code is not valid. Check the code and try again.",
+      "keyLabel": "Key"
+    },
+    "codes": {
+      "title": "Save your recovery codes",
+      "warning": "Keep these codes somewhere safe, for example in a password manager. Each one works once and replaces the app if you lose your phone. They are shown only now.",
+      "copy": "Copy codes",
+      "copied": "Recovery codes copied.",
+      "done": "I have saved the codes"
+    },
+    "confirm": {
+      "disableTitle": "Turn off two-factor authentication",
+      "disableMessage": "Confirm with your password and a code. Your recovery codes are deleted.",
+      "codesTitle": "Create new recovery codes",
+      "codesMessage": "Confirm with your password and a code. The old recovery codes stop working.",
+      "password": "Current password",
+      "code": "6-digit code from the app",
+      "recoveryCode": "Recovery code",
+      "useRecovery": "Use a recovery code",
+      "useApp": "Use the authenticator app",
+      "disableSubmit": "Turn off",
+      "codesSubmit": "Create new codes",
+      "wrongPassword": "The password is incorrect.",
+      "invalid": "That code is not valid. Check the code and try again."
+    },
+    "disabledSuccess": "Two-factor authentication is off.",
+    "actionError": "Could not complete the action.",
+    "locked": "Too many failed attempts. Please try again later."
   }
 }

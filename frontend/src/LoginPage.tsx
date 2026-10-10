@@ -1,19 +1,10 @@
 import { useState } from 'react';
-import { loginUser, isAuthenticated, API_BASE_URL } from './auth';
+import { loginUser, isAuthenticated, API_BASE_URL, InvalidSecondFactorError, LoginLockedError } from './auth';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import i18n from './i18n/config';
 import { initializeDateFormatFromBackend } from './DateFormatProvider';
-import {
-  Box,
-  TextField,
-  Button,
-  Typography,
-  Alert,
-  Paper,
-  Stack,
-  Divider
-} from '@mui/material';
+import { Box, TextField, Button, Typography, Alert, Paper, Stack, Divider } from '@mui/material';
 import ForgotPasswordDialog from './components/ForgotPasswordDialog';
 import { useOIDCConfig } from './hooks/useOIDCConfig';
 
@@ -38,6 +29,10 @@ export default function LoginPage({ setToken }: LoginPageProps) {
   });
   const [loading, setLoading] = useState(false);
   const [forgotOpen, setForgotOpen] = useState(false);
+  // Second step for accounts with two-factor authentication
+  const [needsCode, setNeedsCode] = useState(false);
+  const [useRecovery, setUseRecovery] = useState(false);
+  const [code, setCode] = useState('');
   const navigate = useNavigate();
   const oidcConfig = useOIDCConfig();
 
@@ -46,7 +41,15 @@ export default function LoginPage({ setToken }: LoginPageProps) {
     setLoading(true);
     setError('');
     try {
-      const { language, date_format } = await loginUser(identifier, password);
+      const { language, date_format, totpRequired } = await loginUser(
+        identifier,
+        password,
+        needsCode ? (useRecovery ? { recoveryCode: code } : { code }) : undefined,
+      );
+      if (totpRequired) {
+        setNeedsCode(true);
+        return;
+      }
       // Signal that user is now authenticated (token is in httpOnly cookie)
       if (setToken) setToken(isAuthenticated() ? 'authenticated' : null);
 
@@ -60,8 +63,13 @@ export default function LoginPage({ setToken }: LoginPageProps) {
 
       navigate('/');
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : t('login.loginFailed');
-      setError(errorMessage);
+      if (err instanceof InvalidSecondFactorError) {
+        setError(t('login.twoFactor.invalid'));
+      } else if (err instanceof LoginLockedError) {
+        setError(t('login.twoFactor.locked'));
+      } else {
+        setError(err instanceof Error ? err.message : t('login.loginFailed'));
+      }
     } finally {
       setLoading(false);
     }
@@ -71,56 +79,102 @@ export default function LoginPage({ setToken }: LoginPageProps) {
     <Box sx={{ maxWidth: 400, mx: 'auto', mt: 8 }}>
       <Paper sx={{ p: 4 }}>
         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-          <Box
-            component="img"
-            src="/meerkat-crm-logo.svg"
-            alt="Meerkat CRM"
-            sx={{ width: 150, height: 'auto' }}
-          />
+          <Box component="img" src="/meerkat-crm-logo.svg" alt="Meerkat CRM" sx={{ width: 150, height: 'auto' }} />
         </Box>
-        <Typography variant="h5" mb={2}>{t('login.title')}</Typography>
-        <form onSubmit={handleSubmit}>
-          <Stack spacing={2}>
-            <TextField
-              label={t('login.identifier')}
-              type="text"
-              value={identifier}
-              onChange={e => setIdentifier(e.target.value)}
-              required
-              fullWidth
-            />
-            <TextField
-              label={t('login.password')}
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-              fullWidth
-            />
-            {error && <Alert severity="error">{error}</Alert>}
-            <Button type="submit" variant="contained" color="primary" disabled={loading}>
-              {loading ? t('login.loggingIn') : t('login.loginButton')}
-            </Button>
-            <Button variant="text" color="secondary" onClick={() => setForgotOpen(true)}>
-              {t('login.forgotPassword')}
-            </Button>
-            <Button component={Link} to="/register" color="secondary" variant="text">
-              {t('login.noAccount')}
-            </Button>
-            {oidcConfig.enabled && (
-              <>
-                <Divider>{t('login.orSeparator')}</Divider>
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  onClick={() => { window.location.href = `${API_BASE_URL}/auth/oidc/login`; }}
-                >
-                  {t('login.ssoButton', { provider: oidcConfig.provider_name })}
-                </Button>
-              </>
-            )}
-          </Stack>
-        </form>
+        <Typography variant="h5" mb={2}>
+          {needsCode ? t('login.twoFactor.title') : t('login.title')}
+        </Typography>
+        {needsCode ? (
+          <form onSubmit={handleSubmit}>
+            <Stack spacing={2}>
+              <Typography variant="body2" color="text.secondary">
+                {useRecovery ? t('login.twoFactor.recoveryDescription') : t('login.twoFactor.description')}
+              </Typography>
+              <TextField
+                label={useRecovery ? t('login.twoFactor.recoveryCode') : t('login.twoFactor.code')}
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                required
+                fullWidth
+                autoFocus
+                autoComplete="one-time-code"
+                slotProps={{ htmlInput: { inputMode: useRecovery ? 'text' : 'numeric' } }}
+              />
+              {error && <Alert severity="error">{error}</Alert>}
+              <Button type="submit" variant="contained" color="primary" disabled={loading}>
+                {loading ? t('login.twoFactor.verifying') : t('login.twoFactor.verify')}
+              </Button>
+              <Button
+                variant="text"
+                color="secondary"
+                onClick={() => {
+                  setUseRecovery(!useRecovery);
+                  setCode('');
+                  setError('');
+                }}
+              >
+                {useRecovery ? t('login.twoFactor.useApp') : t('login.twoFactor.useRecovery')}
+              </Button>
+              <Button
+                variant="text"
+                color="secondary"
+                onClick={() => {
+                  setNeedsCode(false);
+                  setUseRecovery(false);
+                  setCode('');
+                  setError('');
+                }}
+              >
+                {t('login.twoFactor.back')}
+              </Button>
+            </Stack>
+          </form>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            <Stack spacing={2}>
+              <TextField
+                label={t('login.identifier')}
+                type="text"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                required
+                fullWidth
+              />
+              <TextField
+                label={t('login.password')}
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                fullWidth
+              />
+              {error && <Alert severity="error">{error}</Alert>}
+              <Button type="submit" variant="contained" color="primary" disabled={loading}>
+                {loading ? t('login.loggingIn') : t('login.loginButton')}
+              </Button>
+              <Button variant="text" color="secondary" onClick={() => setForgotOpen(true)}>
+                {t('login.forgotPassword')}
+              </Button>
+              <Button component={Link} to="/register" color="secondary" variant="text">
+                {t('login.noAccount')}
+              </Button>
+              {oidcConfig.enabled && (
+                <>
+                  <Divider>{t('login.orSeparator')}</Divider>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    onClick={() => {
+                      window.location.href = `${API_BASE_URL}/auth/oidc/login`;
+                    }}
+                  >
+                    {t('login.ssoButton', { provider: oidcConfig.provider_name })}
+                  </Button>
+                </>
+              )}
+            </Stack>
+          </form>
+        )}
       </Paper>
       <ForgotPasswordDialog open={forgotOpen} onClose={() => setForgotOpen(false)} />
     </Box>

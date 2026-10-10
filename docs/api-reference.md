@@ -259,6 +259,20 @@ Every browser login is a session; a revoked or expired session is refused even t
 
 Changing the password through `/users/change-password` signs out all other browsers (the current one gets a new session); resetting it by e-mail or an admin setting a new password signs out everywhere.
 
+### Two-factor authentication (TOTP)
+
+Optional per user. Enrolment is two steps so a broken app cannot lock you out: `setup` creates a pending secret, `enable` proves the app shows the right code and returns ten one-time recovery codes (shown only once). These endpoints are refused for API tokens (`403`). OIDC logins are not asked for a code (the identity provider is the second factor); API tokens are not affected.
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/users/me/2fa` | `{"enabled", "recovery_codes_remaining", "available"}`; `available` is false for accounts without a password (single sign-on only), which cannot use two-factor |
+| `POST` | `/users/me/2fa/setup` | Create a pending secret: `{"secret", "otpauth_uri"}` (the URI is what the QR code encodes). `409` when already enabled, `400` for accounts without a password; calling it again replaces a pending secret |
+| `POST` | `/users/me/2fa/enable` | Body `{"password", "code"}`. Turns two-factor on, signs out the account's other sessions and returns `{"recovery_codes": [...]}`. `400` for a wrong password or code |
+| `POST` | `/users/me/2fa/disable` | Body `{"password", "code"}` or `{"password", "recovery_code"}`. Removes the secret and the recovery codes and signs out the other sessions |
+| `POST` | `/users/me/2fa/recovery-codes` | Same body as disable. Replaces the recovery codes and returns the new ones |
+
+Login (`POST /login`) for an account with two-factor: the password alone answers `200 {"totp_required": true}` and sets no cookie; repeat the request with `totp_code` (6 digits, one use per 30-second step) or `recovery_code` (one use). A wrong code is `401` with code `INVALID_TOTP_CODE`. Failed codes, and wrong passwords on the endpoints above, count toward the account lockout (`429`); the counter is per account, not per identifier, and asking for the code does not reset it.
+
 ### API Tokens
 
 | Method | Path | Description |
@@ -300,10 +314,11 @@ Content:
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/admin/system-status` | Operational warnings: `{"private_urls_allowed", "user_count", "private_url_warning", "setting", "features"}`. `private_url_warning` is true when outbound features may reach private addresses and more than one user exists (fix: `BLOCK_PRIVATE_URLS=true`); `features` lists the features (`webhooks`, `caldav`, `carddav`, `monica`) that still allow private addresses. Shown as a banner on the Users page |
-| `GET` | `/admin/audit-log` | Security events, newest first: `{"entries": [{"id", "created_at", "user_id", "username", "event", "ip", "user_agent", "detail"}], "total", "page", "limit", "events", "retention_days"}`. Query: `event` (exact, one of `events`), `username` (substring), `page`, `limit`. Events: login, failed login, logout, password change/reset, session revoked, sign out everywhere, export, API token, calendar feed and backup actions, admin user changes and reminder runs. `detail` is machine-readable, `;`-separated `key:value` segments (for example `reason:wrong_password`, `format:csv`, `user:alice#3;changed:email,password`) that the admin page translates. A failed login for an unknown account has no user and never stores what was typed. Entries older than `AUDIT_LOG_RETENTION_DAYS` (default 365, `0` = keep) are purged daily |
+| `GET` | `/admin/audit-log` | Security events, newest first: `{"entries": [{"id", "created_at", "user_id", "username", "event", "ip", "user_agent", "detail"}], "total", "page", "limit", "events", "retention_days"}`. Query: `event` (exact, one of `events`), `username` (substring), `page`, `limit`. Events: login, failed login, logout, password change/reset, session revoked, sign out everywhere, export, API token, calendar feed and backup actions, admin user changes and reminder runs, two-factor changes (enabled, disabled, recovery code used or regenerated, admin reset). `detail` is machine-readable, `;`-separated `key:value` segments (for example `reason:wrong_password`, `format:csv`, `user:alice#3;changed:email,password`) that the admin page translates. A failed login for an unknown account has no user and never stores what was typed. Entries older than `AUDIT_LOG_RETENTION_DAYS` (default 365, `0` = keep) are purged daily |
 | `GET` | `/admin/users` | List all users |
 | `GET` | `/admin/users/:id` | Get a user |
 | `PATCH` | `/admin/users/:id` | Update a user (e.g. set admin flag) |
+| `POST` | `/admin/users/:id/2fa/reset` | Switch off a user's two-factor (lost phone and recovery codes) and sign the user out everywhere. `409` when the user has no two-factor (nothing changes). Audited. The user list and `GET /admin/users/:id` show `two_factor_enabled` |
 | `DELETE` | `/admin/users/:id` | Delete a user. Their data, API tokens, calendar feed, CardDAV connection, calendar subscriptions and webhooks are removed and their sessions end immediately (`401`). The account stays soft-deleted, but its email, username and OIDC identity are released: the person can register or log in via OIDC again and gets a new, empty account |
 | `GET` | `/admin/backups` | List the server backups, newest first, with the schedule: `{"backups": [{"name", "size", "created_at"}], "enabled", "time", "retention_count", "directory"}` |
 | `POST` | `/admin/backups` | Create a backup now (`201`, `{"name", "size", "created_at"}`) and prune to `BACKUP_RETENTION_COUNT` |

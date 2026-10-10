@@ -30,7 +30,9 @@ import AppDialog from './components/AppDialog';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SendIcon from '@mui/icons-material/Send';
+import LockResetIcon from '@mui/icons-material/LockReset';
 import { getUsers, updateUser, deleteUser, triggerReminders, getSystemStatus, ssrfBannerSignature } from './api/admin';
+import { resetUserTwoFactor } from './api/twoFactor';
 import { isAdmin } from './auth';
 import { useSnackbar } from './context/SnackbarContext';
 import type { User, UserUpdateInput } from './types';
@@ -61,6 +63,27 @@ export default function UsersPage() {
   const [deletingUser, setDeletingUser] = useState<User | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+
+  // Reset two-factor dialog state
+  const [resetUser, setResetUser] = useState<User | null>(null);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState('');
+
+  const handleResetConfirm = async () => {
+    if (!resetUser) return;
+    setResetLoading(true);
+    setResetError('');
+    try {
+      await resetUserTwoFactor(resetUser.id);
+      setUsers(users.map((u) => (u.id === resetUser.id ? { ...u, two_factor_enabled: false } : u)));
+      showSuccess(t('users.twoFactor.resetSuccess'));
+      setResetUser(null);
+    } catch (err) {
+      setResetError(err instanceof Error ? err.message : t('users.twoFactor.resetError'));
+    } finally {
+      setResetLoading(false);
+    }
+  };
 
   // Check admin access
   useEffect(() => {
@@ -291,9 +314,25 @@ export default function UsersPage() {
                     color={user.is_admin ? 'primary' : 'default'}
                     size="small"
                   />
+                  {user.two_factor_enabled && (
+                    <Chip label={t('users.twoFactor.twoFactorChip')} variant="outlined" size="small" sx={{ ml: 0.5 }} />
+                  )}
                 </TableCell>
                 <TableCell>{formatDate(user.created_at)}</TableCell>
                 <TableCell align="right">
+                  {user.two_factor_enabled && (
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        setResetUser(user);
+                        setResetError('');
+                      }}
+                      title={t('users.twoFactor.resetTwoFactor')}
+                      aria-label={t('users.twoFactor.resetTwoFactor')}
+                    >
+                      <LockResetIcon fontSize="small" />
+                    </IconButton>
+                  )}
                   <IconButton size="small" onClick={() => handleEditClick(user)} title={t('common.edit')}>
                     <EditIcon fontSize="small" />
                   </IconButton>
@@ -375,6 +414,30 @@ export default function UsersPage() {
           </DialogActions>
         </form>
       </AppDialog>
+
+      {/* Reset two-factor dialog */}
+      <Dialog open={resetUser !== null} onClose={() => setResetUser(null)}>
+        <DialogTitle>{t('users.twoFactor.resetDialog.title')}</DialogTitle>
+        <DialogContent>
+          {resetError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {resetError}
+            </Alert>
+          )}
+          <Typography>{t('users.twoFactor.resetDialog.message', { username: resetUser?.username })}</Typography>
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            {t('users.twoFactor.resetDialog.warning')}
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setResetUser(null)} disabled={resetLoading}>
+            {t('common.cancel')}
+          </Button>
+          <Button onClick={handleResetConfirm} color="error" variant="contained" disabled={resetLoading}>
+            {t('users.twoFactor.resetDialog.confirm')}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onClose={handleDeleteClose}>
