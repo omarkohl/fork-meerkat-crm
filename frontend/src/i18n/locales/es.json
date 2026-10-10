@@ -822,6 +822,8 @@
     "description": "Suscríbete a tus cumpleaños y recordatorios desde cualquier aplicación de calendario. Cualquiera que tenga la URL del feed puede leerlo, así que mantenla privada.",
     "inactive": "Aún no hay feed de calendario.",
     "active": "Feed activo desde {{date}}.",
+    "lastFetched": "Última consulta: {{date}}.",
+    "neverFetched": "Aún no consultado.",
     "generateButton": "Generar URL del feed",
     "regenerateButton": "Regenerar URL",
     "revokeButton": "Revocar feed",

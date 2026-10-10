@@ -10,14 +10,20 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	apperrors "meerkat/errors"
+	"meerkat/logger"
 	"meerkat/models"
 	"meerkat/services"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
+
+// icsFetchedThrottle bounds how often a fetch writes last_fetched_at, so a calendar
+// app polling every few minutes costs at most one small write a minute.
+const icsFetchedThrottle = time.Minute
 
 // icsTokenPattern matches a base64url-encoded 32-byte token. Anything else cannot
 // be a valid token, so the database is not queried for it.
@@ -32,7 +38,7 @@ func icsFeedStatus(feed *models.IcsFeed) models.IcsFeedStatus {
 		return models.IcsFeedStatus{}
 	}
 	created := feed.CreatedAt
-	return models.IcsFeedStatus{Enabled: true, CreatedAt: &created}
+	return models.IcsFeedStatus{Enabled: true, CreatedAt: &created, LastFetchedAt: feed.LastFetchedAt}
 }
 
 // GetIcsFeed reports whether the current user has an active feed. It never reveals the token.
@@ -170,6 +176,8 @@ func ServeIcsFeed(c *gin.Context) {
 		return
 	}
 
+	recordIcsFetch(db, feed.ID)
+
 	sum := sha256.Sum256([]byte(body))
 	etag := fmt.Sprintf(`"%x"`, sum[:16])
 	c.Header("ETag", etag)
@@ -180,4 +188,17 @@ func ServeIcsFeed(c *gin.Context) {
 	}
 	c.Header("Content-Disposition", `inline; filename="meerkat.ics"`)
 	c.Data(http.StatusOK, "text/calendar; charset=utf-8", []byte(body))
+}
+
+// recordIcsFetch stamps last_fetched_at unless it was stamped less than a minute ago.
+// The condition lives in the UPDATE, so concurrent fetches write at most once. A failure
+// is logged and ignored: serving the calendar matters more than the timestamp.
+func recordIcsFetch(db *gorm.DB, feedID uint) {
+	now := time.Now().UTC()
+	err := db.Model(&models.IcsFeed{}).
+		Where("id = ? AND (last_fetched_at IS NULL OR last_fetched_at < ?)", feedID, now.Add(-icsFetchedThrottle)).
+		UpdateColumn("last_fetched_at", now).Error
+	if err != nil {
+		logger.Logger.Warn().Err(err).Uint("ics_feed_id", feedID).Msg("Failed to update ics feed last_fetched_at")
+	}
 }

@@ -822,6 +822,8 @@
     "description": "Abonnez-vous à vos anniversaires et rappels depuis n'importe quelle application de calendrier. Toute personne disposant de l'URL du flux peut le lire, gardez-la donc privée.",
     "inactive": "Aucun flux de calendrier pour le moment.",
     "active": "Flux actif depuis le {{date}}.",
+    "lastFetched": "Dernière récupération : {{date}}.",
+    "neverFetched": "Pas encore récupéré.",
     "generateButton": "Générer l'URL du flux",
     "regenerateButton": "Régénérer l'URL",
     "revokeButton": "Révoquer le flux",

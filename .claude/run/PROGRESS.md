@@ -2,13 +2,14 @@
 
 ## Next step
 
-5.
+6.
 
 ## Stack
 
 - 1: second-sprint/01-ci-fixes (PR #16, base first-sprint/12-finish)
 - 2: second-sprint/02-deleted-users (PR #17)
 - 3: second-sprint/03-trash-followups (PR #18)
+- 4: second-sprint/04-file-robustness (PR #19)
 
 ## Log
 
@@ -44,9 +45,19 @@
   it (5 s) after the HTTP server stops and before the DB closes. Tests for modes, Close/partial-file
   handling and Background; docs note on directory modes. `SaveJPEG` uses O_EXCL (names are UUIDs, nothing
   overwrites) and fsyncs before close; the thumbnail is built before the photo file is written.
+- 5: migration 26 adds `ics_feeds.last_fetched_at` (NULL = never). `ServeIcsFeed` stamps it with one conditional
+  `UPDATE ... WHERE last_fetched_at IS NULL OR last_fetched_at < now-1min` (no race, at most one write a minute),
+  after the token and owner checks and a successful build; so 200 and 304 both count, 404s and 500s do not. A failed
+  write is logged and ignored. `GET/POST /ics-feed` return `last_fetched_at`; the Integrations card shows
+  "Last fetched: <date and time>." or "Not fetched yet." (five locales). Tests: migration up/down/up, throttle,
+  304, 404, per-user, reset on regenerate; Vitest; e2e. The e2e run needed `PLAYWRIGHT_BROWSERS_PATH` with
+  symlinks to `/opt/pw-browsers` (no config change).
 
 ## Decisions
 
+- Step 5: the stamp is written synchronously (a single indexed UPDATE), not in a goroutine like API-token
+  `last_used_at`, so tests are deterministic and no write can outlive the DB at shutdown. Regenerating replaces
+  the row, so the new URL starts with no fetch time. The card does not poll: it shows the value at page load.
 - Step 4: the startup tasks are not interruptible (they take no context); the context only stops tasks
   that have not begun. Shutdown therefore waits up to 5 s and logs a warning if one is still running.
   Making the sync and reminder jobs context-aware is a larger change and left for later.
@@ -63,6 +74,8 @@
 - Step 2: every authenticated request now does a user lookup; confirm that cost is acceptable.
 - Step 3: `WebhooksSettings.tsx` was not Prettier-clean, so the format check forced a full reformat of the file (the real change is one line, `contact.restored`).
 - Step 3: the sync never writes `purged_at` back (`saveLink` and the link saves omit it), so a purge during a running sync keeps its tombstone.
+
+- Step 5: `IcsFeedSettings.test.tsx` and `e2e/ics-feed.spec.ts` were reformatted by Prettier (small diffs only).
 
 ## Questions
 

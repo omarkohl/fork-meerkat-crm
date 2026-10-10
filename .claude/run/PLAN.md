@@ -60,7 +60,7 @@ context is above 200k at the end of a step, then start a new one. Reviewer is al
 - [x] 4. **File and shutdown robustness**: photo dir 0750/files 0640 (existing dirs are left
       alone, documented); write-path `Close` errors checked; startup goroutines under a context and
       WaitGroup, shutdown waits bounded. Remove the matching gosec suppressions.
-- [ ] 5. **ICS feed "last fetched"**: column, update throttled to once a minute, shown on the
+- [x] 5. **ICS feed "last fetched"**: column, update throttled to once a minute, shown on the
       Integrations card, i18n, tests.
 - [ ] 6. **Complete API reference**: document every route group missing (webhooks, calendars,
       CardDAV connections, Monica import, OIDC, enabled-contact-fields, trash, backups, ICS, fix

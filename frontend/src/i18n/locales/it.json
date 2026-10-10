@@ -822,6 +822,8 @@
     "description": "Iscriviti ai tuoi compleanni e promemoria da qualsiasi app di calendario. Chiunque abbia l'URL del feed può leggerlo, quindi tienilo privato.",
     "inactive": "Nessun feed del calendario.",
     "active": "Feed attivo dal {{date}}.",
+    "lastFetched": "Ultimo scaricamento: {{date}}.",
+    "neverFetched": "Non ancora scaricato.",
     "generateButton": "Genera URL del feed",
     "regenerateButton": "Rigenera URL",
     "revokeButton": "Revoca feed",

@@ -33,6 +33,11 @@ test.describe('Calendar feed (ICS)', () => {
       await dialog.getByRole('button', { name: /done/i }).click();
       await expect(dialog).toBeHidden();
 
+      // The fetch above shows up as "last fetched" on the card.
+      await page.reload();
+      await expect(page.getByText(/Last fetched: /)).toBeVisible();
+      await expect(page.getByText('Not fetched yet.')).toBeHidden();
+
       // Regenerate: the old URL stops working, the new one works.
       await page.getByRole('button', { name: 'Regenerate URL' }).click();
       await page.getByRole('dialog').getByRole('button', { name: 'Regenerate', exact: true }).click();
@@ -41,6 +46,8 @@ test.describe('Calendar feed (ICS)', () => {
       expect((await anonymous.get(firstUrl)).status()).toBe(404);
       expect((await anonymous.get(secondUrl)).status()).toBe(200);
       await page.getByRole('dialog').getByRole('button', { name: /done/i }).click();
+      // A regenerated URL starts as not fetched (the card shows the response of the create call).
+      await expect(page.getByText('Not fetched yet.')).toBeVisible();
 
       // Revoke
       await page.getByRole('button', { name: 'Revoke feed' }).click();
