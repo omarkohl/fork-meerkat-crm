@@ -12,7 +12,7 @@ func TestOutboxMigration(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer db.Close()
-	migrateTo(t, db, 30)
+	migrateTo(t, db, 31)
 	for _, q := range []string{
 		"INSERT INTO users (id, username, email, password) VALUES (1, 'u', 'u@example.com', 'x')",
 		"INSERT INTO webhooks (id, user_id, name, url, secret) VALUES (1, 1, 'w', 'http://x', 's')",
@@ -26,7 +26,7 @@ func TestOutboxMigration(t *testing.T) {
 		}
 	}
 
-	migrateTo(t, db, 31)
+	migrateTo(t, db, 32)
 	want := map[int]string{1: "delivered", 2: "pending", 3: "dead"}
 	for id, status := range want {
 		var got string
@@ -38,7 +38,7 @@ func TestOutboxMigration(t *testing.T) {
 		t.Fatalf("email_outbox: %v", err)
 	}
 
-	migrateTo(t, db, 30)
+	migrateTo(t, db, 31)
 	if columnExists(t, db, "webhook_deliveries", "status") || columnExists(t, db, "webhook_deliveries", "locked_at") {
 		t.Fatal("outbox columns still present after down")
 	}

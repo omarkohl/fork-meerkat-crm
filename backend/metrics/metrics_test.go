@@ -132,7 +132,9 @@ func TestDefaultRegistryHasAppMetrics(t *testing.T) {
 	WebhookDelivery(false)
 	EmailSent(true)
 	EmailSent(false)
-	JobResult("backup", false)
+	JobResult("backup", ResultFailure)
+	JobDone("backup", nil)
+	JobResult("reminders", ResultSkipped)
 
 	body := scrape(t, Handler(Default, ""), "").Body.String()
 	for _, want := range []string{
@@ -141,6 +143,8 @@ func TestDefaultRegistryHasAppMetrics(t *testing.T) {
 		`meerkat_emails_total{result="success"}`,
 		`meerkat_emails_total{result="failure"}`,
 		`meerkat_job_runs_total{job="backup",result="failure"}`,
+		`meerkat_job_runs_total{job="backup",result="success"}`,
+		`meerkat_job_runs_total{job="reminders",result="skipped"}`,
 		"go_goroutines ",
 		"process_start_time_seconds ",
 	} {
@@ -158,4 +162,25 @@ func TestServerServesOnlyMetrics(t *testing.T) {
 	rec = httptest.NewRecorder()
 	srv.Handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/v1/users/me", nil))
 	assert.Equal(t, http.StatusNotFound, rec.Code)
+}
+
+func TestDuplicateRegistrationPanics(t *testing.T) {
+	r := NewRegistry()
+	r.Counter("dup_total", "x")
+	assert.Panics(t, func() { r.Counter("dup_total", "y") })
+	assert.Panics(t, func() { r.GaugeFunc("dup_total", "y", nil, func() []Sample { return nil }) })
+	assert.Panics(t, func() {
+		NewHTTPMetrics(r)
+		NewHTTPMetrics(r)
+	})
+}
+
+func TestOnScrapeRunsOncePerWrite(t *testing.T) {
+	r := NewRegistry()
+	n := 0
+	r.OnScrape(func() { n++ })
+	r.GaugeFunc("a", "a", nil, func() []Sample { return nil })
+	r.GaugeFunc("b", "b", nil, func() []Sample { return nil })
+	scrape(t, Handler(r, ""), "")
+	assert.Equal(t, 1, n)
 }

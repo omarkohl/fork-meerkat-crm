@@ -3,13 +3,10 @@ package services
 import (
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
 	"time"
 
-	"meerkat/logger"
 	"meerkat/models"
+	"meerkat/photofile"
 
 	"gorm.io/gorm"
 )
@@ -281,23 +278,5 @@ func purgeChunkTx(tx *gorm.DB, chunk []models.Contact) ([]models.Contact, error)
 // (and a legacy file-named thumbnail; base64 data URLs have no file).
 // Failures are logged, not returned: the database change already happened.
 func RemoveContactPhotoFiles(photoDir string, contact models.Contact) {
-	if photoDir == "" {
-		return
-	}
-	remove := func(name, what string) {
-		if name == "" || strings.HasPrefix(name, "data:") {
-			return
-		}
-		path := filepath.Join(photoDir, name)
-		if rel, err := filepath.Rel(photoDir, path); err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-			logger.Warn().Str("path", path).Msgf("Refusing to delete %s outside the photo directory", what)
-			return
-		}
-		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
-			logger.Warn().Err(err).Str("path", path).Msgf("Failed to delete contact %s", what)
-		}
-	}
-	remove(contact.Photo, "photo")
-	remove(contact.PhotoThumbnailFile, "thumbnail")
-	remove(contact.LegacyThumbnail, "thumbnail")
+	photofile.Remove(photoDir, contact.Photo, contact.PhotoThumbnailFile, contact.LegacyThumbnail)
 }

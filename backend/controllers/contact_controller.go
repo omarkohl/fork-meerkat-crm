@@ -88,13 +88,19 @@ func contactFTSMatch(db *gorm.DB, searchTerm string) string {
 // every word a prefix) when there is one, otherwise a LIKE search
 // thumbnailColumns maps the API field "photo_thumbnail" to the column that holds the
 // thumbnail's file name; the legacy base64 column is never selected by list queries.
+// The thumbnail URL needs the contact's ID, so ID is added when it was not requested.
 func thumbnailColumns(fields []string) []string {
 	out := make([]string, len(fields))
+	hasThumbnail := false
 	for i, f := range fields {
 		if f == "photo_thumbnail" {
 			f = "photo_thumbnail_file"
+			hasThumbnail = true
 		}
 		out[i] = f
+	}
+	if hasThumbnail && !slices.Contains(out, "ID") {
+		out = append(out, "ID")
 	}
 	return out
 }

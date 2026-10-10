@@ -11,6 +11,7 @@ import (
 	mcarddav "meerkat/carddav"
 	"meerkat/config"
 	"meerkat/logger"
+	"meerkat/metrics"
 	"meerkat/models"
 	"meerkat/netguard"
 	"net/http"
@@ -983,7 +984,7 @@ func (r *contactSyncRun) pullCreate(obj *remoteObject, link *models.CardDAVConta
 	if contact.VCardUID == "" {
 		contact.VCardUID = remoteUID(obj)
 	}
-	r.applyPhoto(contact, photoData, mediaType, photoURL)
+	swap := r.applyPhoto(contact, photoData, mediaType, photoURL)
 
 	var hash string
 	err := r.db.Transaction(func(tx *gorm.DB) error {
@@ -1007,9 +1008,11 @@ func (r *contactSyncRun) pullCreate(obj *remoteObject, link *models.CardDAVConta
 		return tx.Omit("PurgedAt").Save(link).Error
 	})
 	if err != nil {
+		swap.Rollback(r.cfg.ProfilePhotoDir, contact)
 		r.recordItemError(err, "Failed to import remote contact", map[string]string{"path": obj.Path})
 		return
 	}
+	swap.Commit(r.cfg.ProfilePhotoDir)
 	r.contactByID[contact.ID] = contact
 	r.setLocalHash(contact.ID, hash)
 	r.linkByPath[obj.Path] = link
@@ -1021,7 +1024,7 @@ func (r *contactSyncRun) pullCreate(obj *remoteObject, link *models.CardDAVConta
 func (r *contactSyncRun) pullUpdate(obj *remoteObject, link *models.CardDAVContactLink, contact *models.Contact) {
 	updated, photoData, mediaType, photoURL := mcarddav.VCardToContact(obj.Card, contact)
 	updated.UserID = r.conn.UserID
-	r.applyPhoto(updated, photoData, mediaType, photoURL)
+	swap := r.applyPhoto(updated, photoData, mediaType, photoURL)
 	r.invalidateLocalHash(updated.ID) // the contact just changed
 
 	var hash string
@@ -1038,9 +1041,11 @@ func (r *contactSyncRun) pullUpdate(obj *remoteObject, link *models.CardDAVConta
 		return tx.Omit("PurgedAt").Save(link).Error
 	})
 	if err != nil {
+		swap.Rollback(r.cfg.ProfilePhotoDir, updated)
 		r.recordItemError(err, "Failed to update contact from remote", map[string]string{"path": obj.Path})
 		return
 	}
+	swap.Commit(r.cfg.ProfilePhotoDir)
 	r.contactByID[updated.ID] = updated
 	r.setLocalHash(updated.ID, hash)
 	r.stats.PulledUpdated++
@@ -1071,26 +1076,26 @@ func (r *contactSyncRun) resolveByRevision(obj *remoteObject, link *models.CardD
 // applyPhoto stores an embedded or URL-referenced photo on the contact,
 // mirroring the CardDAV server's PutAddressObject behavior. Photo failures
 // are logged, never fatal.
-func (r *contactSyncRun) applyPhoto(contact *models.Contact, photoData []byte, mediaType, photoURL string) {
+func (r *contactSyncRun) applyPhoto(contact *models.Contact, photoData []byte, mediaType, photoURL string) mcarddav.PhotoSwap {
+	swap := mcarddav.NewPhotoSwap(contact)
 	if len(photoData) == 0 && photoURL != "" {
 		fetched, fetchedType, err := mcarddav.FetchPhotoFromURL(photoURL)
 		if err != nil {
 			logger.Warn().Err(err).Str("photo_url", photoURL).Msg("Contact sync: failed to fetch photo from URL")
-			return
+			return swap
 		}
 		photoData, mediaType = fetched, fetchedType
 	}
 	if len(photoData) == 0 {
-		return
+		return swap
 	}
 	photoPath, thumbnail, err := mcarddav.SaveContactPhoto(photoData, mediaType, r.cfg.ProfilePhotoDir)
 	if err != nil {
 		logger.Warn().Err(err).Msg("Contact sync: failed to save contact photo")
-		return
+		return swap
 	}
-	contact.Photo = photoPath
-	contact.PhotoThumbnailFile = thumbnail
-	contact.LegacyThumbnail = ""
+	swap.Apply(contact, photoPath, thumbnail)
+	return swap
 }
 
 // reconcileRemoteDeletions handles objects that disappeared from the server.
@@ -1337,14 +1342,17 @@ func SyncContactsWithRateLimit(db *gorm.DB, cfg config.Config) {
 	acquired, err := acquireJobLock(db, models.JobNameContactSync, minInterval)
 	if err != nil {
 		logger.Error().Err(err).Msg("Error checking contact sync job lock")
+		metrics.JobResult(JobContactSync, metrics.ResultFailure)
 		return
 	}
 	if !acquired {
 		logger.Info().Msg("Skipping contact sync job - rate limited")
+		metrics.JobResult(JobContactSync, metrics.ResultSkipped)
 		return
 	}
 
 	SyncAllContactConnections(db, cfg)
+	metrics.JobResult(JobContactSync, metrics.ResultSuccess)
 
 	if err := releaseJobLock(db, models.JobNameContactSync, true); err != nil {
 		logger.Error().Err(err).Msg("Error releasing contact sync job lock")

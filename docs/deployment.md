@@ -108,15 +108,21 @@ Meerkat can expose metrics in the Prometheus text format. It is **off by default
 | `METRICS_TOKEN` | If set, scrapers must send `Authorization: Bearer <token>` (compared in constant time) |
 | `METRICS_ADDR` | If set (for example `127.0.0.1:9090` or `:9090` on a private Docker network), `/metrics` is served only on this extra listener and not on the main port |
 
-The bundled nginx proxies only `/api/`, `/health` and `/carddav/`, so `/metrics` on the main port is not reachable through it. If your own reverse proxy forwards everything, set a token or use `METRICS_ADDR`. Without either, Meerkat logs a warning at startup. The metrics contain no user data (routes are patterns such as `/api/v1/contacts/:id`, never URLs), but they reveal traffic and failure patterns.
+**Where the endpoint is.** The nginx in the images proxies only `/api/`, `/health` and `/carddav/`; every other path, `/metrics` included, is answered with the web app (`index.html`), so the browser port never serves metrics. How to reach them depends on the layout:
+
+- *Single container* (`docker-compose.yml`, service `meerkat`): nginx listens on 8080 and the backend on `PORT=8081` inside the container. Scrape `meerkat:8081/metrics` from a container on the same Docker network (port 8081 is not published to the host, which is what you want), or set `METRICS_ADDR=:9090` and scrape `meerkat:9090/metrics`.
+- *Legacy split* (`docker-compose.legacy.yml`: `backend` and `frontend` containers): the backend listens on 8080, scrape `backend:8080/metrics`.
+- *Without Docker*: `/metrics` is on the backend `PORT`.
+
+If your own reverse proxy forwards everything to the backend, set a token or use `METRICS_ADDR`, or block `/metrics` there. Without a token or `METRICS_ADDR`, Meerkat logs a warning at startup. If `METRICS_ADDR` cannot be bound, Meerkat does not start. The metrics contain no user data (routes are patterns such as `/api/v1/contacts/:id`, never URLs), but they reveal traffic and failure patterns.
 
 | Metric | Type | Meaning |
 |---|---|---|
 | `meerkat_http_requests_total{method,route,status}` | counter | Requests by route pattern (`unmatched` for 404s without a route) |
 | `meerkat_http_request_duration_seconds{method,route}` | histogram | Latency |
-| `meerkat_job_last_success_timestamp_seconds{job}` | gauge | Last successful run of the jobs kept in the `job_executions` table (`daily_reminders`, `calendar_sync`, `carddav_contact_sync`) |
-| `meerkat_job_running{job}` | gauge | 1 while the job holds its lock |
-| `meerkat_job_runs_total{job,result}` | counter | Runs of `reminders`, `trash-purge` and `backup` since the process started, `success` or `failure` |
+| `meerkat_job_last_success_timestamp_seconds{job}` | gauge | When the job last completed a run. Jobs: `reminders`, `calendar-sync`, `contact-sync` (the ones kept in `job_executions`). Missing until the first run after upgrading to this version has completed; a run that failed or was cut short never sets it |
+| `meerkat_job_running{job}` | gauge | 1 while the job holds its lock. A process that died mid-run leaves the lock until the next run takes it over (after 5 minutes), so it can stay 1 for a while |
+| `meerkat_job_runs_total{job,result}` | counter | Runs since the process started, same job names plus `trash-purge` and `backup`. `result` is `success`, `failure`, or `skipped` (turned away by the rate limit or another instance's lock; the sync jobs count `success` when they ran, per-connection errors are in their own status and logs) |
 | `meerkat_webhook_deliveries_total{result}` | counter | Webhook delivery attempts (every retry counts) |
 | `meerkat_emails_total{result}` | counter | Emails where at least one channel succeeded (`success`) or all failed (`failure`) |
 | `meerkat_outbox_pending{kind}` | gauge | Webhook deliveries and emails waiting for a try or retry (`kind` is `webhook` or `email`) |
@@ -134,14 +140,15 @@ scrape_configs:
       type: Bearer
       credentials_file: /etc/prometheus/meerkat-token
     static_configs:
-      - targets: ["meerkat-backend:8080"]   # or the METRICS_ADDR host and port
+      # single container: meerkat:8081 (or the METRICS_ADDR host and port); legacy split: backend:8080
+      - targets: ["meerkat:8081"]
 ```
 
 Alert ideas (adapt the thresholds):
 
 - Backend down: `up{job="meerkat"} == 0` for 5 minutes.
-- Reminders did not run for over 26 hours: `time() - meerkat_job_last_success_timestamp_seconds{job="daily_reminders"} > 26 * 3600`. The same for `calendar_sync` and `carddav_contact_sync`, with your sync interval.
-- A scheduled job failed: `increase(meerkat_job_runs_total{result="failure"}[1h]) > 0`.
+- Reminders did not run for over 26 hours: `time() - meerkat_job_last_success_timestamp_seconds{job="reminders"} > 26 * 3600`. The same for `calendar-sync` and `contact-sync`, with your sync interval.
+- A scheduled job failed: `increase(meerkat_job_runs_total{result="failure"}[1h]) > 0` (`skipped` is normal after restarts).
 - Email failing: `increase(meerkat_emails_total{result="failure"}[1h]) > 0`.
 - Dead letters: `meerkat_outbox_dead > 0` for 10 minutes, or `increase(meerkat_outbox_dead_total[1h]) > 0`.
 - Many failing webhooks: `increase(meerkat_webhook_deliveries_total{result="failure"}[1h]) > 10`.
@@ -207,7 +214,7 @@ Meerkat has built-in backups. Every day at `BACKUP_TIME` (default `02:30`, in `R
 Each archive holds:
 
 - `meerkat.db`: a consistent snapshot of the whole SQLite database, taken with `VACUUM INTO`. This is safe while the app is running and the database is in WAL mode.
-- `photos/`: all profile photo files, including the small thumbnails (`*_thumb.jpg`). Thumbnails used to be stored inside the database; at startup after the upgrade Meerkat copies them into this directory once (the old copy stays in the database, so a downgrade keeps working for them, and a later version removes it). The photo directory must therefore be writable; if it is not, thumbnails stay hidden and the log says so. Thumbnails of photos added after the upgrade exist only as files.
+- `photos/`: all profile photo files, including the small thumbnails (`*_thumb.jpg`). Thumbnails used to be stored inside the database; at startup after the upgrade Meerkat copies them into this directory once (the old copy stays in the database, so a downgrade keeps working for them, and a later version removes it). The photo directory must therefore be writable; if it is not, thumbnails stay hidden and the log says so. Thumbnails of photos added after the upgrade exist only as files. After a downgrade and a later upgrade again, the thumbnail files from the first upgrade are orphaned (the second upgrade writes new ones); this is harmless and the `*_thumb.jpg` files that no contact references can be deleted.
 
 **A backup contains the data of all users** (contacts, notes, reminders, account data and password hashes, CardDAV and calendar credentials in encrypted form). Treat it like the database itself: the directory is created (or, if it exists, set) to mode `0700` and the files with `0600`, and downloads are limited to administrators.
 

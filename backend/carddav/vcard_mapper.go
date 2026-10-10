@@ -443,6 +443,44 @@ func VCardToContact(card vcard.Card, existing *models.Contact) (*models.Contact,
 	return contact, photoData, photoMediaType, photoURL
 }
 
+// PhotoSwap tracks a contact's photo being replaced: the files it had (Old...) and the files
+// just written (New...). Commit after the database change succeeded, Rollback when it failed,
+// so neither the old nor the new files are left behind.
+type PhotoSwap struct {
+	OldPhoto, OldThumbnail, OldLegacy string
+	NewPhoto, NewThumbnail            string
+}
+
+// NewPhotoSwap starts a swap from the photo files the contact has now.
+func NewPhotoSwap(c *models.Contact) PhotoSwap {
+	return PhotoSwap{OldPhoto: c.Photo, OldThumbnail: c.PhotoThumbnailFile, OldLegacy: c.LegacyThumbnail}
+}
+
+// Replaced reports whether new files were written.
+func (s PhotoSwap) Replaced() bool { return s.NewPhoto != "" }
+
+// Apply points the contact at the new files and drops the legacy copy of the old picture.
+func (s *PhotoSwap) Apply(c *models.Contact, photo, thumbnail string) {
+	s.NewPhoto, s.NewThumbnail = photo, thumbnail
+	c.Photo, c.PhotoThumbnailFile, c.LegacyThumbnail = photo, thumbnail, ""
+}
+
+// Commit deletes the old files.
+func (s PhotoSwap) Commit(dir string) {
+	if s.Replaced() {
+		photofile.Remove(dir, s.OldPhoto, s.OldThumbnail, s.OldLegacy)
+	}
+}
+
+// Rollback deletes the new files and restores the old values on the contact.
+func (s PhotoSwap) Rollback(dir string, c *models.Contact) {
+	if !s.Replaced() {
+		return
+	}
+	photofile.Remove(dir, s.NewPhoto, s.NewThumbnail)
+	c.Photo, c.PhotoThumbnailFile, c.LegacyThumbnail = s.OldPhoto, s.OldThumbnail, s.OldLegacy
+}
+
 // SaveContactPhoto saves photo data to disk and writes the 48px thumbnail next to it.
 // Returns the photo filename and the thumbnail filename (both in photoDir).
 func SaveContactPhoto(photoData []byte, mediaType string, photoDir string) (string, string, error) {

@@ -4,8 +4,11 @@ import (
 	"database/sql"
 	"embed"
 	"fmt"
+	"io/fs"
 	"math"
 	"meerkat/logger"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/glebarez/sqlite"
@@ -97,6 +100,54 @@ func InitDB(dbPath string) (*gorm.DB, error) {
 	return db, nil
 }
 
+// legacyThumbnailDrop matches a migration that removes the old base64 thumbnail column
+// (contacts.photo_thumbnail, not photo_thumbnail_file).
+var legacyThumbnailDrop = regexp.MustCompile(`(?i)DROP\s+COLUMN\s+"?photo_thumbnail"?\s*(;|$)`)
+
+// checkLegacyThumbnailsExported refuses to run a pending migration that drops
+// contacts.photo_thumbnail while some row still has its thumbnail only there: the data
+// would be lost silently. services.ExportLegacyThumbnails moves it into files at startup,
+// but it runs after the migrations, so a version that drops the column must be preceded by
+// one that has run the export (see docs/development/backend.md).
+func checkLegacyThumbnailsExported(db *sql.DB, fsys fs.FS, current uint) error {
+	entries, err := fs.ReadDir(fsys, "migrations")
+	if err != nil {
+		return fmt.Errorf("failed to read migrations: %w", err)
+	}
+	drops := false
+	for _, e := range entries {
+		name := e.Name()
+		if !strings.HasSuffix(name, ".up.sql") {
+			continue
+		}
+		v, err := strconv.ParseUint(strings.SplitN(name, "_", 2)[0], 10, 32)
+		if err != nil || uint(v) <= current {
+			continue
+		}
+		body, err := fs.ReadFile(fsys, "migrations/"+name)
+		if err != nil {
+			return fmt.Errorf("failed to read migration %s: %w", name, err)
+		}
+		if legacyThumbnailDrop.Match(body) {
+			drops = true
+		}
+	}
+	if !drops {
+		return nil
+	}
+	var n int
+	err = db.QueryRow(`SELECT COUNT(*) FROM contacts WHERE photo_thumbnail LIKE 'data:%' AND photo_thumbnail_file = ''`).Scan(&n)
+	if err != nil {
+		// Without the columns there is nothing to lose.
+		return nil
+	}
+	if n > 0 {
+		return fmt.Errorf("refusing to drop contacts.photo_thumbnail: %d contacts have their thumbnail only there; "+
+			"start the previous Meerkat version once so that services.ExportLegacyThumbnails moves them into files, then upgrade", n)
+	}
+	return nil
+}
+
 // RunMigrations runs all pending database migrations
 func RunMigrations(db *sql.DB) error {
 	driver, err := withInstance(db, &sqliteConfig{})
@@ -128,6 +179,10 @@ func RunMigrations(db *sql.DB) error {
 		if err := m.Force(int(version)); err != nil {
 			return fmt.Errorf("failed to force version: %w", err)
 		}
+	}
+
+	if err := checkLegacyThumbnailsExported(db, migrationsFS, version); err != nil {
+		return err
 	}
 
 	// Run migrations

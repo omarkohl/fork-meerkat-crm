@@ -32,14 +32,30 @@ type collector interface {
 type Registry struct {
 	mu         sync.Mutex
 	collectors []collector
+	onScrape   []func()
+}
+
+// OnScrape registers fn to run once at the start of every Write, before any gauge function
+// is read. Gauges that share a data source load it here, so a scrape queries it once.
+func (r *Registry) OnScrape(fn func()) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.onScrape = append(r.onScrape, fn)
 }
 
 // NewRegistry returns an empty registry.
 func NewRegistry() *Registry { return &Registry{} }
 
+// add registers c. A name registered twice is a programming error (the second metric would
+// write a second, conflicting TYPE line), so it panics at start-up.
 func (r *Registry) add(c collector) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	for _, o := range r.collectors {
+		if o.name() == c.name() {
+			panic("metrics: duplicate registration of " + c.name())
+		}
+	}
 	r.collectors = append(r.collectors, c)
 }
 
@@ -47,7 +63,11 @@ func (r *Registry) add(c collector) {
 func (r *Registry) Write(w io.Writer) {
 	r.mu.Lock()
 	cs := append([]collector(nil), r.collectors...)
+	hooks := append([]func(){}, r.onScrape...)
 	r.mu.Unlock()
+	for _, fn := range hooks {
+		fn()
+	}
 	sort.Slice(cs, func(i, j int) bool { return cs[i].name() < cs[j].name() })
 	for _, c := range cs {
 		c.write(w)
@@ -291,7 +311,7 @@ var (
 	emailsSent = Default.Counter("meerkat_emails_total",
 		"Email sends by result (failure: every configured channel failed).", "result")
 	jobRuns = Default.Counter("meerkat_job_runs_total",
-		"Scheduled job runs by result.", "job", "result")
+		"Scheduled job runs by result (success, failure, or skipped by the rate limit or another instance's lock).", "job", "result")
 	outboxDead = Default.Counter("meerkat_outbox_dead_total",
 		"Outbox entries that gave up after the last try, by kind (webhook, email).", "kind")
 	defaultHTTP = NewHTTPMetrics(Default)
@@ -327,8 +347,26 @@ func EmailSent(ok bool) { emailsSent.Inc(result(ok)) }
 // OutboxDead counts one outbox entry that moved to the dead letter state.
 func OutboxDead(kind string) { outboxDead.Inc(kind) }
 
-// JobResult counts one run of a scheduled job.
-func JobResult(job string, ok bool) { jobRuns.Inc(job, result(ok)) }
+// Results of a scheduled job run. A run that the rate limit or another instance's lock
+// turned away is "skipped", not a success.
+const (
+	ResultSuccess = "success"
+	ResultFailure = "failure"
+	ResultSkipped = "skipped"
+)
+
+// JobResult counts one run of a scheduled job. job is the scheduler's job name
+// (reminders, calendar-sync, contact-sync, trash-purge, backup).
+func JobResult(job, res string) { jobRuns.Inc(job, res) }
+
+// JobDone counts a finished run: success when err is nil, otherwise failure.
+func JobDone(job string, err error) {
+	if err != nil {
+		JobResult(job, ResultFailure)
+		return
+	}
+	JobResult(job, ResultSuccess)
+}
 
 // DefaultHTTP returns the HTTP metrics of the default registry.
 func DefaultHTTP() *HTTPMetrics { return defaultHTTP }
