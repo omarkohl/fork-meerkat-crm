@@ -13,6 +13,7 @@ import (
 	"meerkat/middleware"
 	"meerkat/routes"
 	"meerkat/services"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -103,9 +104,7 @@ func main() {
 	}
 	// Use rate-limited versions to prevent duplicate work during rapid restarts
 	reminderTask := func() {
-		err := services.SendRemindersWithRateLimit(db, *cfg)
-		metrics.JobResult(services.JobReminders, err == nil)
-		if err != nil {
+		if err := services.SendRemindersWithRateLimit(db, *cfg); err != nil {
 			logger.Error().Err(err).Msg("Error sending reminders")
 		}
 	}
@@ -117,7 +116,7 @@ func main() {
 	}
 	trashPurgeTask := func() {
 		n, err := services.PurgeExpiredTrash(db, cfg.TrashRetentionDays, cfg.ProfilePhotoDir, time.Now())
-		metrics.JobResult(services.JobTrashPurge, err == nil)
+		metrics.JobDone(services.JobTrashPurge, err)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error purging expired trash")
 		} else if n > 0 {
@@ -137,7 +136,7 @@ func main() {
 	}
 	backupTask := func() {
 		b, err := services.RunScheduledBackup(db, cfg.BackupDir, cfg.ProfilePhotoDir, cfg.BackupRetentionCount, time.Now())
-		metrics.JobResult(services.JobBackup, err == nil)
+		metrics.JobDone(services.JobBackup, err)
 		if err != nil {
 			logger.Error().Err(err).Msg("Scheduled backup failed")
 			return
@@ -275,9 +274,15 @@ func main() {
 	}()
 
 	if metricsSrv != nil {
+		// Bind before serving: a typo or a busy port must stop the start, not leave the
+		// operator with metrics that silently never appear.
+		ln, err := net.Listen("tcp", metricsSrv.Addr)
+		if err != nil {
+			logger.Fatal().Err(err).Str("addr", metricsSrv.Addr).Msg("Failed to listen for metrics (METRICS_ADDR)")
+		}
 		go func() {
-			logger.Info().Str("addr", metricsSrv.Addr).Msg("Serving metrics on a separate listener")
-			if err := metricsSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Info().Str("addr", ln.Addr().String()).Msg("Serving metrics on a separate listener")
+			if err := metricsSrv.Serve(ln); err != nil && err != http.ErrServerClosed {
 				logger.Error().Err(err).Msg("Metrics listener failed")
 			}
 		}()
@@ -303,7 +308,9 @@ func main() {
 	}
 
 	if metricsSrv != nil {
-		if err := metricsSrv.Shutdown(ctx); err != nil {
+		metricsCtx, metricsCancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer metricsCancel()
+		if err := metricsSrv.Shutdown(metricsCtx); err != nil {
 			logger.Error().Err(err).Msg("Metrics listener forced to shutdown")
 		}
 	}

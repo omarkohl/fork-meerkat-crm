@@ -11,6 +11,7 @@ import (
 	mcarddav "meerkat/carddav"
 	"meerkat/config"
 	"meerkat/logger"
+	"meerkat/metrics"
 	"meerkat/models"
 	"meerkat/netguard"
 	"net/http"
@@ -1337,14 +1338,17 @@ func SyncContactsWithRateLimit(db *gorm.DB, cfg config.Config) {
 	acquired, err := acquireJobLock(db, models.JobNameContactSync, minInterval)
 	if err != nil {
 		logger.Error().Err(err).Msg("Error checking contact sync job lock")
+		metrics.JobResult(JobContactSync, metrics.ResultFailure)
 		return
 	}
 	if !acquired {
 		logger.Info().Msg("Skipping contact sync job - rate limited")
+		metrics.JobResult(JobContactSync, metrics.ResultSkipped)
 		return
 	}
 
 	SyncAllContactConnections(db, cfg)
+	metrics.JobResult(JobContactSync, metrics.ResultSuccess)
 
 	if err := releaseJobLock(db, models.JobNameContactSync, true); err != nil {
 		logger.Error().Err(err).Msg("Error releasing contact sync job lock")

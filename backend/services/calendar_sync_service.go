@@ -10,6 +10,7 @@ import (
 	"meerkat/config"
 	"meerkat/i18n"
 	"meerkat/logger"
+	"meerkat/metrics"
 	"meerkat/models"
 	"meerkat/netguard"
 	"net/http"
@@ -757,14 +758,17 @@ func SyncCalendarsWithRateLimit(db *gorm.DB, cfg config.Config) {
 	acquired, err := acquireJobLock(db, models.JobNameCalendarSync, minInterval)
 	if err != nil {
 		logger.Error().Err(err).Msg("Error checking calendar sync job lock")
+		metrics.JobResult(JobCalendarSync, metrics.ResultFailure)
 		return
 	}
 	if !acquired {
 		logger.Info().Msg("Skipping calendar sync job - rate limited")
+		metrics.JobResult(JobCalendarSync, metrics.ResultSkipped)
 		return
 	}
 
 	SyncAllCalendars(db, cfg)
+	metrics.JobResult(JobCalendarSync, metrics.ResultSuccess)
 
 	if err := releaseJobLock(db, models.JobNameCalendarSync, true); err != nil {
 		logger.Error().Err(err).Msg("Error releasing calendar sync job lock")
