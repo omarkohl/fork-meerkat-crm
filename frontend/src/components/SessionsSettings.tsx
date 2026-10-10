@@ -127,7 +127,9 @@ export default function SessionsSettings() {
                     color="error"
                     disabled={busyId !== null}
                     onClick={() => handleRevoke(session)}
-                    aria-label={t('sessions.revokeAria', { device: session.user_agent || session.ip })}
+                    aria-label={t('sessions.revokeAria', {
+                      device: session.user_agent || session.ip || t('sessions.unknownDevice'),
+                    })}
                   >
                     {t('sessions.revoke')}
                   </Button>

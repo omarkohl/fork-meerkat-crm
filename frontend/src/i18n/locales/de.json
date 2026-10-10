@@ -1031,7 +1031,31 @@
       "totp_recovery_used": "Wiederherstellungscode verwendet",
       "totp_recovery_regenerated": "Neue Wiederherstellungscodes erstellt",
       "admin_totp_reset": "Zwei-Faktor vom Admin zurückgesetzt"
-    }
+    },
+    "keys": {
+      "reason": "Grund",
+      "method": "Methode",
+      "format": "Format",
+      "token": "API-Token",
+      "backup": "Backup",
+      "user": "Benutzer",
+      "changed": "Geändert"
+    },
+    "values": {
+      "unknown_account": "Unbekanntes Konto",
+      "wrong_password": "Falsches Passwort",
+      "wrong_password_locked": "Falsches Passwort, Konto gesperrt",
+      "oidc": "Single Sign-On (OIDC)",
+      "csv": "CSV",
+      "vcf": "vCard",
+      "username": "Benutzername",
+      "email": "E-Mail",
+      "password": "Passwort",
+      "is_admin": "Admin-Rechte",
+      "wrong_2fa_code": "Falscher Zwei-Faktor-Code",
+      "wrong_2fa_code_locked": "Falscher Zwei-Faktor-Code, Konto gesperrt"
+    },
+    "userAgent": "Gerät"
   },
   "twoFactor": {
     "title": "Zwei-Faktor-Authentifizierung",

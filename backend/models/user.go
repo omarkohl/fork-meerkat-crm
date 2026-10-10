@@ -21,7 +21,7 @@ type User struct {
 	EnabledContactFields     []string   `gorm:"type:text;serializer:json" json:"enabled_contact_fields"`
 	OIDCSubject              *string    `gorm:"column:oidc_subject"`
 	OIDCProvider             *string    `gorm:"column:oidc_provider"`
-	TokenVersion             int        `gorm:"not null;default:0" json:"-"`
+	TokenVersion             int        `gorm:"->;not null;default:0" json:"-"` // read-only: Save() must never write a stale copy back; services.RevokeAllSessions raises it
 	// Two-factor (TOTP). The secret is encrypted with the credential key; LastStep is the
 	// last accepted 30-second step (replay protection).
 	TOTPSecret   string `gorm:"column:totp_secret;not null;default:''" json:"-"`

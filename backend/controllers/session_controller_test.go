@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -122,6 +123,8 @@ func TestFailedLoginsAreAuditedWithoutWhatWasTyped(t *testing.T) {
 
 	failed := e.events(models.AuditLoginFailed)
 	require.Len(t, failed, 2)
+	assert.Equal(t, "reason:wrong_password", failed[0].Detail)
+	assert.Equal(t, "reason:unknown_account", failed[1].Detail)
 	require.NotNil(t, failed[0].UserID)
 	assert.Equal(t, u.ID, *failed[0].UserID)
 	assert.Nil(t, failed[1].UserID, "unknown account")
@@ -282,6 +285,50 @@ func TestDeletingAUserRemovesTheirSessionsButKeepsTheAuditTrail(t *testing.T) {
 	require.Len(t, logs, 2)
 	assert.Equal(t, "victim", logs[0].Username, "the old entry keeps the name")
 	assert.Equal(t, models.AuditAdminUserDeleted, logs[1].Event)
-	assert.Contains(t, logs[1].Detail, "victim")
+	assert.Equal(t, fmt.Sprintf("user:victim#%d", victim.ID), logs[1].Detail)
 	assert.Equal(t, admin.ID, *logs[1].UserID)
+}
+
+// The new password and the end of the sessions are one change: when the sessions cannot be
+// revoked, the request fails and the old password still works.
+func TestPasswordResetIsAllOrNothing(t *testing.T) {
+	e := newSessionEnv(t)
+	u := e.user(t, "alice")
+	hash := services.HashPasswordResetToken("reset-token-value")
+	require.NoError(t, e.db.Model(&u).Updates(map[string]any{"password_reset_token_hash": hash, "password_reset_expires_at": time.Now().Add(time.Hour)}).Error)
+	require.NoError(t, e.db.Exec("DROP TABLE sessions").Error)
+
+	w := e.do("POST", "/password-reset/confirm", "", map[string]string{"token": "reset-token-value", "password": strongPasswordAlt})
+	assert.Equal(t, http.StatusInternalServerError, w.Code, w.Body.String())
+
+	var after models.User
+	require.NoError(t, e.db.First(&after, u.ID).Error)
+	assert.Equal(t, u.Password, after.Password, "the password did not change")
+	assert.NotNil(t, after.PasswordResetTokenHash, "the reset token is still usable")
+}
+
+func TestAdminUserUpdateAuditDetailIsStructured(t *testing.T) {
+	db, router := setupRouter()
+	require.NoError(t, db.AutoMigrate(&models.AuditLog{}, &models.Session{}))
+	var admin models.User
+	require.NoError(t, db.First(&admin).Error)
+	require.NoError(t, db.Model(&admin).Update("is_admin", true).Error)
+	target := models.User{Username: "target", Email: "t@example.com", Password: "x"}
+	require.NoError(t, db.Create(&target).Error)
+	require.NoError(t, db.Create(&models.Session{UserID: target.ID, PublicID: "t1", ExpiresAt: time.Now().Add(time.Hour)}).Error)
+	router.PATCH("/admin/users/:id", middleware.ValidateJSONMiddleware(&models.AdminUserUpdateInput{}), UpdateUser)
+
+	body := `{"email":"new@example.com","password":"` + strongPasswordAlt + `"}`
+	req := httptest.NewRequest("PATCH", fmt.Sprintf("/admin/users/%d", target.ID), strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+
+	var entry models.AuditLog
+	require.NoError(t, db.Where("event = ?", models.AuditAdminUserUpdated).First(&entry).Error)
+	assert.Equal(t, fmt.Sprintf("user:target#%d;changed:email,password", target.ID), entry.Detail)
+	assert.NotContains(t, entry.Detail, strongPasswordAlt)
+	live, _ := services.ListSessions(db, target.ID)
+	assert.Empty(t, live, "a password set by an admin ends the sessions")
 }

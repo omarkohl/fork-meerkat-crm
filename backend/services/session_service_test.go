@@ -6,6 +6,7 @@ import (
 
 	"meerkat/config"
 	"meerkat/models"
+	"meerkat/session"
 
 	"github.com/glebarez/sqlite"
 	"github.com/golang-jwt/jwt/v5"
@@ -68,19 +69,25 @@ func TestIssueSessionTruncatesLongUserAgents(t *testing.T) {
 	assert.LessOrEqual(t, len(s.UserAgent), 255)
 }
 
+// sessionActive is what the auth middleware asks, through the shared package.
+func sessionActive(db *gorm.DB, userID uint, publicID string) bool {
+	_, err := session.Find(db, userID, publicID)
+	return err == nil
+}
+
 func TestCheckSession(t *testing.T) {
 	db, a, b := sessionTestDB(t)
 	token, _ := IssueSession(db, a, sessionCfg, "", "")
 	sid := claimsOf(t, token)["sid"].(string)
 
-	assert.True(t, SessionActive(db, a.ID, sid))
-	assert.False(t, SessionActive(db, b.ID, sid), "another user's id never matches")
-	assert.False(t, SessionActive(db, a.ID, "nope"))
+	assert.True(t, sessionActive(db, a.ID, sid))
+	assert.False(t, sessionActive(db, b.ID, sid), "another user's id never matches")
+	assert.False(t, sessionActive(db, a.ID, "nope"))
 
 	ok, err := RevokeSession(db, a.ID, sid)
 	require.NoError(t, err)
 	assert.True(t, ok)
-	assert.False(t, SessionActive(db, a.ID, sid))
+	assert.False(t, sessionActive(db, a.ID, sid))
 
 	ok, _ = RevokeSession(db, a.ID, sid)
 	assert.False(t, ok, "already revoked")
@@ -91,27 +98,9 @@ func TestExpiredSessionIsNotActive(t *testing.T) {
 	token, _ := IssueSession(db, a, sessionCfg, "", "")
 	sid := claimsOf(t, token)["sid"].(string)
 	require.NoError(t, db.Model(&models.Session{}).Where("public_id = ?", sid).Update("expires_at", time.Now().Add(-time.Minute)).Error)
-	assert.False(t, SessionActive(db, a.ID, sid))
+	assert.False(t, sessionActive(db, a.ID, sid))
 	list, _ := ListSessions(db, a.ID)
 	assert.Empty(t, list)
-}
-
-func TestTouchSessionIsThrottled(t *testing.T) {
-	db, a, _ := sessionTestDB(t)
-	token, _ := IssueSession(db, a, sessionCfg, "", "")
-	sid := claimsOf(t, token)["sid"].(string)
-	old := time.Now().Add(-time.Hour)
-	require.NoError(t, db.Model(&models.Session{}).Where("public_id = ?", sid).Update("last_seen_at", old).Error)
-
-	TouchSession(db, sid)
-	var s models.Session
-	require.NoError(t, db.Where("public_id = ?", sid).First(&s).Error)
-	assert.WithinDuration(t, time.Now(), s.LastSeenAt, time.Minute)
-
-	seen := s.LastSeenAt
-	TouchSession(db, sid) // within a minute: no write
-	require.NoError(t, db.Where("public_id = ?", sid).First(&s).Error)
-	assert.True(t, seen.Equal(s.LastSeenAt))
 }
 
 func TestListSessionsIsPerUserAndNewestFirst(t *testing.T) {
@@ -148,7 +137,7 @@ func TestSignOutEverywhereBumpsTheVersionAndRevokesEverySession(t *testing.T) {
 	var gotB models.User
 	require.NoError(t, db.First(&gotB, b.ID).Error)
 	assert.Equal(t, 0, gotB.TokenVersion)
-	assert.True(t, SessionActive(db, b.ID, claimsOf(t, other)["sid"].(string)))
+	assert.True(t, sessionActive(db, b.ID, claimsOf(t, other)["sid"].(string)))
 
 	// A token issued afterwards carries the new version
 	token, _ := IssueSession(db, got, sessionCfg, "", "")
@@ -211,4 +200,29 @@ func TestWriteAuditNeverFails(t *testing.T) {
 	// A database without the table: logged, not a panic
 	broken, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	assert.NotPanics(t, func() { WriteAudit(broken, models.AuditLog{Event: models.AuditLogin}) })
+}
+
+// token_version is read-only for gorm: a Save() of a user loaded earlier must not undo a
+// "sign out everywhere" that happened in between.
+func TestSavingAStaleUserDoesNotRollBackTheTokenVersion(t *testing.T) {
+	db, a, _ := sessionTestDB(t)
+	var stale models.User
+	require.NoError(t, db.First(&stale, a.ID).Error)
+
+	require.NoError(t, RevokeAllSessions(db, a.ID))
+
+	stale.Language = "de"
+	require.NoError(t, db.Save(&stale).Error)
+
+	var got models.User
+	require.NoError(t, db.First(&got, a.ID).Error)
+	assert.Equal(t, 1, got.TokenVersion)
+	assert.Equal(t, "de", got.Language)
+
+	// Creating a user cannot set it either
+	created := models.User{Username: "c", Email: "c@example.com", Password: "x", TokenVersion: 7}
+	require.NoError(t, db.Create(&created).Error)
+	var reloaded models.User
+	require.NoError(t, db.First(&reloaded, created.ID).Error)
+	assert.Equal(t, 0, reloaded.TokenVersion)
 }

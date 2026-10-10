@@ -1,12 +1,21 @@
 package controllers
 
 import (
+	"strings"
+
 	"meerkat/models"
 	"meerkat/services"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
+
+// Audit details are machine-readable, not English: ";"-separated "key:value" segments that the
+// admin page translates (frontend AuditLogPage). auditValue keeps a free-text value (a token
+// or file name) from breaking that format.
+func auditValue(s string) string {
+	return strings.ReplaceAll(s, ";", ",")
+}
 
 func usernameOf(db *gorm.DB, userID uint) string {
 	var name string

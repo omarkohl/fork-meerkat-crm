@@ -1031,7 +1031,31 @@
       "totp_recovery_used": "Recovery code used",
       "totp_recovery_regenerated": "New recovery codes created",
       "admin_totp_reset": "Two-factor reset by admin"
-    }
+    },
+    "keys": {
+      "reason": "Reason",
+      "method": "Method",
+      "format": "Format",
+      "token": "API token",
+      "backup": "Backup",
+      "user": "User",
+      "changed": "Changed"
+    },
+    "values": {
+      "unknown_account": "Unknown account",
+      "wrong_password": "Wrong password",
+      "wrong_password_locked": "Wrong password, account locked",
+      "oidc": "Single sign-on (OIDC)",
+      "csv": "CSV",
+      "vcf": "vCard",
+      "username": "Username",
+      "email": "E-mail",
+      "password": "Password",
+      "is_admin": "Admin rights",
+      "wrong_2fa_code": "Wrong two-factor code",
+      "wrong_2fa_code_locked": "Wrong two-factor code, account locked"
+    },
+    "userAgent": "Device"
   },
   "twoFactor": {
     "title": "Two-factor authentication",

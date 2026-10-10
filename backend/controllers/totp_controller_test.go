@@ -111,7 +111,7 @@ func TestEnrolmentAndLoginRequireTheSecondStep(t *testing.T) {
 	assert.Nil(t, cookie(w, "auth_token"))
 	failed := e.events(models.AuditLoginFailed)
 	require.NotEmpty(t, failed)
-	assert.Equal(t, "wrong 2fa code", failed[len(failed)-1].Detail)
+	assert.Equal(t, "reason:wrong_2fa_code", failed[len(failed)-1].Detail)
 	assert.Equal(t, u.ID, *failed[len(failed)-1].UserID)
 
 	// right code

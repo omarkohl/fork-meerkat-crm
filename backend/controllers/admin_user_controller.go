@@ -246,7 +246,16 @@ func UpdateUser(c *gin.Context) {
 		user.IsAdmin = *input.IsAdmin
 	}
 
-	if err := db.Save(&user).Error; err != nil {
+	// A new password set by an admin ends the user's sessions in the same change.
+	if err := db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Save(&user).Error; err != nil {
+			return err
+		}
+		if input.Password != nil {
+			return services.RevokeAllSessions(tx, user.ID)
+		}
+		return nil
+	}); err != nil {
 		log.Error().Err(err).Uint("user_id", user.ID).Msg("Failed to update user")
 		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
 			apperrors.AbortWithError(c, apperrors.ErrAlreadyExists("User").WithDetails("field", "username or email"))
@@ -256,13 +265,7 @@ func UpdateUser(c *gin.Context) {
 		return
 	}
 
-	// A new password set by an admin ends the user's sessions.
-	if input.Password != nil {
-		if err := services.RevokeAllSessions(db, user.ID); err != nil {
-			log.Error().Err(err).Uint("user_id", user.ID).Msg("Failed to revoke sessions after admin password change")
-		}
-	}
-	audit(c, db, models.AuditAdminUserUpdated, fmt.Sprintf("user: %s (id %d), changed: %s", user.Username, user.ID, strings.Join(changed, ", ")))
+	audit(c, db, models.AuditAdminUserUpdated, fmt.Sprintf("user:%s#%d;changed:%s", auditValue(user.Username), user.ID, strings.Join(changed, ",")))
 
 	c.JSON(http.StatusOK, models.AdminUserResponse{
 		ID:         user.ID,
@@ -433,6 +436,6 @@ func DeleteUser(c *gin.Context) {
 		return
 	}
 
-	audit(c, db, models.AuditAdminUserDeleted, fmt.Sprintf("user: %s (id %d)", user.Username, id))
+	audit(c, db, models.AuditAdminUserDeleted, fmt.Sprintf("user:%s#%d", auditValue(user.Username), id))
 	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }

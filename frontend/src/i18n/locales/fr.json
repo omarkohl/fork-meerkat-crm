@@ -1031,7 +1031,31 @@
       "totp_recovery_used": "Code de récupération utilisé",
       "totp_recovery_regenerated": "Nouveaux codes de récupération créés",
       "admin_totp_reset": "Double authentification réinitialisée par un administrateur"
-    }
+    },
+    "keys": {
+      "reason": "Motif",
+      "method": "Méthode",
+      "format": "Format",
+      "token": "Jeton d'API",
+      "backup": "Sauvegarde",
+      "user": "Utilisateur",
+      "changed": "Modifié"
+    },
+    "values": {
+      "unknown_account": "Compte inconnu",
+      "wrong_password": "Mot de passe incorrect",
+      "wrong_password_locked": "Mot de passe incorrect, compte verrouillé",
+      "oidc": "Authentification unique (OIDC)",
+      "csv": "CSV",
+      "vcf": "vCard",
+      "username": "Nom d'utilisateur",
+      "email": "E-mail",
+      "password": "Mot de passe",
+      "is_admin": "Droits d'administrateur",
+      "wrong_2fa_code": "Code de double authentification incorrect",
+      "wrong_2fa_code_locked": "Code de double authentification incorrect, compte verrouillé"
+    },
+    "userAgent": "Appareil"
   },
   "twoFactor": {
     "title": "Authentification à deux facteurs",

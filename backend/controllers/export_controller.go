@@ -27,8 +27,6 @@ func ExportData(c *gin.Context) {
 		return
 	}
 
-	audit(c, db, models.AuditExport, "csv")
-
 	// Fetch user to get custom field names
 	var user models.User
 	if err := db.First(&user, userID).Error; err != nil {
@@ -323,6 +321,9 @@ func ExportData(c *gin.Context) {
 	// Generate filename with timestamp
 	filename := fmt.Sprintf("meerkat-export-%s.csv", time.Now().Format("2006-01-02"))
 
+	// Everything loaded: the export is going out
+	audit(c, db, models.AuditExport, "format:csv")
+
 	// Set headers for file download
 	c.Header("Content-Description", "File Transfer")
 	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
@@ -349,8 +350,6 @@ func ExportContactsAsVCF(c *gin.Context, photoDir string) {
 		return
 	}
 
-	audit(c, db, models.AuditExport, "vcf")
-
 	// Fetch all user contacts
 	var contacts []models.Contact
 	if err := db.Where("user_id = ?", userID).
@@ -376,6 +375,9 @@ func ExportContactsAsVCF(c *gin.Context, photoDir string) {
 
 	// Generate filename with timestamp
 	filename := fmt.Sprintf("meerkat-contacts-%s.vcf", time.Now().Format("2006-01-02"))
+
+	// Everything loaded: the export is going out
+	audit(c, db, models.AuditExport, "format:vcf")
 
 	// Set headers for file download
 	c.Header("Content-Description", "File Transfer")

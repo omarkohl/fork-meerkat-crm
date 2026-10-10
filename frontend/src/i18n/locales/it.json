@@ -1031,7 +1031,31 @@
       "totp_recovery_used": "Codice di recupero usato",
       "totp_recovery_regenerated": "Nuovi codici di recupero creati",
       "admin_totp_reset": "Due fattori reimpostati da un amministratore"
-    }
+    },
+    "keys": {
+      "reason": "Motivo",
+      "method": "Metodo",
+      "format": "Formato",
+      "token": "Token API",
+      "backup": "Backup",
+      "user": "Utente",
+      "changed": "Modificato"
+    },
+    "values": {
+      "unknown_account": "Account sconosciuto",
+      "wrong_password": "Password errata",
+      "wrong_password_locked": "Password errata, account bloccato",
+      "oidc": "Single sign-on (OIDC)",
+      "csv": "CSV",
+      "vcf": "vCard",
+      "username": "Nome utente",
+      "email": "E-mail",
+      "password": "Password",
+      "is_admin": "Diritti di amministratore",
+      "wrong_2fa_code": "Codice a due fattori errato",
+      "wrong_2fa_code_locked": "Codice a due fattori errato, account bloccato"
+    },
+    "userAgent": "Dispositivo"
   },
   "twoFactor": {
     "title": "Autenticazione a due fattori",

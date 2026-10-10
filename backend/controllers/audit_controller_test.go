@@ -114,7 +114,8 @@ func TestSecurityRelevantActionsAreAudited(t *testing.T) {
 		assert.NotContains(t, g.Detail, "meerkat_")
 	}
 	assert.Equal(t, []string{models.AuditAPITokenCreated, models.AuditAPITokenRevoked, models.AuditICSFeedCreated, models.AuditICSFeedRevoked}, events)
-	assert.Equal(t, "ci", got[0].Detail[len("token: "):])
+	assert.Equal(t, "token:ci", got[0].Detail)
+	assert.Equal(t, "token:ci", got[1].Detail)
 }
 
 func TestPurgedAuditEntriesKeepOtherYears(t *testing.T) {
@@ -140,7 +141,7 @@ func TestExportsAreAudited(t *testing.T) {
 	var got []models.AuditLog
 	require.NoError(t, db.Order("id").Find(&got).Error)
 	require.Len(t, got, 2)
-	assert.Equal(t, []string{"csv", "vcf"}, []string{got[0].Detail, got[1].Detail})
+	assert.Equal(t, []string{"format:csv", "format:vcf"}, []string{got[0].Detail, got[1].Detail})
 	assert.Equal(t, models.AuditExport, got[0].Event)
 	assert.Equal(t, "tester", got[0].Username)
 }

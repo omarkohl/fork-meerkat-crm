@@ -259,6 +259,6 @@ func ResetUserTOTP(c *gin.Context) {
 		return
 	}
 	middleware.GetAccountRateLimiter().RecordSuccessfulLogin(totpLimiterKey(user.ID))
-	audit(c, db, models.AuditTOTPAdminReset, "user "+user.Username)
+	audit(c, db, models.AuditTOTPAdminReset, fmt.Sprintf("user:%s#%d", auditValue(user.Username), user.ID))
 	c.JSON(http.StatusOK, gin.H{"message": "Two-factor authentication reset"})
 }
