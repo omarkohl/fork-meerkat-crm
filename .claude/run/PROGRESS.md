@@ -2,7 +2,7 @@
 
 ## Next step
 
-7. `gocron` v1 to v2.
+8. ICS feed export.
 
 ## Stack
 
@@ -12,7 +12,8 @@
 - 3: `first-sprint/03-frontend-ci-gates`, PR #6 (base `first-sprint/02-golangci-lint`)
 - 4: `first-sprint/04-dependabot-govulncheck`, PR #7 (base `first-sprint/03-frontend-ci-gates`)
 - 5: `first-sprint/05-replace-nfnt-resize`, PR #8 (base `first-sprint/04-dependabot-govulncheck`)
-- 6: `first-sprint/06-jwt-v5`, PR pending (base `first-sprint/05-replace-nfnt-resize`)
+- 6: `first-sprint/06-jwt-v5`, PR #9 (base `first-sprint/05-replace-nfnt-resize`)
+- 7: `first-sprint/07-gocron-v2`, PR pending (base `first-sprint/06-jwt-v5`)
 
 ## Log
 
@@ -59,8 +60,23 @@
   `ErrTokenMalformed`, `ErrSignatureInvalid` are the same in v5. `go mod tidy`,
   `golangci-lint` (0 issues), `make precommit` and `make test-e2e` (28, login included)
   green.
+- Step 7 (gocron v2): scheduling lived inline in `main.go` and was untestable, so it
+  moved first (on v1) into `services/scheduler.go` (`NewScheduler`, `Start`, `Stop`,
+  `RunAll`, `NextRuns`; library types stay inside). `services/scheduler_test.go` pins:
+  four named jobs, reminders daily at `REMINDER_TIME` in `REMINDER_TIMEZONE`, 5 min / N h
+  intervals, interval jobs run once at start while the reminder job does not, `RunAll`,
+  clean `Stop`. Green on v1 (also with `-race`), then migrated to v2.22.0 with the tests
+  unchanged apart from the constructor now returning an error. `main.go` shrank.
+  `golangci-lint` 0 issues, `make precommit` and `make test-e2e` (28) green.
 
 ## Decisions
+
+- Step 7: v1 ran interval jobs immediately at start (found by the characterisation
+  test); v2's `DurationJob` waits a full interval by default, so `WithStartImmediately`
+  is set on those three jobs to keep behaviour. main still also fires the reminder,
+  calendar and contact tasks once at startup, as before (rate-limited services). The
+  `HH:MM` reminder time is parsed with `Sscanf` (config already validates it). No
+  singleton mode, as in v1. `Stop` now uses `Shutdown` with a 5 s stop timeout (v2's default is 10 s, as long as Docker's grace period while HTTP is still serving); a timeout is logged as a warning. `RunAll`/`NextRuns` are test-only helpers (`services/scheduler_export_test.go`).
 
 - Step 6: the only issuer (`services/user_service.go`) signs HS256 and always sets `exp`,
   so the parser is tightened with `WithValidMethods(["HS256"])` and
@@ -120,6 +136,9 @@
 
 ## Questions
 
+- The startup goroutines in `main.go` (`go reminderTask()` etc.) are not tracked during
+  shutdown, so the database can close under a running startup sync; pre-existing, not
+  covered by the scheduler's stop timeout.
 - `middleware/auth.go` still accepts `int`/`uint` `user_id` claim types that a JSON-decoded
   token can never contain (only `float64`); candidate for simplification, left alone.
 - Most Dockerfile base image tags float (`golang:alpine`, `node:lts-alpine`,
