@@ -198,6 +198,26 @@ func TestOIDCCallbackLogsInAndClearsCookies(t *testing.T) {
 	assert.Equal(t, "sub-42", *u.OIDCSubject)
 }
 
+// Single sign-on is the second factor: an account with TOTP enabled is not asked for a code.
+func TestOIDCCallbackIgnoresTwoFactor(t *testing.T) {
+	db, _ := setupRouter()
+	idp := newFakeIdP(t)
+	idp.claims = idp.idClaims("nonce-1", "sub-2fa", "sso2fa@example.com")
+	r, _ := oidcRouter(t, idp, db, nil)
+	callback := func() *httptest.ResponseRecorder {
+		return get(r, "/api/v1/auth/oidc/callback?state=state-1&code=c",
+			&http.Cookie{Name: "oidc_state", Value: "state-1"}, &http.Cookie{Name: "oidc_nonce", Value: "nonce-1"})
+	}
+	require.Equal(t, http.StatusFound, callback().Code) // provisions the account
+	require.NoError(t, db.Model(&models.User{}).Where("email = ?", "sso2fa@example.com").
+		Updates(map[string]any{"totp_enabled": true, "totp_secret": "x"}).Error)
+
+	w := callback()
+	require.Equal(t, http.StatusFound, w.Code)
+	assert.Equal(t, "/", w.Header().Get("Location"))
+	require.NotNil(t, cookie(w, "auth_token"))
+}
+
 func TestOIDCCallbackRejectsNonceMismatch(t *testing.T) {
 	db, _ := setupRouter()
 	idp := newFakeIdP(t)

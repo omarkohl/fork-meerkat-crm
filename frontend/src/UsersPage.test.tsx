@@ -6,6 +6,7 @@ import { SnackbarProvider } from './context/SnackbarContext';
 import UsersPage from './UsersPage';
 import * as adminApi from './api/admin';
 import * as auth from './auth';
+import * as twoFactorApi from './api/twoFactor';
 
 vi.mock('./api/admin', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./api/admin')>()),
@@ -20,6 +21,8 @@ vi.mock('./auth', async (importOriginal) => ({
   isAuthenticated: () => true,
   isAdmin: vi.fn(),
 }));
+
+vi.mock('./api/twoFactor', () => ({ resetUserTwoFactor: vi.fn() }));
 
 const status = (over: Partial<adminApi.SystemStatus> = {}): adminApi.SystemStatus => ({
   private_urls_allowed: true,
@@ -97,5 +100,47 @@ describe('UsersPage private URL banner', () => {
     expect(adminApi.ssrfBannerSignature(status({ user_count: 5 }))).toBe(
       adminApi.ssrfBannerSignature(status({ user_count: 4 })),
     );
+  });
+});
+
+describe('UsersPage two-factor reset', () => {
+  const user = (over: Record<string, unknown>) => ({
+    id: 1,
+    username: 'alice',
+    email: 'alice@example.com',
+    language: 'en',
+    is_admin: false,
+    created_at: '2030-01-01T00:00:00Z',
+    updated_at: '2030-01-01T00:00:00Z',
+    ...over,
+  });
+
+  beforeEach(async () => {
+    vi.resetAllMocks();
+    localStorage.clear();
+    vi.mocked(auth.isAdmin).mockReturnValue(true);
+    vi.mocked(adminApi.getSystemStatus).mockResolvedValue(status({ private_url_warning: false }));
+    await i18n.changeLanguage('en');
+  });
+
+  test('only users with two-factor get the badge and the reset button, and a reset asks first', async () => {
+    vi.mocked(adminApi.getUsers).mockResolvedValue({
+      users: [user({ id: 1, username: 'alice', two_factor_enabled: true }), user({ id: 2, username: 'bob' })],
+      total: 2,
+      page: 1,
+      limit: 25,
+    } as never);
+    vi.mocked(twoFactorApi.resetUserTwoFactor).mockResolvedValue();
+    renderPage();
+    expect(await screen.findByText('alice')).toBeInTheDocument();
+    expect(screen.getAllByText('2FA')).toHaveLength(1);
+    const buttons = screen.getAllByRole('button', { name: 'Reset two-factor' });
+    expect(buttons).toHaveLength(1);
+
+    fireEvent.click(buttons[0]);
+    expect(twoFactorApi.resetUserTwoFactor).not.toHaveBeenCalled();
+    fireEvent.click(await screen.findByRole('button', { name: 'Reset' }));
+    await waitFor(() => expect(twoFactorApi.resetUserTwoFactor).toHaveBeenCalledWith(1));
+    await waitFor(() => expect(screen.queryByText('2FA')).not.toBeInTheDocument());
   });
 });

@@ -11,6 +11,30 @@ const USER_INFO_KEY = 'user_info';
 export interface LoginResponse {
   language?: string;
   date_format?: string;
+  /** The password was right, but the account needs a code (or recovery code) as well. */
+  totpRequired?: boolean;
+}
+
+/** Second login step for accounts with two-factor authentication. */
+export interface SecondFactor {
+  code?: string;
+  recoveryCode?: string;
+}
+
+/** The code or recovery code was wrong. */
+export class InvalidSecondFactorError extends Error {
+  constructor() {
+    super('Invalid verification code');
+    this.name = 'InvalidSecondFactorError';
+  }
+}
+
+/** Too many failed attempts: the account is locked for a while. */
+export class LoginLockedError extends Error {
+  constructor() {
+    super('Account temporarily locked');
+    this.name = 'LoginLockedError';
+  }
 }
 
 export interface UserInfo {
@@ -19,19 +43,40 @@ export interface UserInfo {
   is_admin: boolean;
 }
 
-export async function loginUser(identifier: string, password: string): Promise<LoginResponse> {
+export async function loginUser(
+  identifier: string,
+  password: string,
+  secondFactor?: SecondFactor,
+): Promise<LoginResponse> {
   const response = await fetch(`${API_BASE_URL}/login`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     credentials: 'include', // Send and receive cookies
-    body: JSON.stringify({ identifier, password }),
+    body: JSON.stringify({
+      identifier,
+      password,
+      totp_code: secondFactor?.code || undefined,
+      recovery_code: secondFactor?.recoveryCode || undefined,
+    }),
   });
   if (!response.ok) {
+    if (response.status === 429) {
+      throw new LoginLockedError();
+    }
+    if (response.status === 401) {
+      const body = await response.json().catch(() => null);
+      if (body?.error?.code === 'INVALID_TOTP_CODE') {
+        throw new InvalidSecondFactorError();
+      }
+    }
     throw new Error('Login failed');
   }
   const data = await response.json();
+  if (data.totp_required) {
+    return { totpRequired: true };
+  }
 
   // Fetch user info and cache it (since we can't read the httpOnly cookie)
   await fetchAndCacheUserInfo();

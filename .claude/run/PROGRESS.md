@@ -2,7 +2,7 @@
 
 ## Next step
 
-15.
+16.
 
 ## Stack
 
@@ -20,6 +20,7 @@
 - 12: second-sprint/12-ssrf-switch (PR #27)
 - 13: second-sprint/13-security-headers
 - 14: second-sprint/14-sessions-audit (PR set by the orchestrator)
+- 15: second-sprint/15-totp (PR set by the orchestrator)
 
 ## Log
 
@@ -141,7 +142,11 @@
 
 - 14: migration 27: `users.token_version`, `sessions` (public_id = the JWT `sid` claim, user agent, IP, last_seen_at, expires_at, revoked_at), `audit_logs` (no foreign key; username copied). Logins (password and OIDC) go through `services.IssueSession`, tokens carry `sid` and `tv`. `AuthMiddleware` (one extra query for the token version, one for the session when `sid` is present) refuses revoked, expired and foreign sessions and a stale `tv`; `last_seen_at` is stamped at most once a minute. Tokens without `sid`/`tv` (issued before) still work at version 0 and die on "sign out everywhere". API: `GET /sessions`, `DELETE /sessions/:id`, `POST /sessions/revoke-all` (refused for API tokens), `GET /admin/audit-log` (event, username substring, pagination). Password change signs out the other browsers (and starts a new session for this one), password reset and an admin-set password sign out everywhere, logout revokes the session behind the cookie, admin delete removes the user's sessions. Audit events: login, login_failed, logout, password_changed/reset, session_revoked, sign_out_everywhere, export (csv/vcf), API token, ICS feed, backup create/download/delete, admin user update/delete, admin reminders. Failed login for an unknown account stores no identifier. `AUDIT_LOG_RETENTION_DAYS` (365, 0 = forever); the daily 03:30 trash task also purges ended sessions and old entries. UI: "Active sessions" card on the profile page, admin "Audit log" page (event and user filters, pagination), five locales. Tests: services (issue, revoke, touch throttle, purge), middleware (sid, tv, legacy), controllers (login/logout/revoke/isolation/sign-out-everywhere/password change/reset/delete/audit list), migration up/down, config, Vitest for both components, e2e `sessions.spec.ts`. `make precommit`, golangci-lint, `go test -race` and `make test-e2e` (46) pass. Prettier forced a reformat of `SettingsPage.tsx`.
 
+- 15: TOTP two-factor (RFC 6238, SHA-1, 6 digits, 30 s, one step of drift, hand-written with the standard library; no Go dependency). Migration 28: `users.totp_secret` (AES-GCM with the credential key, like CardDAV passwords), `totp_enabled`, `totp_last_step` (a code works once), table `recovery_codes` (sha256 hash, `used_at`). Enrolment is two steps: `POST /users/me/2fa/setup` (pending secret, returns key and otpauth URI) and `/enable` (needs a valid code, returns ten recovery codes once); `/disable` and `/recovery-codes` need password plus code or recovery code; `GET /users/me/2fa` status; `POST /admin/users/:id/2fa/reset` (signs the user out everywhere, audited); `two_factor_enabled` in the admin user list. Login: password alone on a 2FA account answers `200 {"totp_required": true}` with no cookie; the second request carries `totp_code` or `recovery_code`; a wrong code is `401 INVALID_TOTP_CODE`. Rate limiting reuses the account lockout: wrong codes count on the typed identifier and on a per-account key (`2fa:<id>`), so alternating username and email does not give more guesses, and asking for the code does not call `RecordSuccessfulLogin` (otherwise the password alone would reset a code-guessing lockout). OIDC logins never go through `LoginUser`, so they are exempt (test added); API tokens refuse the 2FA endpoints and are not affected. Audit events: totp_enabled, totp_disabled, totp_recovery_used, totp_recovery_regenerated, admin_totp_reset. UI: card on the settings page (QR code via the `qrcode` npm package rendered as an SVG data URI, which the CSP allows; key for typing; recovery codes dialog with copy), login second step with "use a recovery code", admin Users page badge and reset button, five locales. Tests: services (RFC vectors, window, replay, hashing, encryption), migration up/down, controllers (flow, lockout, replay, isolation, admin reset, disable, regenerate, OIDC exempt), Vitest (settings, login, auth, users) and e2e `two-factor.spec.ts` (TOTP computed with node crypto). `make precommit`, golangci-lint, `go test -race` and `make test-e2e` (47) pass. Prettier forced a reformat of `LoginPage.tsx` and `types/index.ts`.
+
 ## Decisions
+
+- Step 15: enabling two-factor does not sign out the other sessions (they were created with the password the owner holds; "sign out everywhere" is one click on the same page). Disabling and new recovery codes re-ask for the password plus a code, enabling does not need the password (the session is already authenticated and a pending secret has no effect until confirmed). The admin reset also ends the user's sessions, because the admin cannot verify who asked. Recovery codes are 10 x 50 bits, hashed with SHA-256 (not bcrypt: high entropy, and the lockout bounds guessing). Changing `JWT_SECRET_KEY` makes stored TOTP secrets undecryptable (same as CardDAV credentials); documented, recovery codes and the admin reset still work. SHA-1 is the algorithm because not every authenticator app supports the others.
 
 - Step 14: tokens from before the upgrade (no `sid`) are accepted so nobody is logged out by the update, which means such a token cannot be revoked one by one, only by "sign out everywhere" or when it expires. Sessions are a table (not only a token version) because listing and revoking single sessions needs rows. Audit rows of deleted accounts are kept until retention (security record); they hold the username, IP and user agent. The IP is `c.ClientIP()`, so behind a proxy it needs `TRUSTED_PROXIES`. Audit writes never fail a request (errors are logged). Not audited: contact/note changes (not security events), CardDAV/ICS fetches.
 - Step 13: enforcing, not report-only: production nginx already enforced a CSP (so report-only would have loosened it), the whole e2e suite passes under it, and report-only needs a report endpoint nobody reads. `style-src 'unsafe-inline'` stays (emotion injects style tags; a nonce is not possible with static nginx). COOP `same-origin` and CORP `same-origin` on the SPA, CORP `same-site` on the API (a SPA on a sibling subdomain can still show photos). The backend does not trust `X-Forwarded-Proto` for anything but HSTS.
@@ -166,6 +171,9 @@
   `contact.restored` payload is the contact, like `contact.created`.
 
 ## For review
+
+- Step 15: the login now answers `200 {"totp_required": true}` (not an error) for 2FA accounts, so the frontend 401 handler is not triggered; a client that ignores the body would think it logged in but has no cookie. The password check happens before the code, so a wrong password and a right password with a missing code are distinguishable (inherent to a two-step form).
+- Step 15: `LoginPage.tsx` and `types/index.ts` were reformatted by Prettier (the format check forced it); the `qrcode` package (1.5.4, MIT) is a new frontend dependency.
 
 - Step 14: the audit log stores IP addresses and user agents for the retention period (default 365 days); check that is acceptable for the instances you care about (`AUDIT_LOG_RETENTION_DAYS`).
 - Step 14: one extra indexed query per authenticated JWT request (session lookup) next to the user lookup.

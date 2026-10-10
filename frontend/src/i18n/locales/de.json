@@ -52,7 +52,21 @@
     "orSeparator": "oder",
     "oidcDenied": "Die SSO-Anmeldung wurde abgebrochen oder abgelehnt.",
     "oidcNoAccount": "Kein Konto für Ihre SSO-Identität gefunden. Kontaktieren Sie Ihren Administrator.",
-    "oidcError": "Bei der SSO-Anmeldung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut."
+    "oidcError": "Bei der SSO-Anmeldung ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
+    "twoFactor": {
+      "title": "Zwei-Faktor-Authentifizierung",
+      "description": "Gib den 6-stelligen Code aus deiner Authenticator-App ein.",
+      "code": "Authentifizierungscode",
+      "recoveryDescription": "Gib einen deiner Wiederherstellungscodes ein. Jeder Code funktioniert nur einmal.",
+      "recoveryCode": "Wiederherstellungscode",
+      "useRecovery": "Wiederherstellungscode verwenden",
+      "useApp": "Authenticator-App verwenden",
+      "verify": "Bestätigen",
+      "verifying": "Wird geprüft...",
+      "invalid": "Dieser Code ist ungültig. Prüfe den Code und versuche es erneut.",
+      "locked": "Zu viele Fehlversuche. Bitte versuche es später erneut.",
+      "back": "Zurück zur Anmeldung"
+    }
   },
   "passwordReset": {
     "title": "Passwort zurücksetzen",
@@ -945,7 +959,19 @@
     "deleteError": "Benutzer konnte nicht gelöscht werden",
     "triggerReminders": "Erinnerungs-E-Mails senden",
     "triggerRemindersSuccess": "Erinnerungs-E-Mails erfolgreich gesendet",
-    "triggerRemindersError": "Fehler beim Senden der Erinnerungs-E-Mails"
+    "triggerRemindersError": "Fehler beim Senden der Erinnerungs-E-Mails",
+    "twoFactor": {
+      "twoFactorChip": "2FA",
+      "resetTwoFactor": "Zwei-Faktor zurücksetzen",
+      "resetDialog": {
+        "title": "Zwei-Faktor-Authentifizierung zurücksetzen",
+        "message": "Zwei-Faktor-Authentifizierung für \"{{username}}\" ausschalten?",
+        "warning": "Der Benutzer wird überall abgemeldet und kann sich nur mit dem Passwort anmelden und die Funktion danach neu einrichten. Tu das nur, wenn du sicher bist, dass die Anfrage vom Kontoinhaber kommt.",
+        "confirm": "Zurücksetzen"
+      },
+      "resetSuccess": "Die Zwei-Faktor-Authentifizierung wurde zurückgesetzt.",
+      "resetError": "Zwei-Faktor-Authentifizierung konnte nicht zurückgesetzt werden"
+    }
   },
   "sessions": {
     "title": "Aktive Sitzungen",
@@ -999,7 +1025,58 @@
       "backup_deleted": "Backup gelöscht",
       "admin_user_updated": "Benutzer vom Admin geändert",
       "admin_user_deleted": "Benutzer vom Admin gelöscht",
-      "admin_reminders_triggered": "Erinnerungen vom Admin ausgelöst"
+      "admin_reminders_triggered": "Erinnerungen vom Admin ausgelöst",
+      "totp_enabled": "Zwei-Faktor eingeschaltet",
+      "totp_disabled": "Zwei-Faktor ausgeschaltet",
+      "totp_recovery_used": "Wiederherstellungscode verwendet",
+      "totp_recovery_regenerated": "Neue Wiederherstellungscodes erstellt",
+      "admin_totp_reset": "Zwei-Faktor vom Admin zurückgesetzt"
     }
+  },
+  "twoFactor": {
+    "title": "Zwei-Faktor-Authentifizierung",
+    "description": "Bei der Anmeldung zusätzlich zum Passwort einen Code aus einer Authenticator-App (oder einen Wiederherstellungscode) verlangen. Anmeldungen per Single Sign-on sind nicht betroffen.",
+    "loadError": "Der Status der Zwei-Faktor-Authentifizierung konnte nicht geladen werden.",
+    "statusOn": "Die Zwei-Faktor-Authentifizierung ist eingeschaltet.",
+    "statusOff": "Die Zwei-Faktor-Authentifizierung ist ausgeschaltet.",
+    "recoveryRemaining": "Unbenutzte Wiederherstellungscodes: {{remaining}}",
+    "enable": "Einschalten",
+    "disable": "Ausschalten",
+    "newCodes": "Neue Wiederherstellungscodes",
+    "setup": {
+      "title": "Zwei-Faktor-Authentifizierung einrichten",
+      "scan": "Scanne diesen QR-Code mit einer Authenticator-App (zum Beispiel Aegis, 2FAS, Google Authenticator oder Authy).",
+      "qrAlt": "QR-Code für die Authenticator-App",
+      "key": "Scannen nicht möglich? Gib diesen Schlüssel in der App ein:",
+      "code": "6-stelliger Code aus der App",
+      "confirm": "Einschalten",
+      "confirming": "Wird geprüft...",
+      "error": "Die Einrichtung konnte nicht gestartet werden.",
+      "invalid": "Dieser Code ist ungültig. Prüfe den Code und versuche es erneut."
+    },
+    "codes": {
+      "title": "Wiederherstellungscodes speichern",
+      "warning": "Bewahre diese Codes sicher auf, zum Beispiel in einem Passwortmanager. Jeder Code funktioniert nur einmal und ersetzt die App, falls du dein Handy verlierst. Sie werden nur jetzt angezeigt.",
+      "copy": "Codes kopieren",
+      "copied": "Wiederherstellungscodes kopiert.",
+      "done": "Ich habe die Codes gespeichert"
+    },
+    "confirm": {
+      "disableTitle": "Zwei-Faktor-Authentifizierung ausschalten",
+      "disableMessage": "Bestätige mit deinem Passwort und einem Code. Deine Wiederherstellungscodes werden gelöscht.",
+      "codesTitle": "Neue Wiederherstellungscodes erstellen",
+      "codesMessage": "Bestätige mit deinem Passwort und einem Code. Die alten Wiederherstellungscodes funktionieren dann nicht mehr.",
+      "password": "Aktuelles Passwort",
+      "code": "6-stelliger Code aus der App",
+      "recoveryCode": "Wiederherstellungscode",
+      "useRecovery": "Wiederherstellungscode verwenden",
+      "useApp": "Authenticator-App verwenden",
+      "disableSubmit": "Ausschalten",
+      "codesSubmit": "Neue Codes erstellen",
+      "wrongPassword": "Das Passwort ist falsch.",
+      "invalid": "Dieser Code ist ungültig. Prüfe den Code und versuche es erneut."
+    },
+    "disabledSuccess": "Die Zwei-Faktor-Authentifizierung ist ausgeschaltet.",
+    "actionError": "Die Aktion konnte nicht ausgeführt werden."
   }
 }

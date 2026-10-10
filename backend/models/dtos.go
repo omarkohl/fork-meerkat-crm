@@ -235,6 +235,21 @@ type AdminUserResponse struct {
 	IsAdmin    bool      `json:"is_admin"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
+	// TwoFactorEnabled tells an admin whether a reset is needed; never the secret.
+	TwoFactorEnabled bool `json:"two_factor_enabled"`
+}
+
+// TOTPCodeInput carries one authenticator code (enabling two-factor).
+type TOTPCodeInput struct {
+	Code string `json:"code" validate:"required,max=16"`
+}
+
+// TOTPConfirmInput re-authenticates a sensitive two-factor change: the password plus an
+// authenticator code or a recovery code.
+type TOTPConfirmInput struct {
+	Password     string `json:"password" validate:"required"`
+	Code         string `json:"code" validate:"omitempty,max=16"`
+	RecoveryCode string `json:"recovery_code" validate:"omitempty,max=32"`
 }
 
 // /users/me payload: standard user fields plus caller's UI preferences (custom field names and enabled contact fields)

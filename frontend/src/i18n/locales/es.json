@@ -52,7 +52,21 @@
     "orSeparator": "o",
     "oidcDenied": "El inicio de sesión SSO fue cancelado o denegado.",
     "oidcNoAccount": "No se encontró ninguna cuenta para tu identidad SSO. Contacta con tu administrador.",
-    "oidcError": "Se produjo un error durante el inicio de sesión SSO. Inténtalo de nuevo."
+    "oidcError": "Se produjo un error durante el inicio de sesión SSO. Inténtalo de nuevo.",
+    "twoFactor": {
+      "title": "Autenticación en dos pasos",
+      "description": "Introduce el código de 6 dígitos de tu aplicación de autenticación.",
+      "code": "Código de autenticación",
+      "recoveryDescription": "Introduce uno de tus códigos de recuperación. Cada código sirve una sola vez.",
+      "recoveryCode": "Código de recuperación",
+      "useRecovery": "Usar un código de recuperación",
+      "useApp": "Usar la aplicación de autenticación",
+      "verify": "Verificar",
+      "verifying": "Verificando...",
+      "invalid": "El código no es válido. Compruébalo e inténtalo de nuevo.",
+      "locked": "Demasiados intentos fallidos. Inténtalo de nuevo más tarde.",
+      "back": "Volver al inicio de sesión"
+    }
   },
   "passwordReset": {
     "title": "Restablecer Contraseña",
@@ -945,7 +959,19 @@
     "deleteError": "Error al eliminar el usuario",
     "triggerReminders": "Enviar Emails de Recordatorio",
     "triggerRemindersSuccess": "Emails de recordatorio enviados exitosamente",
-    "triggerRemindersError": "Error al enviar los emails de recordatorio"
+    "triggerRemindersError": "Error al enviar los emails de recordatorio",
+    "twoFactor": {
+      "twoFactorChip": "2FA",
+      "resetTwoFactor": "Restablecer dos pasos",
+      "resetDialog": {
+        "title": "Restablecer la autenticación en dos pasos",
+        "message": "¿Desactivar la autenticación en dos pasos de \"{{username}}\"?",
+        "warning": "El usuario cierra sesión en todas partes y puede iniciar sesión solo con la contraseña, y luego configurarla de nuevo. Hazlo solo si estás seguro de que la solicitud viene del titular de la cuenta.",
+        "confirm": "Restablecer"
+      },
+      "resetSuccess": "Se restableció la autenticación en dos pasos.",
+      "resetError": "No se pudo restablecer la autenticación en dos pasos"
+    }
   },
   "sessions": {
     "title": "Sesiones activas",
@@ -999,7 +1025,58 @@
       "backup_deleted": "Copia de seguridad eliminada",
       "admin_user_updated": "Usuario modificado por el admin",
       "admin_user_deleted": "Usuario eliminado por el admin",
-      "admin_reminders_triggered": "Recordatorios activados por el admin"
+      "admin_reminders_triggered": "Recordatorios activados por el admin",
+      "totp_enabled": "Dos pasos activados",
+      "totp_disabled": "Dos pasos desactivados",
+      "totp_recovery_used": "Código de recuperación usado",
+      "totp_recovery_regenerated": "Nuevos códigos de recuperación creados",
+      "admin_totp_reset": "Dos pasos restablecidos por un administrador"
     }
+  },
+  "twoFactor": {
+    "title": "Autenticación en dos pasos",
+    "description": "Pide un código de una aplicación de autenticación (o un código de recuperación) además de la contraseña al iniciar sesión. Los inicios de sesión con inicio de sesión único no se ven afectados.",
+    "loadError": "No se pudo cargar el estado de la autenticación en dos pasos.",
+    "statusOn": "La autenticación en dos pasos está activada.",
+    "statusOff": "La autenticación en dos pasos está desactivada.",
+    "recoveryRemaining": "Códigos de recuperación sin usar: {{remaining}}",
+    "enable": "Activar",
+    "disable": "Desactivar",
+    "newCodes": "Nuevos códigos de recuperación",
+    "setup": {
+      "title": "Configurar la autenticación en dos pasos",
+      "scan": "Escanea este código QR con una aplicación de autenticación (por ejemplo Aegis, 2FAS, Google Authenticator o Authy).",
+      "qrAlt": "Código QR para la aplicación de autenticación",
+      "key": "¿No puedes escanearlo? Introduce esta clave en la aplicación:",
+      "code": "Código de 6 dígitos de la aplicación",
+      "confirm": "Activar",
+      "confirming": "Comprobando...",
+      "error": "No se pudo iniciar la configuración.",
+      "invalid": "El código no es válido. Compruébalo e inténtalo de nuevo."
+    },
+    "codes": {
+      "title": "Guarda tus códigos de recuperación",
+      "warning": "Guarda estos códigos en un lugar seguro, por ejemplo en un gestor de contraseñas. Cada uno sirve una sola vez y sustituye a la aplicación si pierdes el teléfono. Solo se muestran ahora.",
+      "copy": "Copiar códigos",
+      "copied": "Códigos de recuperación copiados.",
+      "done": "He guardado los códigos"
+    },
+    "confirm": {
+      "disableTitle": "Desactivar la autenticación en dos pasos",
+      "disableMessage": "Confirma con tu contraseña y un código. Tus códigos de recuperación se eliminan.",
+      "codesTitle": "Crear nuevos códigos de recuperación",
+      "codesMessage": "Confirma con tu contraseña y un código. Los códigos de recuperación antiguos dejan de funcionar.",
+      "password": "Contraseña actual",
+      "code": "Código de 6 dígitos de la aplicación",
+      "recoveryCode": "Código de recuperación",
+      "useRecovery": "Usar un código de recuperación",
+      "useApp": "Usar la aplicación de autenticación",
+      "disableSubmit": "Desactivar",
+      "codesSubmit": "Crear nuevos códigos",
+      "wrongPassword": "La contraseña es incorrecta.",
+      "invalid": "El código no es válido. Compruébalo e inténtalo de nuevo."
+    },
+    "disabledSuccess": "La autenticación en dos pasos está desactivada.",
+    "actionError": "No se pudo completar la acción."
   }
 }

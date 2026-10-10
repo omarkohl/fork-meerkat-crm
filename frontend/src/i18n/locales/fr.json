@@ -52,7 +52,21 @@
     "orSeparator": "ou",
     "oidcDenied": "La connexion SSO a été annulée ou refusée.",
     "oidcNoAccount": "Aucun compte trouvé pour votre identité SSO. Contactez votre administrateur.",
-    "oidcError": "Une erreur s'est produite lors de la connexion SSO. Veuillez réessayer."
+    "oidcError": "Une erreur s'est produite lors de la connexion SSO. Veuillez réessayer.",
+    "twoFactor": {
+      "title": "Authentification à deux facteurs",
+      "description": "Saisissez le code à 6 chiffres de votre application d'authentification.",
+      "code": "Code d'authentification",
+      "recoveryDescription": "Saisissez l'un de vos codes de récupération. Chaque code ne fonctionne qu'une fois.",
+      "recoveryCode": "Code de récupération",
+      "useRecovery": "Utiliser un code de récupération",
+      "useApp": "Utiliser l'application d'authentification",
+      "verify": "Vérifier",
+      "verifying": "Vérification...",
+      "invalid": "Ce code n'est pas valide. Vérifiez-le et réessayez.",
+      "locked": "Trop de tentatives échouées. Réessayez plus tard.",
+      "back": "Retour à la connexion"
+    }
   },
   "passwordReset": {
     "title": "Réinitialiser le mot de passe",
@@ -945,7 +959,19 @@
     "deleteError": "Échec de la suppression de l'utilisateur",
     "triggerReminders": "Envoyer les e-mails de rappel",
     "triggerRemindersSuccess": "E-mails de rappel envoyés avec succès",
-    "triggerRemindersError": "Échec de l'envoi des e-mails de rappel"
+    "triggerRemindersError": "Échec de l'envoi des e-mails de rappel",
+    "twoFactor": {
+      "twoFactorChip": "2FA",
+      "resetTwoFactor": "Réinitialiser la double authentification",
+      "resetDialog": {
+        "title": "Réinitialiser l'authentification à deux facteurs",
+        "message": "Désactiver l'authentification à deux facteurs de « {{username}} » ?",
+        "warning": "L'utilisateur est déconnecté partout et peut se connecter avec le seul mot de passe, puis la configurer à nouveau. Ne le faites que si vous êtes sûr que la demande vient du titulaire du compte.",
+        "confirm": "Réinitialiser"
+      },
+      "resetSuccess": "L'authentification à deux facteurs a été réinitialisée.",
+      "resetError": "Impossible de réinitialiser l'authentification à deux facteurs"
+    }
   },
   "sessions": {
     "title": "Sessions actives",
@@ -999,7 +1025,58 @@
       "backup_deleted": "Sauvegarde supprimée",
       "admin_user_updated": "Utilisateur modifié par l'admin",
       "admin_user_deleted": "Utilisateur supprimé par l'admin",
-      "admin_reminders_triggered": "Rappels déclenchés par l'admin"
+      "admin_reminders_triggered": "Rappels déclenchés par l'admin",
+      "totp_enabled": "Double authentification activée",
+      "totp_disabled": "Double authentification désactivée",
+      "totp_recovery_used": "Code de récupération utilisé",
+      "totp_recovery_regenerated": "Nouveaux codes de récupération créés",
+      "admin_totp_reset": "Double authentification réinitialisée par un administrateur"
     }
+  },
+  "twoFactor": {
+    "title": "Authentification à deux facteurs",
+    "description": "Demander un code d'une application d'authentification (ou un code de récupération) en plus du mot de passe à la connexion. Les connexions par authentification unique ne sont pas concernées.",
+    "loadError": "Impossible de charger l'état de l'authentification à deux facteurs.",
+    "statusOn": "L'authentification à deux facteurs est activée.",
+    "statusOff": "L'authentification à deux facteurs est désactivée.",
+    "recoveryRemaining": "Codes de récupération non utilisés : {{remaining}}",
+    "enable": "Activer",
+    "disable": "Désactiver",
+    "newCodes": "Nouveaux codes de récupération",
+    "setup": {
+      "title": "Configurer l'authentification à deux facteurs",
+      "scan": "Scannez ce code QR avec une application d'authentification (par exemple Aegis, 2FAS, Google Authenticator ou Authy).",
+      "qrAlt": "Code QR pour l'application d'authentification",
+      "key": "Impossible de le scanner ? Saisissez cette clé dans l'application :",
+      "code": "Code à 6 chiffres de l'application",
+      "confirm": "Activer",
+      "confirming": "Vérification...",
+      "error": "Impossible de démarrer la configuration.",
+      "invalid": "Ce code n'est pas valide. Vérifiez-le et réessayez."
+    },
+    "codes": {
+      "title": "Enregistrez vos codes de récupération",
+      "warning": "Conservez ces codes en lieu sûr, par exemple dans un gestionnaire de mots de passe. Chacun ne fonctionne qu'une fois et remplace l'application si vous perdez votre téléphone. Ils ne sont affichés que maintenant.",
+      "copy": "Copier les codes",
+      "copied": "Codes de récupération copiés.",
+      "done": "J'ai enregistré les codes"
+    },
+    "confirm": {
+      "disableTitle": "Désactiver l'authentification à deux facteurs",
+      "disableMessage": "Confirmez avec votre mot de passe et un code. Vos codes de récupération sont supprimés.",
+      "codesTitle": "Créer de nouveaux codes de récupération",
+      "codesMessage": "Confirmez avec votre mot de passe et un code. Les anciens codes de récupération cessent de fonctionner.",
+      "password": "Mot de passe actuel",
+      "code": "Code à 6 chiffres de l'application",
+      "recoveryCode": "Code de récupération",
+      "useRecovery": "Utiliser un code de récupération",
+      "useApp": "Utiliser l'application d'authentification",
+      "disableSubmit": "Désactiver",
+      "codesSubmit": "Créer de nouveaux codes",
+      "wrongPassword": "Le mot de passe est incorrect.",
+      "invalid": "Ce code n'est pas valide. Vérifiez-le et réessayez."
+    },
+    "disabledSuccess": "L'authentification à deux facteurs est désactivée.",
+    "actionError": "Impossible de terminer l'action."
   }
 }

@@ -99,6 +99,8 @@ func ListUsers(c *gin.Context) {
 			IsAdmin:    user.IsAdmin,
 			CreatedAt:  user.CreatedAt,
 			UpdatedAt:  user.UpdatedAt,
+
+			TwoFactorEnabled: user.TOTPEnabled,
 		}
 	}
 
@@ -148,6 +150,8 @@ func GetUser(c *gin.Context) {
 		IsAdmin:    user.IsAdmin,
 		CreatedAt:  user.CreatedAt,
 		UpdatedAt:  user.UpdatedAt,
+
+		TwoFactorEnabled: user.TOTPEnabled,
 	})
 }
 
@@ -269,6 +273,8 @@ func UpdateUser(c *gin.Context) {
 		IsAdmin:    user.IsAdmin,
 		CreatedAt:  user.CreatedAt,
 		UpdatedAt:  user.UpdatedAt,
+
+		TwoFactorEnabled: user.TOTPEnabled,
 	})
 }
 
@@ -401,6 +407,15 @@ func DeleteUser(c *gin.Context) {
 			"oidc_subject":  nil,
 			"oidc_provider": nil,
 		}).Error; err != nil {
+			return err
+		}
+
+		// Two-factor: the secret and the recovery codes go with the account
+		if err := tx.Where("user_id = ?", userID).Delete(&models.RecoveryCode{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Unscoped().Model(&models.User{}).Where("id = ?", userID).
+			Updates(map[string]any{"totp_secret": "", "totp_enabled": false}).Error; err != nil {
 			return err
 		}
 

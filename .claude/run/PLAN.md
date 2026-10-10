@@ -87,7 +87,7 @@ context is above 200k at the end of a step, then start a new one. Reviewer is al
 - [x] 14. **Sessions and audit log**: list/revoke sessions (token version per user, "sign out
       everywhere"), audit log table (login, failed login, export, token/ICS/backup actions, admin
       actions) with retention, admin page with filter, i18n, tests.
-- [ ] 15. **TOTP two-factor**: enrol with QR and recovery codes, enforce at login, admin can reset,
+- [x] 15. **TOTP two-factor**: enrol with QR and recovery codes, enforce at login, admin can reset,
       rate-limited, secrets encrypted with the existing credential crypto, OIDC users exempt.
       Passkeys are a later step.
 - [ ] 16. **Search with SQLite FTS5**: contacts, notes, activities; triggers keep the index in
