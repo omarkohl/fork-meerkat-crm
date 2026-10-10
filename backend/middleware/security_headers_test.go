@@ -47,7 +47,9 @@ func TestHSTSOnlyOverHTTPS(t *testing.T) {
 
 	want := "max-age=31536000; includeSubDomains"
 	assert.Equal(t, want, headersFor(t, true, nil).Get("Strict-Transport-Security"), "COOKIE_SECURE says HTTPS")
-	assert.Equal(t, want, headersFor(t, false, func(r *http.Request) { r.Header.Set("X-Forwarded-Proto", "https") }).Get("Strict-Transport-Security"), "TLS-terminating proxy")
-	assert.Equal(t, want, headersFor(t, false, func(r *http.Request) { r.Header.Set("X-Forwarded-Proto", "HTTPS") }).Get("Strict-Transport-Security"))
-	assert.Equal(t, want, headersFor(t, false, func(r *http.Request) { r.TLS = &tls.ConnectionState{} }).Get("Strict-Transport-Security"), "direct TLS")
+	// Derived from the request (a header or TLS): no includeSubDomains
+	derived := "max-age=31536000"
+	assert.Equal(t, derived, headersFor(t, false, func(r *http.Request) { r.Header.Set("X-Forwarded-Proto", "https") }).Get("Strict-Transport-Security"), "TLS-terminating proxy")
+	assert.Equal(t, derived, headersFor(t, false, func(r *http.Request) { r.Header.Set("X-Forwarded-Proto", "HTTPS") }).Get("Strict-Transport-Security"))
+	assert.Equal(t, derived, headersFor(t, false, func(r *http.Request) { r.TLS = &tls.ConnectionState{} }).Get("Strict-Transport-Security"), "direct TLS")
 }
