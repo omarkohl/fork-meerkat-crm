@@ -68,7 +68,7 @@ context is above 200k at the end of a step, then start a new one. Reviewer is al
 - [x] 7. **Supply chain**: pin actions by SHA, align `docker/build-push-action`, pin Docker base
       tags, Trivy scan of the built image, SBOM and provenance on publish, build (no push) the image
       on PRs, build the docs on PRs touching `docs/**` (Jekyll via the workflow container).
-- [ ] 8. **Test infrastructure**: `go test -race` in CI, coverage for Go and Vitest uploaded as
+- [x] 8. **Test infrastructure**: `go test -race` in CI, coverage for Go and Vitest uploaded as
       artifact and printed in the job summary, migration test (all up, all down, up again on seeded
       data), Radicale CardDAV integration tests as a service container.
 - [ ] 9. **Fuzz and parser tests**: fuzz targets for the vCard mapper, CSV import, Monica import

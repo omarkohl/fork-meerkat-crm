@@ -2,7 +2,7 @@
 
 ## Next step
 
-8.
+9.
 
 ## Stack
 
@@ -12,6 +12,7 @@
 - 4: second-sprint/04-file-robustness (PR #19)
 - 5: second-sprint/05-ics-last-fetched (PR #20)
 - 6: second-sprint/06-api-reference (PR #21)
+- 7: second-sprint/07-supply-chain (PR #22)
 
 ## Log
 
@@ -72,6 +73,13 @@
   concurrency group is per PR (`pages-<ref>`) or `pages-deploy`; build job has `pages: read`; nginx base is
   `1.30-alpine` (1.29 is stale; existence not checkable from here, the proxy blocks Docker Hub); `.dockerignore`
   added to the build paths; publish cache scoped per image.
+- 8: Unit Tests workflow: Go runs with `-race -coverprofile` (passes locally; cgo is needed for `-race`, the runner
+  has gcc, the SQLite driver stays pure Go), Vitest with the new `test:coverage` script
+  (`@vitest/coverage-v8` 3.2.7, same as vitest; `yarn.lock` updated). Totals go to `$GITHUB_STEP_SUMMARY`, reports
+  are uploaded as artifacts (`go-coverage`, `frontend-coverage`). Local totals: Go 51.6%, frontend 17.1% lines.
+  New `TestMigrationsRoundTripOnSeededDatabase`: all up, seed 15 tables, all down (schema empty), all up, schema
+  compared (columns, fks, indexes): it passed at once, so no down migration needed fixing. New CI job
+  `CardDAV sync (Radicale)` runs `TestContactSync` with `MEERKAT_CARDDAV_IT=1`. Docs: `docs/development/testing.md`.
 
 ## Decisions
 
@@ -91,6 +99,8 @@
 
 ## For review
 
+- Step 8: Radicale runs via `docker run` after checkout, not as a `services:` container, because it needs `docker/radicale` mounted as config (service containers start before checkout). Image `tomsquest/docker-radicale:3.5.4.0` (also pinned in `docker-compose.carddav-test.yml`, was `latest`): the tag could not be checked against Docker Hub from here, and the job has never run. Fix the tag if the first CI run says it does not exist.
+- Step 8: the frontend coverage is low (17% of statements, only 9 test files; the UI is covered by Playwright). No threshold is enforced, numbers are informational.
 - Step 7: base image tags (`golang:1.26-alpine`, `alpine:3.22`, `nginx-unprivileged:1.30-alpine`) and the Trivy/docs/Docker workflows could not be tested here (no registry access, docker daemon unusable). The first PR run of `Docker build and scan` is the check: if a tag does not exist or Trivy finds fixable HIGH/CRITICAL issues in a base image, adjust the tag. Tags are minor-level, not digest-pinned (Dependabot keeps them current).
 - Step 7: the Trivy job is a required-looking check on every Docker-related PR and weekly; a new advisory in Alpine/nginx can turn it red without any code change.
 - Step 6: the test allowlist has two entries, both for the CardDAV server (`/carddav/*path`, `/.well-known/carddav`): WebDAV for CardDAV clients, documented in `docs/carddav.md`, not REST. Response shapes in the new doc sections are summarised from the handlers, not exhaustive.

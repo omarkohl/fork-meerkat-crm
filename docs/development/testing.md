@@ -15,6 +15,20 @@ cd backend
 go test ./...
 ```
 
+CI runs `go test -race -coverprofile=coverage.out ./...` (the race detector needs cgo and a C compiler; the SQLite driver itself is pure Go). Run the same locally to reproduce a race, and `go tool cover -func=coverage.out | tail -1` for the total.
+
+### Coverage
+
+The Unit Tests workflow prints the total coverage of the Go and Vitest suites in the job summary and uploads the full reports (`go-coverage`, `frontend-coverage`) as workflow artifacts for 14 days. No third-party service is involved. Locally: `cd frontend && yarn test:coverage` writes `frontend/coverage/`.
+
+### Migrations
+
+`TestMigrationsRoundTripOnSeededDatabase` applies all migrations, fills the main tables, rolls everything back, applies everything again and compares the schema (tables, columns, foreign keys, indexes) with the first run. Every new migration needs a working `down`, or this test fails. Add a row for a new table to `seedAllTables`.
+
+### CardDAV integration (Radicale)
+
+The contact sync tests also run against a real Radicale server when `MEERKAT_CARDDAV_IT=1` is set; CI does this in the `CardDAV sync (Radicale)` job. Locally: `docker compose -f docker-compose.carddav-test.yml up -d --wait radicale`, then `cd backend && MEERKAT_CARDDAV_IT=1 go test ./services/ -run TestContactSync -v`. The Radicale image tag is pinned in the compose file and in `unit-tests.yml`; change both together.
+
 ### Test Database
 
 Tests use an in-memory SQLite database that is auto-migrated before each test. No external dependencies required.

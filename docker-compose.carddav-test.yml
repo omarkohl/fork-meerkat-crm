@@ -27,7 +27,7 @@
 
 services:
   radicale:
-    image: tomsquest/docker-radicale:latest
+    image: tomsquest/docker-radicale:3.5.4.0
     container_name: meerkat-radicale-test
     volumes:
       - ./docker/radicale:/config:ro

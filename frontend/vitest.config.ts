@@ -10,6 +10,13 @@ export default defineConfig({
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
     // Node >= 22 ships its own experimental localStorage global, which is
     // undefined without --localstorage-file and shadows jsdom's working one
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/**/*.test.{ts,tsx}', 'src/setupTests.ts'],
+      reporter: ['text-summary', 'json-summary', 'html'],
+      reportsDirectory: 'coverage',
+    },
     pool: 'forks',
     poolOptions: {
       forks: {
