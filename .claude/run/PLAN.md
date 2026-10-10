@@ -39,7 +39,7 @@ Read first: `.claude/AUTONOMOUS-RUNS.md`, `README-developer.md`, `IMPROVEMENTS.m
       revive, bodyclose, sqlclosecheck), CI job, fix or justify findings.
 - [x] 3. **Frontend lint/format/type gates in CI (1.3-1.5)**: ESLint, `tsc --noEmit`
       and Prettier check (changed files) as CI jobs; add `gofmt` check.
-- [ ] 4. **Dependabot and govulncheck (3.1, 3.3)**: npm, github-actions, docker,
+- [x] 4. **Dependabot and govulncheck (3.1, 3.3)**: npm, github-actions, docker,
       bundler ecosystems with grouped minor/patch; `govulncheck` and npm audit job.
 - [ ] 5. **Replace `nfnt/resize` (6.4)** with `golang.org/x/image/draw`; photo tests
       prove output sizes unchanged.

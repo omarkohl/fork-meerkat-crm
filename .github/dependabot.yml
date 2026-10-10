@@ -4,3 +4,44 @@ updates:
     directory: "/backend"
     schedule:
       interval: "weekly"
+    groups:
+      go-minor-patch:
+        update-types: ["minor", "patch"]
+
+  # Covers yarn.lock too (Yarn classic is handled by the npm ecosystem).
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+    groups:
+      npm-minor-patch:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    groups:
+      actions-minor-patch:
+        update-types: ["minor", "patch"]
+
+  # Base images in the three Dockerfiles (root, backend, frontend).
+  - package-ecosystem: "docker"
+    directories:
+      - "/"
+      - "/backend"
+      - "/frontend"
+    schedule:
+      interval: "weekly"
+    groups:
+      docker-minor-patch:
+        update-types: ["minor", "patch"]
+
+  # Jekyll documentation site.
+  - package-ecosystem: "bundler"
+    directory: "/docs"
+    schedule:
+      interval: "weekly"
+    groups:
+      bundler-minor-patch:
+        update-types: ["minor", "patch"]

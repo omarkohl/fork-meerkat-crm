@@ -64,6 +64,7 @@
 - Deletions often clean up dependent entities manually (contacts remove reminders, notes, relationships, and activity links); mirror transaction patterns from [backend/controllers/contact_controller.go](backend/controllers/contact_controller.go).
 
 **Dependencies & Updates**
+- [.github/workflows/security.yml](.github/workflows/security.yml) runs `govulncheck` (reachable Go vulnerabilities) and `yarn audit --groups dependencies --level high` (production frontend deps) on push to main, on PRs, weekly and on demand. Both block. Build tooling such as `react-scripts` belongs in `devDependencies` so it is not audited as production code.
 
 - **Backend (Go modules)**
 	1. `cd backend && go mod tidy && go mod verify` to pull new indirect deps, drop unused modules, and confirm checksums.

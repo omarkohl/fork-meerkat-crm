@@ -1,0 +1,55 @@
+name: Security
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # New advisories appear without code changes; re-check weekly.
+    - cron: '17 5 * * 1'
+
+jobs:
+  govulncheck:
+    permissions:
+      contents: read
+    name: Backend (govulncheck)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      # Fails when a vulnerable function is actually reachable from our code.
+      - name: Run govulncheck
+        working-directory: backend
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./...
+
+  frontend-audit:
+    permissions:
+      contents: read
+    name: Frontend (yarn audit, production, high+)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Only runtime dependencies at high or critical severity fail the job;
+      # dev tooling and lower severities are left to Dependabot.
+      - name: Audit production dependencies
+        working-directory: frontend
+        run: yarn audit --groups dependencies --level high

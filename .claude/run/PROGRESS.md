@@ -2,14 +2,15 @@
 
 ## Next step
 
-4. Dependabot and govulncheck.
+5. Replace `nfnt/resize`.
 
 ## Stack
 
 <!-- step: branch, PR number (base) -->
 - 1: `first-sprint/01-sqlite-pragmas`, PR #4 (base `claude/workflow-clarification-kb7ca1`)
 - 2: `first-sprint/02-golangci-lint`, PR #5 (base `first-sprint/01-sqlite-pragmas`)
-- 3: `first-sprint/03-frontend-ci-gates`, PR pending (base `first-sprint/02-golangci-lint`)
+- 3: `first-sprint/03-frontend-ci-gates`, PR #6 (base `first-sprint/02-golangci-lint`)
+- 4: `first-sprint/04-dependabot-govulncheck`, PR pending (base `first-sprint/03-frontend-ci-gates`)
 
 ## Log
 
@@ -34,8 +35,23 @@
   (single quotes, width 120); `make format`/`format-check` now cover frontend files
   changed since BASE. Verified a badly formatted new file fails `make format-check`.
   `make precommit` green.
+- Step 4 (Dependabot, govulncheck): `.github/dependabot.yml` now covers gomod, npm
+  (`/frontend`, also reads yarn.lock), github-actions, docker (`/`, `/backend`,
+  `/frontend`) and bundler (`/docs`), each weekly with minor/patch grouped. New
+  `.github/workflows/security.yml` (push to main, PRs, weekly, manual) with `govulncheck`
+  and `yarn audit`. YAML parses. govulncheck could not run here (the sandbox proxy blocks
+  vuln.go.dev), CI is the first real run. `react-scripts` moved to devDependencies;
+  `yarn audit --groups dependencies --level high` then reports 0 (it was 2 critical and
+  22 high, all via react-scripts). `yarn.lock` unchanged, `--frozen-lockfile` passes.
 
 ## Decisions
+
+- Step 4: both security jobs block. govulncheck is pinned `@v1.8.0` and run via `go run`
+  (reports only reachable vulnerabilities; v1.1.4 failed locally with "requires newer Go
+  version"). The yarn audit covers production dependencies at high severity or above;
+  `react-scripts` (build tooling) moved to devDependencies to get a green baseline. The
+  Dockerfiles run a full `yarn install --frozen-lockfile` (no `--production`), so builds
+  are unaffected.
 
 - Step 3: the `format` CI job takes the base from the pull request's base SHA (the
   previous branch for stacked PRs) or the push's `before` SHA, with full history. The
@@ -75,6 +91,10 @@
 
 ## Questions
 
+- Most Dockerfile base image tags float (`golang:alpine`, `node:lts-alpine`,
+  `alpine:latest`, `nginxinc/nginx-unprivileged:alpine`), so Dependabot's docker
+  ecosystem only sees the few pinned ones (`node:22-alpine`, `alpine:3.20`). Pinning was
+  left alone on purpose.
 - Photo directories are created with `os.ModePerm` (0777) in `controllers/photo_controller.go`
   and `carddav/vcard_mapper.go` (gosec G301, suppressed for now); should the mode be tightened?
 - `middleware/auth.go` and `relationship_controller.go` convert a JWT float64 claim and an
