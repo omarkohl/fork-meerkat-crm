@@ -287,7 +287,7 @@ Content:
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/admin/system-status` | Operational warnings: `{"private_urls_allowed", "user_count", "private_url_warning", "setting"}`. `private_url_warning` is true when outbound features may reach private addresses and more than one user exists (fix: `BLOCK_PRIVATE_URLS=true`). Shown as a banner on the Users page |
+| `GET` | `/admin/system-status` | Operational warnings: `{"private_urls_allowed", "user_count", "private_url_warning", "setting", "features"}`. `private_url_warning` is true when outbound features may reach private addresses and more than one user exists (fix: `BLOCK_PRIVATE_URLS=true`); `features` lists the features (`webhooks`, `caldav`, `carddav`, `monica`) that still allow private addresses. Shown as a banner on the Users page |
 | `GET` | `/admin/users` | List all users |
 | `GET` | `/admin/users/:id` | Get a user |
 | `PATCH` | `/admin/users/:id` | Update a user (e.g. set admin flag) |

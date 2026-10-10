@@ -30,7 +30,7 @@ import AppDialog from './components/AppDialog';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SendIcon from '@mui/icons-material/Send';
-import { getUsers, updateUser, deleteUser, triggerReminders, getSystemStatus } from './api/admin';
+import { getUsers, updateUser, deleteUser, triggerReminders, getSystemStatus, ssrfBannerSignature } from './api/admin';
 import { isAdmin } from './auth';
 import { useSnackbar } from './context/SnackbarContext';
 import type { User, UserUpdateInput } from './types';
@@ -73,18 +73,21 @@ export default function UsersPage() {
   // effort (no banner if it fails); the dismissal is remembered in this browser only.
   const [ssrfWarning, setSsrfWarning] = useState(false);
   const [ssrfSetting, setSsrfSetting] = useState('BLOCK_PRIVATE_URLS');
+  const [ssrfSignature, setSsrfSignature] = useState('');
   useEffect(() => {
-    let dismissed = false;
-    try {
-      dismissed = localStorage.getItem(SSRF_BANNER_DISMISSED_KEY) === '1';
-    } catch {
-      // storage unavailable: show the banner
-    }
-    if (dismissed) return;
+    if (!isAdmin()) return;
     getSystemStatus()
       .then((status) => {
-        setSsrfWarning(status.private_url_warning);
+        const signature = ssrfBannerSignature(status);
+        let dismissed = false;
+        try {
+          dismissed = localStorage.getItem(SSRF_BANNER_DISMISSED_KEY) === signature;
+        } catch {
+          // storage unavailable: show the banner
+        }
+        setSsrfSignature(signature);
         setSsrfSetting(status.setting);
+        setSsrfWarning(status.private_url_warning && !dismissed);
       })
       .catch(() => undefined);
   }, []);
@@ -92,7 +95,7 @@ export default function UsersPage() {
   const dismissSsrfWarning = () => {
     setSsrfWarning(false);
     try {
-      localStorage.setItem(SSRF_BANNER_DISMISSED_KEY, '1');
+      localStorage.setItem(SSRF_BANNER_DISMISSED_KEY, ssrfSignature);
     } catch {
       // storage unavailable: dismissed for this visit only
     }

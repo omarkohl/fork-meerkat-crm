@@ -46,12 +46,14 @@ func TestSystemStatusIsAdminOnlyAndWarnsOnMultiUserInstances(t *testing.T) {
 	out := status(config.Config{})
 	assert.Equal(t, true, out["private_url_warning"])
 	assert.Equal(t, "BLOCK_PRIVATE_URLS", out["setting"])
+	assert.Equal(t, []any{"webhooks", "caldav", "carddav", "monica"}, out["features"])
 
 	// Fully blocked: no warning. One flag still off: warning.
 	all := config.Config{WebhookBlockPrivateURLs: true, CalDAVBlockPrivateURLs: true, CardDAVBlockPrivateURLs: true, MonicaBlockPrivateURLs: true}
 	assert.Equal(t, false, status(all)["private_url_warning"])
 	all.MonicaBlockPrivateURLs = false
 	assert.Equal(t, true, status(all)["private_url_warning"])
+	assert.Equal(t, []any{"monica"}, status(all)["features"])
 
 	// A single-user instance is not warned; deleted users do not count.
 	require.NoError(t, e.db.Delete(&user).Error)

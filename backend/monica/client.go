@@ -83,7 +83,7 @@ func NewClient(baseURL, token string, blockPrivate bool) (*Client, error) {
 
 	transport := &http.Transport{}
 	if blockPrivate {
-		transport.DialContext = netguard.NewDialContext(ErrUnreachable, ErrPrivateAddress)
+		transport = netguard.NewTransport(ErrUnreachable, ErrPrivateAddress)
 	}
 	return &Client{
 		baseURL: u,

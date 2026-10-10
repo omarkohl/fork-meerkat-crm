@@ -95,6 +95,7 @@ export interface SystemStatus {
   user_count: number;
   private_url_warning: boolean;
   setting: string;
+  features: string[];
 }
 
 // Operational warnings for admins (admin only)
@@ -109,4 +110,12 @@ export async function getSystemStatus(): Promise<SystemStatus> {
   }
 
   return response.json();
+}
+
+// The dismissal is tied to the situation it was made in: a different set of risky features
+// or a much bigger instance shows the banner again.
+export function ssrfBannerSignature(status: { setting: string; features?: string[]; user_count: number }): string {
+  const n = status.user_count;
+  const bucket = n <= 2 ? '2' : n <= 5 ? '3-5' : n <= 10 ? '6-10' : n <= 50 ? '11-50' : '51+';
+  return [status.setting, [...(status.features ?? [])].sort().join(','), bucket].join('|');
 }

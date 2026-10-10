@@ -33,6 +33,7 @@ func SystemStatus(c *gin.Context) {
 		"private_urls_allowed": cfg.PrivateURLsAllowed(),
 		"user_count":           users,
 		"private_url_warning":  warn,
+		"features":             cfg.PrivateURLFeatures(),
 		"setting":              "BLOCK_PRIVATE_URLS",
 	})
 }

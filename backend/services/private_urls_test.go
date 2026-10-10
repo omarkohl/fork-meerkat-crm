@@ -63,3 +63,13 @@ func TestPrivateURLSwitchOnCalendarAndCardDAVClients(t *testing.T) {
 		})
 	}
 }
+
+// The guarded webhook client must not use a proxy from the environment: the guard would
+// check the proxy's address instead of the target's.
+func TestBlockingWebhookClientIgnoresProxyEnvironment(t *testing.T) {
+	t.Setenv("HTTP_PROXY", "http://proxy.invalid:3128")
+	t.Setenv("HTTPS_PROXY", "http://proxy.invalid:3128")
+	tr, ok := blockingDeliveryClient().Transport.(*http.Transport)
+	require.True(t, ok)
+	assert.Nil(t, tr.Proxy)
+}

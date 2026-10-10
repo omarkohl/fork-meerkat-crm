@@ -74,7 +74,7 @@ type ContactSyncService struct {
 func NewContactSyncService(blockPrivateURLs bool) *ContactSyncService {
 	transport := &http.Transport{}
 	if blockPrivateURLs {
-		transport.DialContext = netguard.NewDialContext(ErrContactSyncUnreachable, ErrContactSyncPrivateAddress)
+		transport = netguard.NewTransport(ErrContactSyncUnreachable, ErrContactSyncPrivateAddress)
 	}
 	return &ContactSyncService{
 		client: &http.Client{

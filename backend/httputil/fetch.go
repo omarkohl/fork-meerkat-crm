@@ -70,10 +70,8 @@ func FetchImageFromURL(imageURL string) ([]byte, string, error) {
 
 	// Create HTTP client with custom transport that validates IPs at connection time
 	client := &http.Client{
-		Timeout: 15 * time.Second,
-		Transport: &http.Transport{
-			DialContext: netguard.NewDialContext(errors.New("failed to resolve hostname"), errors.New("access to internal IP addresses is not allowed")),
-		},
+		Timeout:   15 * time.Second,
+		Transport: netguard.NewTransport(errors.New("failed to resolve hostname"), errors.New("access to internal IP addresses is not allowed")),
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			// Validate redirect target URL format
 			_, err := validateURLForSSRF(req.URL.String())

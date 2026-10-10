@@ -21,8 +21,15 @@ func TestBlockPrivateURLsPrecedence(t *testing.T) {
 		{"old flags alone", map[string]string{"WEBHOOK_BLOCK_PRIVATE_URLS": "true", "MONICA_BLOCK_PRIVATE_URLS": "true"}, [4]bool{true, false, false, true}},
 		{"carddav follows caldav", map[string]string{"CALDAV_BLOCK_PRIVATE_URLS": "true"}, [4]bool{false, true, true, false}},
 		{"carddav explicit off", map[string]string{"CALDAV_BLOCK_PRIVATE_URLS": "true", "CARDDAV_BLOCK_PRIVATE_URLS": "false"}, [4]bool{false, true, false, false}},
-		{"invalid global falls back to old flags", map[string]string{"BLOCK_PRIVATE_URLS": "maybe", "WEBHOOK_BLOCK_PRIVATE_URLS": "true"}, [4]bool{true, false, false, false}},
-		{"empty global is invalid, not false", map[string]string{"BLOCK_PRIVATE_URLS": "", "CALDAV_BLOCK_PRIVATE_URLS": "true"}, [4]bool{false, true, true, false}},
+		{"invalid global fails closed", map[string]string{"BLOCK_PRIVATE_URLS": "maybe"}, [4]bool{true, true, true, true}},
+		{"invalid global beats explicit off", map[string]string{"BLOCK_PRIVATE_URLS": "maybe", "WEBHOOK_BLOCK_PRIVATE_URLS": "false"}, [4]bool{true, true, true, true}},
+		{"empty global fails closed", map[string]string{"BLOCK_PRIVATE_URLS": ""}, [4]bool{true, true, true, true}},
+		{"yes", map[string]string{"BLOCK_PRIVATE_URLS": "Yes"}, [4]bool{true, true, true, true}},
+		{"on", map[string]string{"BLOCK_PRIVATE_URLS": "ON"}, [4]bool{true, true, true, true}},
+		{"1", map[string]string{"BLOCK_PRIVATE_URLS": "1"}, [4]bool{true, true, true, true}},
+		{"no", map[string]string{"BLOCK_PRIVATE_URLS": "no"}, [4]bool{false, false, false, false}},
+		{"off", map[string]string{"BLOCK_PRIVATE_URLS": " Off "}, [4]bool{false, false, false, false}},
+		{"0", map[string]string{"BLOCK_PRIVATE_URLS": "0"}, [4]bool{false, false, false, false}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

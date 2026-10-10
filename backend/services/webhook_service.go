@@ -63,8 +63,11 @@ func buildPayloadBody(eventType string, data interface{}) ([]byte, error) {
 // address for the pre-check and to a private one for the connection).
 func blockingDeliveryClient() *http.Client {
 	blockingClientOnce.Do(func() {
-		transport := http.DefaultTransport.(*http.Transport).Clone()
-		transport.DialContext = netguard.NewDialContext(errWebhookUnreachable, errWebhookPrivateAddress)
+		// netguard.NewTransport ignores HTTP(S)_PROXY: a proxy would be dialled instead of the target.
+		transport := netguard.NewTransport(errWebhookUnreachable, errWebhookPrivateAddress)
+		transport.TLSHandshakeTimeout = 10 * time.Second
+		transport.MaxIdleConns = 10
+		transport.IdleConnTimeout = 90 * time.Second
 		blockingClient = &http.Client{Timeout: deliveryClient.Timeout, Transport: transport}
 	})
 	return blockingClient

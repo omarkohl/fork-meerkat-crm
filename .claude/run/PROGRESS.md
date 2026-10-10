@@ -17,7 +17,7 @@
 - 9: second-sprint/09-fuzz (PR #24)
 - 10: second-sprint/10-untested-logic (PR #25)
 - 11: second-sprint/11-i18n-check (PR #26)
-- 12: (branch and PR set by the orchestrator)
+- 12: second-sprint/12-ssrf-switch (PR #27)
 
 ## Log
 
@@ -125,6 +125,15 @@
 - 11: `scripts/i18n-check.mjs` (plain Node, no dependencies; tests in `scripts/i18n-check.test.mjs` run with `node --test`) checks `frontend/src/i18n/locales` and `backend/i18n/locales`: a key missing in de/it/es/fr, a key not in en and non-string values are errors; duplicate keys (JSON.parse hides them, so there is a small parser) and keys no source seems to use are warnings. The existing locales had no gaps (0 errors); 27 frontend keys are reported as unused (warnings, left alone). `make i18n-check` is part of `make precommit` (about 0.2 s) and of a new `i18n` job in lint.yml; `lefthook.yml` is optional and documented in contributing.md. No UI strings changed, so no E2E run. Hardening after review: invalid JSON (trailing comma, truncation, BOM, empty file) is an error instead of hanging; plural families need at least `_other` in every locale (the backend has no plurals, so exact keys there); empty values and a different `{{placeholder}}` set than en are errors.
 
 - 12: `BLOCK_PRIVATE_URLS`: when set to a valid boolean it decides for webhooks, CalDAV, CardDAV and Monica and overrides the four older flags; unset (or invalid, with a warning) leaves them as before; default off. The guard is now one package, `backend/netguard` (`IsBlockedIP`, `NewDialContext`): the copies in `services` (dav_http, webhook), `monica` and `httputil` are gone. It resolves, drops blocked addresses and dials the checked IP (each in turn). It now also blocks carrier-grade NAT (100.64.0.0/10), multicast and 255.255.255.255. CardDAV was already guarded (flag defaulted to CALDAV's); discovery and `/.well-known/carddav` share the service's transport, so they are covered (tested). `httputil.FetchImageFromURL` (photo URLs) stays always-on. Startup warning and `GET /admin/system-status` (admin only) + dismissible banner on the Users page (dismissal in localStorage). Tests: config precedence table, netguard, each path blocked/allowed, endpoint isolation.
+  Review fixes: guarded transports come from `netguard.NewTransport` and never use `HTTP(S)_PROXY` (the webhook client cloned
+  `DefaultTransport`, so a proxy would have been checked instead of the target; tested, documented). The resolver and dialer are
+  seams in netguard: tests show a mixed answer dials only the public IP, one lookup per dial, and a rebinding sequence never reaches the
+  private address. An invalid `BLOCK_PRIVATE_URLS` now fails closed (true, error logged); true/false/1/0/yes/no/on/off in any case.
+  netguard uses `net/netip` prefixes and also blocks 0.0.0.0/8, 240.0.0.0/4, 198.18.0.0/15, 192.0.0.0/24, Teredo, local-use NAT64 and
+  NAT64/6to4 addresses embedding a blocked IPv4. The banner is requested for admins only, its dismissal stores a signature of the
+  situation (setting, features that allow private URLs, user-count bucket) so a changed situation shows it again;
+  `/admin/system-status` gained `features`. Vitest for the banner and an e2e case (`users-banner.spec.ts`). Prettier did not force
+  unrelated reformatting this time.
 
 ## Decisions
 

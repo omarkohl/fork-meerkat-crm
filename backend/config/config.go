@@ -175,19 +175,20 @@ func getIntEnv(key string, fallback int) int {
 	return fallback
 }
 
-// applyBlockPrivateURLs applies BLOCK_PRIVATE_URLS. When it is set to a valid boolean it
-// decides for every outbound feature (webhooks, CalDAV, CardDAV, Monica) and overrides
-// the older per-feature flags. When it is unset (or invalid) the per-feature flags keep
-// working as before. The default stays off: LAN servers are a common legitimate setup.
+// applyBlockPrivateURLs applies BLOCK_PRIVATE_URLS. When it is set it decides for every
+// outbound feature (webhooks, CalDAV, CardDAV, Monica) and overrides the older per-feature
+// flags. When it is unset the per-feature flags keep working as before. The default stays
+// off: LAN servers are a common legitimate setup. It is a security switch, so a value that
+// is not a recognised boolean fails closed: blocking is turned on and an error is logged.
 func applyBlockPrivateURLs(cfg *Config) {
 	value, set := os.LookupEnv("BLOCK_PRIVATE_URLS")
 	if !set {
 		return
 	}
-	block, err := strconv.ParseBool(value)
-	if err != nil {
-		log.Printf("WARN: Invalid boolean value for BLOCK_PRIVATE_URLS: %s. Using the per-feature flags", value)
-		return
+	block, ok := parseSwitch(value)
+	if !ok {
+		log.Printf("ERROR: Invalid value for BLOCK_PRIVATE_URLS: %q (use true or false). Blocking private URLs to be safe", value)
+		block = true
 	}
 	cfg.WebhookBlockPrivateURLs = block
 	cfg.CalDAVBlockPrivateURLs = block
@@ -195,10 +196,35 @@ func applyBlockPrivateURLs(cfg *Config) {
 	cfg.MonicaBlockPrivateURLs = block
 }
 
+// parseSwitch accepts true/false, 1/0, yes/no and on/off in any case.
+func parseSwitch(value string) (on, ok bool) {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "true", "1", "yes", "on":
+		return true, true
+	case "false", "0", "no", "off":
+		return false, true
+	}
+	return false, false
+}
+
 // PrivateURLsAllowed reports whether any outbound feature may still reach private,
 // loopback or link-local addresses.
 func (c Config) PrivateURLsAllowed() bool {
 	return !(c.WebhookBlockPrivateURLs && c.CalDAVBlockPrivateURLs && c.CardDAVBlockPrivateURLs && c.MonicaBlockPrivateURLs)
+}
+
+// PrivateURLFeatures lists the outbound features that may still reach private addresses.
+func (c Config) PrivateURLFeatures() []string {
+	features := []string{}
+	for _, f := range []struct {
+		name    string
+		blocked bool
+	}{{"webhooks", c.WebhookBlockPrivateURLs}, {"caldav", c.CalDAVBlockPrivateURLs}, {"carddav", c.CardDAVBlockPrivateURLs}, {"monica", c.MonicaBlockPrivateURLs}} {
+		if !f.blocked {
+			features = append(features, f.name)
+		}
+	}
+	return features
 }
 
 func getBoolEnv(key string, fallback bool) bool {
