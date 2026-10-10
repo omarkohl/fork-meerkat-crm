@@ -5,7 +5,7 @@ pre-commit:
   parallel: true
   commands:
     gofmt:
-      glob: 'backend/**/*.go'
+      glob: '{backend/*.go,backend/**/*.go}'
       run: gofmt -l {staged_files} | (! grep .)
     prettier:
       root: frontend/
@@ -16,5 +16,5 @@ pre-commit:
       glob: '*.{ts,tsx}'
       run: npx eslint --max-warnings=0 {staged_files}
     i18n:
-      glob: '**/i18n/locales/*.json'
+      glob: '{backend,frontend}/**/i18n/locales/*.json'
       run: make i18n-check

@@ -16,7 +16,7 @@
 - 8: second-sprint/08-test-infra (PR #23)
 - 9: second-sprint/09-fuzz (PR #24)
 - 10: second-sprint/10-untested-logic (PR #25)
-- 11: (branch and PR set by the orchestrator)
+- 11: second-sprint/11-i18n-check (PR #26)
 
 ## Log
 
@@ -121,7 +121,7 @@
   7. Import sessions answered 401 for another user's session id (the frontend treats 401 as an expired login and logs out, and it
      confirmed the id exists); now the same 404 as an unknown id (CSV/VCF and Monica).
 
-- 11: `scripts/i18n-check.mjs` (plain Node, no dependencies; tests in `scripts/i18n-check.test.mjs` run with `node --test`) checks `frontend/src/i18n/locales` and `backend/i18n/locales`: a key missing in de/it/es/fr, a key not in en and non-string values are errors; duplicate keys (JSON.parse hides them, so there is a small parser) and keys no source seems to use are warnings. The existing locales had no gaps (0 errors); 27 frontend keys are reported as unused (warnings, left alone). `make i18n-check` is part of `make precommit` (about 0.2 s) and of a new `i18n` job in lint.yml; `lefthook.yml` is optional and documented in contributing.md. No UI strings changed, so no E2E run.
+- 11: `scripts/i18n-check.mjs` (plain Node, no dependencies; tests in `scripts/i18n-check.test.mjs` run with `node --test`) checks `frontend/src/i18n/locales` and `backend/i18n/locales`: a key missing in de/it/es/fr, a key not in en and non-string values are errors; duplicate keys (JSON.parse hides them, so there is a small parser) and keys no source seems to use are warnings. The existing locales had no gaps (0 errors); 27 frontend keys are reported as unused (warnings, left alone). `make i18n-check` is part of `make precommit` (about 0.2 s) and of a new `i18n` job in lint.yml; `lefthook.yml` is optional and documented in contributing.md. No UI strings changed, so no E2E run. Hardening after review: invalid JSON (trailing comma, truncation, BOM, empty file) is an error instead of hanging; plural families need at least `_other` in every locale (the backend has no plurals, so exact keys there); empty values and a different `{{placeholder}}` set than en are errors.
 
 ## Decisions
 

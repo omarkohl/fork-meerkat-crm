@@ -12,7 +12,9 @@ export const LOCALES = ['en', 'de', 'it', 'es', 'fr'];
 const PLURAL_SUFFIX = /_(zero|one|two|few|many|other)$/;
 
 // Parses JSON and also reports duplicate keys, which JSON.parse silently collapses.
+// Throws on invalid JSON (trailing comma, truncation, BOM, empty file, trailing text).
 export function parseWithDuplicates(text) {
+  JSON.parse(text); // clear error first; the scan below can then rely on valid input
   const duplicates = [];
   let i = 0;
   const ws = () => {
@@ -21,7 +23,7 @@ export function parseWithDuplicates(text) {
   const string = () => {
     const start = i;
     i++; // opening quote
-    while (text[i] !== '"') i += text[i] === '\\' ? 2 : 1;
+    while (i < text.length && text[i] !== '"') i += text[i] === '\\' ? 2 : 1;
     i++;
     return JSON.parse(text.slice(start, i));
   };
@@ -30,7 +32,7 @@ export function parseWithDuplicates(text) {
     const c = text[i];
     if (c === '{') {
       i++;
-      const obj = {};
+      const obj = Object.create(null);
       ws();
       if (text[i] === '}') {
         i++;
@@ -42,7 +44,7 @@ export function parseWithDuplicates(text) {
         ws();
         i++; // colon
         const full = path ? `${path}.${key}` : key;
-        if (Object.prototype.hasOwnProperty.call(obj, key)) duplicates.push(full);
+        if (Object.hasOwn(obj, key)) duplicates.push(full);
         obj[key] = value(full);
         ws();
         if (text[i] === ',') {
@@ -76,7 +78,7 @@ export function parseWithDuplicates(text) {
 }
 
 // Flattens nested objects to dotted keys. Non-string leaves are returned in `invalid`.
-export function flatten(obj, prefix = '', out = {}, invalid = []) {
+export function flatten(obj, prefix = '', out = Object.create(null), invalid = []) {
   for (const [k, v] of Object.entries(obj)) {
     const key = prefix ? `${prefix}.${k}` : k;
     if (v && typeof v === 'object' && !Array.isArray(v)) flatten(v, key, out, invalid);
@@ -86,24 +88,55 @@ export function flatten(obj, prefix = '', out = {}, invalid = []) {
   return { flat: out, invalid };
 }
 
-// Plural forms differ per language (en has _one/_other, others may add _many), so
-// plural keys are compared by their base name.
+// Plural forms differ per language (en has _one/_other, others may add _many), so with
+// plurals on, a key family is compared by its base name and every locale must have at
+// least the `_other` form where en has plurals. The backend has no plural support:
+// there keys are compared exactly.
 export const baseKey = (key) => key.replace(PLURAL_SUFFIX, '');
+const placeholders = (text) => [...new Set([...text.matchAll(/\{\{\s*([^}\s]+)\s*\}\}/g)].map((m) => m[1]))].sort();
 
 // locales: { en: {flat, duplicates, invalid}, de: ... } -> { errors, warnings }
-export function compareLocales(locales, label = '') {
+export function compareLocales(locales, label = '', { plurals = true } = {}) {
   const errors = [];
   const warnings = [];
   const prefix = label ? `${label}: ` : '';
-  const enBases = new Set(Object.keys(locales.en.flat).map(baseKey));
+  const en = locales.en.flat;
+  const family = (k) => (plurals ? baseKey(k) : k);
+  // required keys of a locale: exact for plain keys, `<base>_other` for plural families
+  const required = new Set();
+  const enByFamily = new Map();
+  for (const k of Object.keys(en)) {
+    const f = family(k);
+    if (!enByFamily.has(f)) enByFamily.set(f, []);
+    enByFamily.get(f).push(k);
+    required.add(plurals && f !== k ? `${f}_other` : k);
+  }
   for (const lang of Object.keys(locales)) {
     const { flat, duplicates, invalid } = locales[lang];
     for (const k of invalid) errors.push(`${prefix}${lang}: "${k}" is not a string`);
     for (const k of duplicates) warnings.push(`${prefix}${lang}: duplicate key "${k}"`);
+    for (const [k, v] of Object.entries(flat)) {
+      if (v.trim() === '') errors.push(`${prefix}${lang}: "${k}" is empty`);
+    }
     if (lang === 'en') continue;
-    const bases = new Set(Object.keys(flat).map(baseKey));
-    for (const b of enBases) if (!bases.has(b)) errors.push(`${prefix}${lang}: missing key "${b}"`);
-    for (const b of bases) if (!enBases.has(b)) errors.push(`${prefix}${lang}: key "${b}" is not in en`);
+    for (const k of required) if (!(k in flat)) errors.push(`${prefix}${lang}: missing key "${k}"`);
+    for (const [k, v] of Object.entries(flat)) {
+      const f = family(k);
+      const counterparts = enByFamily.get(f);
+      if (!counterparts) {
+        errors.push(`${prefix}${lang}: key "${k}" is not in en`);
+        continue;
+      }
+      // a plural form of a family that is plain in en (or the reverse) does not belong
+      if (plurals && counterparts.every((c) => (c === f) !== (k === f))) {
+        errors.push(`${prefix}${lang}: key "${k}" is not in en`);
+        continue;
+      }
+      const ref = en[k] ?? en[`${f}_other`] ?? en[counterparts[0]];
+      const want = placeholders(ref).join(', ');
+      const got = placeholders(v).join(', ');
+      if (want !== got) errors.push(`${prefix}${lang}: "${k}" has placeholders {{${got}}}, en has {{${want}}}`);
+    }
   }
   return { errors, warnings };
 }
@@ -163,18 +196,20 @@ export function run(root) {
   const targets = [
     {
       label: 'frontend',
+      plurals: true,
       dir: join(root, 'frontend/src/i18n/locales'),
       sources: walk(join(root, 'frontend/src'), ['.ts', '.tsx'], (p) => p.includes('/i18n/locales') || /\.test\.tsx?$/.test(p)),
     },
     {
       label: 'backend',
+      plurals: false,
       dir: join(root, 'backend/i18n/locales'),
       sources: walk(join(root, 'backend'), ['.go'], (p) => /_test\.go$/.test(p) || p.endsWith('/testdata')),
     },
   ];
   for (const t of targets) {
     const locales = readLocaleDir(t.dir);
-    const res = compareLocales(locales, t.label);
+    const res = compareLocales(locales, t.label, { plurals: t.plurals });
     errors.push(...res.errors);
     warnings.push(...res.warnings);
     const sources = t.sources.map((f) => readFileSync(f, 'utf8'));

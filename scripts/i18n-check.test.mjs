@@ -19,7 +19,7 @@ test('parseWithDuplicates reports repeated keys with their path', () => {
 
 test('flatten gives dotted keys and flags non-strings', () => {
   const { flat, invalid } = flatten({ a: { b: 'x' }, n: 3 });
-  assert.deepEqual(flat, { 'a.b': 'x' });
+  assert.deepEqual({ ...flat }, { 'a.b': 'x' });
   assert.deepEqual(invalid, ['n']);
 });
 
@@ -61,7 +61,39 @@ test('run fails on a real gap in a fixture tree', () => {
   assert.deepEqual(errors, ['backend: de: missing key "k"']);
 });
 
-test('the repository locales are consistent', () => {
-  const root = new URL('..', import.meta.url).pathname;
-  assert.deepEqual(run(root).errors, []);
+test('parseWithDuplicates rejects invalid JSON instead of hanging', () => {
+  for (const bad of ['{"a":"x",}', '{"a":"x', '', '\ufeff{"a":"x"}', '{"a":"x"} trailing', '{"a":"x\\']) {
+    assert.throws(() => parseWithDuplicates(bad), undefined, JSON.stringify(bad));
+  }
+});
+
+test('a __proto__ key is kept', () => {
+  const { data } = parseWithDuplicates('{"__proto__":"x","a":"y"}');
+  const { flat } = flatten(data);
+  assert.deepEqual(Object.keys(flat).sort(), ['__proto__', 'a']);
+});
+
+test('plurals: every locale needs _other where en has plurals', () => {
+  const en = loc({ d_one: '{{count}} day', d_other: '{{count}} days' });
+  const ok = loc({ d_one: '{{count}} Tag', d_many: '{{count}} Tage', d_other: '{{count}} Tage' });
+  const noOther = loc({ d_one: '{{count}} Tag' });
+  const plain = loc({ d: '{{count}} Tage' });
+  assert.deepEqual(compareLocales({ en, de: ok }).errors, []);
+  assert.deepEqual(compareLocales({ en, de: noOther }).errors, ['de: missing key "d_other"']);
+  assert.deepEqual(compareLocales({ en, de: plain }).errors.sort(), ['de: key "d" is not in en', 'de: missing key "d_other"']);
+});
+
+test('backend locales have no plurals: suffixes are ordinary keys', () => {
+  const en = loc({ a_one: 'x', a_other: 'y' });
+  const de = loc({ a_other: 'y' });
+  assert.deepEqual(compareLocales({ en, de }, 'backend', { plurals: false }).errors, ['backend: de: missing key "a_one"']);
+});
+
+test('empty values and different placeholders are errors', () => {
+  const en = loc({ a: 'In {{days}} days', b: 'x' });
+  const de = loc({ a: 'In {{day}} Tagen', b: '  ' });
+  assert.deepEqual(compareLocales({ en, de }).errors.sort(), [
+    'de: "a" has placeholders {{day}}, en has {{days}}',
+    'de: "b" is empty',
+  ]);
 });
