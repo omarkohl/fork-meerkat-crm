@@ -87,6 +87,17 @@ Several features make the server fetch an address a user typed in: webhooks, Cal
 
 **Audit log.** Admins see it under Settings, Audit log (filter by event and user). It records logins and failed logins (with the account, never what was typed for an unknown account), logouts, password changes and resets, sessions signed out, data exports, API token, calendar feed and backup actions, and admin changes to users. Each entry has the time, user, IP address (behind a proxy this is the address of the proxy unless `TRUSTED_PROXIES` is set) and user agent. Entries of deleted accounts stay until the retention period ends. Entries older than `AUDIT_LOG_RETENTION_DAYS` (default 365, `0` = keep) are deleted daily at 03:30, together with ended sessions.
 
+## Delivery queue (webhooks and email)
+
+Webhook deliveries and emails (reminders, password resets) go through a database-backed queue, so a restart, a crash or a failing receiver or mail server does not lose them.
+
+- The row is written first, then sent at once in the background. A background job runs every minute and sends everything that is due, including rows a restart interrupted. A claim that is older than 5 minutes (the process died while sending) is taken over, so a delivery can in rare cases arrive twice. Sends have timeouts well below that (HTTP 15 s, SMTP and Resend 30 s each). Webhook payloads carry a stable `id`, use it to deduplicate.
+- A failed try is repeated after 1 minute, 5 minutes, 30 minutes and 2 hours. After the 5th failed try the entry is **dead** (dead letter) and not tried again. A webhook whose URL points to a blocked private address is dead at once. Entries of a webhook that was deleted or switched off are dead; they are not counted in the metrics, and entries of deleted webhooks are purged.
+- Webhook entries show up per webhook under Settings, Webhooks, Recent Deliveries: delivered (HTTP status), retrying (with the next try time) or gave up. There is one entry per event, updated on every try.
+- Emails: while no email channel is configured nothing is sent and no try is counted; the entries wait. Webhook entries are purged like emails: delivered after 7 days, dead after 30. The body of an email is removed as soon as it is sent or dead. Password reset emails are not retried after the link expires (1 hour). Deleting a user deletes their queued emails.
+- Reminders are marked as emailed when the email is queued, not when it is delivered; the queue does the retrying.
+- Metrics: `meerkat_outbox_pending{kind}`, `meerkat_outbox_dead{kind}` and `meerkat_outbox_dead_total{kind}` (`kind` is `webhook` or `email`), see below. Alert on `meerkat_outbox_dead > 0`.
+
 ## Monitoring with Prometheus
 
 Meerkat can expose metrics in the Prometheus text format. It is **off by default**. Set `METRICS_ENABLED=true` and choose how to protect it:
@@ -114,6 +125,9 @@ If your own reverse proxy forwards everything to the backend, set a token or use
 | `meerkat_job_runs_total{job,result}` | counter | Runs since the process started, same job names plus `trash-purge` and `backup`. `result` is `success`, `failure`, or `skipped` (turned away by the rate limit or another instance's lock; the sync jobs count `success` when they ran, per-connection errors are in their own status and logs) |
 | `meerkat_webhook_deliveries_total{result}` | counter | Webhook delivery attempts (every retry counts) |
 | `meerkat_emails_total{result}` | counter | Emails where at least one channel succeeded (`success`) or all failed (`failure`) |
+| `meerkat_outbox_pending{kind}` | gauge | Webhook deliveries and emails waiting for a try or retry (`kind` is `webhook` or `email`) |
+| `meerkat_outbox_dead{kind}` | gauge | Entries that gave up and are still stored |
+| `meerkat_outbox_dead_total{kind}` | counter | Entries that gave up since the process started |
 | `go_goroutines`, `go_memstats_alloc_bytes`, `process_start_time_seconds` | gauge | Process basics |
 
 Example scrape config:
@@ -136,6 +150,7 @@ Alert ideas (adapt the thresholds):
 - Reminders did not run for over 26 hours: `time() - meerkat_job_last_success_timestamp_seconds{job="reminders"} > 26 * 3600`. The same for `calendar-sync` and `contact-sync`, with your sync interval.
 - A scheduled job failed: `increase(meerkat_job_runs_total{result="failure"}[1h]) > 0` (`skipped` is normal after restarts).
 - Email failing: `increase(meerkat_emails_total{result="failure"}[1h]) > 0`.
+- Dead letters: `meerkat_outbox_dead > 0` for 10 minutes, or `increase(meerkat_outbox_dead_total[1h]) > 0`.
 - Many failing webhooks: `increase(meerkat_webhook_deliveries_total{result="failure"}[1h]) > 10`.
 - Server errors: `sum(rate(meerkat_http_requests_total{status=~"5.."}[5m])) > 0.05`.
 - Slow API: `histogram_quantile(0.95, sum by (le) (rate(meerkat_http_request_duration_seconds_bucket[5m]))) > 1`.

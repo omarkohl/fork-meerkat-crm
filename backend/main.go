@@ -83,6 +83,7 @@ func main() {
 	var metricsSrv *http.Server
 	if cfg.MetricsEnabled {
 		services.RegisterJobMetrics(metrics.Default, db)
+		services.RegisterOutboxMetrics(metrics.Default, db)
 		switch {
 		case cfg.MetricsAddr != "":
 			metricsSrv = metrics.NewServer(cfg.MetricsAddr, metrics.Default, cfg.MetricsToken)
@@ -122,6 +123,16 @@ func main() {
 		} else if n > 0 {
 			logger.Info().Int("contacts", n).Msg("Purged expired contacts from the trash")
 		}
+		if n, err := services.PurgeEmailOutbox(db, time.Now()); err != nil {
+			logger.Error().Err(err).Msg("Error purging the email outbox")
+		} else if n > 0 {
+			logger.Info().Int64("emails", n).Msg("Purged old emails from the outbox")
+		}
+		if n, err := services.PurgeWebhookDeliveries(db, time.Now()); err != nil {
+			logger.Error().Err(err).Msg("Error purging webhook deliveries")
+		} else if n > 0 {
+			logger.Info().Int64("deliveries", n).Msg("Purged old webhook deliveries")
+		}
 		// Same daily slot: ended sessions and old audit entries
 		if n, err := services.PurgeSessions(db, time.Now()); err != nil {
 			logger.Error().Err(err).Msg("Error purging ended sessions")
@@ -144,12 +155,15 @@ func main() {
 		logger.Info().Str("backup", b.Name).Int64("bytes", b.Size).Msg("Scheduled backup created")
 	}
 	s, err := services.NewScheduler(cfg, services.SchedulerTasks{
-		Reminders:      reminderTask,
-		WebhookRetries: func() { services.ProcessWebhookRetries(db, *cfg) },
-		CalendarSync:   calendarSyncTask,
-		ContactSync:    contactSyncTask,
-		TrashPurge:     trashPurgeTask,
-		Backup:         backupTask,
+		Reminders: reminderTask,
+		WebhookRetries: func() {
+			services.ProcessWebhookOutbox(db, *cfg)
+			services.ProcessEmailOutbox(db, *cfg)
+		},
+		CalendarSync: calendarSyncTask,
+		ContactSync:  contactSyncTask,
+		TrashPurge:   trashPurgeTask,
+		Backup:       backupTask,
 	})
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to create scheduler")

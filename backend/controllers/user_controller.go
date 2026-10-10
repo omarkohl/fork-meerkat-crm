@@ -329,9 +329,9 @@ func RequestPasswordReset(context *gin.Context, cfg *config.Config) {
 		return
 	}
 
-	if err := services.SendPasswordResetEmail(user.Email, token, user.Language, cfg); err != nil {
+	if err := services.SendPasswordResetEmail(db, user.ID, user.Email, token, user.Language, cfg); err != nil {
 		log.Error().Err(err).Uint("user_id", user.ID).Msg("Failed to send password reset email")
-		apperrors.AbortWithError(context, apperrors.ErrExternal("email", "Failed to send password reset email").WithError(err))
+		apperrors.AbortWithError(context, apperrors.ErrExternal("email", "Failed to queue password reset email").WithError(err))
 		return
 	}
 

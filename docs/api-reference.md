@@ -217,9 +217,9 @@ Webhooks send a signed HTTP `POST` to your URL when something happens. The `secr
 | `PUT` | `/webhooks/:id` | Update name, URL, events and active flag |
 | `DELETE` | `/webhooks/:id` | Delete a webhook |
 | `POST` | `/webhooks/:id/test` | Send a test event now: `{"delivery": {...}}` |
-| `GET` | `/webhooks/:id/deliveries` | Recent deliveries with status: `{"deliveries": [...]}` |
+| `GET` | `/webhooks/:id/deliveries` | Last 50 deliveries, newest first: `{"deliveries": [{"id", "webhook_id", "event_type", "status_code", "error", "attempts", "status", "next_retry_at", "created_at"}]}`. `status` is `pending` (waiting for a try or retry, `next_retry_at` says when), `delivered` or `dead` (gave up). One entry per event, updated on every try |
 
-A user can have at most 20 webhooks (`409` beyond that). URLs pointing at private addresses are refused when `BLOCK_PRIVATE_URLS` (or `WEBHOOK_BLOCK_PRIVATE_URLS`) is set.
+Deliveries are queued in the database first and retried with backoff (see [Delivery queue](deployment.md#delivery-queue-webhooks-and-email)). A user can have at most 20 webhooks (`409` beyond that). URLs pointing at private addresses are refused when `BLOCK_PRIVATE_URLS` (or `WEBHOOK_BLOCK_PRIVATE_URLS`) is set.
 
 Events: `contact.created`, `contact.updated`, `contact.deleted`, `contact.restored`, `note.created`, `note.updated`, `note.deleted`, `activity.created`, `activity.updated`, `activity.deleted`, `reminder.triggered`, `birthday.occurred`.
 
