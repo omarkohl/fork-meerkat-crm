@@ -4,6 +4,7 @@ import { handleResponse } from './errorHandling';
 export interface IcsFeedStatus {
   enabled: boolean;
   created_at: string | null;
+  last_fetched_at: string | null;
 }
 
 export interface IcsFeedCreateResponse extends IcsFeedStatus {
@@ -16,7 +17,11 @@ export async function getIcsFeed(): Promise<IcsFeedStatus> {
     headers: getAuthHeaders(),
   });
   const data = await handleResponse(response, 'Unable to load calendar feed.');
-  return { enabled: !!data?.enabled, created_at: data?.created_at ?? null };
+  return {
+    enabled: !!data?.enabled,
+    created_at: data?.created_at ?? null,
+    last_fetched_at: data?.last_fetched_at ?? null,
+  };
 }
 
 /** Creates the feed, or replaces its token if one exists (the old URL stops working). */

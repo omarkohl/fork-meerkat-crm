@@ -207,8 +207,8 @@ Exports birthdays and reminders as a subscribable iCalendar feed. Each user has 
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| `GET` | `/ics-feed` | session or API token | Feed status: `{"enabled": bool, "created_at": ...}`. Never contains the token |
-| `POST` | `/ics-feed` | session or API token | Create the feed, or regenerate it (the old URL stops working). Returns `201` with `token` once |
+| `GET` | `/ics-feed` | session or API token | Feed status: `{"enabled": bool, "created_at": ..., "last_fetched_at": ...}`. Never contains the token |
+| `POST` | `/ics-feed` | session or API token | Create the feed, or regenerate it (the old URL stops working). Returns `201` with `token` once, plus the status fields (`enabled`, `created_at`, `last_fetched_at`, which is `null` for a new URL) |
 | `DELETE` | `/ics-feed` | session or API token | Revoke the feed (idempotent) |
 | `GET` | `/ics/<token>.ics` | token in the URL only | The calendar (`text/calendar; charset=utf-8`) |
 

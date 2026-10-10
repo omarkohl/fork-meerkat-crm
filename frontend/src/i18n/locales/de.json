@@ -822,6 +822,8 @@
     "description": "Abonniere deine Geburtstage und Erinnerungen in jeder Kalender-App. Jeder, der die Feed-URL kennt, kann den Feed lesen, halte sie daher geheim.",
     "inactive": "Noch kein Kalender-Feed.",
     "active": "Feed aktiv seit {{date}}.",
+    "lastFetched": "Zuletzt abgerufen: {{date}}.",
+    "neverFetched": "Noch nicht abgerufen.",
     "generateButton": "Feed-URL erzeugen",
     "regenerateButton": "URL neu erzeugen",
     "revokeButton": "Feed widerrufen",
