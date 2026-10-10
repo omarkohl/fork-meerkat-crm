@@ -28,7 +28,12 @@ func HashPassword(password string) (string, error) {
 	return string(hashedPassword), nil
 }
 
+// GenerateToken signs a JWT without a session (no "sid" claim). Logins use IssueSession.
 func GenerateToken(user models.User, cfg *config.Config) (string, error) {
+	return signToken(user, cfg, "")
+}
+
+func signToken(user models.User, cfg *config.Config, sessionID string) (string, error) {
 	JWTSecretKey := cfg.JWTSecretKey
 	if JWTSecretKey == "" {
 		return "", errors.New("JWT secret key is empty")
@@ -45,6 +50,11 @@ func GenerateToken(user models.User, cfg *config.Config) (string, error) {
 		"username":   user.Username,
 		"user_id":    user.ID,
 		"exp":        time.Now().Add(time.Hour * time.Duration(JWTExpiryHours)).Unix(),
+		// Bumping users.token_version invalidates every token issued before.
+		"tv": user.TokenVersion,
+	}
+	if sessionID != "" {
+		claims["sid"] = sessionID
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

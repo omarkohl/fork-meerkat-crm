@@ -99,6 +99,8 @@ func CreateIcsFeed(c *gin.Context) {
 		return
 	}
 
+	audit(c, db, models.AuditICSFeedCreated, "")
+
 	c.JSON(http.StatusCreated, models.IcsFeedCreateResponse{
 		IcsFeedStatus: icsFeedStatus(&feed),
 		Token:         token,
@@ -116,6 +118,7 @@ func DeleteIcsFeed(c *gin.Context) {
 		apperrors.AbortWithError(c, apperrors.ErrDatabase("delete").WithError(err))
 		return
 	}
+	audit(c, db, models.AuditICSFeedRevoked, "")
 	c.JSON(http.StatusOK, gin.H{"message": "Calendar feed revoked successfully"})
 }
 

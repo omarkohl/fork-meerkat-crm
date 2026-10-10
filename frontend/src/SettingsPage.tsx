@@ -13,7 +13,7 @@ import {
   TextField,
   Button,
   Stack,
-  Alert
+  Alert,
 } from '@mui/material';
 import { SelectChangeEvent } from '@mui/material/Select';
 import LanguageIcon from '@mui/icons-material/Language';
@@ -24,6 +24,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import Link from '@mui/material/Link';
 import { changePassword } from './api/auth';
+import SessionsSettings from './components/SessionsSettings';
 import { updateLanguage, updateDateFormat } from './api/users';
 import { ThemePreference, useThemePreference } from './AppThemeProvider';
 import { DateFormat, useDateFormat } from './DateFormatProvider';
@@ -43,7 +44,7 @@ export default function SettingsPage() {
     const newLang = event.target.value;
     // Update frontend i18n immediately for responsive UI
     i18n.changeLanguage(newLang);
-    
+
     // Sync to backend for email language preferences (fire and forget)
     try {
       await updateLanguage(newLang);
@@ -116,11 +117,7 @@ export default function SettingsPage() {
           <Divider sx={{ mb: 1.5 }} />
 
           <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-            <img
-              src="/meerkat-crm-logo.svg"
-              alt="Meerkat CRM Logo"
-              style={{ height: 100, flexShrink: 0 }}
-            />
+            <img src="/meerkat-crm-logo.svg" alt="Meerkat CRM Logo" style={{ height: 100, flexShrink: 0 }} />
             <Stack spacing={1}>
               <Typography variant="body2" color="text.secondary">
                 {t('settings.about.description')}
@@ -153,11 +150,9 @@ export default function SettingsPage() {
             </Typography>
           </Box>
           <Divider sx={{ mb: 1.5 }} />
-          
+
           <FormControl fullWidth size="small">
-            <InputLabel id="language-select-label">
-              {t('settings.language.label')}
-            </InputLabel>
+            <InputLabel id="language-select-label">{t('settings.language.label')}</InputLabel>
             <Select
               labelId="language-select-label"
               value={i18n.language}
@@ -171,7 +166,7 @@ export default function SettingsPage() {
               <MenuItem value="fr">Français</MenuItem>
             </Select>
           </FormControl>
-          
+
           <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
             {t('settings.language.description')}
           </Typography>
@@ -189,17 +184,15 @@ export default function SettingsPage() {
           <Divider sx={{ mb: 1.5 }} />
 
           <FormControl fullWidth size="small">
-            <InputLabel id="date-format-select-label">
-              {t('settings.dateFormat.label')}
-            </InputLabel>
+            <InputLabel id="date-format-select-label">{t('settings.dateFormat.label')}</InputLabel>
             <Select
               labelId="date-format-select-label"
               value={dateFormat}
               label={t('settings.dateFormat.label')}
               onChange={handleDateFormatChange}
             >
-              <MenuItem value="eu" >{t('settings.dateFormat.options.eu' )}</MenuItem>
-              <MenuItem value="us" >{t('settings.dateFormat.options.us' )}</MenuItem>
+              <MenuItem value="eu">{t('settings.dateFormat.options.eu')}</MenuItem>
+              <MenuItem value="us">{t('settings.dateFormat.options.us')}</MenuItem>
               <MenuItem value="iso">{t('settings.dateFormat.options.iso')}</MenuItem>
             </Select>
           </FormControl>
@@ -221,9 +214,7 @@ export default function SettingsPage() {
           <Divider sx={{ mb: 1.5 }} />
 
           <FormControl fullWidth size="small">
-            <InputLabel id="theme-select-label">
-              {t('settings.theme.label')}
-            </InputLabel>
+            <InputLabel id="theme-select-label">{t('settings.theme.label')}</InputLabel>
             <Select
               labelId="theme-select-label"
               value={themePreference}
@@ -257,13 +248,21 @@ export default function SettingsPage() {
               <Typography variant="body2" color="text.secondary">
                 {t('settings.password.description')}
               </Typography>
-              {passwordError && <Alert severity="error" sx={{ py: 0 }}>{passwordError}</Alert>}
-              {passwordSuccess && <Alert severity="success" sx={{ py: 0 }}>{passwordSuccess}</Alert>}
+              {passwordError && (
+                <Alert severity="error" sx={{ py: 0 }}>
+                  {passwordError}
+                </Alert>
+              )}
+              {passwordSuccess && (
+                <Alert severity="success" sx={{ py: 0 }}>
+                  {passwordSuccess}
+                </Alert>
+              )}
               <TextField
                 label={t('settings.password.current')}
                 type="password"
                 value={currentPassword}
-                onChange={event => setCurrentPassword(event.target.value)}
+                onChange={(event) => setCurrentPassword(event.target.value)}
                 fullWidth
                 required
                 size="small"
@@ -272,7 +271,7 @@ export default function SettingsPage() {
                 label={t('settings.password.new')}
                 type="password"
                 value={newPassword}
-                onChange={event => setNewPassword(event.target.value)}
+                onChange={(event) => setNewPassword(event.target.value)}
                 fullWidth
                 required
                 size="small"
@@ -281,7 +280,7 @@ export default function SettingsPage() {
                 label={t('settings.password.confirm')}
                 type="password"
                 value={confirmPassword}
-                onChange={event => setConfirmPassword(event.target.value)}
+                onChange={(event) => setConfirmPassword(event.target.value)}
                 fullWidth
                 required
                 size="small"
@@ -293,6 +292,8 @@ export default function SettingsPage() {
           </form>
         </CardContent>
       </Card>
+
+      <SessionsSettings />
     </Box>
   );
 }

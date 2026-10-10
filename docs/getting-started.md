@@ -49,6 +49,7 @@ After adjusting the environment variables as needed you can run:
 | `BACKUP_TIME` | Time of day of the automatic backup, `HH:MM` (24-hour) in `REMINDER_TIMEZONE`. Default is `02:30` |
 | `BACKUP_RETENTION_COUNT` | Number of most recent backups to keep (older ones are deleted after each backup). Default is `7` |
 | `BACKUP_DIR` | Directory the backups are written to. Default is a `backups` directory next to the database file (`SQLITE_DB_PATH`) |
+| `AUDIT_LOG_RETENTION_DAYS` | Number of days [audit log](deployment.md#sessions-and-audit-log) entries are kept (purged daily). `0` keeps them forever. Default is `365` |
 | `TRASH_RETENTION_DAYS` | Number of days a deleted contact stays in the Trash before it is deleted permanently (checked daily). Default is `30` |
 
 SSO is disabled unless all three of `OIDC_PROVIDER_URL`, `OIDC_CLIENT_ID`, and `OIDC_CLIENT_SECRET` are set.

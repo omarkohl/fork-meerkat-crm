@@ -29,6 +29,7 @@ func TriggerReminders(c *gin.Context, cfg config.Config) {
 		return
 	}
 
+	audit(c, db, models.AuditAdminReminders, "")
 	c.JSON(http.StatusOK, gin.H{"message": "Reminder emails sent successfully"})
 }
 
@@ -205,6 +206,19 @@ func UpdateUser(c *gin.Context) {
 	}
 
 	// Apply updates
+	var changed []string
+	if input.Username != nil {
+		changed = append(changed, "username")
+	}
+	if input.Email != nil {
+		changed = append(changed, "email")
+	}
+	if input.Password != nil {
+		changed = append(changed, "password")
+	}
+	if input.IsAdmin != nil {
+		changed = append(changed, "is_admin")
+	}
 	if input.Username != nil {
 		user.Username = strings.ToLower(*input.Username)
 	}
@@ -228,7 +242,16 @@ func UpdateUser(c *gin.Context) {
 		user.IsAdmin = *input.IsAdmin
 	}
 
-	if err := db.Save(&user).Error; err != nil {
+	// A new password set by an admin ends the user's sessions in the same change.
+	if err := db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Save(&user).Error; err != nil {
+			return err
+		}
+		if input.Password != nil {
+			return services.RevokeAllSessions(tx, user.ID)
+		}
+		return nil
+	}); err != nil {
 		log.Error().Err(err).Uint("user_id", user.ID).Msg("Failed to update user")
 		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
 			apperrors.AbortWithError(c, apperrors.ErrAlreadyExists("User").WithDetails("field", "username or email"))
@@ -237,6 +260,8 @@ func UpdateUser(c *gin.Context) {
 		apperrors.AbortWithError(c, apperrors.ErrDatabase("update user").WithError(err))
 		return
 	}
+
+	audit(c, db, models.AuditAdminUserUpdated, fmt.Sprintf("user:%s#%d;changed:%s", auditValue(user.Username), user.ID, strings.Join(changed, ",")))
 
 	c.JSON(http.StatusOK, models.AdminUserResponse{
 		ID:         user.ID,
@@ -332,6 +357,11 @@ func DeleteUser(c *gin.Context) {
 			return err
 		}
 
+		// Sessions: the user is soft-deleted, so the foreign key cascade does not run
+		if err := tx.Where("user_id = ?", userID).Delete(&models.Session{}).Error; err != nil {
+			return err
+		}
+
 		// Delete the calendar feed (the user row is soft-deleted, so the foreign key
 		// cascade does not remove it and the token would stay valid)
 		if err := tx.Where("user_id = ?", userID).Delete(&models.IcsFeed{}).Error; err != nil {
@@ -391,5 +421,6 @@ func DeleteUser(c *gin.Context) {
 		return
 	}
 
+	audit(c, db, models.AuditAdminUserDeleted, fmt.Sprintf("user:%s#%d", auditValue(user.Username), id))
 	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 }

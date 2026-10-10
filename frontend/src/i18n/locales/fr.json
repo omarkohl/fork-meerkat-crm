@@ -20,7 +20,8 @@
     "integrations": "Intégrations",
     "data": "Données",
     "collapseSidebar": "Réduire la barre latérale",
-    "expandSidebar": "Développer la barre latérale"
+    "expandSidebar": "Développer la barre latérale",
+    "auditLog": "Journal d'audit"
   },
   "dashboard": {
     "welcome": "Bienvenue sur le tableau de bord Meerkat CRM",
@@ -945,5 +946,82 @@
     "triggerReminders": "Envoyer les e-mails de rappel",
     "triggerRemindersSuccess": "E-mails de rappel envoyés avec succès",
     "triggerRemindersError": "Échec de l'envoi des e-mails de rappel"
+  },
+  "sessions": {
+    "title": "Sessions actives",
+    "description": "Navigateurs et appareils connectés à votre compte. Déconnectez ceux que vous ne reconnaissez pas, ou tous en cas de doute.",
+    "signOutAll": "Se déconnecter partout",
+    "current": "Cet appareil",
+    "unknownDevice": "Appareil inconnu",
+    "signedInAt": "Connecté le {{date}}",
+    "lastActive": "dernière activité {{date}}",
+    "revoke": "Déconnecter",
+    "revokeAria": "Déconnecter {{device}}",
+    "revokeSuccess": "Session déconnectée.",
+    "revokeError": "Impossible de déconnecter la session.",
+    "loadError": "Impossible de charger les sessions.",
+    "signOutAllError": "Impossible de se déconnecter partout.",
+    "signOutAllDialog": {
+      "title": "Se déconnecter partout ?",
+      "message": "Tous les navigateurs et appareils, celui-ci compris, seront déconnectés et vous devrez vous reconnecter. Les jetons d'API et le flux de calendrier continuent de fonctionner.",
+      "confirm": "Se déconnecter partout"
+    }
+  },
+  "auditLog": {
+    "title": "Journal d'audit",
+    "retention": "Les entrées sont conservées {{days}} jours.",
+    "retentionForever": "Les entrées sont conservées jusqu'à leur suppression de la base de données.",
+    "filterEvent": "Événement",
+    "allEvents": "Tous les événements",
+    "filterUser": "Utilisateur",
+    "time": "Heure",
+    "event": "Événement",
+    "user": "Utilisateur",
+    "ip": "Adresse IP",
+    "detail": "Détails",
+    "empty": "Aucune entrée.",
+    "loadError": "Impossible de charger le journal d'audit.",
+    "events": {
+      "login": "Connexion",
+      "login_failed": "Échec de connexion",
+      "logout": "Déconnexion",
+      "password_changed": "Mot de passe modifié",
+      "password_reset": "Mot de passe réinitialisé",
+      "session_revoked": "Session déconnectée",
+      "sign_out_everywhere": "Déconnecté partout",
+      "export": "Export de données",
+      "api_token_created": "Jeton d'API créé",
+      "api_token_revoked": "Jeton d'API révoqué",
+      "ics_feed_created": "Flux de calendrier créé",
+      "ics_feed_revoked": "Flux de calendrier révoqué",
+      "backup_created": "Sauvegarde créée",
+      "backup_downloaded": "Sauvegarde téléchargée",
+      "backup_deleted": "Sauvegarde supprimée",
+      "admin_user_updated": "Utilisateur modifié par l'admin",
+      "admin_user_deleted": "Utilisateur supprimé par l'admin",
+      "admin_reminders_triggered": "Rappels déclenchés par l'admin"
+    },
+    "keys": {
+      "reason": "Motif",
+      "method": "Méthode",
+      "format": "Format",
+      "token": "Jeton d'API",
+      "backup": "Sauvegarde",
+      "user": "Utilisateur",
+      "changed": "Modifié"
+    },
+    "values": {
+      "unknown_account": "Compte inconnu",
+      "wrong_password": "Mot de passe incorrect",
+      "wrong_password_locked": "Mot de passe incorrect, compte verrouillé",
+      "oidc": "Authentification unique (OIDC)",
+      "csv": "CSV",
+      "vcf": "vCard",
+      "username": "Nom d'utilisateur",
+      "email": "E-mail",
+      "password": "Mot de passe",
+      "is_admin": "Droits d'administrateur"
+    },
+    "userAgent": "Appareil"
   }
 }

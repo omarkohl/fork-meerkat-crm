@@ -20,7 +20,8 @@
     "integrations": "Integrations",
     "data": "Data",
     "collapseSidebar": "Collapse sidebar",
-    "expandSidebar": "Expand sidebar"
+    "expandSidebar": "Expand sidebar",
+    "auditLog": "Audit log"
   },
   "dashboard": {
     "welcome": "Welcome to Meerkat CRM Dashboard",
@@ -945,5 +946,82 @@
     "triggerReminders": "Send Reminder Emails",
     "triggerRemindersSuccess": "Reminder emails sent successfully",
     "triggerRemindersError": "Failed to send reminder emails"
+  },
+  "sessions": {
+    "title": "Active sessions",
+    "description": "Browsers and devices that are signed in to your account. Sign out the ones you do not recognise, or everywhere if you are unsure.",
+    "signOutAll": "Sign out everywhere",
+    "current": "This device",
+    "unknownDevice": "Unknown device",
+    "signedInAt": "Signed in {{date}}",
+    "lastActive": "last active {{date}}",
+    "revoke": "Sign out",
+    "revokeAria": "Sign out {{device}}",
+    "revokeSuccess": "Session signed out.",
+    "revokeError": "Could not sign the session out.",
+    "loadError": "Could not load the sessions.",
+    "signOutAllError": "Could not sign out everywhere.",
+    "signOutAllDialog": {
+      "title": "Sign out everywhere?",
+      "message": "Every browser and device, including this one, is signed out and you have to log in again. API tokens and the calendar feed keep working.",
+      "confirm": "Sign out everywhere"
+    }
+  },
+  "auditLog": {
+    "title": "Audit log",
+    "retention": "Entries are kept for {{days}} days.",
+    "retentionForever": "Entries are kept until deleted from the database.",
+    "filterEvent": "Event",
+    "allEvents": "All events",
+    "filterUser": "User",
+    "time": "Time",
+    "event": "Event",
+    "user": "User",
+    "ip": "IP address",
+    "detail": "Details",
+    "empty": "No entries.",
+    "loadError": "Could not load the audit log.",
+    "events": {
+      "login": "Login",
+      "login_failed": "Failed login",
+      "logout": "Logout",
+      "password_changed": "Password changed",
+      "password_reset": "Password reset",
+      "session_revoked": "Session signed out",
+      "sign_out_everywhere": "Signed out everywhere",
+      "export": "Data export",
+      "api_token_created": "API token created",
+      "api_token_revoked": "API token revoked",
+      "ics_feed_created": "Calendar feed created",
+      "ics_feed_revoked": "Calendar feed revoked",
+      "backup_created": "Backup created",
+      "backup_downloaded": "Backup downloaded",
+      "backup_deleted": "Backup deleted",
+      "admin_user_updated": "User changed by admin",
+      "admin_user_deleted": "User deleted by admin",
+      "admin_reminders_triggered": "Reminders triggered by admin"
+    },
+    "keys": {
+      "reason": "Reason",
+      "method": "Method",
+      "format": "Format",
+      "token": "API token",
+      "backup": "Backup",
+      "user": "User",
+      "changed": "Changed"
+    },
+    "values": {
+      "unknown_account": "Unknown account",
+      "wrong_password": "Wrong password",
+      "wrong_password_locked": "Wrong password, account locked",
+      "oidc": "Single sign-on (OIDC)",
+      "csv": "CSV",
+      "vcf": "vCard",
+      "username": "Username",
+      "email": "E-mail",
+      "password": "Password",
+      "is_admin": "Admin rights"
+    },
+    "userAgent": "Device"
   }
 }

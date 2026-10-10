@@ -59,6 +59,11 @@ func RegisterRoutes(router *gin.Engine, cfg *config.Config, db *gorm.DB, oidcPro
 			protected.PATCH("/users/enabled-contact-fields", middleware.ValidateJSONMiddleware(&models.EnabledContactFieldsInput{}), controllers.UpdateEnabledContactFields)
 			protected.GET("/users/me", controllers.GetCurrentUser)
 
+			// Login sessions: list, sign one out, sign out everywhere
+			protected.GET("/sessions", controllers.ListSessions)
+			protected.POST("/sessions/revoke-all", controllers.SignOutEverywhere)
+			protected.DELETE("/sessions/:id", controllers.RevokeSession)
+
 			// Contact routes
 			protected.GET("/contacts", controllers.GetContacts)
 			protected.GET("/contacts/circles", controllers.GetCircles)
@@ -200,6 +205,7 @@ func RegisterRoutes(router *gin.Engine, cfg *config.Config, db *gorm.DB, oidcPro
 		admin.Use(middleware.AdminMiddleware())
 		{
 			admin.GET("/system-status", controllers.SystemStatus)
+			admin.GET("/audit-log", controllers.ListAuditLog)
 			admin.GET("/users", controllers.ListUsers)
 			admin.GET("/users/:id", controllers.GetUser)
 			admin.PATCH("/users/:id", middleware.ValidateJSONMiddleware(&models.AdminUserUpdateInput{}), controllers.UpdateUser)

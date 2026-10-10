@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense, useMemo, MouseEvent as ReactMouseEvent } from 'react';
+import { useState, useEffect, Suspense, lazy, useMemo, MouseEvent as ReactMouseEvent } from 'react';
 import ContactsPage from './ContactsPage';
 import ContactDetailPage from './ContactDetailPage';
 import ActivitiesPage from './ActivitiesPage';
@@ -53,6 +53,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import SettingsIcon from '@mui/icons-material/Settings';
 import PeopleIcon from '@mui/icons-material/People';
 import BackupIcon from '@mui/icons-material/Backup';
+import HistoryIcon from '@mui/icons-material/History';
 import TokenIcon from '@mui/icons-material/Token';
 import StorageIcon from '@mui/icons-material/Storage';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -61,6 +62,8 @@ import ExpandMore from '@mui/icons-material/ExpandMore';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import './App.css';
+
+const AuditLogPage = lazy(() => import('./AuditLogPage'));
 
 const EXPANDED_DRAWER_WIDTH = 240;
 const COLLAPSED_DRAWER_WIDTH = 64;
@@ -167,6 +170,7 @@ function AppContent({ token, setToken }: { token: string | null; setToken: (toke
     if (userIsAdmin) {
       items.push({ text: t('nav.users'), icon: <PeopleIcon />, path: '/users' });
       items.push({ text: t('nav.backups'), icon: <BackupIcon />, path: '/backups' });
+      items.push({ text: t('nav.auditLog'), icon: <HistoryIcon />, path: '/audit-log' });
     }
     return items;
   }, [t, userIsAdmin]);
@@ -187,6 +191,7 @@ function AppContent({ token, setToken }: { token: string | null; setToken: (toke
     location.pathname.startsWith('/settings') ||
     location.pathname.startsWith('/users') ||
     location.pathname.startsWith('/backups') ||
+    location.pathname.startsWith('/audit-log') ||
     location.pathname.startsWith('/api-tokens');
 
   // Check if current path matches the nav item (handle exact match for "/" and prefix match for others)
@@ -654,6 +659,20 @@ function AppContent({ token, setToken }: { token: string | null; setToken: (toke
                 }
               >
                 <BackupsPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/audit-log"
+            element={
+              <Suspense
+                fallback={
+                  <Box display="flex" justifyContent="center" mt={4}>
+                    <CircularProgress />
+                  </Box>
+                }
+              >
+                <AuditLogPage />
               </Suspense>
             }
           />
