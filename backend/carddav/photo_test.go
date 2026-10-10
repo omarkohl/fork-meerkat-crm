@@ -2,7 +2,6 @@ package carddav
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/binary"
 	"hash/crc32"
 	"image"
@@ -89,11 +88,10 @@ func TestSaveContactPhotoSizes(t *testing.T) {
 			}
 			assertCentre(t, "photo", out)
 
-			const prefix = "data:image/jpeg;base64,"
-			if !strings.HasPrefix(thumb, prefix) {
-				t.Fatalf("thumbnail is not a JPEG data URL: %.30s", thumb)
+			if !strings.HasSuffix(thumb, "_thumb.jpg") {
+				t.Fatalf("thumbnail is not a file name: %.30s", thumb)
 			}
-			raw, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(thumb, prefix))
+			raw, err := os.ReadFile(filepath.Join(dir, thumb))
 			if err != nil {
 				t.Fatal(err)
 			}

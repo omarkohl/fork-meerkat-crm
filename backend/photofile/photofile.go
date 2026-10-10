@@ -10,7 +10,10 @@ import (
 	_ "image/gif" // registers the GIF decoder for image.DecodeConfig
 	"image/jpeg"
 	_ "image/png" // registers the PNG decoder for image.DecodeConfig
+	"meerkat/logger"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 // Modes of new photo directories and files. Existing directories are not changed.
@@ -31,6 +34,15 @@ func EnsureDir(dir string) error {
 func SaveJPEG(path string, img image.Image) error {
 	return write(path, func(f *os.File) error {
 		return jpeg.Encode(f, img, &jpeg.Options{Quality: 85})
+	})
+}
+
+// WriteFile writes data into a new file at path with the same rules as SaveJPEG: no
+// overwrite, private mode, partial file removed on failure.
+func WriteFile(path string, data []byte) error {
+	return write(path, func(f *os.File) error {
+		_, err := f.Write(data)
+		return err
 	})
 }
 
@@ -86,4 +98,26 @@ func CheckDimensions(data []byte) error {
 		return fmt.Errorf("%w: %w", ErrUnreadable, err)
 	}
 	return CheckSize(cfg.Width, cfg.Height)
+}
+
+// Remove deletes the named files in dir. Empty names, base64 data URLs (legacy thumbnails
+// have no file) and names that would leave dir are skipped. Failures are logged, not
+// returned: callers use it after the database change that made the files unused.
+func Remove(dir string, names ...string) {
+	if dir == "" {
+		return
+	}
+	for _, name := range names {
+		if name == "" || strings.HasPrefix(name, "data:") {
+			continue
+		}
+		path := filepath.Join(dir, name)
+		if rel, err := filepath.Rel(dir, path); err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+			logger.Warn().Str("path", path).Msg("Refusing to delete a photo file outside the photo directory")
+			continue
+		}
+		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+			logger.Warn().Err(err).Str("path", path).Msg("Failed to delete a photo file")
+		}
+	}
 }

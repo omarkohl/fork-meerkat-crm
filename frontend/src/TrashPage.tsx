@@ -26,6 +26,7 @@ import { useTrash } from './hooks/useTrash';
 import { emptyTrash, purgeTrashedContact, restoreTrashedContact, TrashedContact } from './api/trash';
 import { useSnackbar } from './context/SnackbarContext';
 import { useDateFormat } from './DateFormatProvider';
+import { thumbnailSrc } from './utils/thumbnail';
 
 function displayName(c: TrashedContact): string {
   return [c.firstname, c.nickname && `"${c.nickname}"`, c.lastname].filter(Boolean).join(' ');
@@ -127,7 +128,7 @@ export default function TrashPage() {
               {contacts.map((contact) => (
                 <Box component="li" key={contact.id} sx={{ display: 'flex', alignItems: 'center', py: 1 }}>
                   <Avatar
-                    src={contact.photo_thumbnail || undefined}
+                    src={thumbnailSrc(contact.photo_thumbnail)}
                     sx={{ width: 40, height: 40, mr: 1.5, bgcolor: 'primary.main' }}
                   >
                     {contact.firstname.charAt(0)}

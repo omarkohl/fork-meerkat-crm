@@ -247,6 +247,8 @@ func (b *Backend) PutAddressObject(ctx context.Context, urlPath string, card vca
 		}
 	}
 
+	swap := NewPhotoSwap(&contact)
+
 	// Convert vCard to contact
 	updatedContact, photoData, photoMediaType, photoURL := VCardToContact(card, &contact)
 	updatedContact.UserID = userID
@@ -265,7 +267,7 @@ func (b *Backend) PutAddressObject(ctx context.Context, urlPath string, card vca
 
 	// Handle photo if provided (embedded base64)
 	if len(photoData) > 0 {
-		photoPath, thumbnailBase64, err := SaveContactPhoto(photoData, photoMediaType, b.getPhotoDir(ctx))
+		photoPath, thumbnailFile, err := SaveContactPhoto(photoData, photoMediaType, b.getPhotoDir(ctx))
 		if err != nil {
 			logger.Warn().
 				Err(err).
@@ -274,8 +276,7 @@ func (b *Backend) PutAddressObject(ctx context.Context, urlPath string, card vca
 				Int("photo_size", len(photoData)).
 				Msg("CardDAV: failed to save contact photo")
 		} else {
-			updatedContact.Photo = photoPath
-			updatedContact.PhotoThumbnail = thumbnailBase64
+			swap.Apply(updatedContact, photoPath, thumbnailFile)
 		}
 	} else if photoURL != "" {
 		// Handle URL-based photo - fetch and save
@@ -287,7 +288,7 @@ func (b *Backend) PutAddressObject(ctx context.Context, urlPath string, card vca
 				Str("photo_url", photoURL).
 				Msg("CardDAV: failed to fetch photo from URL")
 		} else if len(fetchedData) > 0 {
-			photoPath, thumbnailBase64, err := SaveContactPhoto(fetchedData, fetchedMediaType, b.getPhotoDir(ctx))
+			photoPath, thumbnailFile, err := SaveContactPhoto(fetchedData, fetchedMediaType, b.getPhotoDir(ctx))
 			if err != nil {
 				logger.Warn().
 					Err(err).
@@ -295,16 +296,17 @@ func (b *Backend) PutAddressObject(ctx context.Context, urlPath string, card vca
 					Str("photo_url", photoURL).
 					Msg("CardDAV: failed to save fetched photo")
 			} else {
-				updatedContact.Photo = photoPath
-				updatedContact.PhotoThumbnail = thumbnailBase64
+				swap.Apply(updatedContact, photoPath, thumbnailFile)
 			}
 		}
 	}
 
 	// Save contact
 	if err := db.Save(updatedContact).Error; err != nil {
+		swap.Rollback(b.getPhotoDir(ctx), updatedContact)
 		return nil, err
 	}
+	swap.Commit(b.getPhotoDir(ctx))
 
 	return b.contactToAddressObject(ctx, updatedContact), nil
 }

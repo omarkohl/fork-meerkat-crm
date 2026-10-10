@@ -3,13 +3,10 @@ package services
 import (
 	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
 	"time"
 
-	"meerkat/logger"
 	"meerkat/models"
+	"meerkat/photofile"
 
 	"gorm.io/gorm"
 )
@@ -155,7 +152,7 @@ func deletedWith(dependant gorm.DeletedAt, contactDeletedAt time.Time) bool {
 // photo files from photoDir. Live contacts and other users' contacts are never
 // touched. It returns how many contacts were removed.
 func PurgeTrashedContacts(db *gorm.DB, userID uint, ids []uint, photoDir string) (int, error) {
-	q := db.Unscoped().Select("id", "user_id", "photo", "photo_thumbnail", "deleted_at").
+	q := db.Unscoped().Select("id", "user_id", "photo", "photo_thumbnail", "photo_thumbnail_file", "deleted_at").
 		Where("user_id = ? AND deleted_at IS NOT NULL", userID)
 	if len(ids) > 0 {
 		q = q.Where("id IN ?", ids)
@@ -175,7 +172,7 @@ func PurgeExpiredTrash(db *gorm.DB, retentionDays int, photoDir string, now time
 	}
 	cutoff := now.Add(-time.Duration(retentionDays) * 24 * time.Hour)
 	var trashed []models.Contact
-	if err := db.Unscoped().Select("id", "user_id", "photo", "photo_thumbnail", "deleted_at").
+	if err := db.Unscoped().Select("id", "user_id", "photo", "photo_thumbnail", "photo_thumbnail_file", "deleted_at").
 		Where("deleted_at IS NOT NULL").Find(&trashed).Error; err != nil {
 		return 0, err
 	}
@@ -235,7 +232,7 @@ func purgeChunkTx(tx *gorm.DB, chunk []models.Contact) ([]models.Contact, error)
 			listedAt[c.ID] = c.DeletedAt.Time
 		}
 		var current []models.Contact
-		if err := tx.Unscoped().Select("id", "user_id", "photo", "photo_thumbnail", "deleted_at").
+		if err := tx.Unscoped().Select("id", "user_id", "photo", "photo_thumbnail", "photo_thumbnail_file", "deleted_at").
 			Where("id IN ? AND user_id = ? AND deleted_at IS NOT NULL", candidateIDs, userID).
 			Find(&current).Error; err != nil {
 			return nil, err
@@ -277,26 +274,9 @@ func purgeChunkTx(tx *gorm.DB, chunk []models.Contact) ([]models.Contact, error)
 	return confirmed, nil
 }
 
-// RemoveContactPhotoFiles deletes the profile photo and any legacy file-based
-// thumbnail of a contact. Thumbnails stored as base64 data URLs have no file.
+// RemoveContactPhotoFiles deletes the profile photo and the thumbnail file of a contact
+// (and a legacy file-named thumbnail; base64 data URLs have no file).
 // Failures are logged, not returned: the database change already happened.
 func RemoveContactPhotoFiles(photoDir string, contact models.Contact) {
-	if photoDir == "" {
-		return
-	}
-	remove := func(name, what string) {
-		if name == "" || strings.HasPrefix(name, "data:") {
-			return
-		}
-		path := filepath.Join(photoDir, name)
-		if rel, err := filepath.Rel(photoDir, path); err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-			logger.Warn().Str("path", path).Msgf("Refusing to delete %s outside the photo directory", what)
-			return
-		}
-		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
-			logger.Warn().Err(err).Str("path", path).Msgf("Failed to delete contact %s", what)
-		}
-	}
-	remove(contact.Photo, "photo")
-	remove(contact.PhotoThumbnail, "thumbnail")
+	photofile.Remove(photoDir, contact.Photo, contact.PhotoThumbnailFile, contact.LegacyThumbnail)
 }
