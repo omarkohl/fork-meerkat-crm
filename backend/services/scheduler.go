@@ -20,6 +20,7 @@ const (
 	JobCalendarSync   = "calendar-sync"
 	JobContactSync    = "contact-sync"
 	JobTrashPurge     = "trash-purge"
+	JobBackup         = "backup"
 )
 
 // SchedulerTasks are the functions the scheduler runs periodically.
@@ -29,6 +30,7 @@ type SchedulerTasks struct {
 	CalendarSync   func()
 	ContactSync    func()
 	TrashPurge     func()
+	Backup         func()
 }
 
 // Scheduler runs the recurring background jobs.
@@ -38,7 +40,7 @@ type Scheduler struct {
 
 // NewScheduler registers the recurring jobs: reminders daily at cfg.ReminderTime
 // (in the reminder timezone), webhook retries every 5 minutes, and calendar and
-// contact syncs every configured number of hours, and the trash purge daily at 03:30. Interval jobs also run once as
+// contact syncs every configured number of hours, the trash purge daily at 03:30 and, when enabled, the backup daily at cfg.BackupTime. Interval jobs also run once as
 // soon as the scheduler starts. Registration failures are logged and skipped.
 func NewScheduler(cfg *config.Config, t SchedulerTasks) (*Scheduler, error) {
 	s, err := gocron.NewScheduler(gocron.WithLocation(cfg.GetReminderLocation()),
@@ -59,6 +61,14 @@ func NewScheduler(cfg *config.Config, t SchedulerTasks) (*Scheduler, error) {
 	register(s, JobCalendarSync, gocron.DurationJob(time.Duration(cfg.CalDAVSyncIntervalHours)*time.Hour), t.CalendarSync, startNow)
 	register(s, JobContactSync, gocron.DurationJob(time.Duration(cfg.CardDAVSyncIntervalHours)*time.Hour), t.ContactSync, startNow)
 	register(s, JobTrashPurge, gocron.DailyJob(1, gocron.NewAtTimes(gocron.NewAtTime(3, 30, 0))), t.TrashPurge)
+	if cfg.BackupEnabled {
+		var h, m int
+		if _, err := fmt.Sscanf(cfg.BackupTime, "%d:%d", &h, &m); err != nil {
+			logger.Error().Err(err).Str("backup_time", cfg.BackupTime).Msg("Failed to schedule job")
+		} else {
+			register(s, JobBackup, gocron.DailyJob(1, gocron.NewAtTimes(gocron.NewAtTime(uint(h), uint(m), 0))), t.Backup) //nolint:gosec // validated HH:MM
+		}
+	}
 	return &Scheduler{s: s}, nil
 }
 

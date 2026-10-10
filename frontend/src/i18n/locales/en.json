@@ -15,6 +15,7 @@
     "settings": "Settings",
     "profile": "Profile",
     "users": "Users",
+    "backups": "Backups",
     "apiTokens": "API Tokens",
     "integrations": "Integrations",
     "data": "Data",
@@ -877,6 +878,31 @@
       "message_one": "Delete {{count}} contact permanently? This cannot be undone.",
       "message_other": "Delete all {{count}} contacts permanently? This cannot be undone.",
       "confirm": "Empty trash"
+    }
+  },
+  "backups": {
+    "title": "Backups",
+    "listTitle": "Server backups",
+    "createButton": "Create backup now",
+    "creating": "Creating…",
+    "warning": "Each backup contains the data of ALL users on this server (contacts, notes, reminders, account data and password hashes) and all photos. Store and share it only with great care.",
+    "scheduleOn": "A backup is made automatically every day at {{time}}; the {{count}} most recent are kept.",
+    "scheduleOff": "Automatic backups are turned off (BACKUP_ENABLED).",
+    "location": "Stored on the server in {{directory}}.",
+    "empty": "There are no backups yet.",
+    "download": "Download",
+    "delete": "Delete",
+    "downloadAria": "Download {{name}}",
+    "deleteAria": "Delete {{name}}",
+    "createSuccess": "Backup created",
+    "createError": "Failed to create the backup",
+    "downloadError": "Failed to download the backup",
+    "deleteSuccess": "Backup deleted",
+    "deleteError": "Failed to delete the backup",
+    "deleteDialog": {
+      "title": "Delete backup",
+      "message": "Delete {{name}}? This cannot be undone.",
+      "confirm": "Delete"
     }
   },
   "users": {

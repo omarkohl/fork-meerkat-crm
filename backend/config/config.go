@@ -58,6 +58,10 @@ type Config struct {
 	CardDAVBlockPrivateURLs  bool   // Block contact sync requests to private/loopback addresses (defaults to CALDAV_BLOCK_PRIVATE_URLS)
 	MonicaBlockPrivateURLs   bool   // Block Monica import requests to private/loopback addresses (useful for cloud deployments)
 	TrashRetentionDays       int    // Days a deleted contact stays in the trash before it is purged for good
+	BackupEnabled            bool   // Run the scheduled backup (admins can always create one by hand)
+	BackupTime               string // Time of day (HH:MM, in the reminder timezone) of the scheduled backup
+	BackupRetentionCount     int    // Number of most recent backups to keep
+	BackupDir                string // Where backups are stored (holds every user's data; keep it private)
 	OIDC                     OIDCConfig
 }
 
@@ -121,6 +125,14 @@ func LoadConfig() *Config {
 		log.Println("WARN: TRASH_RETENTION_DAYS must be at least 1, using 30")
 		cfg.TrashRetentionDays = 30
 	}
+	cfg.BackupEnabled = getBoolEnv("BACKUP_ENABLED", true)
+	cfg.BackupTime = getEnv("BACKUP_TIME", "02:30")
+	cfg.BackupRetentionCount = getIntEnv("BACKUP_RETENTION_COUNT", 7)
+	if cfg.BackupRetentionCount < 1 {
+		log.Println("WARN: BACKUP_RETENTION_COUNT must be at least 1, using 7")
+		cfg.BackupRetentionCount = 7
+	}
+	cfg.BackupDir = getEnv("BACKUP_DIR", filepath.Join(filepath.Dir(cfg.DBPath), "backups"))
 	cfg.CardDAVBlockPrivateURLs = getBoolEnv("CARDDAV_BLOCK_PRIVATE_URLS", cfg.CalDAVBlockPrivateURLs)
 
 	// An email channel is enabled only when it is fully configured
@@ -256,6 +268,13 @@ func (c *Config) Validate() []ValidationError {
 		errors = append(errors, ValidationError{
 			Field:   "REMINDER_TIME",
 			Message: fmt.Sprintf("Invalid time format '%s'. Must be in HH:MM format (e.g., 12:00).", c.ReminderTime),
+		})
+	}
+
+	if c.BackupEnabled && !timePattern.MatchString(c.BackupTime) {
+		errors = append(errors, ValidationError{
+			Field:   "BACKUP_TIME",
+			Message: fmt.Sprintf("Invalid time format '%s'. Must be in HH:MM format (e.g., 02:30).", c.BackupTime),
 		})
 	}
 

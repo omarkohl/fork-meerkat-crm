@@ -203,6 +203,11 @@ func RegisterRoutes(router *gin.Engine, cfg *config.Config, db *gorm.DB, oidcPro
 			admin.GET("/users/:id", controllers.GetUser)
 			admin.PATCH("/users/:id", middleware.ValidateJSONMiddleware(&models.AdminUserUpdateInput{}), controllers.UpdateUser)
 			admin.DELETE("/users/:id", controllers.DeleteUser)
+			// Backups contain every user's data: admin only (API tokens are refused too).
+			admin.GET("/backups", controllers.ListBackups)
+			admin.POST("/backups", controllers.CreateBackup)
+			admin.GET("/backups/:name", controllers.DownloadBackup)
+			admin.DELETE("/backups/:name", controllers.DeleteBackup)
 			admin.POST("/trigger-reminders", func(c *gin.Context) {
 				controllers.TriggerReminders(c, *cfg)
 			})

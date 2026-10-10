@@ -4,7 +4,7 @@ import { API_BASE_URL, apiFetch, getAuthHeaders, parseErrorResponse } from './cl
 /**
  * Helper function to download a file from an API response
  */
-async function downloadFileFromResponse(response: Response, defaultFilename: string): Promise<void> {
+export async function downloadFileFromResponse(response: Response, defaultFilename: string): Promise<void> {
   // Get the filename from Content-Disposition header or use default
   const contentDisposition = response.headers.get('Content-Disposition');
   let filename = defaultFilename;

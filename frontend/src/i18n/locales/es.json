@@ -15,6 +15,7 @@
     "settings": "Configuración",
     "profile": "Perfil",
     "users": "Usuarios",
+    "backups": "Copias de seguridad",
     "apiTokens": "Tokens API",
     "integrations": "Integraciones",
     "data": "Datos",
@@ -877,6 +878,31 @@
       "message_one": "¿Eliminar definitivamente {{count}} contacto? Esta acción no se puede deshacer.",
       "message_other": "¿Eliminar definitivamente los {{count}} contactos? Esta acción no se puede deshacer.",
       "confirm": "Vaciar papelera"
+    }
+  },
+  "backups": {
+    "title": "Copias de seguridad",
+    "listTitle": "Copias de seguridad del servidor",
+    "createButton": "Crear copia ahora",
+    "creating": "Creando…",
+    "warning": "Cada copia contiene los datos de TODOS los usuarios de este servidor (contactos, notas, recordatorios, datos de cuenta y hashes de contraseña) y todas las fotos. Guárdala y compártela con muchísimo cuidado.",
+    "scheduleOn": "Se crea una copia automáticamente cada día a las {{time}}; se conservan las {{count}} más recientes.",
+    "scheduleOff": "Las copias automáticas están desactivadas (BACKUP_ENABLED).",
+    "location": "Guardadas en el servidor en {{directory}}.",
+    "empty": "Todavía no hay copias de seguridad.",
+    "download": "Descargar",
+    "delete": "Eliminar",
+    "downloadAria": "Descargar {{name}}",
+    "deleteAria": "Eliminar {{name}}",
+    "createSuccess": "Copia creada",
+    "createError": "No se pudo crear la copia",
+    "downloadError": "No se pudo descargar la copia",
+    "deleteSuccess": "Copia eliminada",
+    "deleteError": "No se pudo eliminar la copia",
+    "deleteDialog": {
+      "title": "Eliminar copia",
+      "message": "¿Eliminar {{name}}? Esta acción no se puede deshacer.",
+      "confirm": "Eliminar"
     }
   },
   "users": {

@@ -45,6 +45,10 @@ After adjusting the environment variables as needed you can run:
 | `OIDC_TRUST_EMAIL` | When `true`, skips the `email_verified`  requirement when linking an OIDC identity to an existing account by email. Safe to enable for self-hosted providers (e.g. Authentik) where you control all user accounts. Default is `false` |
 | `REMINDER_TIME` | Time of day at which reminder emails are sent, in `HH:MM` format (24-hour). Default is `12:00` |
 | `REMINDER_TIMEZONE` | Timezone used for scheduling reminder emails. Must be a valid [IANA timezone name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) (e.g. `Europe/Berlin`). Default is `UTC` |
+| `BACKUP_ENABLED` | Whether the daily automatic [backup](deployment.md#backups) runs. Default is `true`. Admins can create backups by hand either way |
+| `BACKUP_TIME` | Time of day of the automatic backup, `HH:MM` (24-hour) in `REMINDER_TIMEZONE`. Default is `02:30` |
+| `BACKUP_RETENTION_COUNT` | Number of most recent backups to keep (older ones are deleted after each backup). Default is `7` |
+| `BACKUP_DIR` | Directory the backups are written to. Default is a `backups` directory next to the database file (`SQLITE_DB_PATH`) |
 | `TRASH_RETENTION_DAYS` | Number of days a deleted contact stays in the Trash before it is deleted permanently (checked daily). Default is `30` |
 
 SSO is disabled unless all three of `OIDC_PROVIDER_URL`, `OIDC_CLIENT_ID`, and `OIDC_CLIENT_SECRET` are set.
@@ -60,4 +64,4 @@ To get started you need to register a user. The first user will automatically re
 
 ## Backup
 
-Make regular backups of your data by copying the database file in your data directory as well as the contents of the photo directory to a separate device.
+Meerkat makes a backup of the database and the photos every day and keeps the last 7 (see [Backups](deployment.md#backups)). Copy them to a separate device regularly: they are stored on the same disk as your data.

@@ -15,6 +15,7 @@
     "settings": "Einstellungen",
     "profile": "Profil",
     "users": "Benutzer",
+    "backups": "Backups",
     "apiTokens": "API-Tokens",
     "integrations": "Integration",
     "data": "Daten",
@@ -877,6 +878,31 @@
       "message_one": "{{count}} Kontakt endgültig löschen? Das kann nicht rückgängig gemacht werden.",
       "message_other": "Alle {{count}} Kontakte endgültig löschen? Das kann nicht rückgängig gemacht werden.",
       "confirm": "Papierkorb leeren"
+    }
+  },
+  "backups": {
+    "title": "Backups",
+    "listTitle": "Server-Backups",
+    "createButton": "Jetzt Backup erstellen",
+    "creating": "Wird erstellt…",
+    "warning": "Jedes Backup enthält die Daten ALLER Benutzer dieses Servers (Kontakte, Notizen, Erinnerungen, Kontodaten und Passwort-Hashes) sowie alle Fotos. Bewahre es nur mit größter Sorgfalt auf und gib es nicht weiter.",
+    "scheduleOn": "Jeden Tag um {{time}} wird automatisch ein Backup erstellt; die {{count}} neuesten bleiben erhalten.",
+    "scheduleOff": "Automatische Backups sind ausgeschaltet (BACKUP_ENABLED).",
+    "location": "Gespeichert auf dem Server in {{directory}}.",
+    "empty": "Es gibt noch keine Backups.",
+    "download": "Herunterladen",
+    "delete": "Löschen",
+    "downloadAria": "{{name}} herunterladen",
+    "deleteAria": "{{name}} löschen",
+    "createSuccess": "Backup erstellt",
+    "createError": "Backup konnte nicht erstellt werden",
+    "downloadError": "Backup konnte nicht heruntergeladen werden",
+    "deleteSuccess": "Backup gelöscht",
+    "deleteError": "Backup konnte nicht gelöscht werden",
+    "deleteDialog": {
+      "title": "Backup löschen",
+      "message": "{{name}} löschen? Das kann nicht rückgängig gemacht werden.",
+      "confirm": "Löschen"
     }
   },
   "users": {
