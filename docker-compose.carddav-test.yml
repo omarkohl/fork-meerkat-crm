@@ -17,7 +17,7 @@
 #
 # USAGE:
 #   docker compose -f docker-compose.carddav-test.yml up -d --wait
-#   cd backend && MEERKAT_CARDDAV_IT=1 go test ./services/ -run TestContactSync -v
+#   cd backend && MEERKAT_CARDDAV_IT=1 go test ./services/ -v
 #   docker compose -f docker-compose.carddav-test.yml down -v
 #
 # Nextcloud's first boot runs its installer and can take ~30-60s after the
@@ -27,7 +27,7 @@
 
 services:
   radicale:
-    image: tomsquest/docker-radicale:latest
+    image: tomsquest/docker-radicale:3.8.3.0
     container_name: meerkat-radicale-test
     volumes:
       - ./docker/radicale:/config:ro
