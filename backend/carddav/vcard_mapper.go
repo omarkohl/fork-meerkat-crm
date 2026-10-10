@@ -12,6 +12,7 @@ import (
 	"io"
 	"meerkat/httputil"
 	"meerkat/models"
+	"meerkat/photofile"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -511,7 +512,7 @@ func SaveContactPhoto(photoData []byte, mediaType string, photoDir string) (stri
 	photoPath := baseFilename + "_photo.jpg"
 
 	// Ensure directory exists
-	if err := os.MkdirAll(photoDir, os.ModePerm); err != nil { //nolint:gosec // photo directory is shared with the web server; mode kept as-is
+	if err := photofile.EnsureDir(photoDir); err != nil {
 		return "", "", err
 	}
 
@@ -522,17 +523,6 @@ func SaveContactPhoto(photoData []byte, mediaType string, photoDir string) (stri
 	if bounds.Dx() > maxPhotoSize || bounds.Dy() > maxPhotoSize {
 		photoImg = resizeTo(img, maxPhotoSize)
 	}
-	fullPhotoPath := filepath.Join(photoDir, photoPath)
-	outFile, err := os.Create(fullPhotoPath) //nolint:gosec // path built from the configured photo directory
-	if err != nil {
-		return "", "", err
-	}
-	defer outFile.Close()
-
-	if err := jpeg.Encode(outFile, photoImg, &jpeg.Options{Quality: 85}); err != nil {
-		return "", "", err
-	}
-
 	// Create thumbnail and encode as base64 data URL (48x48)
 	thumbnail := resizeTo(img, 48)
 	var thumbnailBuf bytes.Buffer
@@ -540,6 +530,11 @@ func SaveContactPhoto(photoData []byte, mediaType string, photoDir string) (stri
 		return "", "", err
 	}
 	thumbnailBase64 := "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(thumbnailBuf.Bytes())
+
+	fullPhotoPath := filepath.Join(photoDir, photoPath)
+	if err := photofile.SaveJPEG(fullPhotoPath, photoImg); err != nil {
+		return "", "", err
+	}
 
 	return photoPath, thumbnailBase64, nil
 }

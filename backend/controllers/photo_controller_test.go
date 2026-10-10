@@ -131,3 +131,23 @@ func TestProcessAndSavePhotoSizes(t *testing.T) {
 		})
 	}
 }
+
+func TestProcessAndSavePhotoUsesPrivateModes(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "new", "photos")
+	photo, _, err := processAndSavePhoto(pngFileHeader(t, 50, 50), dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Written through photofile: private modes, not the process default.
+	di, err := os.Stat(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fi, err := os.Stat(filepath.Join(dir, photo))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if di.Mode().Perm()&0o007 != 0 || fi.Mode().Perm()&0o137 != 0 {
+		t.Errorf("dir %v, file %v: others must have no access, file must not be executable or group-writable", di.Mode().Perm(), fi.Mode().Perm())
+	}
+}

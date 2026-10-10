@@ -2,12 +2,13 @@
 
 ## Next step
 
-4.
+5.
 
 ## Stack
 
 - 1: second-sprint/01-ci-fixes (PR #16, base first-sprint/12-finish)
 - 2: second-sprint/02-deleted-users (PR #17)
+- 3: second-sprint/03-trash-followups (PR #18)
 
 ## Log
 
@@ -34,9 +35,21 @@
   card in a pushing mode is still deleted remotely, because the local-gone pass ignores `purged_at`; kept
   as is, it is the existing behaviour for a row that disappeared). New `contact.restored` webhook event
   (API validation, UI list, five locales, docs). Tests for all of it.
+- CI note: the Go jobs use `go-version: '1.26'` with `check-latest` (fix for the govulncheck stdlib findings,
+  commit on branch 01, merged up).
+- 4: new `photofile` package (`EnsureDir` 0750, `SaveJPEG` with 0640, returns the `Close` error and removes a
+  partial file) replaces the duplicated photo writing in `controllers/photo_controller.go` and
+  `carddav/vcard_mapper.go`; four gosec suppressions gone (one G304 remains, in `photofile`). New
+  `services.Background` runs the four startup tasks under one context and a WaitGroup; `main.go` waits for
+  it (5 s) after the HTTP server stops and before the DB closes. Tests for modes, Close/partial-file
+  handling and Background; docs note on directory modes. `SaveJPEG` uses O_EXCL (names are UUIDs, nothing
+  overwrites) and fsyncs before close; the thumbnail is built before the photo file is written.
 
 ## Decisions
 
+- Step 4: the startup tasks are not interruptible (they take no context); the context only stops tasks
+  that have not begun. Shutdown therefore waits up to 5 s and logs a warning if one is still running.
+  Making the sync and reminder jobs context-aware is a larger change and left for later.
 - There is no admin "disable user" feature, so only deletion is covered. One extra `COUNT` query per
   authenticated request (primary key lookup; fine for SQLite).
 - Claim `user_id` is accepted only as a whole number float64 in 1..MaxUint32 (what JSON decoding of

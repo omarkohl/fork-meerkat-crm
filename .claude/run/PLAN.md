@@ -57,7 +57,7 @@ context is above 200k at the end of a step, then start a new one. Reviewer is al
       helper for uint conversions (removes the G115 suppressions). Tests, isolation case.
 - [x] 3. **Trash follow-ups**: link tombstone on purge (migration), pull-only sync skips it;
       `contact.restored` webhook (docs, UI event list, i18n); tests for both.
-- [ ] 4. **File and shutdown robustness**: photo dir 0750/files 0640 (existing dirs are left
+- [x] 4. **File and shutdown robustness**: photo dir 0750/files 0640 (existing dirs are left
       alone, documented); write-path `Close` errors checked; startup goroutines under a context and
       WaitGroup, shutdown waits bounded. Remove the matching gosec suppressions.
 - [ ] 5. **ICS feed "last fetched"**: column, update throttled to once a minute, shown on the

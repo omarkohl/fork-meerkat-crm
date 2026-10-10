@@ -57,6 +57,8 @@ Other variables are found in the [sample env file](https://github.com/fbuchner/m
 
 The backend process runs as a non-root user (default UID/GID 1001), and a startup script chowns the data and photo directories to that user. Run `id` on your host to find your UID and GID and set them as `PUID`/`PGID` in your `.env` file if you prefer folders to be owned by your host user (optional).
 
+New photo directories are created with mode `0750` and photo files with `0640`, so other users on the host cannot read them. Directories that already exist keep their mode (earlier versions created them with `0777`); run `chmod 750 photos` on the host if you want to tighten them.
+
 ## Post-Installation Setup
 
 When running Meerkat-CRM you can access the application under the specified port (default is `7300`). 

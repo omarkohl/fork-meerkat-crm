@@ -106,3 +106,28 @@ func TestSaveContactPhotoSizes(t *testing.T) {
 		})
 	}
 }
+
+func TestSaveContactPhotoUsesPrivateModes(t *testing.T) {
+	img := image.NewRGBA(image.Rect(0, 0, 50, 50))
+	var in bytes.Buffer
+	if err := png.Encode(&in, img); err != nil {
+		t.Fatal(err)
+	}
+	dir := filepath.Join(t.TempDir(), "new", "photos")
+	photo, _, err := SaveContactPhoto(in.Bytes(), "image/png", dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Written through photofile: private modes, not the process default.
+	di, err := os.Stat(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fi, err := os.Stat(filepath.Join(dir, photo))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if di.Mode().Perm()&0o007 != 0 || fi.Mode().Perm()&0o137 != 0 {
+		t.Errorf("dir %v, file %v: others must have no access, file must not be executable or group-writable", di.Mode().Perm(), fi.Mode().Perm())
+	}
+}
