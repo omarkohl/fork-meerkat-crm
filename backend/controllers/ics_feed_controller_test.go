@@ -298,3 +298,95 @@ func TestCreateIcsFeedRetriesOnUniqueConflict(t *testing.T) {
 	assert.False(t, first, "conflict path was exercised")
 	assert.Equal(t, http.StatusOK, doReq(env.public, "GET", "/ics/"+resp.Token+".ics").Code)
 }
+
+func feedStatus(t *testing.T, r *gin.Engine) models.IcsFeedStatus {
+	t.Helper()
+	w := doReq(r, "GET", "/ics-feed")
+	require.Equal(t, http.StatusOK, w.Code)
+	var st models.IcsFeedStatus
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &st))
+	return st
+}
+
+func storedLastFetched(t *testing.T, env *icsEnv, userID uint) *time.Time {
+	t.Helper()
+	var feed models.IcsFeed
+	require.NoError(t, env.db.Where("user_id = ?", userID).First(&feed).Error)
+	return feed.LastFetchedAt
+}
+
+func TestIcsFeedLastFetchedIsNullUntilFetched(t *testing.T) {
+	env := newICSEnv(t)
+	resp := createFeed(t, env.manageA)
+	assert.Nil(t, resp.LastFetchedAt)
+	assert.Nil(t, feedStatus(t, env.manageA).LastFetchedAt)
+	assert.Contains(t, doReq(env.manageA, "GET", "/ics-feed").Body.String(), `"last_fetched_at":null`)
+}
+
+func TestIcsFeedFetchRecordsLastFetchedThrottled(t *testing.T) {
+	env := newICSEnv(t)
+	resp := createFeed(t, env.manageA)
+	url := "/ics/" + resp.Token + ".ics"
+
+	before := time.Now().Add(-time.Second)
+	require.Equal(t, http.StatusOK, doReq(env.public, "GET", url).Code)
+	first := storedLastFetched(t, env, env.userA.ID)
+	require.NotNil(t, first)
+	assert.True(t, first.After(before))
+	st := feedStatus(t, env.manageA)
+	require.NotNil(t, st.LastFetchedAt)
+	assert.WithinDuration(t, *first, *st.LastFetchedAt, time.Second)
+
+	// A second fetch within a minute does not write again.
+	require.Equal(t, http.StatusOK, doReq(env.public, "GET", url).Code)
+	again := storedLastFetched(t, env, env.userA.ID)
+	assert.True(t, first.Equal(*again), "timestamp must not move inside the throttle window")
+
+	// Older than a minute: updated (also for conditional requests answered 304).
+	old := time.Now().UTC().Add(-2 * time.Minute)
+	require.NoError(t, env.db.Model(&models.IcsFeed{}).Where("user_id = ?", env.userA.ID).Update("last_fetched_at", old).Error)
+	etag := doReq(env.public, "GET", url).Header().Get("ETag")
+	updated := storedLastFetched(t, env, env.userA.ID)
+	require.NotNil(t, updated)
+	assert.True(t, updated.After(old.Add(time.Minute)))
+
+	require.NoError(t, env.db.Model(&models.IcsFeed{}).Where("user_id = ?", env.userA.ID).Update("last_fetched_at", old).Error)
+	require.Equal(t, http.StatusNotModified, doReq(env.public, "GET", url, "If-None-Match", etag).Code)
+	assert.True(t, storedLastFetched(t, env, env.userA.ID).After(old.Add(time.Minute)))
+}
+
+func TestIcsFeedFailedFetchDoesNotRecord(t *testing.T) {
+	env := newICSEnv(t)
+	resp := createFeed(t, env.manageA)
+	url := "/ics/" + resp.Token + ".ics"
+
+	// Failed build: the calendar is not served, so no fetch is recorded.
+	fail := true
+	require.NoError(t, env.db.Callback().Query().Before("gorm:query").Register("test:ics-build-fail", func(tx *gorm.DB) {
+		if fail && tx.Statement.Table == "contacts" {
+			tx.AddError(fmt.Errorf("boom"))
+		}
+	}))
+	assert.Equal(t, http.StatusInternalServerError, doReq(env.public, "GET", url).Code)
+	assert.Nil(t, storedLastFetched(t, env, env.userA.ID))
+
+	// Owner gone: 404, nothing recorded.
+	fail = false
+	require.NoError(t, env.db.Delete(&env.userA).Error)
+	assert.Equal(t, http.StatusNotFound, doReq(env.public, "GET", url).Code)
+	assert.Nil(t, storedLastFetched(t, env, env.userA.ID))
+}
+
+func TestIcsFeedLastFetchedIsPerUserAndResetOnRegenerate(t *testing.T) {
+	env := newICSEnv(t)
+	a := createFeed(t, env.manageA)
+	createFeed(t, env.manageB)
+
+	require.Equal(t, http.StatusOK, doReq(env.public, "GET", "/ics/"+a.Token+".ics").Code)
+	assert.NotNil(t, feedStatus(t, env.manageA).LastFetchedAt)
+	assert.Nil(t, feedStatus(t, env.manageB).LastFetchedAt, "another user's fetch must not show")
+
+	// A regenerated URL has not been fetched yet.
+	createFeed(t, env.manageA)
+	assert.Nil(t, feedStatus(t, env.manageA).LastFetchedAt)
+}

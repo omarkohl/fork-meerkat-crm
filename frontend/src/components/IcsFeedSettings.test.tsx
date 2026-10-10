@@ -33,10 +33,11 @@ describe('IcsFeedSettings', () => {
   });
 
   test('generates a feed and shows the URL once', async () => {
-    vi.mocked(icsApi.getIcsFeed).mockResolvedValue({ enabled: false, created_at: null });
+    vi.mocked(icsApi.getIcsFeed).mockResolvedValue({ enabled: false, created_at: null, last_fetched_at: null });
     vi.mocked(icsApi.createIcsFeed).mockResolvedValue({
       enabled: true,
       created_at: '2030-01-01T00:00:00Z',
+      last_fetched_at: null,
       token: TOKEN,
     });
     renderIt();
@@ -57,7 +58,11 @@ describe('IcsFeedSettings', () => {
   });
 
   test('revoking asks for confirmation and then calls the API', async () => {
-    vi.mocked(icsApi.getIcsFeed).mockResolvedValue({ enabled: true, created_at: '2030-01-01T00:00:00Z' });
+    vi.mocked(icsApi.getIcsFeed).mockResolvedValue({
+      enabled: true,
+      created_at: '2030-01-01T00:00:00Z',
+      last_fetched_at: null,
+    });
     vi.mocked(icsApi.revokeIcsFeed).mockResolvedValue();
     renderIt();
 
@@ -71,10 +76,15 @@ describe('IcsFeedSettings', () => {
   });
 
   test('regenerating asks for confirmation and shows the new URL', async () => {
-    vi.mocked(icsApi.getIcsFeed).mockResolvedValue({ enabled: true, created_at: '2030-01-01T00:00:00Z' });
+    vi.mocked(icsApi.getIcsFeed).mockResolvedValue({
+      enabled: true,
+      created_at: '2030-01-01T00:00:00Z',
+      last_fetched_at: null,
+    });
     vi.mocked(icsApi.createIcsFeed).mockResolvedValue({
       enabled: true,
       created_at: '2030-01-02T00:00:00Z',
+      last_fetched_at: null,
       token: 'B'.repeat(43),
     });
     renderIt();
@@ -86,5 +96,39 @@ describe('IcsFeedSettings', () => {
 
     const field = (await screen.findByRole('textbox', { name: 'Feed URL' })) as HTMLInputElement;
     expect(field.value).toContain('B'.repeat(43));
+  });
+
+  test('shows when the feed was last fetched, or that it was not yet', async () => {
+    vi.mocked(icsApi.getIcsFeed).mockResolvedValue({
+      enabled: true,
+      created_at: '2030-01-01T00:00:00Z',
+      last_fetched_at: null,
+    });
+    const first = renderIt();
+    expect(await screen.findByText('Not fetched yet.')).toBeInTheDocument();
+    first.unmount();
+
+    vi.mocked(icsApi.getIcsFeed).mockResolvedValue({
+      enabled: true,
+      created_at: '2030-01-01T00:00:00Z',
+      last_fetched_at: '2030-02-03T04:05:00Z',
+    });
+    renderIt();
+    const expected = new Date('2030-02-03T04:05:00Z').toLocaleString();
+    expect(await screen.findByText(`Last fetched: ${expected}.`)).toBeInTheDocument();
+    expect(screen.queryByText('Not fetched yet.')).not.toBeInTheDocument();
+  });
+
+  test('a new feed has not been fetched yet', async () => {
+    vi.mocked(icsApi.getIcsFeed).mockResolvedValue({ enabled: false, created_at: null, last_fetched_at: null });
+    vi.mocked(icsApi.createIcsFeed).mockResolvedValue({
+      enabled: true,
+      created_at: '2030-01-01T00:00:00Z',
+      last_fetched_at: null,
+      token: TOKEN,
+    });
+    renderIt();
+    fireEvent.click(await screen.findByRole('button', { name: 'Generate feed URL' }));
+    expect(await screen.findByText('Not fetched yet.')).toBeInTheDocument();
   });
 });

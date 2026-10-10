@@ -63,7 +63,11 @@ export default function IcsFeedSettings() {
     try {
       const result = await createIcsFeed();
       setConfirm(null);
-      setStatus({ enabled: result.enabled, created_at: result.created_at });
+      setStatus({
+        enabled: result.enabled,
+        created_at: result.created_at,
+        last_fetched_at: result.last_fetched_at,
+      });
       setFeedUrl(buildIcsFeedUrl(result.token));
       setCopied(false);
     } catch (err) {
@@ -78,7 +82,7 @@ export default function IcsFeedSettings() {
     try {
       await revokeIcsFeed();
       setConfirm(null);
-      setStatus({ enabled: false, created_at: null });
+      setStatus({ enabled: false, created_at: null, last_fetched_at: null });
       showSuccess(t('icsFeed.revokeSuccess'));
     } catch (err) {
       showError(err instanceof Error ? err.message : t('icsFeed.revokeError'));
@@ -124,6 +128,11 @@ export default function IcsFeedSettings() {
                   {t('icsFeed.active', {
                     date: status.created_at ? new Date(status.created_at).toLocaleDateString() : '',
                   })}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+                  {status.last_fetched_at
+                    ? t('icsFeed.lastFetched', { date: new Date(status.last_fetched_at).toLocaleString() })
+                    : t('icsFeed.neverFetched')}
                 </Typography>
                 <Button variant="outlined" size="small" disabled={busy} onClick={() => setConfirm('regenerate')}>
                   {t('icsFeed.regenerateButton')}

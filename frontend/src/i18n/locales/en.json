@@ -822,6 +822,8 @@
     "description": "Subscribe to your birthdays and reminders from any calendar app. Anyone who has the feed URL can read it, so keep it private.",
     "inactive": "No calendar feed yet.",
     "active": "Feed active since {{date}}.",
+    "lastFetched": "Last fetched: {{date}}.",
+    "neverFetched": "Not fetched yet.",
     "generateButton": "Generate feed URL",
     "regenerateButton": "Regenerate URL",
     "revokeButton": "Revoke feed",

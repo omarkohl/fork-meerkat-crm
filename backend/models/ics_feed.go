@@ -9,14 +9,18 @@ type IcsFeed struct {
 	ID        uint   `gorm:"primaryKey"`
 	UserID    uint   `gorm:"not null;uniqueIndex"`
 	TokenHash string `gorm:"not null;uniqueIndex" json:"-"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	// LastFetchedAt is when the feed was last read through its URL; it is written at
+	// most once a minute (see ServeIcsFeed).
+	LastFetchedAt *time.Time
+	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
 
 // IcsFeedStatus is returned by the feed management endpoints.
 type IcsFeedStatus struct {
-	Enabled   bool       `json:"enabled"`
-	CreatedAt *time.Time `json:"created_at"`
+	Enabled       bool       `json:"enabled"`
+	CreatedAt     *time.Time `json:"created_at"`
+	LastFetchedAt *time.Time `json:"last_fetched_at"`
 }
 
 // IcsFeedCreateResponse is returned on creation/regeneration and includes the
