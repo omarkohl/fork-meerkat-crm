@@ -39,6 +39,10 @@ Set these variables in `.env` when running over HTTPS:
 | `JWT_SECRET_KEY` | Generate with `openssl rand -base64 32` |
 
 
+## Database storage
+
+Meerkat stores everything in one SQLite file (`meerkat.db`, `SQLITE_DB_PATH`). It opens it in WAL mode with `busy_timeout` of 5 seconds, `synchronous=NORMAL` and foreign keys enforced, so you will see `meerkat.db-wal` and `meerkat.db-shm` next to it (see [The WAL files](#the-wal-files)). WAL needs shared memory between processes on the same machine, so **keep the database on a local disk**. Network file systems (NFS, SMB/CIFS and the like) are not supported and can corrupt the database. Mount `DATA_PATH` from a local disk, and run only one Meerkat instance per database.
+
 ## Single Sign-On (OIDC)
 
 Meerkat CRM supports SSO via any OpenID Connect provider (Keycloak, Google, Authentik, Authelia, etc.). When enabled, a **Sign in with provider** button appears on the login page.

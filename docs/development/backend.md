@@ -42,6 +42,10 @@ make migrate-create NAME=add_foo_column
 
 This creates two files in `database/migrations/`: `NNNNNN_add_foo_column.up.sql` and `.down.sql`.
 
+### SQLite settings
+
+The database is opened in WAL mode with `busy_timeout`, `synchronous=NORMAL` and foreign keys on (see `sqliteDSN` in `database/migrate.go`). Migrations run on a separate connection without foreign key enforcement because they may recreate tables. Never copy `meerkat.db` while the app runs; use the built-in [backups](../deployment.html#backups) (`VACUUM INTO`).
+
 ### Running Migrations
 
 Migrations run automatically on startup. To apply or roll back manually:
