@@ -46,8 +46,12 @@ export default function ContactsPage() {
   const [showArchived, setShowArchived] = useState(false);
   const pageSize = 10;
 
-  // Parse sort option into field and order
-  const [sortField, sortOrder] = sortOption.split('-');
+  // While searching, the default order is the best match first (the server ranks when no
+  // sort is sent); picking another order is still possible and is not remembered.
+  const searching = searchQuery.trim() !== '';
+  const [searchSortOption, setSearchSortOption] = useState('relevance');
+  const activeSort = searching ? searchSortOption : sortOption;
+  const [sortField, sortOrder] = activeSort.split('-');
 
   // Persist sort option to localStorage
   useEffect(() => {
@@ -77,8 +81,8 @@ export default function ContactsPage() {
       limit: pageSize,
       search: searchQuery,
       circle: selectedCircle,
-      sort: sortField,
-      order: sortOrder,
+      sort: sortField === 'relevance' ? undefined : sortField,
+      order: sortField === 'relevance' ? undefined : sortOrder,
       includeArchived: showArchived,
     }),
     [page, searchQuery, selectedCircle, sortField, sortOrder, showArchived],
@@ -157,10 +161,11 @@ export default function ContactsPage() {
           <InputLabel id="sort-select-label">{t('contacts.sortBy')}</InputLabel>
           <Select
             labelId="sort-select-label"
-            value={sortOption}
+            value={activeSort}
             label={t('contacts.sortBy')}
-            onChange={(e) => setSortOption(e.target.value)}
+            onChange={(e) => (searching ? setSearchSortOption(e.target.value) : setSortOption(e.target.value))}
           >
+            {searching && <MenuItem value="relevance">{t('contacts.sort.relevance')}</MenuItem>}
             <MenuItem value="id-desc">{t('contacts.sort.recentlyAdded')}</MenuItem>
             <MenuItem value="id-asc">{t('contacts.sort.oldestFirst')}</MenuItem>
             <MenuItem value="firstname-asc">{t('contacts.sort.nameAZ')}</MenuItem>

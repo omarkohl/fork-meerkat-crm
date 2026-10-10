@@ -41,6 +41,15 @@ test.describe('Contacts', () => {
     }
   });
 
+  test('searching sorts by best match and the sort menu offers it only then', async ({ page }) => {
+    await page.goto('/contacts');
+    await waitForLoading(page);
+    await expect(page.getByLabel(/sort by/i)).not.toContainText('Best match');
+    await searchContact(page, 'Alice');
+    await expect(page.getByText('Alice Johnson')).toBeVisible();
+    await expect(page.getByLabel(/sort by/i)).toContainText('Best match');
+  });
+
   test('should navigate to contact detail', async ({ page }) => {
     await page.goto('/contacts');
     await waitForLoading(page);

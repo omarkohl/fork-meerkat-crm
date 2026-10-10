@@ -94,7 +94,7 @@ Every request and response carries an `X-Request-ID` header created by the middl
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/contacts` | List contacts (supports search and circle filter). `search` is a full-text search over name, nickname, e-mail addresses and phone numbers: case and accents are ignored (`zoe` finds `Zoë`), every word must match the start of a word, in any order (`mül zo`). Without `sort` the best match comes first; with `sort` that order wins. Text with no letters or digits (`+`) is a plain substring search |
+| `GET` | `/contacts` | List contacts (supports search and circle filter). `search` is a full-text search over name, nickname, e-mail addresses and phone numbers: case and accents are ignored (`zoe` finds `Zoë`), every word must match the start of a word, in any order (`mül zo`). Without `sort` the best match comes first; with `sort` that order wins. Text with no letters or digits (`+`), only digits and phone punctuation (`795550`) and Chinese, Japanese or Korean text are plain substring searches. Terms are cut at 200 characters and 32 words. Notes and activities (`search` on `/notes` and `/activities`) use the same matching but stay in date order, only contacts are ranked |
 | `POST` | `/contacts` | Create a contact |
 | `GET` | `/contacts/:id` | Get a contact (supports filtering the returned fields) |
 | `PUT` | `/contacts/:id` | Update a contact |
