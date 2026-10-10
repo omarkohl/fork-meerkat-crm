@@ -76,6 +76,9 @@ type LoginInput struct {
 	Identifier string `json:"identifier"` // Can be username or email
 	Email      string `json:"email"`      // Legacy field for backward compatibility
 	Password   string `json:"password"`
+	// Second step for accounts with two-factor: an authenticator code or a recovery code.
+	TOTPCode     string `json:"totp_code"`
+	RecoveryCode string `json:"recovery_code"`
 }
 
 func LoginUser(context *gin.Context, cfg *config.Config) {
@@ -164,6 +167,37 @@ func LoginUser(context *gin.Context, cfg *config.Config) {
 		}
 		apperrors.AbortWithError(context, apperrors.ErrInvalidCredentials())
 		return
+	}
+
+	// Second step. Asking for the code is not a success: the failed-attempt counter is only
+	// cleared after the whole login, or the password alone would reset a code-guessing lockout.
+	// (OIDC logins never come through here: the identity provider is the second factor.)
+	if foundUser.TOTPEnabled {
+		if input.TOTPCode == "" && input.RecoveryCode == "" {
+			context.JSON(http.StatusOK, gin.H{"totp_required": true})
+			return
+		}
+		result, lockSecs := verifySecondFactor(context, db, foundUser, input.TOTPCode, input.RecoveryCode)
+		switch result {
+		case factorLocked:
+			return
+		case factorWrong, factorWrongNowLocked:
+			isLocked, lockoutSecs := accountLimiter.RecordFailedAttempt(identifier)
+			if result == factorWrongNowLocked {
+				isLocked, lockoutSecs = true, max(lockSecs, lockoutSecs)
+			}
+			detail := "reason:wrong_2fa_code"
+			if isLocked {
+				detail = "reason:wrong_2fa_code_locked"
+			}
+			auditFor(context, db, &foundUser.ID, models.AuditLoginFailed, detail)
+			if isLocked {
+				respondLocked(context, lockoutSecs)
+				return
+			}
+			apperrors.AbortWithError(context, apperrors.ErrInvalidTOTPCode())
+			return
+		}
 	}
 
 	// Successful login - clear any failed attempt tracking

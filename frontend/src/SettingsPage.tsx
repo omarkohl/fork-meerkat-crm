@@ -25,6 +25,7 @@ import GitHubIcon from '@mui/icons-material/GitHub';
 import Link from '@mui/material/Link';
 import { changePassword } from './api/auth';
 import SessionsSettings from './components/SessionsSettings';
+import TwoFactorSettings from './components/TwoFactorSettings';
 import { updateLanguage, updateDateFormat } from './api/users';
 import { ThemePreference, useThemePreference } from './AppThemeProvider';
 import { DateFormat, useDateFormat } from './DateFormatProvider';
@@ -293,6 +294,7 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      <TwoFactorSettings />
       <SessionsSettings />
     </Box>
   );

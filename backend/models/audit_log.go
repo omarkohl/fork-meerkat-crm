@@ -22,6 +22,12 @@ const (
 	AuditAdminUserUpdated  = "admin_user_updated"
 	AuditAdminUserDeleted  = "admin_user_deleted"
 	AuditAdminReminders    = "admin_reminders_triggered"
+
+	AuditTOTPEnabled             = "totp_enabled"
+	AuditTOTPDisabled            = "totp_disabled"
+	AuditTOTPRecoveryUsed        = "totp_recovery_used"
+	AuditTOTPRecoveryRegenerated = "totp_recovery_regenerated"
+	AuditTOTPAdminReset          = "admin_totp_reset"
 )
 
 // AuditEvents lists every event, in the order the UI shows them.
@@ -31,6 +37,7 @@ var AuditEvents = []string{
 	AuditAPITokenCreated, AuditAPITokenRevoked, AuditICSFeedCreated, AuditICSFeedRevoked,
 	AuditBackupCreated, AuditBackupDownloaded, AuditBackupDeleted,
 	AuditAdminUserUpdated, AuditAdminUserDeleted, AuditAdminReminders,
+	AuditTOTPEnabled, AuditTOTPDisabled, AuditTOTPRecoveryUsed, AuditTOTPRecoveryRegenerated, AuditTOTPAdminReset,
 }
 
 // AuditLog is one security-relevant event. UserID is the account the event is about (the

@@ -17,7 +17,7 @@ import (
 
 func TestDeleteUser_RemovesTokensAndFeed(t *testing.T) {
 	db, router := setupRouter()
-	require.NoError(t, db.AutoMigrate(&models.ApiToken{}, &models.IcsFeed{}, &models.CardDAVConnection{}, &models.CalendarSubscription{}, &models.CardDAVContactLink{}, &models.CalendarEventLink{}, models.Session{}, models.AuditLog{}))
+	require.NoError(t, db.AutoMigrate(&models.ApiToken{}, &models.IcsFeed{}, &models.CardDAVConnection{}, &models.CalendarSubscription{}, &models.CardDAVContactLink{}, &models.CalendarEventLink{}, models.Session{}, models.AuditLog{}, models.RecoveryCode{}))
 
 	var admin models.User
 	require.NoError(t, db.First(&admin).Error)

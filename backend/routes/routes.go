@@ -64,6 +64,13 @@ func RegisterRoutes(router *gin.Engine, cfg *config.Config, db *gorm.DB, oidcPro
 			protected.POST("/sessions/revoke-all", controllers.SignOutEverywhere)
 			protected.DELETE("/sessions/:id", controllers.RevokeSession)
 
+			// Two-factor (TOTP): status, enrol, enable, disable, new recovery codes
+			protected.GET("/users/me/2fa", controllers.GetTOTPStatus)
+			protected.POST("/users/me/2fa/setup", controllers.SetupTOTP)
+			protected.POST("/users/me/2fa/enable", middleware.ValidateJSONMiddleware(&models.TOTPCodeInput{}), controllers.EnableTOTP)
+			protected.POST("/users/me/2fa/disable", middleware.ValidateJSONMiddleware(&models.TOTPConfirmInput{}), controllers.DisableTOTP)
+			protected.POST("/users/me/2fa/recovery-codes", middleware.ValidateJSONMiddleware(&models.TOTPConfirmInput{}), controllers.RegenerateRecoveryCodes)
+
 			// Contact routes
 			protected.GET("/contacts", controllers.GetContacts)
 			protected.GET("/contacts/circles", controllers.GetCircles)
@@ -210,6 +217,7 @@ func RegisterRoutes(router *gin.Engine, cfg *config.Config, db *gorm.DB, oidcPro
 			admin.GET("/users/:id", controllers.GetUser)
 			admin.PATCH("/users/:id", middleware.ValidateJSONMiddleware(&models.AdminUserUpdateInput{}), controllers.UpdateUser)
 			admin.DELETE("/users/:id", controllers.DeleteUser)
+			admin.POST("/users/:id/2fa/reset", controllers.ResetUserTOTP)
 			// Backups contain every user's data: admin only (API tokens are refused too).
 			admin.GET("/backups", controllers.ListBackups)
 			admin.POST("/backups", controllers.CreateBackup)
