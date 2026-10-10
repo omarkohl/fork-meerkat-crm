@@ -911,6 +911,7 @@
     }
   },
   "users": {
+    "privateUrlsWarning": "Webhooks, Kalender- und Kontaktsynchronisierung sowie der Monica-Import können private und interne Netzwerkadressen erreichen, und diese Instanz hat mehrere Benutzer. Setze {{setting}}=true in der Server-Umgebung, um das zu blockieren.",
     "title": "Benutzerverwaltung",
     "loadError": "Benutzer konnten nicht geladen werden",
     "noUsers": "Keine Benutzer gefunden",

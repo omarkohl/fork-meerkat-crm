@@ -37,6 +37,21 @@ Set these variables in `.env` when running over HTTPS:
 | `COOKIE_SECURE` | `true` |
 | `COOKIE_DOMAIN` | Leave empty. Only set it (e.g. `.example.com`) if frontend and API live on different subdomains |
 | `JWT_SECRET_KEY` | Generate with `openssl rand -base64 32` |
+| `BLOCK_PRIVATE_URLS` | `true` on any instance with more than one user (see [Private network access](#private-network-access-ssrf)) |
+
+## Private network access (SSRF)
+
+Several features make the server fetch an address a user typed in: webhooks, CalDAV/ICS calendar sync, CardDAV contact sync (including the `/.well-known/carddav` discovery) and the Monica import (including avatars). On a shared instance a user could point them at the server's own network (a database, the cloud metadata service at `169.254.169.254`, other containers).
+
+`BLOCK_PRIVATE_URLS=true` refuses loopback, private (RFC 1918, IPv6 unique local), link-local, carrier-grade NAT (`100.64.0.0/10`), multicast, `0.0.0.0/8`, the reserved `240.0.0.0/4`, benchmarking (`198.18.0.0/15`) and IPv6 forms that embed an IPv4 address (IPv4-mapped `::ffff:127.0.0.1`, NAT64 `64:ff9b::/96`, 6to4 `2002::/16`, Teredo) addresses for all of these features at once. The check runs when the connection is made, on the address that is dialled (a name is resolved once and only the checked addresses are dialled), so redirects and DNS rebinding are covered too.
+
+- **Default: `false`.** Self-hosters often sync from a CalDAV, CardDAV or Monica server on their LAN, which needs private addresses. Turn it on when you do not trust every user.
+- When `BLOCK_PRIVATE_URLS` is set it decides for all features and overrides the older `WEBHOOK_BLOCK_PRIVATE_URLS`, `CALDAV_BLOCK_PRIVATE_URLS`, `CARDDAV_BLOCK_PRIVATE_URLS` and `MONICA_BLOCK_PRIVATE_URLS`. When it is unset, those still work as before (`CARDDAV_BLOCK_PRIVATE_URLS` defaults to `CALDAV_BLOCK_PRIVATE_URLS`).
+- Accepted values: `true`/`false`, `1`/`0`, `yes`/`no`, `on`/`off` (any case). Anything else (including an empty value) is treated as `true` and logged as an error: for a security switch a typo must not leave the server open.
+- Features guarded by this switch ignore the `HTTP_PROXY`/`HTTPS_PROXY` environment variables and always connect directly. A proxy would be dialled instead of the target, and the check would look at the wrong address. If your network needs an outbound proxy, these features cannot use it.
+- If blocking is off for any feature and more than one user exists, the server logs a warning at startup and admins see a dismissible banner on the Users page.
+- Photo URLs in vCards and photo uploads by URL are always checked, whatever the setting.
+- Not covered, on purpose: the OIDC provider (`OIDC_PROVIDER_URL`) and the SMTP host. Only the administrator sets them, and they are often internal services.
 
 
 ## Database storage

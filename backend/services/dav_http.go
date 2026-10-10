@@ -1,47 +1,8 @@
 package services
 
 import (
-	"context"
-	"fmt"
 	"io"
-	"net"
-	"time"
 )
-
-// builds a DialContext that refuses connections to private/loopback/link-local addresses (SSRF protection for cloud
-// deployments). The caller supplies its feature-specific sentinel errors so
-// controllers can map failures without cross-feature coupling.
-func newPrivateBlockingDialContext(errUnreachable, errPrivateAddress error) func(ctx context.Context, network, addr string) (net.Conn, error) {
-	return func(ctx context.Context, network, addr string) (net.Conn, error) {
-		host, port, err := net.SplitHostPort(addr)
-		if err != nil {
-			return nil, err
-		}
-		ips, err := net.DefaultResolver.LookupIP(ctx, "ip", host)
-		if err != nil {
-			return nil, fmt.Errorf("%w: could not resolve host", errUnreachable)
-		}
-		var safeIPs []net.IP
-		for _, ip := range ips {
-			if !(ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified()) {
-				safeIPs = append(safeIPs, ip)
-			}
-		}
-		if len(safeIPs) == 0 {
-			return nil, errPrivateAddress
-		}
-		dialer := &net.Dialer{Timeout: 10 * time.Second, KeepAlive: 10 * time.Second}
-		var lastErr error
-		for _, ip := range safeIPs {
-			conn, err := dialer.DialContext(ctx, network, net.JoinHostPort(ip.String(), port))
-			if err == nil {
-				return conn, nil
-			}
-			lastErr = err
-		}
-		return nil, lastErr
-	}
-}
 
 // limitedBody caps a response body's size, returning errTooLarge once exceeded.
 type limitedBody struct {
