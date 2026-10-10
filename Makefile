@@ -23,6 +23,7 @@ format-check: ## Fail if Go files changed since BASE are not gofmt-clean
 
 lint: ## go vet + eslint
 	cd backend && go vet ./...
+	cd backend && golangci-lint run
 	cd frontend && npx eslint --max-warnings=0 src
 
 typecheck: ## TypeScript type check
