@@ -1,7 +1,26 @@
 import { test as base, Page, APIRequestContext, expect } from '@playwright/test';
 import { TEST_USER, API_BASE_URL, E2E_CONTACT_PREFIX } from './global-setup';
 
-export { test } from '@playwright/test';
+/**
+ * `test` with a guard on every page: a Content-Security-Policy violation (a blocked script,
+ * style, image, connection, ...) anywhere in a test fails it. The SPA is served with the
+ * enforcing policy from frontend/security-headers.conf, so a blocked resource is a real bug.
+ */
+export const test = base.extend({
+  page: async ({ page }, use) => {
+    const violations: string[] = [];
+    await page.addInitScript(() => {
+      document.addEventListener('securitypolicyviolation', (e) => {
+        console.error(`CSP-VIOLATION ${e.violatedDirective} ${e.blockedURI}`);
+      });
+    });
+    page.on('console', (msg) => {
+      if (/content security policy|CSP-VIOLATION/i.test(msg.text())) violations.push(msg.text());
+    });
+    await use(page);
+    expect(violations, 'Content-Security-Policy violations').toEqual([]);
+  },
+});
 export { expect } from '@playwright/test';
 
 export const LOGGED_OUT = { cookies: [], origins: [] };
@@ -38,9 +57,7 @@ export async function logoutUser(page: Page): Promise<void> {
  * Waits for any MUI loading spinners to disappear.
  */
 export async function waitForLoading(page: Page): Promise<void> {
-  await page
-    .waitForSelector('[role="progressbar"]', { state: 'hidden', timeout: 10000 })
-    .catch(() => {});
+  await page.waitForSelector('[role="progressbar"]', { state: 'hidden', timeout: 10000 }).catch(() => {});
 }
 
 /**
@@ -69,7 +86,7 @@ export interface CreatedContact {
  */
 export async function createTestContact(
   request: APIRequestContext,
-  overrides: Record<string, unknown> = {}
+  overrides: Record<string, unknown> = {},
 ): Promise<CreatedContact> {
   const firstname = `${E2E_CONTACT_PREFIX}${Date.now()}`;
   const response = await request.post(`${API_BASE_URL}/contacts`, {
@@ -84,9 +101,6 @@ export async function createTestContact(
 /**
  * Deletes a contact via the API. Safe to call in finally/afterEach blocks.
  */
-export async function deleteTestContact(
-  request: APIRequestContext,
-  id: number | string
-): Promise<void> {
+export async function deleteTestContact(request: APIRequestContext, id: number | string): Promise<void> {
   await request.delete(`${API_BASE_URL}/contacts/${id}`).catch(() => {});
 }
