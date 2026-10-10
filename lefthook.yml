@@ -1,0 +1,20 @@
+# Optional local git hooks (https://lefthook.dev). Not installed automatically:
+#   install lefthook, then run `lefthook install` once in this repository.
+# CI runs the same checks, so skipping the hooks never lets a problem through.
+pre-commit:
+  parallel: true
+  commands:
+    gofmt:
+      glob: '{backend/*.go,backend/**/*.go}'
+      run: gofmt -l {staged_files} | (! grep .)
+    prettier:
+      root: frontend/
+      glob: '*.{ts,tsx}'
+      run: npx prettier --check {staged_files}
+    eslint:
+      root: frontend/
+      glob: '*.{ts,tsx}'
+      run: npx eslint --max-warnings=0 {staged_files}
+    i18n:
+      glob: '{backend,frontend}/**/i18n/locales/*.json'
+      run: make i18n-check
