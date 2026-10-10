@@ -93,7 +93,7 @@ Every request and response carries an `X-Request-ID` header created by the middl
 | `POST` | `/contacts` | Create a contact |
 | `GET` | `/contacts/:id` | Get a contact (supports filtering the returned fields) |
 | `PUT` | `/contacts/:id` | Update a contact |
-| `DELETE` | `/contacts/:id` | Delete a contact |
+| `DELETE` | `/contacts/:id` | Delete a contact (moves it to the trash, see [Trash](#trash)) |
 | `POST` | `/contacts/:id/archive` | Archive a contact |
 | `POST` | `/contacts/:id/unarchive` | Unarchive a contact |
 | `GET` | `/contacts/circles` | List all circles in use |
@@ -102,6 +102,17 @@ Every request and response carries an `X-Request-ID` header created by the middl
 | `POST` | `/contacts/:id/profile_picture` | Upload a profile picture (multipart) |
 | `GET` | `/contacts/:id/profile_picture` | Get a contact's profile picture |
 | `GET` | `/proxy/image` | Proxy an external image URL for upload preview |
+
+### Trash
+
+Deleting a contact moves it to the trash: the contact and its notes, reminders and relationships are soft-deleted, while its activity links and photo files are kept. The trash is private to each user. Contacts that have been in the trash longer than `TRASH_RETENTION_DAYS` (default 30) are purged automatically by a daily job (03:30 in `REMINDER_TIMEZONE`). Contacts in the trash are hidden everywhere else (lists, search, circles, birthdays, graph, ICS feed, reminders, CardDAV).
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/trash/contacts` | List the trash, newest deletion first: `{"contacts": [{"id", "firstname", "lastname", "nickname", "email", "photo_thumbnail", "deleted_at", "purge_at"}], "retention_days": 30}` |
+| `POST` | `/trash/contacts/:id/restore` | Restore a contact with the notes, reminders and relationships deleted with it. `404` if it is not in the user's trash |
+| `DELETE` | `/trash/contacts/:id` | Delete a trashed contact permanently, with its dependants and photo files. `404` if it is not in the user's trash (live contacts cannot be purged here) |
+| `DELETE` | `/trash/contacts` | Empty the user's trash: `{"message": ..., "purged": <count>}` |
 
 ### Relationships
 

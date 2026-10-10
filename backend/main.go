@@ -78,11 +78,20 @@ func main() {
 	contactSyncTask := func() {
 		services.SyncContactsWithRateLimit(db, *cfg)
 	}
+	trashPurgeTask := func() {
+		n, err := services.PurgeExpiredTrash(db, cfg.TrashRetentionDays, cfg.ProfilePhotoDir, time.Now())
+		if err != nil {
+			logger.Error().Err(err).Msg("Error purging expired trash")
+		} else if n > 0 {
+			logger.Info().Int("contacts", n).Msg("Purged expired contacts from the trash")
+		}
+	}
 	s, err := services.NewScheduler(cfg, services.SchedulerTasks{
 		Reminders:      reminderTask,
 		WebhookRetries: func() { services.ProcessWebhookRetries(db, *cfg) },
 		CalendarSync:   calendarSyncTask,
 		ContactSync:    contactSyncTask,
+		TrashPurge:     trashPurgeTask,
 	})
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to create scheduler")
@@ -91,6 +100,7 @@ func main() {
 	go reminderTask()
 	go calendarSyncTask()
 	go contactSyncTask()
+	go trashPurgeTask()
 	s.Start()
 
 	// gin.Default() equivalent, except that gin's access log skips requests whose path

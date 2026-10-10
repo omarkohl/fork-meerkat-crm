@@ -45,6 +45,7 @@ After adjusting the environment variables as needed you can run:
 | `OIDC_TRUST_EMAIL` | When `true`, skips the `email_verified`  requirement when linking an OIDC identity to an existing account by email. Safe to enable for self-hosted providers (e.g. Authentik) where you control all user accounts. Default is `false` |
 | `REMINDER_TIME` | Time of day at which reminder emails are sent, in `HH:MM` format (24-hour). Default is `12:00` |
 | `REMINDER_TIMEZONE` | Timezone used for scheduling reminder emails. Must be a valid [IANA timezone name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) (e.g. `Europe/Berlin`). Default is `UTC` |
+| `TRASH_RETENTION_DAYS` | Number of days a deleted contact stays in the Trash before it is deleted permanently (checked daily). Default is `30` |
 
 SSO is disabled unless all three of `OIDC_PROVIDER_URL`, `OIDC_CLIENT_ID`, and `OIDC_CLIENT_SECRET` are set.
 

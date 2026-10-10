@@ -85,4 +85,34 @@ test.describe('Multi-user isolation', () => {
       await page.request.delete(`${API_BASE_URL}/contacts/${contactA.ID}`).catch(() => {});
     }
   });
+  test("a user cannot list, restore or purge another user's trash", async ({ page }) => {
+    const created = await page.request.post(`${API_BASE_URL}/contacts`, {
+      data: { firstname: 'E2E-TrashIsolationA', lastname: 'Owner' },
+    });
+    expect(created.ok()).toBeTruthy();
+    const contactA = (await created.json()).contact;
+    expect((await page.request.delete(`${API_BASE_URL}/contacts/${contactA.ID}`)).ok()).toBeTruthy();
+
+    const ctx = await request.newContext();
+    try {
+      await ctx.post(`${API_BASE_URL}/register`, { data: USER_B }).catch(() => {});
+      const login = await ctx.post(`${API_BASE_URL}/login`, {
+        data: { identifier: USER_B.username, password: USER_B.password },
+      });
+      expect(login.ok(), 'userB login should succeed').toBeTruthy();
+
+      const trashB = await (await ctx.get(`${API_BASE_URL}/trash/contacts`)).json();
+      expect((trashB.contacts || []).some((c: any) => c.id === contactA.ID)).toBeFalsy();
+      expect((await ctx.post(`${API_BASE_URL}/trash/contacts/${contactA.ID}/restore`)).status()).toBe(404);
+      expect((await ctx.delete(`${API_BASE_URL}/trash/contacts/${contactA.ID}`)).status()).toBe(404);
+      // Emptying userB's own trash must not touch userA's.
+      expect((await ctx.delete(`${API_BASE_URL}/trash/contacts`)).ok()).toBeTruthy();
+
+      const trashA = await (await page.request.get(`${API_BASE_URL}/trash/contacts`)).json();
+      expect((trashA.contacts || []).some((c: any) => c.id === contactA.ID)).toBeTruthy();
+    } finally {
+      await ctx.dispose();
+      await page.request.delete(`${API_BASE_URL}/trash/contacts/${contactA.ID}`).catch(() => {});
+    }
+  });
 });

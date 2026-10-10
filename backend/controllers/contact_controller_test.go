@@ -588,7 +588,7 @@ func TestGetCircles(t *testing.T) {
 	assert.ElementsMatch(t, []string{"Friends", "Family", "Work"}, responseBody)
 }
 
-func TestDeleteContactCleansUpPhotos(t *testing.T) {
+func TestDeleteContactKeepsPhotosForTheTrash(t *testing.T) {
 	db, router := setupRouter()
 
 	var user models.User
@@ -644,11 +644,12 @@ func TestDeleteContactCleansUpPhotos(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &respBody)
 	assert.Equal(t, "Contact deleted", respBody["message"])
 
-	// Verify photo files are deleted
+	// The files stay while the contact is in the trash; purging removes them
+	// (see TestPurgeSingleContact and the trash service tests).
 	_, err = os.Stat(photoPath)
-	assert.True(t, os.IsNotExist(err), "Photo file should be deleted")
+	assert.NoError(t, err, "Photo file must survive a soft delete so a restore keeps the photo")
 	_, err = os.Stat(thumbnailPath)
-	assert.True(t, os.IsNotExist(err), "Thumbnail file should be deleted")
+	assert.NoError(t, err, "Thumbnail file must survive a soft delete")
 }
 
 func TestDeleteContactWithNoPhotos(t *testing.T) {

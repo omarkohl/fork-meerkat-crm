@@ -8,6 +8,7 @@ import SettingsPage from './SettingsPage';
 import NetworkPage from './NetworkPage';
 import UsersPage from './UsersPage';
 import ApiTokensPage from './ApiTokensPage';
+import TrashPage from './TrashPage';
 import DataSettingsPage from './DataSettingsPage';
 import LoginPage from './LoginPage';
 import RegisterPage from './RegisterPage';
@@ -36,7 +37,7 @@ import {
   Collapse,
   Tooltip,
   Menu,
-  MenuItem
+  MenuItem,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
@@ -47,6 +48,7 @@ import ContactsIcon from '@mui/icons-material/Contacts';
 import EventNoteIcon from '@mui/icons-material/EventNote';
 import NoteIcon from '@mui/icons-material/Note';
 import HubIcon from '@mui/icons-material/Hub';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import SettingsIcon from '@mui/icons-material/Settings';
 import PeopleIcon from '@mui/icons-material/People';
 import TokenIcon from '@mui/icons-material/Token';
@@ -83,7 +85,7 @@ function AppContent({ token, setToken }: { token: string | null; setToken: (toke
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [settingsMenuOpen, setSettingsMenuOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(
-    () => localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === 'true'
+    () => localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === 'true',
   );
   const [settingsFlyoutAnchor, setSettingsFlyoutAnchor] = useState<HTMLElement | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -142,13 +144,17 @@ function AppContent({ token, setToken }: { token: string | null; setToken: (toke
   // eslint-disable-next-line react-hooks/exhaustive-deps -- token changes trigger admin status recalculation
   const userIsAdmin = useMemo(() => isAdmin(), [token]);
 
-  const mainNavItems = useMemo(() => [
-    { text: t('nav.dashboard'), icon: <DashboardIcon />, path: '/' },
-    { text: t('nav.contacts'), icon: <ContactsIcon />, path: '/contacts' },
-    { text: t('nav.activities'), icon: <EventNoteIcon />, path: '/activities' },
-    { text: t('nav.notes'), icon: <NoteIcon />, path: '/notes' },
-    { text: t('nav.network'), icon: <HubIcon />, path: '/network' },
-  ], [t]);
+  const mainNavItems = useMemo(
+    () => [
+      { text: t('nav.dashboard'), icon: <DashboardIcon />, path: '/' },
+      { text: t('nav.contacts'), icon: <ContactsIcon />, path: '/contacts' },
+      { text: t('nav.activities'), icon: <EventNoteIcon />, path: '/activities' },
+      { text: t('nav.notes'), icon: <NoteIcon />, path: '/notes' },
+      { text: t('nav.network'), icon: <HubIcon />, path: '/network' },
+      { text: t('nav.trash'), icon: <DeleteOutlineIcon />, path: '/trash' },
+    ],
+    [t],
+  );
 
   const settingsSubItems = useMemo(() => {
     const items = [
@@ -174,7 +180,10 @@ function AppContent({ token, setToken }: { token: string | null; setToken: (toke
     setSettingsFlyoutAnchor(null);
   };
 
-  const isSettingsActive = location.pathname.startsWith('/settings') || location.pathname.startsWith('/users') || location.pathname.startsWith('/api-tokens');
+  const isSettingsActive =
+    location.pathname.startsWith('/settings') ||
+    location.pathname.startsWith('/users') ||
+    location.pathname.startsWith('/api-tokens');
 
   // Check if current path matches the nav item (handle exact match for "/" and prefix match for others)
   const isActiveRoute = (path: string) => {
@@ -230,7 +239,9 @@ function AppContent({ token, setToken }: { token: string | null; setToken: (toke
                 },
               }}
             >
-              <ListItemIcon sx={{ minWidth: collapsed ? 0 : 40, justifyContent: 'center' }}><SettingsIcon /></ListItemIcon>
+              <ListItemIcon sx={{ minWidth: collapsed ? 0 : 40, justifyContent: 'center' }}>
+                <SettingsIcon />
+              </ListItemIcon>
               {!collapsed && <ListItemText primary={t('nav.settings')} />}
               {!collapsed && (settingsMenuOpen ? <ExpandLess /> : <ExpandMore />)}
             </ListItemButton>
@@ -309,37 +320,32 @@ function AppContent({ token, setToken }: { token: string | null; setToken: (toke
           zIndex: (theme) => theme.zIndex.drawer + 1,
           width: { md: `calc(100% - ${drawerWidth}px)` },
           ml: { md: `${drawerWidth}px` },
-          transition: (theme) => theme.transitions.create(['width', 'margin'], {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.enteringScreen,
-          }),
+          transition: (theme) =>
+            theme.transitions.create(['width', 'margin'], {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.enteringScreen,
+            }),
         }}
       >
         <Toolbar>
           {isMobile && (
-            <IconButton 
-              edge="start" 
-              color="inherit" 
-              aria-label="menu" 
-              onClick={handleDrawerToggle} 
-              sx={{ mr: 2 }}
-            >
+            <IconButton edge="start" color="inherit" aria-label="menu" onClick={handleDrawerToggle} sx={{ mr: 2 }}>
               <MenuIcon />
             </IconButton>
           )}
-          <Typography 
-            variant="h6" 
-            component={Link} 
-            to="/" 
+          <Typography
+            variant="h6"
+            component={Link}
+            to="/"
             onClick={() => {
               setSearchQuery('');
               setSearchResults([]);
             }}
-            sx={{ 
-              flexGrow: 1, 
-              textDecoration: 'none', 
+            sx={{
+              flexGrow: 1,
+              textDecoration: 'none',
               color: 'inherit',
-              '&:hover': { opacity: 0.8 }
+              '&:hover': { opacity: 0.8 },
             }}
           >
             {t('app.title')}
@@ -348,10 +354,8 @@ function AppContent({ token, setToken }: { token: string | null; setToken: (toke
             freeSolo
             size="small"
             options={searchResults}
-            getOptionLabel={(option) => 
-              typeof option === 'string' 
-                ? option 
-                : `${option.firstname} ${option.lastname}`
+            getOptionLabel={(option) =>
+              typeof option === 'string' ? option : `${option.firstname} ${option.lastname}`
             }
             loading={searchLoading}
             onInputChange={(_, value) => setSearchQuery(value)}
@@ -461,7 +465,7 @@ function AppContent({ token, setToken }: { token: string | null; setToken: (toke
         onClose={handleDrawerToggle}
         sx={{
           display: { xs: 'block', md: 'none' },
-          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: EXPANDED_DRAWER_WIDTH }
+          '& .MuiDrawer-paper': { boxSizing: 'border-box', width: EXPANDED_DRAWER_WIDTH },
         }}
       >
         {renderDrawerContent(false)}
@@ -475,19 +479,21 @@ function AppContent({ token, setToken }: { token: string | null; setToken: (toke
           width: drawerWidth,
           flexShrink: 0,
           whiteSpace: 'nowrap',
-          transition: (theme) => theme.transitions.create('width', {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.enteringScreen,
-          }),
+          transition: (theme) =>
+            theme.transitions.create('width', {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.enteringScreen,
+            }),
           '& .MuiDrawer-paper': {
             width: drawerWidth,
             boxSizing: 'border-box',
             overflowX: 'hidden',
-            transition: (theme) => theme.transitions.create('width', {
-              easing: theme.transitions.easing.sharp,
-              duration: theme.transitions.duration.enteringScreen,
-            }),
-          }
+            transition: (theme) =>
+              theme.transitions.create('width', {
+                easing: theme.transitions.easing.sharp,
+                duration: theme.transitions.duration.enteringScreen,
+              }),
+          },
         }}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -495,7 +501,11 @@ function AppContent({ token, setToken }: { token: string | null; setToken: (toke
             {renderDrawerContent(sidebarCollapsed)}
           </Box>
           <Box sx={{ display: 'flex', justifyContent: sidebarCollapsed ? 'center' : 'flex-end', p: 1 }}>
-            <IconButton onClick={handleSidebarCollapseToggle} size="small" aria-label={sidebarCollapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')}>
+            <IconButton
+              onClick={handleSidebarCollapseToggle}
+              size="small"
+              aria-label={sidebarCollapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')}
+            >
               {sidebarCollapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
             </IconButton>
           </Box>
@@ -509,24 +519,169 @@ function AppContent({ token, setToken }: { token: string | null; setToken: (toke
           p: 2,
           width: { md: `calc(100% - ${drawerWidth}px)` },
           mt: 7,
-          transition: (theme) => theme.transitions.create('width', {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.enteringScreen,
-          }),
+          transition: (theme) =>
+            theme.transitions.create('width', {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.enteringScreen,
+            }),
         }}
       >
         <Routes>
-          <Route path="/contacts" element={<Suspense fallback={<Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>}><ContactsPage /></Suspense>} />
-          <Route path="/contacts/:id" element={<Suspense fallback={<Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>}><ContactDetailPage /></Suspense>} />
-          <Route path="/notes" element={<Suspense fallback={<Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>}><NotesPage /></Suspense>} />
-          <Route path="/activities" element={<Suspense fallback={<Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>}><ActivitiesPage /></Suspense>} />
-          <Route path="/settings" element={<Suspense fallback={<Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>}><SettingsPage /></Suspense>} />
-          <Route path="/settings/data" element={<Suspense fallback={<Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>}><DataSettingsPage /></Suspense>} />
-          <Route path="/network" element={<Suspense fallback={<Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>}><NetworkPage /></Suspense>} />
-          <Route path="/users" element={<Suspense fallback={<Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>}><UsersPage /></Suspense>} />
-          <Route path="/api-tokens" element={<Suspense fallback={<Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>}><ApiTokensPage /></Suspense>} />
+          <Route
+            path="/contacts"
+            element={
+              <Suspense
+                fallback={
+                  <Box display="flex" justifyContent="center" mt={4}>
+                    <CircularProgress />
+                  </Box>
+                }
+              >
+                <ContactsPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/contacts/:id"
+            element={
+              <Suspense
+                fallback={
+                  <Box display="flex" justifyContent="center" mt={4}>
+                    <CircularProgress />
+                  </Box>
+                }
+              >
+                <ContactDetailPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/notes"
+            element={
+              <Suspense
+                fallback={
+                  <Box display="flex" justifyContent="center" mt={4}>
+                    <CircularProgress />
+                  </Box>
+                }
+              >
+                <NotesPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/activities"
+            element={
+              <Suspense
+                fallback={
+                  <Box display="flex" justifyContent="center" mt={4}>
+                    <CircularProgress />
+                  </Box>
+                }
+              >
+                <ActivitiesPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <Suspense
+                fallback={
+                  <Box display="flex" justifyContent="center" mt={4}>
+                    <CircularProgress />
+                  </Box>
+                }
+              >
+                <SettingsPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/settings/data"
+            element={
+              <Suspense
+                fallback={
+                  <Box display="flex" justifyContent="center" mt={4}>
+                    <CircularProgress />
+                  </Box>
+                }
+              >
+                <DataSettingsPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/network"
+            element={
+              <Suspense
+                fallback={
+                  <Box display="flex" justifyContent="center" mt={4}>
+                    <CircularProgress />
+                  </Box>
+                }
+              >
+                <NetworkPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/users"
+            element={
+              <Suspense
+                fallback={
+                  <Box display="flex" justifyContent="center" mt={4}>
+                    <CircularProgress />
+                  </Box>
+                }
+              >
+                <UsersPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/trash"
+            element={
+              <Suspense
+                fallback={
+                  <Box display="flex" justifyContent="center" mt={4}>
+                    <CircularProgress />
+                  </Box>
+                }
+              >
+                <TrashPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/api-tokens"
+            element={
+              <Suspense
+                fallback={
+                  <Box display="flex" justifyContent="center" mt={4}>
+                    <CircularProgress />
+                  </Box>
+                }
+              >
+                <ApiTokensPage />
+              </Suspense>
+            }
+          />
           <Route path="/reminders" element={<div>{t('pages.reminders')}</div>} />
-          <Route path="/" element={<Suspense fallback={<Box display="flex" justifyContent="center" mt={4}><CircularProgress /></Box>}><DashboardPage /></Suspense>} />
+          <Route
+            path="/"
+            element={
+              <Suspense
+                fallback={
+                  <Box display="flex" justifyContent="center" mt={4}>
+                    <CircularProgress />
+                  </Box>
+                }
+              >
+                <DashboardPage />
+              </Suspense>
+            }
+          />
           <Route path="/login" element={<Navigate to="/" replace />} />
           <Route path="/register" element={<Navigate to="/" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -543,7 +698,7 @@ function App() {
     // Restore session after OIDC redirect: the server sets the auth cookie but
     // localStorage is empty, so we fetch user info once to populate it.
     if (!getToken()) {
-      fetchAndCacheUserInfo().then(info => {
+      fetchAndCacheUserInfo().then((info) => {
         if (info) setToken(getToken());
       });
     }

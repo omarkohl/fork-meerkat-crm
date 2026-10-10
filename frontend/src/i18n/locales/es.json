@@ -10,6 +10,7 @@
     "activities": "Actividades",
     "notes": "Notas",
     "network": "Red",
+    "trash": "Papelera",
     "reminders": "Recordatorios",
     "settings": "Configuración",
     "profile": "Perfil",
@@ -282,7 +283,7 @@
     "female": "Femenino",
     "other": "Otro",
     "deleteContact": "Eliminar Contacto",
-    "confirmDeleteContact": "¿Estás seguro de que quieres eliminar a {{name}}? Esta acción no se puede deshacer y también eliminará todas las notas, actividades y recordatorios asociados con este contacto.",
+    "confirmDeleteContact": "¿Estás seguro de que quieres eliminar a {{name}}? El contacto se mueve a la Papelera junto con sus notas, actividades y recordatorios. Puedes restaurarlo allí hasta que se elimine definitivamente.",
     "deleteContactError": "Error al eliminar el contacto. Inténtalo de nuevo.",
     "updateError": "Error al actualizar el contacto. Verifica tu entrada e inténtalo de nuevo.",
     "firstNameRequired": "El nombre es obligatorio",
@@ -844,6 +845,38 @@
       "title": "Revocar feed de calendario",
       "message": "La URL del feed dejará de funcionar de inmediato. Podrás generar una nueva más tarde.",
       "confirm": "Revocar"
+    }
+  },
+  "trash": {
+    "title": "Papelera",
+    "contactsTitle": "Contactos eliminados",
+    "description_one": "Los contactos eliminados permanecen aquí {{count}} día. Después se eliminan definitivamente junto con sus notas, recordatorios y foto.",
+    "description_other": "Los contactos eliminados permanecen aquí {{count}} días. Después se eliminan definitivamente junto con sus notas, recordatorios y foto.",
+    "empty": "La papelera está vacía.",
+    "deletedOn": "Eliminado el {{date}}",
+    "purgedOn": "Se eliminará definitivamente el {{date}}",
+    "restore": "Restaurar",
+    "purge": "Eliminar definitivamente",
+    "restoreAria": "Restaurar a {{name}}",
+    "purgeAria": "Eliminar definitivamente a {{name}}",
+    "restoreSuccess": "{{name}} restaurado",
+    "restoreError": "No se pudo restaurar el contacto",
+    "purgeSuccess": "{{name}} eliminado definitivamente",
+    "purgeError": "No se pudo eliminar el contacto definitivamente",
+    "emptyButton": "Vaciar papelera",
+    "emptySuccess_one": "{{count}} contacto eliminado definitivamente",
+    "emptySuccess_other": "{{count}} contactos eliminados definitivamente",
+    "emptyError": "No se pudo vaciar la papelera",
+    "purgeDialog": {
+      "title": "Eliminar definitivamente",
+      "message": "¿Eliminar definitivamente a {{name}}? El contacto con sus notas, recordatorios y foto no se puede recuperar.",
+      "confirm": "Eliminar definitivamente"
+    },
+    "emptyDialog": {
+      "title": "Vaciar papelera",
+      "message_one": "¿Eliminar definitivamente {{count}} contacto? Esta acción no se puede deshacer.",
+      "message_other": "¿Eliminar definitivamente los {{count}} contactos? Esta acción no se puede deshacer.",
+      "confirm": "Vaciar papelera"
     }
   },
   "users": {
