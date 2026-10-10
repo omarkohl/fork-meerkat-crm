@@ -20,7 +20,6 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"github.com/go-co-op/gocron"
 )
 
 func main() {
@@ -67,31 +66,32 @@ func main() {
 	if !cfg.UseResend {
 		logger.Warn().Msg("No Mails to be sent since Resend configuration is not set")
 	}
-	s := gocron.NewScheduler(cfg.GetReminderLocation())
-	task := func() {
-		// Use rate-limited version to prevent duplicate emails during rapid restarts
+	// Use rate-limited versions to prevent duplicate work during rapid restarts
+	reminderTask := func() {
 		if err := services.SendRemindersWithRateLimit(db, *cfg); err != nil {
 			logger.Error().Err(err).Msg("Error sending reminders")
 		}
 	}
-	schedule(s.Every(1).Day().At(cfg.ReminderTime).Do(task))
-	go task() // Run initially once on startup (rate-limited to prevent duplicates)
-	schedule(s.Every(5).Minutes().Do(func() {
-		services.ProcessWebhookRetries(db, *cfg)
-	}))
-	// Sync calendar subscriptions regularly (rate-limited via job lock)
 	calendarSyncTask := func() {
 		services.SyncCalendarsWithRateLimit(db, *cfg)
 	}
-	schedule(s.Every(cfg.CalDAVSyncIntervalHours).Hours().Do(calendarSyncTask))
-	go calendarSyncTask() // Run initially once on startup (rate-limited to prevent duplicates)
-	// Sync CardDAV contact connections regularly (rate-limited via job lock)
 	contactSyncTask := func() {
 		services.SyncContactsWithRateLimit(db, *cfg)
 	}
-	schedule(s.Every(cfg.CardDAVSyncIntervalHours).Hours().Do(contactSyncTask))
-	go contactSyncTask() // Run initially once on startup (rate-limited to prevent duplicates)
-	go s.StartBlocking()
+	s, err := services.NewScheduler(cfg, services.SchedulerTasks{
+		Reminders:      reminderTask,
+		WebhookRetries: func() { services.ProcessWebhookRetries(db, *cfg) },
+		CalendarSync:   calendarSyncTask,
+		ContactSync:    contactSyncTask,
+	})
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Failed to create scheduler")
+	}
+	// Run once on startup (rate-limited to prevent duplicates)
+	go reminderTask()
+	go calendarSyncTask()
+	go contactSyncTask()
+	s.Start()
 
 	r := gin.Default()
 
@@ -218,11 +218,4 @@ func main() {
 	}
 
 	logger.Info().Msg("Server exited gracefully")
-}
-
-// schedule logs a failure to register a scheduled job.
-func schedule(_ *gocron.Job, err error) {
-	if err != nil {
-		logger.Error().Err(err).Msg("Failed to schedule job")
-	}
 }
