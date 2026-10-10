@@ -1076,7 +1076,8 @@
       "confirm": "Einschalten",
       "confirming": "Wird geprüft...",
       "error": "Die Einrichtung konnte nicht gestartet werden.",
-      "invalid": "Dieser Code ist ungültig. Prüfe den Code und versuche es erneut."
+      "invalid": "Dieser Code ist ungültig. Prüfe den Code und versuche es erneut.",
+      "keyLabel": "Schlüssel"
     },
     "codes": {
       "title": "Wiederherstellungscodes speichern",
@@ -1101,6 +1102,7 @@
       "invalid": "Dieser Code ist ungültig. Prüfe den Code und versuche es erneut."
     },
     "disabledSuccess": "Die Zwei-Faktor-Authentifizierung ist ausgeschaltet.",
-    "actionError": "Die Aktion konnte nicht ausgeführt werden."
+    "actionError": "Die Aktion konnte nicht ausgeführt werden.",
+    "locked": "Zu viele Fehlversuche. Bitte versuche es später erneut."
   }
 }

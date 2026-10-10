@@ -1076,7 +1076,8 @@
       "confirm": "Turn on",
       "confirming": "Checking...",
       "error": "Could not start the setup.",
-      "invalid": "That code is not valid. Check the code and try again."
+      "invalid": "That code is not valid. Check the code and try again.",
+      "keyLabel": "Key"
     },
     "codes": {
       "title": "Save your recovery codes",
@@ -1101,6 +1102,7 @@
       "invalid": "That code is not valid. Check the code and try again."
     },
     "disabledSuccess": "Two-factor authentication is off.",
-    "actionError": "Could not complete the action."
+    "actionError": "Could not complete the action.",
+    "locked": "Too many failed attempts. Please try again later."
   }
 }

@@ -177,11 +177,15 @@ func LoginUser(context *gin.Context, cfg *config.Config) {
 			context.JSON(http.StatusOK, gin.H{"totp_required": true})
 			return
 		}
-		switch verifySecondFactor(context, db, foundUser, input.TOTPCode, input.RecoveryCode) {
+		result, lockSecs := verifySecondFactor(context, db, foundUser, input.TOTPCode, input.RecoveryCode)
+		switch result {
 		case factorLocked:
 			return
-		case factorWrong:
+		case factorWrong, factorWrongNowLocked:
 			isLocked, lockoutSecs := accountLimiter.RecordFailedAttempt(identifier)
+			if result == factorWrongNowLocked {
+				isLocked, lockoutSecs = true, max(lockSecs, lockoutSecs)
+			}
 			detail := "reason:wrong_2fa_code"
 			if isLocked {
 				detail = "reason:wrong_2fa_code_locked"

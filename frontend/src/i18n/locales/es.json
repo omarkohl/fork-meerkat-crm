@@ -1076,7 +1076,8 @@
       "confirm": "Activar",
       "confirming": "Comprobando...",
       "error": "No se pudo iniciar la configuración.",
-      "invalid": "El código no es válido. Compruébalo e inténtalo de nuevo."
+      "invalid": "El código no es válido. Compruébalo e inténtalo de nuevo.",
+      "keyLabel": "Clave"
     },
     "codes": {
       "title": "Guarda tus códigos de recuperación",
@@ -1101,6 +1102,7 @@
       "invalid": "El código no es válido. Compruébalo e inténtalo de nuevo."
     },
     "disabledSuccess": "La autenticación en dos pasos está desactivada.",
-    "actionError": "No se pudo completar la acción."
+    "actionError": "No se pudo completar la acción.",
+    "locked": "Demasiados intentos fallidos. Inténtalo de nuevo más tarde."
   }
 }

@@ -107,6 +107,7 @@ export default function TwoFactorSettings() {
   const [setupOpen, setSetupOpen] = useState(false);
   const [setup, setSetup] = useState<TwoFactorSetup | null>(null);
   const [setupCode, setSetupCode] = useState('');
+  const [setupPassword, setSetupPassword] = useState('');
   const [setupError, setSetupError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -120,12 +121,16 @@ export default function TwoFactorSettings() {
   const [useRecovery, setUseRecovery] = useState(false);
   const [confirmError, setConfirmError] = useState('');
 
+  // Server messages are English; show a translated text for the cases the UI knows.
+  const errorText = (err: unknown, fallback: string) =>
+    err instanceof ApiError && err.status === 429 ? t('twoFactor.locked') : fallback;
+
   const load = useCallback(async () => {
     try {
       setStatus(await getTwoFactorStatus());
       setLoadError('');
-    } catch (err) {
-      setLoadError(err instanceof Error ? err.message : t('twoFactor.loadError'));
+    } catch {
+      setLoadError(t('twoFactor.loadError'));
     }
   }, [t]);
 
@@ -137,11 +142,12 @@ export default function TwoFactorSettings() {
     setSetupOpen(true);
     setSetup(null);
     setSetupCode('');
+    setSetupPassword('');
     setSetupError('');
     try {
       setSetup(await setupTwoFactor());
     } catch (err) {
-      setSetupError(err instanceof Error ? err.message : t('twoFactor.setup.error'));
+      setSetupError(errorText(err, t('twoFactor.setup.error')));
     }
   };
 
@@ -157,11 +163,15 @@ export default function TwoFactorSettings() {
     setBusy(true);
     setSetupError('');
     try {
-      setCodes(await enableTwoFactor(setupCode));
+      setCodes(await enableTwoFactor(setupPassword, setupCode));
     } catch (err) {
-      setSetupError(
-        err instanceof ApiError && err.status === 400 ? t('twoFactor.setup.invalid') : t('twoFactor.actionError'),
-      );
+      if (err instanceof ApiError && err.status === 400 && err.details?.field === 'password') {
+        setSetupError(t('twoFactor.confirm.wrongPassword'));
+      } else if (err instanceof ApiError && err.status === 400) {
+        setSetupError(t('twoFactor.setup.invalid'));
+      } else {
+        setSetupError(errorText(err, t('twoFactor.actionError')));
+      }
     } finally {
       setBusy(false);
     }
@@ -208,12 +218,15 @@ export default function TwoFactorSettings() {
       } else if (err instanceof ApiError && err.status === 400) {
         setConfirmError(t('twoFactor.confirm.invalid'));
       } else {
-        setConfirmError(err instanceof Error ? err.message : t('twoFactor.actionError'));
+        setConfirmError(errorText(err, t('twoFactor.actionError')));
       }
     } finally {
       setBusy(false);
     }
   };
+
+  // Single sign-on only accounts: the identity provider is their second factor.
+  if (status && !status.available) return null;
 
   return (
     <Card sx={{ mb: 2 }}>
@@ -277,13 +290,23 @@ export default function TwoFactorSettings() {
                       <QrImage uri={setup.otpauth_uri} alt={t('twoFactor.setup.qrAlt')} />
                     </Box>
                     <Typography variant="body2">{t('twoFactor.setup.key')}</Typography>
-                    <Typography
-                      variant="body1"
-                      data-testid="two-factor-key"
-                      sx={{ fontFamily: 'monospace', wordBreak: 'break-all', userSelect: 'all' }}
-                    >
-                      {setup.secret}
-                    </Typography>
+                    <TextField
+                      label={t('twoFactor.setup.keyLabel')}
+                      value={setup.secret}
+                      fullWidth
+                      size="small"
+                      slotProps={{ input: { readOnly: true, sx: { fontFamily: 'monospace' } } }}
+                    />
+                    <TextField
+                      label={t('twoFactor.confirm.password')}
+                      type="password"
+                      value={setupPassword}
+                      onChange={(e) => setSetupPassword(e.target.value)}
+                      required
+                      fullWidth
+                      size="small"
+                      autoComplete="current-password"
+                    />
                     <TextField
                       label={t('twoFactor.setup.code')}
                       value={setupCode}

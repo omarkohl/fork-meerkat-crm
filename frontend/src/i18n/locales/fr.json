@@ -1076,7 +1076,8 @@
       "confirm": "Activer",
       "confirming": "Vérification...",
       "error": "Impossible de démarrer la configuration.",
-      "invalid": "Ce code n'est pas valide. Vérifiez-le et réessayez."
+      "invalid": "Ce code n'est pas valide. Vérifiez-le et réessayez.",
+      "keyLabel": "Clé"
     },
     "codes": {
       "title": "Enregistrez vos codes de récupération",
@@ -1101,6 +1102,7 @@
       "invalid": "Ce code n'est pas valide. Vérifiez-le et réessayez."
     },
     "disabledSuccess": "L'authentification à deux facteurs est désactivée.",
-    "actionError": "Impossible de terminer l'action."
+    "actionError": "Impossible de terminer l'action.",
+    "locked": "Trop de tentatives échouées. Réessayez plus tard."
   }
 }

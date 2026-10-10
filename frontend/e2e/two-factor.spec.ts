@@ -43,7 +43,8 @@ test.describe('Two-factor authentication', () => {
       await page.getByRole('button', { name: 'Turn on' }).click();
       const dialog = page.getByRole('dialog');
       await expect(dialog.getByRole('img', { name: 'QR code for the authenticator app' })).toBeVisible();
-      const secret = (await dialog.getByTestId('two-factor-key').textContent())!.trim();
+      const secret = (await dialog.getByLabel('Key').inputValue()).trim();
+      await dialog.getByLabel(/Current password/).fill(user.password);
       await dialog.getByLabel(/6-digit code from the app/).fill('000000');
       await dialog.getByRole('button', { name: 'Turn on' }).click();
       await expect(dialog.getByText(/That code is not valid/)).toBeVisible();
@@ -112,7 +113,9 @@ test.describe('Two-factor authentication', () => {
         ).ok(),
       ).toBeTruthy();
       const { secret } = await (await api.post(`${API_BASE_URL}/users/me/2fa/setup`)).json();
-      const enabled = await api.post(`${API_BASE_URL}/users/me/2fa/enable`, { data: { code: totp(secret) } });
+      const enabled = await api.post(`${API_BASE_URL}/users/me/2fa/enable`, {
+        data: { password: user.password, code: totp(secret) },
+      });
       expect(enabled.ok()).toBeTruthy();
 
       const loginAgain = await request.newContext();

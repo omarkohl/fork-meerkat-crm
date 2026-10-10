@@ -239,9 +239,10 @@ type AdminUserResponse struct {
 	TwoFactorEnabled bool `json:"two_factor_enabled"`
 }
 
-// TOTPCodeInput carries one authenticator code (enabling two-factor).
+// TOTPCodeInput enables two-factor: the password plus one authenticator code.
 type TOTPCodeInput struct {
-	Code string `json:"code" validate:"required,max=16"`
+	Password string `json:"password" validate:"required"`
+	Code     string `json:"code" validate:"required,max=16"`
 }
 
 // TOTPConfirmInput re-authenticates a sensitive two-factor change: the password plus an

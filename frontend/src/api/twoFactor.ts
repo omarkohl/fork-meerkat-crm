@@ -3,6 +3,8 @@ import { apiFetch, API_BASE_URL, getAuthHeaders, parseErrorResponse } from './cl
 export interface TwoFactorStatus {
   enabled: boolean;
   recovery_codes_remaining: number;
+  /** False for accounts without a password (single sign-on only). */
+  available: boolean;
 }
 
 export interface TwoFactorSetup {
@@ -37,8 +39,8 @@ export const getTwoFactorStatus = () => call<TwoFactorStatus>('/users/me/2fa', '
 export const setupTwoFactor = () => call<TwoFactorSetup>('/users/me/2fa/setup', 'POST');
 
 /** Returns the recovery codes. They are shown once and never again. */
-export async function enableTwoFactor(code: string): Promise<string[]> {
-  const data = await call<{ recovery_codes: string[] }>('/users/me/2fa/enable', 'POST', { code });
+export async function enableTwoFactor(password: string, code: string): Promise<string[]> {
+  const data = await call<{ recovery_codes: string[] }>('/users/me/2fa/enable', 'POST', { password, code });
   return data.recovery_codes;
 }
 

@@ -89,11 +89,11 @@ Several features make the server fetch an address a user typed in: webhooks, Cal
 
 ## Two-factor authentication
 
-Each user can turn on a second login step (TOTP, works with any authenticator app) under Settings, Profile: scan the QR code (or type the key), enter the code the app shows, and save the ten recovery codes, which are shown only once. From then on a password login also asks for a code from the app, or for one recovery code (each works once). Disabling it, and creating new recovery codes, need the password and a code.
+Each user can turn on a second login step (TOTP, works with any authenticator app) under Settings, Profile: scan the QR code (or type the key), enter the code the app shows, and save the ten recovery codes, which are shown only once. From then on a password login also asks for a code from the app, or for one recovery code (each works once). Turning it on needs the password and a code from the app; disabling it and creating new recovery codes need the password and a code. Turning it on or off signs out the account's other sessions. Accounts without a password (single sign-on only) cannot use it.
 
 - **Lost phone and recovery codes:** an admin can reset the user's two-factor on the Users page. The user is signed out everywhere and can log in with the password alone, then enrol again. Both the enrolment and the reset are in the [audit log](#sessions-and-audit-log).
-- **Brute force:** wrong codes count toward the same lockout as wrong passwords (per account, with growing delays); a code is accepted once, so a code that was just used (or sniffed) cannot be replayed.
-- **Secrets at rest:** the secret is encrypted with the key derived from `JWT_SECRET_KEY`, like the CardDAV and calendar credentials. If you change `JWT_SECRET_KEY`, secrets cannot be decrypted and users with two-factor are locked out until an admin resets them (recovery codes still work, they are only hashed).
+- **Brute force:** wrong codes, and wrong passwords in the two-factor dialogs, count toward the same lockout as wrong passwords (per account, with growing delays); a code is accepted once, so a code that was just used (or sniffed) cannot be replayed.
+- **Secrets at rest:** the secret is encrypted with the key derived from `JWT_SECRET_KEY`, like the CardDAV and calendar credentials. If you change `JWT_SECRET_KEY`, secrets cannot be decrypted and users with two-factor are locked out until an admin resets them (the recovery codes are stored as HMACs keyed from the same secret, so they stop working too).
 - **Not affected:** single sign-on (the identity provider is the second factor), API tokens and the calendar feed.
 
 ## Database storage

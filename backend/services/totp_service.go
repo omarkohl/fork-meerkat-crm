@@ -115,9 +115,17 @@ func normalizeRecoveryCode(code string) string {
 	return code
 }
 
-func hashRecoveryCode(code string) string {
-	sum := sha256.Sum256([]byte("meerkat-recovery-code:" + normalizeRecoveryCode(code)))
-	return hex.EncodeToString(sum[:])
+// recoveryHashKey is derived from the JWT secret separately from the key that encrypts the
+// TOTP secrets, so a recovery code hash cannot be tested without the server secret.
+func recoveryHashKey(jwtSecret string) []byte {
+	sum := sha256.Sum256([]byte("meerkat-recovery-code-hmac:" + jwtSecret))
+	return sum[:]
+}
+
+func hashRecoveryCode(jwtSecret, code string) string {
+	mac := hmac.New(sha256.New, recoveryHashKey(jwtSecret))
+	mac.Write([]byte(normalizeRecoveryCode(code)))
+	return hex.EncodeToString(mac.Sum(nil))
 }
 
 func newRecoveryCode() (string, error) {
@@ -134,7 +142,7 @@ func newRecoveryCode() (string, error) {
 
 // replaceRecoveryCodes deletes the user's codes and stores a fresh set inside tx. It
 // returns the plain codes, which are never stored.
-func replaceRecoveryCodes(tx *gorm.DB, userID uint) ([]string, error) {
+func replaceRecoveryCodes(tx *gorm.DB, jwtSecret string, userID uint) ([]string, error) {
 	if err := tx.Where("user_id = ?", userID).Delete(&models.RecoveryCode{}).Error; err != nil {
 		return nil, err
 	}
@@ -145,7 +153,7 @@ func replaceRecoveryCodes(tx *gorm.DB, userID uint) ([]string, error) {
 			return nil, err
 		}
 		codes = append(codes, code)
-		if err := tx.Create(&models.RecoveryCode{UserID: userID, CodeHash: hashRecoveryCode(code)}).Error; err != nil {
+		if err := tx.Create(&models.RecoveryCode{UserID: userID, CodeHash: hashRecoveryCode(jwtSecret, code)}).Error; err != nil {
 			return nil, err
 		}
 	}
@@ -198,7 +206,7 @@ func EnableTOTP(db *gorm.DB, cfg *config.Config, userID uint, code string, now t
 	}
 	var codes []string
 	err = db.Transaction(func(tx *gorm.DB) error {
-		res := tx.Model(&models.User{}).Where("id = ? AND totp_enabled = ?", userID, false).
+		res := tx.Model(&models.User{}).Where("id = ? AND totp_enabled = ? AND totp_secret = ?", userID, false, user.TOTPSecret).
 			Updates(map[string]any{"totp_enabled": true, "totp_last_step": step})
 		if res.Error != nil {
 			return res.Error
@@ -207,7 +215,7 @@ func EnableTOTP(db *gorm.DB, cfg *config.Config, userID uint, code string, now t
 			return ErrTOTPAlreadyEnabled
 		}
 		var err error
-		codes, err = replaceRecoveryCodes(tx, userID)
+		codes, err = replaceRecoveryCodes(tx, cfg.JWTSecretKey, userID)
 		return err
 	})
 	return codes, err
@@ -237,7 +245,7 @@ func CheckSecondFactor(db *gorm.DB, cfg *config.Config, user models.User, code, 
 		return false, false
 	}
 	res := db.Model(&models.RecoveryCode{}).
-		Where("user_id = ? AND code_hash = ? AND used_at IS NULL", user.ID, hashRecoveryCode(recovery)).
+		Where("user_id = ? AND code_hash = ? AND used_at IS NULL", user.ID, hashRecoveryCode(cfg.JWTSecretKey, recovery)).
 		Update("used_at", now)
 	if res.Error == nil && res.RowsAffected == 1 {
 		return true, true
@@ -246,11 +254,11 @@ func CheckSecondFactor(db *gorm.DB, cfg *config.Config, user models.User, code, 
 }
 
 // RegenerateRecoveryCodes replaces all recovery codes with a new set.
-func RegenerateRecoveryCodes(db *gorm.DB, userID uint) ([]string, error) {
+func RegenerateRecoveryCodes(db *gorm.DB, cfg *config.Config, userID uint) ([]string, error) {
 	var codes []string
 	err := db.Transaction(func(tx *gorm.DB) error {
 		var err error
-		codes, err = replaceRecoveryCodes(tx, userID)
+		codes, err = replaceRecoveryCodes(tx, cfg.JWTSecretKey, userID)
 		return err
 	})
 	return codes, err
@@ -261,6 +269,16 @@ func RecoveryCodesRemaining(db *gorm.DB, userID uint) int {
 	var n int64
 	db.Model(&models.RecoveryCode{}).Where("user_id = ? AND used_at IS NULL", userID).Count(&n)
 	return int(n)
+}
+
+// RevokeOtherSessions ends the user's sessions except keep (the one making the change). With
+// no current session id (a token from before sessions existed) it only ends the stored rows.
+func RevokeOtherSessions(db *gorm.DB, userID uint, keep string) error {
+	q := db.Model(&models.Session{}).Where("user_id = ? AND revoked_at IS NULL", userID)
+	if keep != "" {
+		q = q.Where("public_id <> ?", keep)
+	}
+	return q.Update("revoked_at", time.Now()).Error
 }
 
 // DisableTOTP removes the secret and the recovery codes.

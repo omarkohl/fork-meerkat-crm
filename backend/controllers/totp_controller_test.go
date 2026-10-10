@@ -48,7 +48,7 @@ func (e *sessionEnv) enrol(t *testing.T, token string) (string, []string) {
 	setup := decode(t, w.Body.Bytes())
 	secret := setup["secret"].(string)
 	require.True(t, strings.HasPrefix(setup["otpauth_uri"].(string), "otpauth://totp/"))
-	w = e.do("POST", "/2fa/enable", token, map[string]string{"code": services.TOTPCode(secret, time.Now())})
+	w = e.do("POST", "/2fa/enable", token, map[string]string{"password": strongPassword, "code": services.TOTPCode(secret, time.Now())})
 	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
 	var out struct {
 		RecoveryCodes []string `json:"recovery_codes"`
@@ -82,12 +82,12 @@ func TestEnrolmentAndLoginRequireTheSecondStep(t *testing.T) {
 	w := e.do("POST", "/2fa/setup", token, nil)
 	require.Equal(t, http.StatusOK, w.Code)
 	secret := decode(t, w.Body.Bytes())["secret"].(string)
-	w = e.do("POST", "/2fa/enable", token, map[string]string{"code": "000000"})
+	w = e.do("POST", "/2fa/enable", token, map[string]string{"password": strongPassword, "code": "000000"})
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	assert.Equal(t, http.StatusOK, e.loginWith("totp_flow", nil).Code, "still no second step")
 	assert.Equal(t, false, decode(t, e.do("GET", "/2fa", token, nil).Body.Bytes())["enabled"])
 
-	w = e.do("POST", "/2fa/enable", token, map[string]string{"code": services.TOTPCode(secret, time.Now())})
+	w = e.do("POST", "/2fa/enable", token, map[string]string{"password": strongPassword, "code": services.TOTPCode(secret, time.Now())})
 	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
 	st = decode(t, e.do("GET", "/2fa", token, nil).Body.Bytes())
 	assert.Equal(t, true, st["enabled"])
@@ -177,6 +177,8 @@ func TestWrongCodesLockTheAccountAcrossIdentifiersAndPasswordOnlyRequestsDoNotRe
 	}
 	w := e.loginWith("totp_lock", map[string]string{"totp_code": "000000"})
 	assert.Equal(t, http.StatusTooManyRequests, w.Code)
+	failed := e.events(models.AuditLoginFailed)
+	assert.Equal(t, "reason:wrong_2fa_code_locked", failed[len(failed)-1].Detail, "the attempt that locks is audited")
 	// locked: even the right code is refused
 	w = e.loginWith("totp_lock", map[string]string{"totp_code": nextCode(secret)})
 	assert.Equal(t, http.StatusTooManyRequests, w.Code)
@@ -242,7 +244,7 @@ func TestSetupIsRefusedWhenEnabledAndRecoveryCodesNeedTwoFactorOn(t *testing.T) 
 	token := e.login(t, "totp_state")
 	w := e.do("POST", "/2fa/recovery-codes", token, map[string]string{"password": strongPassword, "code": "123456"})
 	assert.Equal(t, http.StatusBadRequest, w.Code, "not enabled")
-	w = e.do("POST", "/2fa/enable", token, map[string]string{"code": "123456"})
+	w = e.do("POST", "/2fa/enable", token, map[string]string{"password": strongPassword, "code": "123456"})
 	assert.Equal(t, http.StatusBadRequest, w.Code, "no setup yet")
 	e.enrol(t, token)
 	w = e.do("POST", "/2fa/setup", token, nil)
@@ -340,4 +342,84 @@ func TestAdminResetClearsTwoFactorAndSignsTheUserOut(t *testing.T) {
 	}
 	assert.False(t, got["totp_victim"])
 	assert.True(t, got["totp_other"])
+}
+
+func TestEnableNeedsThePassword(t *testing.T) {
+	e := newTOTPEnv(t)
+	e.user(t, "totp_enable_pw")
+	token := e.login(t, "totp_enable_pw")
+	w := e.do("POST", "/2fa/setup", token, nil)
+	secret := decode(t, w.Body.Bytes())["secret"].(string)
+	code := services.TOTPCode(secret, time.Now())
+	w = e.do("POST", "/2fa/enable", token, map[string]string{"password": "wrong-password-1", "code": code})
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	w = e.do("POST", "/2fa/enable", token, map[string]string{"code": code})
+	assert.Equal(t, http.StatusBadRequest, w.Code, "password is required")
+	assert.Equal(t, false, decode(t, e.do("GET", "/2fa", token, nil).Body.Bytes())["enabled"])
+	w = e.do("POST", "/2fa/enable", token, map[string]string{"password": strongPassword, "code": code})
+	assert.Equal(t, http.StatusOK, w.Code, w.Body.String())
+}
+
+func TestWrongPasswordsInTheDialogsLockTheSecondFactor(t *testing.T) {
+	e := newTOTPEnv(t)
+	u := e.user(t, "totp_pwlock")
+	token := e.login(t, "totp_pwlock")
+	secret, _ := e.enrol(t, token)
+	lim := middleware.GetAccountRateLimiter()
+	t.Cleanup(func() { lim.RecordSuccessfulLogin(totpLimiterKey(u.ID)) })
+	var last int
+	for i := 0; i < middleware.MaxLoginAttempts; i++ {
+		last = e.do("POST", "/2fa/disable", token, map[string]string{"password": "wrong-password-1", "code": nextCode(secret)}).Code
+	}
+	assert.Equal(t, http.StatusTooManyRequests, last)
+	w := e.do("POST", "/2fa/disable", token, map[string]string{"password": strongPassword, "code": nextCode(secret)})
+	assert.Equal(t, http.StatusTooManyRequests, w.Code, "locked even with the right password")
+	assert.Equal(t, true, decode(t, e.do("GET", "/2fa", token, nil).Body.Bytes())["enabled"])
+}
+
+func TestSingleSignOnOnlyAccountsCannotEnrol(t *testing.T) {
+	e := newTOTPEnv(t)
+	u := e.user(t, "totp_sso")
+	token := e.login(t, "totp_sso")
+	require.NoError(t, e.db.Model(&models.User{}).Where("id = ?", u.ID).Update("password", "").Error)
+	assert.Equal(t, http.StatusBadRequest, e.do("POST", "/2fa/setup", token, nil).Code)
+	assert.Equal(t, http.StatusBadRequest, e.do("POST", "/2fa/enable", token, map[string]string{"password": "", "code": "123456"}).Code)
+	st := decode(t, e.do("GET", "/2fa", token, nil).Body.Bytes())
+	assert.Equal(t, false, st["available"])
+	var user models.User
+	require.NoError(t, e.db.First(&user, u.ID).Error)
+	assert.Empty(t, user.TOTPSecret)
+}
+
+func TestEnablingAndDisablingEndOtherSessionsButNotThisOne(t *testing.T) {
+	e := newTOTPEnv(t)
+	e.user(t, "totp_sess")
+	laptop := e.login(t, "totp_sess")
+	phone := e.login(t, "totp_sess")
+	secret, codes := e.enrol(t, laptop)
+	assert.Equal(t, http.StatusOK, e.do("GET", "/me", laptop, nil).Code)
+	assert.Equal(t, http.StatusUnauthorized, e.do("GET", "/me", phone, nil).Code)
+
+	w := e.loginWith("totp_sess", map[string]string{"totp_code": nextCode(secret)})
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	tablet := cookie(w, "auth_token").Value
+	require.Equal(t, http.StatusOK, e.do("GET", "/me", tablet, nil).Code)
+
+	w = e.do("POST", "/2fa/disable", laptop, map[string]string{"password": strongPassword, "recovery_code": codes[0]})
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+	assert.Equal(t, http.StatusOK, e.do("GET", "/me", laptop, nil).Code)
+	assert.Equal(t, http.StatusUnauthorized, e.do("GET", "/me", tablet, nil).Code)
+}
+
+func TestResetOfAUserWithoutTwoFactorIsRefusedAndKeepsTheirSessions(t *testing.T) {
+	e := newTOTPEnv(t)
+	admin := e.user(t, "totp_adm2")
+	require.NoError(t, e.db.Model(&admin).Update("is_admin", true).Error)
+	plain := e.user(t, "totp_plain")
+	adminToken := e.login(t, "totp_adm2")
+	plainToken := e.login(t, "totp_plain")
+	w := e.do("POST", "/admin/users/"+itoa(plain.ID)+"/2fa/reset", adminToken, nil)
+	assert.Equal(t, http.StatusConflict, w.Code)
+	assert.Equal(t, http.StatusOK, e.do("GET", "/me", plainToken, nil).Code)
+	assert.Empty(t, e.events(models.AuditTOTPAdminReset))
 }

@@ -1,6 +1,8 @@
 package services
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"strings"
 	"testing"
 	"time"
@@ -153,7 +155,7 @@ func TestRegenerateReplacesTheOldCodes(t *testing.T) {
 	secret, _ := BeginTOTPSetup(db, cfg, u.ID)
 	now := time.Now()
 	old, _ := EnableTOTP(db, cfg, u.ID, TOTPCode(secret, now), now)
-	fresh, err := RegenerateRecoveryCodes(db, u.ID)
+	fresh, err := RegenerateRecoveryCodes(db, cfg, u.ID)
 	require.NoError(t, err)
 	assert.Len(t, fresh, RecoveryCodeCount)
 	var user models.User
@@ -182,4 +184,27 @@ func TestCheckSecondFactorFailsWithoutEnabledTOTP(t *testing.T) {
 	db, cfg, u := totpTestDB(t)
 	ok, _ := CheckSecondFactor(db, cfg, u, "123456", "", time.Now())
 	assert.False(t, ok)
+}
+
+func TestRecoveryHashDependsOnTheServerSecretAndIsNotTheEncryptionKey(t *testing.T) {
+	a := hashRecoveryCode("secret-one-0123456789abcdefghij", "AAAAA-BBBBB")
+	assert.Equal(t, a, hashRecoveryCode("secret-one-0123456789abcdefghij", "aaaaa bbbbb"), "normalised")
+	assert.NotEqual(t, a, hashRecoveryCode("secret-two-0123456789abcdefghij", "AAAAA-BBBBB"))
+	assert.NotEqual(t, recoveryHashKey("s"), credentialKey("s"))
+	// the plain SHA-256 of the code (what an attacker with the table could test) does not match
+	plain := sha256.Sum256([]byte("AAAAABBBBB"))
+	assert.NotEqual(t, hex.EncodeToString(plain[:]), a)
+}
+
+func TestRevokeOtherSessionsKeepsTheCurrentOne(t *testing.T) {
+	db, _, u := totpTestDB(t)
+	require.NoError(t, db.AutoMigrate(&models.Session{}))
+	for _, id := range []string{"keep", "other1", "other2"} {
+		require.NoError(t, db.Create(&models.Session{UserID: u.ID, PublicID: id, ExpiresAt: time.Now().Add(time.Hour)}).Error)
+	}
+	require.NoError(t, RevokeOtherSessions(db, u.ID, "keep"))
+	live, err := ListSessions(db, u.ID)
+	require.NoError(t, err)
+	require.Len(t, live, 1)
+	assert.Equal(t, "keep", live[0].PublicID)
 }

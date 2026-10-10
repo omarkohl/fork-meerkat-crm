@@ -8,6 +8,7 @@ import (
 
 	apperrors "meerkat/errors"
 	"meerkat/idutil"
+	"meerkat/logger"
 	"meerkat/middleware"
 	"meerkat/models"
 	"meerkat/services"
@@ -28,7 +29,10 @@ type factorResult int
 const (
 	factorOK factorResult = iota
 	factorWrong
+	// factorLocked: the account was already locked; the 429 answer is written.
 	factorLocked
+	// factorWrongNowLocked: this wrong attempt triggered the lockout; nothing is written yet.
+	factorWrongNowLocked
 )
 
 func respondLocked(c *gin.Context, remainingSecs int) {
@@ -41,15 +45,24 @@ func respondLocked(c *gin.Context, remainingSecs int) {
 	c.Abort()
 }
 
+// rejectIfTOTPLocked answers 429 and returns true when the account's second factor is locked.
+func rejectIfTOTPLocked(c *gin.Context, userID uint) bool {
+	if locked, secs := middleware.GetAccountRateLimiter().IsLocked(totpLimiterKey(userID)); locked {
+		respondLocked(c, secs)
+		return true
+	}
+	return false
+}
+
 // verifySecondFactor checks a code or recovery code under the per-account lockout. On
-// factorLocked the 429 answer is already written; on factorWrong the caller answers.
-func verifySecondFactor(c *gin.Context, db *gorm.DB, user models.User, code, recovery string) factorResult {
+// factorLocked the 429 answer is already written; on factorWrong and factorWrongNowLocked
+// (secs is the lockout length) the caller answers.
+func verifySecondFactor(c *gin.Context, db *gorm.DB, user models.User, code, recovery string) (factorResult, int) {
 	cfg := currentConfig(c)
 	limiter := middleware.GetAccountRateLimiter()
 	key := totpLimiterKey(user.ID)
-	if locked, secs := limiter.IsLocked(key); locked {
-		respondLocked(c, secs)
-		return factorLocked
+	if rejectIfTOTPLocked(c, user.ID) {
+		return factorLocked, 0
 	}
 	ok, usedRecovery := services.CheckSecondFactor(db, &cfg, user, code, recovery, time.Now())
 	if ok {
@@ -57,18 +70,27 @@ func verifySecondFactor(c *gin.Context, db *gorm.DB, user models.User, code, rec
 		if usedRecovery {
 			auditFor(c, db, &user.ID, models.AuditTOTPRecoveryUsed, "")
 		}
-		return factorOK
+		return factorOK, 0
 	}
 	if locked, secs := limiter.RecordFailedAttempt(key); locked {
-		respondLocked(c, secs)
-		return factorLocked
+		return factorWrongNowLocked, secs
 	}
-	return factorWrong
+	return factorWrong, 0
 }
 
 func refuseAPITokenFor2FA(c *gin.Context) bool {
 	if c.GetBool("isAPIToken") {
 		apperrors.AbortWithError(c, apperrors.ErrForbidden("API tokens cannot manage two-factor authentication"))
+		return true
+	}
+	return false
+}
+
+// refuseWithoutPassword: accounts that only sign in through single sign-on have no password
+// step to protect and could not confirm changes; the identity provider is their second factor.
+func refuseWithoutPassword(c *gin.Context, user models.User) bool {
+	if user.Password == "" {
+		apperrors.AbortWithError(c, apperrors.ErrInvalidInput("", "Two-factor authentication is not available for single sign-on accounts"))
 		return true
 	}
 	return false
@@ -102,14 +124,19 @@ func GetTOTPStatus(c *gin.Context) {
 	if user.TOTPEnabled {
 		remaining = services.RecoveryCodesRemaining(db, user.ID)
 	}
-	c.JSON(http.StatusOK, gin.H{"enabled": user.TOTPEnabled, "recovery_codes_remaining": remaining})
+	c.JSON(http.StatusOK, gin.H{
+		"enabled":                  user.TOTPEnabled,
+		"recovery_codes_remaining": remaining,
+		// available is false for accounts without a password (single sign-on only)
+		"available": user.Password != "",
+	})
 }
 
 // SetupTOTP creates a pending secret and returns it with the otpauth URI for the QR code.
 // Two-factor stays off until EnableTOTP proves the app works.
 func SetupTOTP(c *gin.Context) {
 	db, user, ok := loadCurrentUser(c)
-	if !ok {
+	if !ok || refuseWithoutPassword(c, user) {
 		return
 	}
 	cfg := currentConfig(c)
@@ -128,11 +155,11 @@ func SetupTOTP(c *gin.Context) {
 	})
 }
 
-// EnableTOTP turns two-factor on after a valid code and returns the recovery codes, which
-// are shown this once.
+// EnableTOTP turns two-factor on after the password and a valid code, and returns the
+// recovery codes, which are shown this once. Other sessions are signed out.
 func EnableTOTP(c *gin.Context) {
 	db, user, ok := loadCurrentUser(c)
-	if !ok {
+	if !ok || refuseWithoutPassword(c, user) {
 		return
 	}
 	input, appErr := middleware.GetValidated[models.TOTPCodeInput](c)
@@ -146,8 +173,10 @@ func EnableTOTP(c *gin.Context) {
 	}
 	limiter := middleware.GetAccountRateLimiter()
 	key := totpLimiterKey(user.ID)
-	if locked, secs := limiter.IsLocked(key); locked {
-		respondLocked(c, secs)
+	if rejectIfTOTPLocked(c, user.ID) {
+		return
+	}
+	if !checkPasswordCounted(c, user, input.Password) {
 		return
 	}
 	cfg := currentConfig(c)
@@ -168,8 +197,31 @@ func EnableTOTP(c *gin.Context) {
 		return
 	}
 	limiter.RecordSuccessfulLogin(key)
+	endOtherSessions(c, db, user.ID)
 	audit(c, db, models.AuditTOTPEnabled, "")
 	c.JSON(http.StatusOK, gin.H{"recovery_codes": codes})
+}
+
+// endOtherSessions signs out every browser but the one making the change: a login that
+// happened before the second step existed (or that is about to lose it) should not linger.
+func endOtherSessions(c *gin.Context, db *gorm.DB, userID uint) {
+	if err := services.RevokeOtherSessions(db, userID, c.GetString("sessionID")); err != nil {
+		logger.FromContext(c).Error().Err(err).Uint("user_id", userID).Msg("Failed to revoke other sessions after a two-factor change")
+	}
+}
+
+// checkPasswordCounted verifies the password; a wrong one counts on the account's
+// second-factor lockout, so the dialogs cannot be used to guess it. It answers 400 or 429.
+func checkPasswordCounted(c *gin.Context, user models.User, password string) bool {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+		if locked, secs := middleware.GetAccountRateLimiter().RecordFailedAttempt(totpLimiterKey(user.ID)); locked {
+			respondLocked(c, secs)
+		} else {
+			apperrors.AbortWithError(c, apperrors.ErrInvalidInput("password", "Password is incorrect"))
+		}
+		return false
+	}
+	return true
 }
 
 // confirmSensitiveChange re-authenticates: current password plus a second factor.
@@ -183,12 +235,14 @@ func confirmSensitiveChange(c *gin.Context, db *gorm.DB, user models.User) (*mod
 		apperrors.AbortWithError(c, apperrors.ErrInvalidInput("", "Two-factor authentication is not enabled"))
 		return nil, false
 	}
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
-		apperrors.AbortWithError(c, apperrors.ErrInvalidInput("password", "Password is incorrect"))
+	if rejectIfTOTPLocked(c, user.ID) || !checkPasswordCounted(c, user, input.Password) {
 		return nil, false
 	}
-	switch verifySecondFactor(c, db, user, input.Code, input.RecoveryCode) {
+	switch result, secs := verifySecondFactor(c, db, user, input.Code, input.RecoveryCode); result {
 	case factorLocked:
+		return nil, false
+	case factorWrongNowLocked:
+		respondLocked(c, secs)
 		return nil, false
 	case factorWrong:
 		apperrors.AbortWithError(c, apperrors.ErrInvalidInput("code", "Invalid verification code"))
@@ -210,6 +264,7 @@ func DisableTOTP(c *gin.Context) {
 		apperrors.AbortWithError(c, apperrors.ErrDatabase("update").WithError(err))
 		return
 	}
+	endOtherSessions(c, db, user.ID)
 	audit(c, db, models.AuditTOTPDisabled, "")
 	c.JSON(http.StatusOK, gin.H{"message": "Two-factor authentication disabled"})
 }
@@ -223,7 +278,8 @@ func RegenerateRecoveryCodes(c *gin.Context) {
 	if _, ok := confirmSensitiveChange(c, db, user); !ok {
 		return
 	}
-	codes, err := services.RegenerateRecoveryCodes(db, user.ID)
+	cfgValue := currentConfig(c)
+	codes, err := services.RegenerateRecoveryCodes(db, &cfgValue, user.ID)
 	if err != nil {
 		apperrors.AbortWithError(c, apperrors.ErrDatabase("update").WithError(err))
 		return
@@ -248,6 +304,10 @@ func ResetUserTOTP(c *gin.Context) {
 		} else {
 			apperrors.AbortWithError(c, apperrors.ErrDatabase("query user").WithError(err))
 		}
+		return
+	}
+	if !user.TOTPEnabled {
+		apperrors.AbortWithError(c, apperrors.ErrConflict("Two-factor authentication is not enabled for this user"))
 		return
 	}
 	if err := services.DisableTOTP(db, user.ID); err != nil {

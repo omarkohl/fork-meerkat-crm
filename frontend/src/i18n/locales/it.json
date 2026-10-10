@@ -1076,7 +1076,8 @@
       "confirm": "Attiva",
       "confirming": "Verifica in corso...",
       "error": "Impossibile avviare la configurazione.",
-      "invalid": "Il codice non è valido. Controlla il codice e riprova."
+      "invalid": "Il codice non è valido. Controlla il codice e riprova.",
+      "keyLabel": "Chiave"
     },
     "codes": {
       "title": "Salva i tuoi codici di recupero",
@@ -1101,6 +1102,7 @@
       "invalid": "Il codice non è valido. Controlla il codice e riprova."
     },
     "disabledSuccess": "L'autenticazione a due fattori è disattivata.",
-    "actionError": "Impossibile completare l'azione."
+    "actionError": "Impossibile completare l'azione.",
+    "locked": "Troppi tentativi falliti. Riprova più tardi."
   }
 }
