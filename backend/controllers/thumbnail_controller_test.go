@@ -183,3 +183,28 @@ func newMultipart(body *bytes.Buffer, data []byte) string {
 	mw.Close()
 	return mw.FormDataContentType()
 }
+
+func TestTrashedContactsThumbnailIsServedToItsOwnerOnly(t *testing.T) {
+	e := newThumbEnv(t)
+	require.NoError(t, os.WriteFile(filepath.Join(e.dir, "abc_thumb.jpg"), []byte("jpegbytes"), 0o600))
+	mine := models.Contact{UserID: e.me.ID, Firstname: "A", PhotoThumbnailFile: "abc_thumb.jpg"}
+	theirs := models.Contact{UserID: e.other.ID, Firstname: "B", PhotoThumbnailFile: "abc_thumb.jpg"}
+	require.NoError(t, e.db.Create(&[]*models.Contact{&mine, &theirs}).Error)
+	require.NoError(t, e.db.Delete(&mine).Error)
+	require.NoError(t, e.db.Delete(&theirs).Error)
+	path := func(id uint) string { return "/contacts/" + strconv.Itoa(int(id)) + "/picture?thumbnail=true" }
+
+	w := e.get(path(mine.ID))
+	require.Equal(t, http.StatusOK, w.Code, "the trash shows avatars")
+	assert.Equal(t, "jpegbytes", w.Body.String())
+	assert.Equal(t, http.StatusNotFound, e.get(path(theirs.ID)).Code, "another user's trashed contact")
+}
+
+func TestListWithThumbnailFieldButNoIDStillGetsWorkingURLs(t *testing.T) {
+	e := newThumbEnv(t)
+	c := models.Contact{UserID: e.me.ID, Firstname: "With", PhotoThumbnailFile: "11111111-2222-3333-4444-555555555555_thumb.jpg"}
+	require.NoError(t, e.db.Create(&c).Error)
+	w := e.get("/contacts?fields=firstname,photo_thumbnail")
+	require.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "/contacts/"+strconv.Itoa(int(c.ID))+"/profile_picture?thumbnail=true")
+}

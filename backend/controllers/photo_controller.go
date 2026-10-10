@@ -45,8 +45,16 @@ func GetProfilePicture(c *gin.Context, cfg *config.Config) {
 		return
 	}
 
-	// Find the contact in the database
-	if err := db.Where("user_id = ?", userID).First(&contact, contactID).Error; err != nil {
+	// Check if thumbnail is requested via query parameter
+	wantsThumbnail := c.Query("thumbnail") == "true"
+
+	// The trash lists avatars, so a thumbnail is also served for the user's own trashed
+	// contacts; the full photo stays reserved for live ones.
+	lookup := db
+	if wantsThumbnail {
+		lookup = db.Unscoped()
+	}
+	if err := lookup.Where("user_id = ?", userID).First(&contact, contactID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			apperrors.AbortWithError(c, apperrors.ErrNotFound("Contact"))
 			return
@@ -54,9 +62,6 @@ func GetProfilePicture(c *gin.Context, cfg *config.Config) {
 		apperrors.AbortWithError(c, apperrors.ErrDatabase("find").WithError(err))
 		return
 	}
-
-	// Check if thumbnail is requested via query parameter
-	wantsThumbnail := c.Query("thumbnail") == "true"
 
 	if wantsThumbnail {
 		serveThumbnail(c, cfg, contact)

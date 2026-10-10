@@ -42,6 +42,10 @@ make migrate-create NAME=add_foo_column
 
 This creates two files in `database/migrations/`: `NNNNNN_add_foo_column.up.sql` and `.down.sql`.
 
+### Dropping the legacy thumbnail column
+
+`contacts.photo_thumbnail` (base64 data URL) is kept only as the copy a downgrade needs. `services.ExportLegacyThumbnails` moves it into files at startup, but it runs after the migrations. A migration that drops the column (`DROP COLUMN photo_thumbnail`) must therefore never be the first thing a database sees after the export-less version: ship it at least one release after the export, and never edit that rule away. `RunMigrations` enforces it (`checkLegacyThumbnailsExported`): it refuses to start when a pending migration drops the column while some contact still has a `data:` thumbnail and no `photo_thumbnail_file`, and the error says to start the previous version once. Keep the `DROP COLUMN photo_thumbnail` spelling so the check recognises the migration. The same release removes `LegacyThumbnail`, `serveLegacyThumbnail` and the fallback in `ContactToVCard`.
+
 ### SQLite settings
 
 The database is opened in WAL mode with `busy_timeout`, `synchronous=NORMAL` and foreign keys on (see `sqliteDSN` in `database/migrate.go`). Migrations run on a separate connection without foreign key enforcement because they may recreate tables. Never copy `meerkat.db` while the app runs; use the built-in [backups](../deployment.html#backups) (`VACUUM INTO`).
