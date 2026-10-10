@@ -66,7 +66,7 @@ func documentedRoutes(t *testing.T) map[string]bool {
 // from drifting again.
 func TestAPIReferenceMatchesRegisteredRoutes(t *testing.T) {
 	gin.SetMode(gin.ReleaseMode)
-	cfg := &config.Config{JWTSecretKey: "test-secret-key-32-chars-minimum!", CardDAVEnabled: true}
+	cfg := &config.Config{JWTSecretKey: "test-secret-key-32-chars-minimum!", CardDAVEnabled: true, MetricsEnabled: true}
 	cfg.OIDC.Enabled = true
 	r := gin.New()
 	RegisterRoutes(r, cfg, nil, &services.OIDCProvider{})
