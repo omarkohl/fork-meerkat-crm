@@ -65,6 +65,8 @@ logs/
 
 # Testing
 coverage/
+coverage.out
+coverage.html
 *.cover
 frontend/playwright-report/
 frontend/test-results/
