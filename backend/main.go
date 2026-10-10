@@ -128,6 +128,11 @@ func main() {
 		} else if n > 0 {
 			logger.Info().Int64("emails", n).Msg("Purged old emails from the outbox")
 		}
+		if n, err := services.PurgeWebhookDeliveries(db, time.Now()); err != nil {
+			logger.Error().Err(err).Msg("Error purging webhook deliveries")
+		} else if n > 0 {
+			logger.Info().Int64("deliveries", n).Msg("Purged old webhook deliveries")
+		}
 		// Same daily slot: ended sessions and old audit entries
 		if n, err := services.PurgeSessions(db, time.Now()); err != nil {
 			logger.Error().Err(err).Msg("Error purging ended sessions")

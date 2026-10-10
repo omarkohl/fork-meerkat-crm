@@ -70,11 +70,12 @@ func SendPasswordResetEmail(db *gorm.DB, userID uint, email, token, lang string,
 		return fmt.Errorf("failed to render password reset email: %w", err)
 	}
 
-	if err := QueueEmail(db, *cfg, &userID, EmailMessage{
+	// Retries stop when the link is dead anyway.
+	if err := QueueEmailUntil(db, *cfg, &userID, EmailMessage{
 		To:      email,
 		Subject: i18n.T(lang, "email.passwordReset.subject"),
 		HTML:    htmlBody,
-	}); err != nil {
+	}, PasswordResetExpiry()); err != nil {
 		return err
 	}
 

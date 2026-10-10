@@ -327,6 +327,7 @@ func TestRequestPasswordReset_Succeeds(t *testing.T) {
 }
 
 func TestRequestPasswordReset_QueuesEmail(t *testing.T) {
+	defer services.StubEmailDelivery(func(func()) {})() // no real background send
 	cfg := config.Config{FrontendURL: "http://localhost:3000", UseSMTP: true, SMTPHost: "127.0.0.1", SMTPPort: 1, SMTPFromEmail: "from@example.com"}
 	db, router := setupRouter()
 	hashed, _ := services.HashPassword(strongPassword)

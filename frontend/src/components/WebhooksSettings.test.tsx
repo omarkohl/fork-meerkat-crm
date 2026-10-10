@@ -49,6 +49,8 @@ describe('WebhooksSettings deliveries', () => {
         next_retry_at: '2030-01-01T01:00:00Z',
       }),
       delivery({ id: 1 }),
+      // first try still running: not a retry
+      delivery({ id: 4, status: 'pending', status_code: null, attempts: 0, next_retry_at: '2030-01-01T00:00:00Z' }),
     ]);
     render(
       <SnackbarProvider>
@@ -60,6 +62,7 @@ describe('WebhooksSettings deliveries', () => {
 
     expect(await screen.findByText('Gave up')).toBeInTheDocument();
     expect(screen.getByText('Retrying')).toBeInTheDocument();
+    expect(screen.getByText('Sending')).toBeInTheDocument();
     expect(screen.getByText('204')).toBeInTheDocument();
     expect(screen.getByText(/^Next try:/)).toBeInTheDocument();
   });

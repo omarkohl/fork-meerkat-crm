@@ -82,7 +82,14 @@ func RegisterJobMetrics(r *metrics.Registry, db *gorm.DB) {
 func RegisterOutboxMetrics(r *metrics.Registry, db *gorm.DB) {
 	count := func(table, status string) float64 {
 		var n int64
-		if err := db.Table(table).Where("status = ?", status).Count(&n).Error; err != nil {
+		q := db.Table(table).Where(table+".status = ?", status)
+		if table == "webhook_deliveries" {
+			// Only what somebody can still act on: not soft-deleted rows, not deliveries
+			// of deleted or disabled webhooks (they are purged later).
+			q = q.Joins("JOIN webhooks ON webhooks.id = webhook_deliveries.webhook_id").
+				Where("webhook_deliveries.deleted_at IS NULL AND webhooks.deleted_at IS NULL AND webhooks.is_active = ?", true)
+		}
+		if err := q.Count(&n).Error; err != nil {
 			logger.Warn().Err(err).Str("table", table).Msg("Could not count outbox entries for metrics")
 		}
 		return float64(n)

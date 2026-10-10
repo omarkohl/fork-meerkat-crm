@@ -651,6 +651,7 @@
       "loadingDeliveries": "Zustellungen werden geladen...",
       "noDeliveries": "Noch keine Zustellungen.",
       "deliveryRetrying": "Wiederholung geplant",
+      "deliverySending": "Wird gesendet",
       "deliveryGaveUp": "Aufgegeben",
       "deliveryNextRetry": "Nächster Versuch: {{time}}",
       "edit": "Bearbeiten",

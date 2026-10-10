@@ -27,9 +27,16 @@ import (
 // outboxBackoff[n-1] after the n-th failure; then it is dead (kept for inspection).
 // outboxLockTimeout is how long a claim holds: a worker that crashed mid-send (restart)
 // loses it, and the row is tried again (at-least-once: the receiver may see a duplicate).
+// It must stay well above the slowest send (HTTP, SMTP and Resend timeouts), or a live
+// send would lose its claim.
 const (
 	maxOutboxAttempts = 5
 	outboxLockTimeout = 5 * time.Minute
+
+	// Finished rows are only kept to see that they went out; dead ones stay longer so an
+	// admin can look at them.
+	sentOutboxRetention = 7 * 24 * time.Hour
+	deadOutboxRetention = 30 * 24 * time.Hour
 )
 
 var outboxBackoff = []time.Duration{time.Minute, 5 * time.Minute, 30 * time.Minute, 2 * time.Hour}
@@ -136,13 +143,14 @@ func TriggerWebhooks(db *gorm.DB, cfg config.Config, userID uint, eventType stri
 			continue
 		}
 		// Try at once; if this process dies first, the outbox job picks the row up.
-		if !claimWebhookDelivery(db, d.ID) {
-			continue
-		}
 		wh, d := wh, d
 		startDelivery(func() {
 			deliverySem <- struct{}{}
 			defer func() { <-deliverySem }()
+			// Claim only once a slot is free: a claim held while waiting would age.
+			if !claimWebhookDelivery(db, d) {
+				return
+			}
 			deliverWebhook(db, cfg, wh, d)
 		})
 	}
@@ -165,7 +173,7 @@ func TestWebhookDelivery(db *gorm.DB, cfg config.Config, wh models.Webhook) mode
 		errStr := err.Error()
 		return models.WebhookDelivery{WebhookID: wh.ID, EventType: "test", Error: &errStr, Status: models.OutboxDead}
 	}
-	if !claimWebhookDelivery(db, d.ID) {
+	if !claimWebhookDelivery(db, d) {
 		return d
 	}
 	return deliverWebhook(db, cfg, wh, d)
@@ -187,12 +195,15 @@ func enqueueWebhookDelivery(db *gorm.DB, webhookID uint, eventType string, body 
 }
 
 // claimWebhookDelivery takes a pending delivery for this worker. It fails if another worker
-// holds a fresh claim. The claim is part of the same UPDATE as the check, so two workers
-// cannot both win.
-func claimWebhookDelivery(db *gorm.DB, id uint) bool {
+// holds a fresh claim, if the row is not due, or if it changed since d was loaded (another
+// worker tried it and released it with a new retry time: d is a stale copy and sending it
+// again would duplicate that try). The checks are part of the same UPDATE as the claim, so
+// two workers cannot both win.
+func claimWebhookDelivery(db *gorm.DB, d models.WebhookDelivery) bool {
 	now := time.Now()
 	res := db.Model(&models.WebhookDelivery{}).
-		Where("id = ? AND status = ? AND (locked_at IS NULL OR locked_at < ?)", id, models.OutboxPending, now.Add(-outboxLockTimeout)).
+		Where("id = ? AND status = ? AND attempts = ? AND next_retry_at <= ? AND (locked_at IS NULL OR locked_at < ?)",
+			d.ID, models.OutboxPending, d.Attempts, now, now.Add(-outboxLockTimeout)).
 		Update("locked_at", now)
 	return res.Error == nil && res.RowsAffected == 1
 }
@@ -299,18 +310,29 @@ func ProcessWebhookOutbox(db *gorm.DB, cfg config.Config) {
 				Updates(map[string]any{"status": models.OutboxDead, "next_retry_at": nil, "error": msg, "locked_at": nil})
 			continue
 		}
-		if !claimWebhookDelivery(db, d.ID) {
-			continue
-		}
 		wg.Add(1)
 		d, wh := d, wh
 		go func() {
 			defer wg.Done()
 			deliverySem <- struct{}{}
 			defer func() { <-deliverySem }()
+			// Claim inside the slot: a claim made up front would age while queued.
+			if !claimWebhookDelivery(db, d) {
+				return
+			}
 			// The original payload is replayed, so retries share the event ID and timestamp.
 			deliverWebhook(db, cfg, wh, d)
 		}()
 	}
 	wg.Wait()
+}
+
+// PurgeWebhookDeliveries deletes delivered deliveries after a week, dead ones after 30
+// days, and every delivery of a webhook that was deleted (nobody can see those).
+func PurgeWebhookDeliveries(db *gorm.DB, now time.Time) (int64, error) {
+	res := db.Unscoped().Where("(status = ? AND updated_at < ?) OR (status = ? AND updated_at < ?) OR "+
+		"webhook_id NOT IN (SELECT id FROM webhooks WHERE deleted_at IS NULL)",
+		models.OutboxDelivered, now.Add(-sentOutboxRetention), models.OutboxDead, now.Add(-deadOutboxRetention)).
+		Delete(&models.WebhookDelivery{})
+	return res.RowsAffected, res.Error
 }

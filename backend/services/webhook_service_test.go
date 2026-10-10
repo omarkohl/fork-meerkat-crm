@@ -46,7 +46,7 @@ func attempt(t *testing.T, db *gorm.DB, cfg config.Config, wh models.Webhook, bo
 	t.Helper()
 	d, err := enqueueWebhookDelivery(db, wh.ID, "e", body)
 	require.NoError(t, err)
-	require.True(t, claimWebhookDelivery(db, d.ID))
+	require.True(t, claimWebhookDelivery(db, d))
 	return deliverWebhook(db, cfg, wh, d)
 }
 
@@ -68,7 +68,7 @@ func TestDeliverWebhookSignsAndRecordsSuccess(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, models.OutboxPending, d.Status)
 	assert.Zero(t, d.Attempts)
-	require.True(t, claimWebhookDelivery(db, d.ID))
+	require.True(t, claimWebhookDelivery(db, d))
 	d = deliverWebhook(db, config.Config{}, wh, d)
 
 	assert.Equal(t, "sha256="+computeSignature("s3cret", body), gotSig)
@@ -98,15 +98,16 @@ func TestDeliverWebhookBackoffThenDead(t *testing.T) {
 	d, err := enqueueWebhookDelivery(db, wh.ID, "e", []byte("{}"))
 	require.NoError(t, err)
 	for n := 1; n < maxOutboxAttempts; n++ {
-		require.True(t, claimWebhookDelivery(db, d.ID))
+		require.True(t, claimWebhookDelivery(db, d))
 		d = deliverWebhook(db, config.Config{}, wh, d)
 		assert.Equal(t, n, d.Attempts)
 		assert.Equal(t, models.OutboxPending, d.Status)
 		require.NotNil(t, d.NextRetryAt)
 		assert.WithinDuration(t, time.Now().Add(outboxBackoff[n-1]), *d.NextRetryAt, time.Minute)
 		assert.NotNil(t, d.Error)
+		d = makeDue(t, db, d)
 	}
-	require.True(t, claimWebhookDelivery(db, d.ID))
+	require.True(t, claimWebhookDelivery(db, d))
 	d = deliverWebhook(db, config.Config{}, wh, d)
 	assert.Equal(t, maxOutboxAttempts, d.Attempts)
 	assert.Equal(t, models.OutboxDead, d.Status, "dead letter after the last try")
@@ -139,12 +140,12 @@ func TestClaimWebhookDeliveryIsExclusiveUntilTheLockIsStale(t *testing.T) {
 	d, err := enqueueWebhookDelivery(db, wh.ID, "e", []byte("{}"))
 	require.NoError(t, err)
 
-	assert.True(t, claimWebhookDelivery(db, d.ID))
-	assert.False(t, claimWebhookDelivery(db, d.ID), "a second worker cannot take it")
+	assert.True(t, claimWebhookDelivery(db, d))
+	assert.False(t, claimWebhookDelivery(db, d), "a second worker cannot take it")
 
 	stale := time.Now().Add(-2 * outboxLockTimeout)
 	require.NoError(t, db.Model(&models.WebhookDelivery{}).Where("id = ?", d.ID).Update("locked_at", stale).Error)
-	assert.True(t, claimWebhookDelivery(db, d.ID), "a crashed worker's lock expires")
+	assert.True(t, claimWebhookDelivery(db, d), "a crashed worker's lock expires")
 }
 
 func TestIsPrivateURL(t *testing.T) {
@@ -304,5 +305,119 @@ func TestTriggerWebhooksQueuesBeforeSending(t *testing.T) {
 	require.NoError(t, db.Find(&rows).Error)
 	require.Len(t, rows, 1, "the row exists before any HTTP call")
 	assert.Equal(t, models.OutboxPending, rows[0].Status)
-	assert.NotNil(t, rows[0].LockedAt, "claimed for the immediate try")
+	assert.Nil(t, rows[0].LockedAt, "claimed only when the send starts")
+}
+
+// makeDue moves a pending delivery's next try into the past and returns the stored row.
+func makeDue(t *testing.T, db *gorm.DB, d models.WebhookDelivery) models.WebhookDelivery {
+	t.Helper()
+	require.NoError(t, db.Model(&models.WebhookDelivery{}).Where("id = ?", d.ID).Update("next_retry_at", time.Now().Add(-time.Second)).Error)
+	var out models.WebhookDelivery
+	require.NoError(t, db.First(&out, d.ID).Error)
+	return out
+}
+
+// The outbox job loaded the row (attempts 0) before the immediate send failed and released
+// it with a retry in the future; the job's claim on its old copy must not succeed.
+func TestClaimWebhookDeliveryRejectsAStaleCopyAfterARelease(t *testing.T) {
+	db := webhookDB(t)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(500) }))
+	defer srv.Close()
+	wh := models.Webhook{UserID: 1, URL: srv.URL, Secret: "s"}
+	require.NoError(t, db.Create(&wh).Error)
+	d, err := enqueueWebhookDelivery(db, wh.ID, "e", []byte("{}"))
+	require.NoError(t, err)
+
+	jobCopy := d // loaded by the job before the immediate send started
+	require.True(t, claimWebhookDelivery(db, d))
+	deliverWebhook(db, config.Config{}, wh, d) // fails, released with attempts=1 and a backoff
+
+	assert.False(t, claimWebhookDelivery(db, jobCopy), "stale copy must not claim a released row")
+
+	// even once the backoff has passed, the old copy (attempts 0) is stale
+	fresh := makeDue(t, db, d)
+	assert.False(t, claimWebhookDelivery(db, jobCopy))
+	assert.True(t, claimWebhookDelivery(db, fresh))
+}
+
+func TestClaimWebhookDeliveryWaitsForTheRetryTime(t *testing.T) {
+	db := webhookDB(t)
+	future := time.Now().Add(time.Hour)
+	d := models.WebhookDelivery{WebhookID: 1, Payload: "{}", EventType: "e", Status: models.OutboxPending, NextRetryAt: &future}
+	require.NoError(t, db.Create(&d).Error)
+	assert.False(t, claimWebhookDelivery(db, d))
+}
+
+func TestPurgeWebhookDeliveries(t *testing.T) {
+	db := webhookDB(t)
+	now := time.Now()
+	live := models.Webhook{UserID: 1, URL: "http://x", Secret: "s", IsActive: true}
+	require.NoError(t, db.Create(&live).Error)
+	mk := func(status string, age time.Duration) uint {
+		d := models.WebhookDelivery{WebhookID: live.ID, EventType: "e", Payload: "{}", Status: status}
+		require.NoError(t, db.Create(&d).Error)
+		require.NoError(t, db.Model(&d).UpdateColumn("updated_at", now.Add(-age)).Error)
+		return d.ID
+	}
+	oldOK := mk(models.OutboxDelivered, 8*24*time.Hour)
+	newOK := mk(models.OutboxDelivered, time.Hour)
+	oldDead := mk(models.OutboxDead, 31*24*time.Hour)
+	newDead := mk(models.OutboxDead, 10*24*time.Hour)
+	oldPending := mk(models.OutboxPending, 60*24*time.Hour)
+
+	n, err := PurgeWebhookDeliveries(db, now)
+	require.NoError(t, err)
+	assert.Equal(t, int64(2), n)
+	var ids []uint
+	db.Unscoped().Model(&models.WebhookDelivery{}).Pluck("id", &ids)
+	assert.ElementsMatch(t, []uint{newOK, newDead, oldPending}, ids)
+	assert.NotContains(t, ids, oldOK)
+	assert.NotContains(t, ids, oldDead)
+}
+
+// Deliveries of deleted webhooks are of no use to anybody, whatever their state.
+func TestPurgeWebhookDeliveriesDropsThoseOfDeletedWebhooks(t *testing.T) {
+	db := webhookDB(t)
+	gone := models.Webhook{UserID: 1, URL: "http://x", Secret: "s", IsActive: true}
+	require.NoError(t, db.Create(&gone).Error)
+	for _, st := range []string{models.OutboxPending, models.OutboxDead, models.OutboxDelivered} {
+		require.NoError(t, db.Create(&models.WebhookDelivery{WebhookID: gone.ID, Status: st, Payload: "{}", EventType: "e"}).Error)
+	}
+	require.NoError(t, db.Delete(&gone).Error)
+
+	n, err := PurgeWebhookDeliveries(db, time.Now())
+	require.NoError(t, err)
+	assert.Equal(t, int64(3), n)
+}
+
+// A due row must stay unclaimed while it waits for a concurrency slot: a claim held in the
+// queue would expire before the send starts.
+func TestProcessWebhookOutboxClaimsInsideTheConcurrencyLimit(t *testing.T) {
+	db := webhookDB(t)
+	var hits atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { hits.Add(1) }))
+	defer srv.Close()
+	wh := models.Webhook{UserID: 1, URL: srv.URL, Secret: "s"}
+	require.NoError(t, db.Create(&wh).Error)
+	d, err := enqueueWebhookDelivery(db, wh.ID, "e", []byte("{}"))
+	require.NoError(t, err)
+	for i := 0; i < cap(deliverySem); i++ {
+		deliverySem <- struct{}{}
+	}
+	done := make(chan struct{})
+	go func() { ProcessWebhookOutbox(db, config.Config{}); close(done) }()
+	time.Sleep(200 * time.Millisecond)
+	var stored models.WebhookDelivery
+	require.NoError(t, db.First(&stored, d.ID).Error)
+	assert.Nil(t, stored.LockedAt, "no claim while waiting for a slot")
+	for i := 0; i < cap(deliverySem); i++ {
+		<-deliverySem
+	}
+	<-done
+	assert.EqualValues(t, 1, hits.Load())
+}
+
+func TestLockTimeoutOutlastsTheSlowestSend(t *testing.T) {
+	assert.Greater(t, outboxLockTimeout, 2*(deliveryClient.Timeout))
+	assert.Greater(t, outboxLockTimeout, 2*(smtpTimeout+resendTimeout))
 }

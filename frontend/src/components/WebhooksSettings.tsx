@@ -346,7 +346,9 @@ export default function WebhooksSettings() {
                                   size="small"
                                   label={
                                     d.status === 'pending'
-                                      ? t('settings.webhooks.deliveryRetrying')
+                                      ? d.attempts === 0
+                                        ? t('settings.webhooks.deliverySending')
+                                        : t('settings.webhooks.deliveryRetrying')
                                       : d.status === 'dead'
                                         ? t('settings.webhooks.deliveryGaveUp')
                                         : (d.status_code ?? 'ok')
@@ -362,7 +364,7 @@ export default function WebhooksSettings() {
                                 <Typography variant="caption" color="text.secondary">
                                   {new Date(d.created_at).toLocaleString()}
                                 </Typography>
-                                {d.status === 'pending' && d.next_retry_at && (
+                                {d.status === 'pending' && d.attempts > 0 && d.next_retry_at && (
                                   <Typography variant="caption" color="text.secondary">
                                     {t('settings.webhooks.deliveryNextRetry', {
                                       time: new Date(d.next_retry_at).toLocaleString(),

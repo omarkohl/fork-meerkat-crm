@@ -39,7 +39,7 @@ type Scheduler struct {
 }
 
 // NewScheduler registers the recurring jobs: reminders daily at cfg.ReminderTime
-// (in the reminder timezone), webhook retries every 5 minutes, and calendar and
+// (in the reminder timezone), the delivery outbox (webhook and email retries) every minute, and calendar and
 // contact syncs every configured number of hours, the trash purge daily at 03:30 and, when enabled, the backup daily at cfg.BackupTime. Interval jobs also run once as
 // soon as the scheduler starts. Registration failures are logged and skipped.
 func NewScheduler(cfg *config.Config, t SchedulerTasks) (*Scheduler, error) {
@@ -57,7 +57,9 @@ func NewScheduler(cfg *config.Config, t SchedulerTasks) (*Scheduler, error) {
 		register(s, JobReminders,
 			gocron.DailyJob(1, gocron.NewAtTimes(gocron.NewAtTime(uint(hour), uint(minute), 0))), t.Reminders) //nolint:gosec // validated HH:MM
 	}
-	register(s, JobWebhookRetries, gocron.DurationJob(time.Minute), t.WebhookRetries, startNow)
+	// Singleton: a run that outlasts the interval must not overlap with the next one.
+	register(s, JobWebhookRetries, gocron.DurationJob(time.Minute), t.WebhookRetries, startNow,
+		gocron.WithSingletonMode(gocron.LimitModeReschedule))
 	register(s, JobCalendarSync, gocron.DurationJob(time.Duration(cfg.CalDAVSyncIntervalHours)*time.Hour), t.CalendarSync, startNow)
 	register(s, JobContactSync, gocron.DurationJob(time.Duration(cfg.CardDAVSyncIntervalHours)*time.Hour), t.ContactSync, startNow)
 	register(s, JobTrashPurge, gocron.DailyJob(1, gocron.NewAtTimes(gocron.NewAtTime(3, 30, 0))), t.TrashPurge)

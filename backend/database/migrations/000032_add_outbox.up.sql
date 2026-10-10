@@ -3,10 +3,19 @@
 ALTER TABLE webhook_deliveries ADD COLUMN status TEXT NOT NULL DEFAULT 'delivered';
 ALTER TABLE webhook_deliveries ADD COLUMN locked_at DATETIME;
 
--- Old rows: one row per try. A row that still waits for its retry stays pending; a failed
--- row without a retry is dead; the rest succeeded.
+-- Old rows: one row per try, a retry replayed the same payload as a new row with attempts + 1.
+-- A row that still waits for its retry stays pending. A failed row without a retry is dead
+-- only when no later try of the same payload exists; one that a later try superseded is
+-- history of a delivery that went on (it stays 'delivered', the default, and is not counted
+-- as dead).
 UPDATE webhook_deliveries SET status = 'pending' WHERE next_retry_at IS NOT NULL;
-UPDATE webhook_deliveries SET status = 'dead' WHERE next_retry_at IS NULL AND error IS NOT NULL;
+UPDATE webhook_deliveries SET status = 'dead'
+WHERE next_retry_at IS NULL AND error IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM webhook_deliveries later
+    WHERE later.webhook_id = webhook_deliveries.webhook_id
+      AND later.payload = webhook_deliveries.payload
+      AND later.attempts > webhook_deliveries.attempts);
 
 CREATE INDEX idx_webhook_deliveries_status_retry ON webhook_deliveries (status, next_retry_at);
 
@@ -19,6 +28,7 @@ CREATE TABLE email_outbox (
     status TEXT NOT NULL DEFAULT 'pending',
     attempts INTEGER NOT NULL DEFAULT 0,
     next_attempt_at DATETIME NOT NULL,
+    expires_at DATETIME,
     locked_at DATETIME,
     last_error TEXT NOT NULL DEFAULT '',
     sent_at DATETIME,

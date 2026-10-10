@@ -50,11 +50,13 @@ type EmailOutbox struct {
 	Status        string    `gorm:"not null;default:pending"`
 	Attempts      int       `gorm:"not null;default:0"`
 	NextAttemptAt time.Time `gorm:"not null"`
-	LockedAt      *time.Time
-	LastError     string `gorm:"not null;default:''"`
-	SentAt        *time.Time
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
+	// ExpiresAt (optional): after this the email is not sent any more (password reset links).
+	ExpiresAt *time.Time
+	LockedAt  *time.Time
+	LastError string `gorm:"not null;default:''"`
+	SentAt    *time.Time
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 func (EmailOutbox) TableName() string { return "email_outbox" }

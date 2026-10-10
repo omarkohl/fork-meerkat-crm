@@ -165,8 +165,125 @@ func TestClaimEmailIsExclusive(t *testing.T) {
 	db := emailDB(t)
 	e := models.EmailOutbox{ToAddr: "a", Subject: "s", HTML: "h", Status: models.OutboxPending, NextAttemptAt: time.Now()}
 	require.NoError(t, db.Create(&e).Error)
-	assert.True(t, claimEmail(db, e.ID))
-	assert.False(t, claimEmail(db, e.ID))
+	assert.True(t, claimEmail(db, e))
+	assert.False(t, claimEmail(db, e))
+}
+
+// The job loaded the row (attempts 0) before the immediate send failed and released it; its
+// claim on the old copy must fail, also once the backoff has passed.
+func TestClaimEmailRejectsAStaleCopyAfterARelease(t *testing.T) {
+	db := emailDB(t)
+	noKick(t)
+	fakeSender(t, errors.New("down"))
+	require.NoError(t, QueueEmail(db, emailCfg, nil, EmailMessage{To: "a@example.com", Subject: "s", HTML: "h"}))
+	var jobCopy models.EmailOutbox
+	require.NoError(t, db.First(&jobCopy).Error)
+
+	require.True(t, claimEmail(db, jobCopy))
+	sendQueuedEmail(db, emailCfg, jobCopy) // fails, released with attempts=1 and a backoff
+
+	assert.False(t, claimEmail(db, jobCopy), "retry time is in the future")
+	require.NoError(t, db.Model(&models.EmailOutbox{}).Where("id = ?", jobCopy.ID).Update("next_attempt_at", time.Now().Add(-time.Second)).Error)
+	assert.False(t, claimEmail(db, jobCopy), "attempts changed since the copy was loaded")
+	var fresh models.EmailOutbox
+	require.NoError(t, db.First(&fresh).Error)
+	assert.True(t, claimEmail(db, fresh))
+}
+
+func TestClaimEmailWaitsForTheRetryTime(t *testing.T) {
+	db := emailDB(t)
+	e := models.EmailOutbox{ToAddr: "a", Subject: "s", HTML: "h", Status: models.OutboxPending, NextAttemptAt: time.Now().Add(time.Hour)}
+	require.NoError(t, db.Create(&e).Error)
+	assert.False(t, claimEmail(db, e))
+}
+
+func TestProcessEmailOutboxClaimsInsideTheConcurrencyLimit(t *testing.T) {
+	db := emailDB(t)
+	noKick(t)
+	sent := fakeSender(t)
+	require.NoError(t, QueueEmail(db, emailCfg, nil, EmailMessage{To: "a@example.com", Subject: "s", HTML: "h"}))
+	for i := 0; i < cap(emailSem); i++ {
+		emailSem <- struct{}{}
+	}
+	done := make(chan struct{})
+	go func() { ProcessEmailOutbox(db, emailCfg); close(done) }()
+	time.Sleep(200 * time.Millisecond)
+	var row models.EmailOutbox
+	require.NoError(t, db.First(&row).Error)
+	assert.Nil(t, row.LockedAt, "no claim while waiting for a slot")
+	for i := 0; i < cap(emailSem); i++ {
+		<-emailSem
+	}
+	<-done
+	assert.Len(t, *sent, 1)
+}
+
+func TestEmailBodyIsClearedOnceDeliveredOrDead(t *testing.T) {
+	db := emailDB(t)
+	noKick(t)
+	fakeSender(t)
+	require.NoError(t, QueueEmail(db, emailCfg, nil, EmailMessage{To: "a@example.com", Subject: "s", HTML: "token"}))
+	ProcessEmailOutbox(db, emailCfg)
+	var row models.EmailOutbox
+	require.NoError(t, db.First(&row).Error)
+	assert.Equal(t, models.OutboxDelivered, row.Status)
+	assert.Empty(t, row.HTML)
+
+	boom := errors.New("down")
+	errs := make([]error, maxOutboxAttempts)
+	for i := range errs {
+		errs[i] = boom
+	}
+	fakeSender(t, errs...)
+	require.NoError(t, db.Delete(&models.EmailOutbox{}, row.ID).Error)
+	row = models.EmailOutbox{}
+	require.NoError(t, QueueEmail(db, emailCfg, nil, EmailMessage{To: "a@example.com", Subject: "s", HTML: "token"}))
+	for n := 1; n <= maxOutboxAttempts; n++ {
+		ProcessEmailOutbox(db, emailCfg)
+		require.NoError(t, db.Model(&models.EmailOutbox{}).Where("1 = 1").Update("next_attempt_at", time.Now().Add(-time.Second)).Error)
+	}
+	require.NoError(t, db.First(&row).Error)
+	assert.Equal(t, models.OutboxDead, row.Status)
+	assert.Empty(t, row.HTML)
+	assert.Equal(t, "a@example.com", row.ToAddr)
+}
+
+func TestExpiredEmailIsNeverSentAndLosesItsBody(t *testing.T) {
+	db := emailDB(t)
+	noKick(t)
+	sent := fakeSender(t)
+	require.NoError(t, QueueEmailUntil(db, emailCfg, nil, EmailMessage{To: "a@example.com", Subject: "s", HTML: "token"}, time.Now().Add(-time.Minute)))
+
+	ProcessEmailOutbox(db, emailCfg)
+
+	assert.Empty(t, *sent)
+	var row models.EmailOutbox
+	require.NoError(t, db.First(&row).Error)
+	assert.Equal(t, models.OutboxDead, row.Status)
+	assert.Empty(t, row.HTML)
+	assert.Contains(t, row.LastError, "expired")
+	assert.Zero(t, row.Attempts)
+}
+
+func TestEmailStopsRetryingWhenTheNextTryWouldBeAfterExpiry(t *testing.T) {
+	db := emailDB(t)
+	noKick(t)
+	sent := fakeSender(t, errors.New("down"), errors.New("down"))
+	// first retry (1 min) fits, the second (5 min) does not
+	require.NoError(t, QueueEmailUntil(db, emailCfg, nil, EmailMessage{To: "a@example.com", Subject: "s", HTML: "token"}, time.Now().Add(2*time.Minute)))
+
+	ProcessEmailOutbox(db, emailCfg)
+	var row models.EmailOutbox
+	require.NoError(t, db.First(&row).Error)
+	assert.Equal(t, models.OutboxPending, row.Status)
+	assert.Equal(t, "token", row.HTML)
+
+	require.NoError(t, db.Model(&row).Update("next_attempt_at", time.Now().Add(-time.Second)).Error)
+	ProcessEmailOutbox(db, emailCfg)
+	require.NoError(t, db.First(&row).Error)
+	assert.Len(t, *sent, 2)
+	assert.Equal(t, models.OutboxDead, row.Status)
+	assert.Empty(t, row.HTML)
 }
 
 func TestPurgeEmailOutbox(t *testing.T) {

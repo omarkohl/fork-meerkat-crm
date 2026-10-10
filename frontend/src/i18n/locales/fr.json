@@ -651,6 +651,7 @@
       "loadingDeliveries": "Chargement des livraisons...",
       "noDeliveries": "Aucune livraison pour l'instant.",
       "deliveryRetrying": "Nouvelle tentative",
+      "deliverySending": "Envoi en cours",
       "deliveryGaveUp": "Abandonné",
       "deliveryNextRetry": "Prochaine tentative : {{time}}",
       "edit": "Modifier",

@@ -152,8 +152,10 @@ func TestOutboxGauges(t *testing.T) {
 	db := emailDB(t)
 	reg := metrics.NewRegistry()
 	RegisterOutboxMetrics(reg, db)
-	require.NoError(t, db.Create(&models.WebhookDelivery{WebhookID: 1, Status: models.OutboxDead}).Error)
-	require.NoError(t, db.Create(&models.WebhookDelivery{WebhookID: 1, Status: models.OutboxPending}).Error)
+	live := models.Webhook{UserID: 1, URL: "http://x", Secret: "s", IsActive: true}
+	require.NoError(t, db.Create(&live).Error)
+	require.NoError(t, db.Create(&models.WebhookDelivery{WebhookID: live.ID, Status: models.OutboxDead}).Error)
+	require.NoError(t, db.Create(&models.WebhookDelivery{WebhookID: live.ID, Status: models.OutboxPending}).Error)
 	require.NoError(t, db.Create(&models.EmailOutbox{ToAddr: "a", Subject: "s", HTML: "h", Status: models.OutboxPending, NextAttemptAt: time.Now()}).Error)
 
 	var sb strings.Builder
@@ -163,4 +165,33 @@ func TestOutboxGauges(t *testing.T) {
 	assert.Contains(t, out, `meerkat_outbox_pending{kind="email"} 1`)
 	assert.Contains(t, out, `meerkat_outbox_dead{kind="webhook"} 1`)
 	assert.Contains(t, out, `meerkat_outbox_dead{kind="email"} 0`)
+}
+
+// Dead and pending rows only count while somebody can still act on them: not for deleted or
+// disabled webhooks, not for soft-deleted rows.
+func TestOutboxGaugesIgnoreRowsNobodyCanActOn(t *testing.T) {
+	db := emailDB(t)
+	reg := metrics.NewRegistry()
+	RegisterOutboxMetrics(reg, db)
+	live := models.Webhook{UserID: 1, URL: "http://x", Secret: "s", IsActive: true}
+	gone := models.Webhook{UserID: 1, URL: "http://x", Secret: "s", IsActive: true}
+	off := models.Webhook{UserID: 1, URL: "http://x", Secret: "s", IsActive: true}
+	for _, w := range []*models.Webhook{&live, &gone, &off} {
+		require.NoError(t, db.Create(w).Error)
+	}
+	require.NoError(t, db.Model(&off).Update("is_active", false).Error)
+	require.NoError(t, db.Delete(&gone).Error)
+	for _, w := range []models.Webhook{live, gone, off} {
+		require.NoError(t, db.Create(&models.WebhookDelivery{WebhookID: w.ID, Status: models.OutboxDead}).Error)
+		require.NoError(t, db.Create(&models.WebhookDelivery{WebhookID: w.ID, Status: models.OutboxPending}).Error)
+	}
+	softDeleted := models.WebhookDelivery{WebhookID: live.ID, Status: models.OutboxDead}
+	require.NoError(t, db.Create(&softDeleted).Error)
+	require.NoError(t, db.Delete(&softDeleted).Error)
+
+	var sb strings.Builder
+	reg.Write(&sb)
+	out := sb.String()
+	assert.Contains(t, out, `meerkat_outbox_dead{kind="webhook"} 1`)
+	assert.Contains(t, out, `meerkat_outbox_pending{kind="webhook"} 1`)
 }

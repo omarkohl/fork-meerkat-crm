@@ -651,6 +651,7 @@
       "loadingDeliveries": "Loading deliveries...",
       "noDeliveries": "No deliveries yet.",
       "deliveryRetrying": "Retrying",
+      "deliverySending": "Sending",
       "deliveryGaveUp": "Gave up",
       "deliveryNextRetry": "Next try: {{time}}",
       "edit": "Edit",
