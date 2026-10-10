@@ -2,7 +2,7 @@
 
 ## Next step
 
-16.
+17.
 
 ## Stack
 
@@ -21,6 +21,7 @@
 - 13: second-sprint/13-security-headers
 - 14: second-sprint/14-sessions-audit (PR set by the orchestrator)
 - 15: second-sprint/15-totp (PR set by the orchestrator)
+- 16: second-sprint/16-fts-search (PR set by the orchestrator)
 
 ## Log
 
@@ -146,7 +147,11 @@
 
 - 15: TOTP two-factor (RFC 6238, SHA-1, 6 digits, 30 s, one step of drift, hand-written with the standard library; no Go dependency). Migration 28: `users.totp_secret` (AES-GCM with the credential key, like CardDAV passwords), `totp_enabled`, `totp_last_step` (a code works once), table `recovery_codes` (sha256 hash, `used_at`). Enrolment is two steps: `POST /users/me/2fa/setup` (pending secret, returns key and otpauth URI) and `/enable` (needs a valid code, returns ten recovery codes once); `/disable` and `/recovery-codes` need password plus code or recovery code; `GET /users/me/2fa` status; `POST /admin/users/:id/2fa/reset` (signs the user out everywhere, audited); `two_factor_enabled` in the admin user list. Login: password alone on a 2FA account answers `200 {"totp_required": true}` with no cookie; the second request carries `totp_code` or `recovery_code`; a wrong code is `401 INVALID_TOTP_CODE`. Rate limiting reuses the account lockout: wrong codes count on the typed identifier and on a per-account key (`2fa:<id>`), so alternating username and email does not give more guesses, and asking for the code does not call `RecordSuccessfulLogin` (otherwise the password alone would reset a code-guessing lockout). OIDC logins never go through `LoginUser`, so they are exempt (test added); API tokens refuse the 2FA endpoints and are not affected. Audit events: totp_enabled, totp_disabled, totp_recovery_used, totp_recovery_regenerated, admin_totp_reset. UI: card on the settings page (QR code via the `qrcode` npm package rendered as an SVG data URI, which the CSP allows; key for typing; recovery codes dialog with copy), login second step with "use a recovery code", admin Users page badge and reset button, five locales. Tests: services (RFC vectors, window, replay, hashing, encryption), migration up/down, controllers (flow, lockout, replay, isolation, admin reset, disable, regenerate, OIDC exempt), Vitest (settings, login, auth, users) and e2e `two-factor.spec.ts` (TOTP computed with node crypto). `make precommit`, golangci-lint, `go test -race` and `make test-e2e` (47) pass. Prettier forced a reformat of `LoginPage.tsx` and `types/index.ts`.
 
+- 16: FTS5 search. The pure-Go driver (modernc via glebarez) has FTS5 compiled in (checked with a probe before designing: `unicode61 remove_diacritics 2` and prefix queries work). Migration 29: `contacts_fts` (firstname, lastname, nickname, email, phone, and the values of the `emails`/`phones` JSON), `notes_fts` (content), `activities_fts` (title, description, location); plain FTS5 tables with rowid = row id, `AFTER INSERT/UPDATE OF .../DELETE` triggers, built from existing rows by the migration; rows are indexed whatever `deleted_at`, queries filter on the real table and `user_id`. New package `search` (`MatchQuery` quotes every word as a prefix term, so input is never FTS syntax; punctuation-only input falls back to LIKE). Contacts list: FTS join, best match first (bm25) unless `sort` is given; total/pagination unchanged. Unassigned notes and activities (title/description/location, or a linked contact's name via a column filter) use their index. When the FTS tables are missing the old LIKE code runs (tests using AutoMigrate still cover it). 20k contacts: word search 1.3 ms, prefix 3.6 ms, the LIKE search it replaces 72 ms. Tests: migration (build, triggers, down), `search`, controllers (accents, prefix, order-free words, syntax injection, scoping, trash/archive, ranking vs sort, pagination, notes, activities, 20k timing), e2e accent search. `make precommit`, golangci-lint, race and `make test-e2e` pass.
+
 ## Decisions
+
+- Step 16: search is now word-prefix, not substring: `ller` no longer finds `Müller` (it did with LIKE), `555` still finds `+41 79 555 0101` (digits are separate words), `5550101` does not. This is what the plan asks for ("prefix match") and is documented. Only the existing search endpoints changed (contacts list, unassigned notes, activities); there is no new global search endpoint. The activities page still matches contact names only, not their e-mail or phone. Notes and activities keep their date order (a chronological list), contacts rank by relevance when no sort is given. The migration is plain SQL and assumes FTS5 (always true for this driver); the LIKE fallback exists for databases without the tables, not as a runtime switch for a missing extension.
 
 - Step 15: enabling and disabling two-factor sign out the other sessions (not the current one; tokens from before sessions existed cannot be revoked one by one). Enabling, disabling and new recovery codes all re-ask for the password (enabling plus a code); wrong passwords there count on the same lockout as wrong codes. Accounts without a password (OIDC-only) cannot enrol. The admin reset also ends the user's sessions, because the admin cannot verify who asked. Recovery codes are 10 x 50 bits, stored as HMAC-SHA-256 keyed with a key derived from `JWT_SECRET_KEY` separately from the TOTP encryption key (not bcrypt: high entropy, the lockout bounds guessing, and a leaked table cannot be tested offline). Changing `JWT_SECRET_KEY` makes stored TOTP secrets undecryptable (same as CardDAV credentials); documented; recovery codes become unverifiable too and the admin reset recovers. SHA-1 is the algorithm because not every authenticator app supports the others.
 
@@ -173,6 +178,9 @@
   `contact.restored` payload is the contact, like `contact.created`.
 
 ## For review
+
+- Step 16: behaviour change for users: substring search became word-prefix search (see Decisions). If you want substring back for short fragments, a trigram index (`tokenize='trigram'`) is the alternative at roughly 3x the index size.
+- Step 16: any later migration that rebuilds `contacts`, `notes` or `activities` must recreate the FTS triggers (documented in `docs/development/backend.md`).
 
 - Step 15: the login now answers `200 {"totp_required": true}` (not an error) for 2FA accounts, so the frontend 401 handler is not triggered; a client that ignores the body would think it logged in but has no cookie. The password check happens before the code, so a wrong password and a right password with a missing code are distinguishable (inherent to a two-step form).
 - Step 15: `LoginPage.tsx` and `types/index.ts` were reformatted by Prettier (the format check forced it); the `qrcode` package (1.5.4, MIT) is a new frontend dependency.

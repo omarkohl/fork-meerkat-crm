@@ -90,7 +90,7 @@ context is above 200k at the end of a step, then start a new one. Reviewer is al
 - [x] 15. **TOTP two-factor**: enrol with QR and recovery codes, enforce at login, admin can reset,
       rate-limited, secrets encrypted with the existing credential crypto, OIDC users exempt.
       Passkeys are a later step.
-- [ ] 16. **Search with SQLite FTS5**: contacts, notes, activities; triggers keep the index in
+- [x] 16. **Search with SQLite FTS5**: contacts, notes, activities; triggers keep the index in
       sync; diacritics folding and prefix match; ranked results; migration builds the index; falls
       back to LIKE if FTS5 is unavailable; tests and performance check on 20k contacts.
 - [ ] 17. **Thumbnails out of the database**: move `PhotoThumbnail` to files with ETag and cache

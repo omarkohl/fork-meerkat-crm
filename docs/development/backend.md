@@ -46,6 +46,13 @@ This creates two files in `database/migrations/`: `NNNNNN_add_foo_column.up.sql`
 
 The database is opened in WAL mode with `busy_timeout`, `synchronous=NORMAL` and foreign keys on (see `sqliteDSN` in `database/migrate.go`). Migrations run on a separate connection without foreign key enforcement because they may recreate tables. Never copy `meerkat.db` while the app runs; use the built-in [backups](../deployment.html#backups) (`VACUUM INTO`).
 
+### Search index (FTS5)
+
+Search uses SQLite FTS5 tables `contacts_fts`, `notes_fts` and `activities_fts` (migration 29). Each has the id of the indexed row as its rowid and is kept in sync by `AFTER INSERT/UPDATE/DELETE` triggers on the real table; the tokenizer is `unicode61 remove_diacritics 2`. The index is not scoped by user: queries always join back to the real table and filter `user_id` and `deleted_at` there. `search.MatchQuery` quotes every typed word as a prefix term, so user input can never be FTS5 syntax.
+
+- **Changing an indexed column** (the list in the trigger's `UPDATE OF`) or **recreating `contacts`, `notes` or `activities`** (SQLite drops triggers with the table) means the migration must recreate the triggers and rebuild the index: `DELETE FROM contacts_fts;` followed by the `INSERT ... SELECT` from migration 29.
+- When the tables do not exist (for example the in-memory test databases built with `AutoMigrate`) the controllers fall back to the old `LIKE` search, so both paths stay covered by tests; `controllers/search_fts_test.go` builds the index from the migration file.
+
 ### Running Migrations
 
 Migrations run automatically on startup. To apply or roll back manually:

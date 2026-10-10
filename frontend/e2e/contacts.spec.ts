@@ -25,6 +25,22 @@ test.describe('Contacts', () => {
     await expect(page.getByText('Bob Smith')).toBeVisible();
   });
 
+  test('search ignores accents and case and matches the start of every word', async ({ page, request }) => {
+    const created = await createTestContact(request, { firstname: 'Zoë', lastname: 'Müllerová' });
+    try {
+      await page.goto('/contacts');
+      await waitForLoading(page);
+      await searchContact(page, 'ZOE mulle');
+      await expect(page.getByText('Zoë Müllerová')).toBeVisible();
+      await searchContact(page, 'müllerová zoë');
+      await expect(page.getByText('Zoë Müllerová')).toBeVisible();
+      await searchContact(page, 'zoe smith');
+      await expect(page.getByText('Zoë Müllerová')).toBeHidden();
+    } finally {
+      await deleteTestContact(request, created.ID);
+    }
+  });
+
   test('should navigate to contact detail', async ({ page }) => {
     await page.goto('/contacts');
     await waitForLoading(page);

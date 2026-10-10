@@ -6,6 +6,7 @@ import (
 	"meerkat/logger"
 	"meerkat/middleware"
 	"meerkat/models"
+	searchlib "meerkat/search"
 	"meerkat/services"
 	"net/http"
 	"strings"
@@ -161,8 +162,11 @@ func GetUnassignedNotes(c *gin.Context) {
 	}
 
 	if search != "" {
-		like := "%" + search + "%"
-		baseQuery = baseQuery.Where("LOWER(content) LIKE ?", like)
+		if match, ok := searchlib.MatchQuery(search); ok && searchlib.Available(db, "notes_fts") {
+			baseQuery = baseQuery.Where("notes.id IN (SELECT rowid FROM notes_fts WHERE notes_fts MATCH ?)", match)
+		} else {
+			baseQuery = baseQuery.Where("LOWER(content) LIKE ?", "%"+search+"%")
+		}
 	}
 
 	countQuery := baseQuery.Session(&gorm.Session{})
