@@ -35,7 +35,7 @@ Read first: `.claude/AUTONOMOUS-RUNS.md`, `README-developer.md`, `IMPROVEMENTS.m
 - [x] 1. **SQLite pragmas (5.2)**: WAL, `busy_timeout`, `foreign_keys=ON`,
       `synchronous=NORMAL`. Test that they are active; make sure enabling foreign
       keys breaks no existing test or migration.
-- [ ] 2. **Go lint in CI (1.1)**: `.golangci.yml` (errcheck, staticcheck, gosec,
+- [x] 2. **Go lint in CI (1.1)**: `.golangci.yml` (errcheck, staticcheck, gosec,
       revive, bodyclose, sqlclosecheck), CI job, fix or justify findings.
 - [ ] 3. **Frontend lint/format/type gates in CI (1.3-1.5)**: ESLint, `tsc --noEmit`
       and Prettier check (changed files) as CI jobs; add `gofmt` check.

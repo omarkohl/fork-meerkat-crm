@@ -122,7 +122,7 @@ func CreateRelationship(c *gin.Context) {
 		Gender:           input.Gender,
 		Birthday:         input.Birthday,
 		RelatedContactID: input.RelatedContactID,
-		ContactID:        uint(contactID),
+		ContactID:        uint(contactID), //nolint:gosec // contactID comes from Atoi on a URL param; lookups are user_id-scoped
 		UserID:           userID,
 	}
 

@@ -107,7 +107,7 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 				case float64:
 					c.Set("userID", uint(v))
 				case int:
-					c.Set("userID", uint(v))
+					c.Set("userID", uint(v)) //nolint:gosec // JWT float64 claim from a signed token
 				case uint:
 					c.Set("userID", v)
 				default:
