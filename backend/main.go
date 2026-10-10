@@ -9,9 +9,11 @@ import (
 	apperrors "meerkat/errors"
 	"meerkat/i18n"
 	"meerkat/logger"
+	"meerkat/metrics"
 	"meerkat/middleware"
 	"meerkat/routes"
 	"meerkat/services"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -78,6 +80,18 @@ func main() {
 			"on an instance with several users. Set BLOCK_PRIVATE_URLS=true to block them (see docs/deployment.md)")
 	}
 
+	var metricsSrv *http.Server
+	if cfg.MetricsEnabled {
+		services.RegisterJobMetrics(metrics.Default, db)
+		switch {
+		case cfg.MetricsAddr != "":
+			metricsSrv = metrics.NewServer(cfg.MetricsAddr, metrics.Default, cfg.MetricsToken)
+		case cfg.MetricsToken == "":
+			logger.Warn().Msg("METRICS_ENABLED without METRICS_TOKEN or METRICS_ADDR: /metrics is open on the main port. " +
+				"Set a token, a separate listener, or block /metrics at your reverse proxy (see docs/deployment.md)")
+		}
+	}
+
 	logger.Info().Msg("Initializing i18n translations...")
 	if err := i18n.Init(); err != nil {
 		logger.Fatal().Err(err).Msg("Failed to initialize i18n")
@@ -102,6 +116,7 @@ func main() {
 	}
 	trashPurgeTask := func() {
 		n, err := services.PurgeExpiredTrash(db, cfg.TrashRetentionDays, cfg.ProfilePhotoDir, time.Now())
+		metrics.JobDone(services.JobTrashPurge, err)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error purging expired trash")
 		} else if n > 0 {
@@ -121,6 +136,7 @@ func main() {
 	}
 	backupTask := func() {
 		b, err := services.RunScheduledBackup(db, cfg.BackupDir, cfg.ProfilePhotoDir, cfg.BackupRetentionCount, time.Now())
+		metrics.JobDone(services.JobBackup, err)
 		if err != nil {
 			logger.Error().Err(err).Msg("Scheduled backup failed")
 			return
@@ -157,6 +173,10 @@ func main() {
 	// gin.Default() equivalent, except that gin's access log skips requests whose path
 	// holds a secret (the ICS feed token); LoggingMiddleware logs those redacted.
 	r := gin.New()
+	if cfg.MetricsEnabled {
+		// First, so panics (answered 500 by Recovery) and rejected requests are counted too
+		r.Use(metrics.DefaultHTTP().Middleware())
+	}
 	r.Use(gin.LoggerWithConfig(gin.LoggerConfig{Skip: middleware.IsSecretPath}), gin.Recovery())
 
 	// Limit multipart form memory to 10MB to prevent DoS via large request bodies
@@ -253,6 +273,21 @@ func main() {
 		}
 	}()
 
+	if metricsSrv != nil {
+		// Bind before serving: a typo or a busy port must stop the start, not leave the
+		// operator with metrics that silently never appear.
+		ln, err := net.Listen("tcp", metricsSrv.Addr)
+		if err != nil {
+			logger.Fatal().Err(err).Str("addr", metricsSrv.Addr).Msg("Failed to listen for metrics (METRICS_ADDR)")
+		}
+		go func() {
+			logger.Info().Str("addr", ln.Addr().String()).Msg("Serving metrics on a separate listener")
+			if err := metricsSrv.Serve(ln); err != nil && err != http.ErrServerClosed {
+				logger.Error().Err(err).Msg("Metrics listener failed")
+			}
+		}()
+	}
+
 	logger.Info().Msg("Server is ready to handle requests")
 
 	// Block until we receive a shutdown signal
@@ -270,6 +305,14 @@ func main() {
 	// Attempt graceful shutdown of HTTP server
 	if err := srv.Shutdown(ctx); err != nil {
 		logger.Error().Err(err).Msg("Server forced to shutdown")
+	}
+
+	if metricsSrv != nil {
+		metricsCtx, metricsCancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer metricsCancel()
+		if err := metricsSrv.Shutdown(metricsCtx); err != nil {
+			logger.Error().Err(err).Msg("Metrics listener forced to shutdown")
+		}
 	}
 
 	// The startup tasks may still use the database: wait for them, bounded.

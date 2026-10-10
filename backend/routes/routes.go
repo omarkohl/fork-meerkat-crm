@@ -4,6 +4,7 @@ import (
 	"meerkat/carddav"
 	"meerkat/config"
 	"meerkat/controllers"
+	"meerkat/metrics"
 	"meerkat/middleware"
 	"meerkat/models"
 	"meerkat/services"
@@ -16,6 +17,12 @@ func RegisterRoutes(router *gin.Engine, cfg *config.Config, db *gorm.DB, oidcPro
 
 	// Health check endpoint (no versioning, standard practice)
 	router.GET("/health", controllers.HealthCheck)
+
+	// Prometheus metrics: off by default. With METRICS_ADDR set they are served on that
+	// separate listener (see main.go) and not here.
+	if cfg.MetricsEnabled && cfg.MetricsAddr == "" {
+		router.GET("/metrics", gin.WrapH(metrics.Handler(metrics.Default, cfg.MetricsToken)))
+	}
 
 	// API v1 routes
 	v1 := router.Group("/api/v1")
