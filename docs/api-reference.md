@@ -190,6 +190,26 @@ Every request and response carries an `X-Request-ID` header created by the middl
 
 Response includes `token` (the `meerkat_…` plaintext value) only on creation. Subsequent list responses omit it.
 
+### Calendar Feed (ICS)
+
+Exports birthdays and reminders as a subscribable iCalendar feed. Each user has at most one feed, protected by a random token that is part of the URL. Only a hash of the token is stored, so the URL is shown once when it is created or regenerated.
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| `GET` | `/ics-feed` | session or API token | Feed status: `{"enabled": bool, "created_at": ...}`. Never contains the token |
+| `POST` | `/ics-feed` | session or API token | Create the feed, or regenerate it (the old URL stops working). Returns `201` with `token` once |
+| `DELETE` | `/ics-feed` | session or API token | Revoke the feed (idempotent) |
+| `GET` | `/ics/<token>.ics` | token in the URL only | The calendar (`text/calendar; charset=utf-8`) |
+
+The feed URL is `<base>/api/v1/ics/<token>.ics`, where `<token>` is the 43 character `token` from `POST /ics-feed`. `GET /ics/<token>.ics` takes no cookie or `Authorization` header, so calendar apps can subscribe to it; it only ever returns the data of the token's owner. An unknown, malformed, regenerated or revoked token answers `404`. The response carries `ETag` and `Cache-Control: private, max-age=900` (conditional requests answer `304`), is rate limited per IP like the other endpoints and is marked `noindex`.
+
+Content:
+
+- **Birthdays** of non-archived contacts as yearly all-day events (`RRULE:FREQ=YEARLY`). A birthday without a year (`--MM-DD`) starts in 1972; 29 February uses `BYMONTH=2;BYMONTHDAY=-1`.
+- **Open reminders** as all-day events on their next date. `weekly`, `monthly`, `quarterly`, `six-months` and `yearly` recurrences become an `RRULE`; `once` reminders have none. Monthly-based rules for dates on the 29th to 31st use `BYMONTHDAY=28,..;BYSETPOS=-1` so short months get their last day instead of being skipped. Dates are UTC dates of `remind_at`. Completed reminders are left out.
+- Event UIDs are stable (`contact-birthday-<id>@meerkat-crm`, `reminder-<id>@meerkat-crm`), and `DTSTAMP` is the last update time of the record.
+- Event titles are in the language of the feed owner.
+
 ### Admin
 
 | Method | Path | Description |

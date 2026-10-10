@@ -814,6 +814,38 @@
       "confirm": "Révoquer"
     }
   },
+  "icsFeed": {
+    "title": "Flux de calendrier (ICS)",
+    "description": "Abonnez-vous à vos anniversaires et rappels depuis n'importe quelle application de calendrier. Toute personne disposant de l'URL du flux peut le lire, gardez-la donc privée.",
+    "inactive": "Aucun flux de calendrier pour le moment.",
+    "active": "Flux actif depuis le {{date}}.",
+    "generateButton": "Générer l'URL du flux",
+    "regenerateButton": "Régénérer l'URL",
+    "revokeButton": "Révoquer le flux",
+    "loadError": "Impossible de charger le flux de calendrier",
+    "createError": "Impossible de créer le flux de calendrier",
+    "revokeError": "Impossible de révoquer le flux de calendrier",
+    "revokeSuccess": "Flux de calendrier révoqué",
+    "copyError": "Impossible de copier dans le presse-papiers",
+    "createdDialog": {
+      "title": "URL du flux de calendrier",
+      "warning": "Cette URL ne sera plus affichée. Copiez-la maintenant et ajoutez-la à votre application de calendrier comme abonnement.",
+      "urlLabel": "URL du flux",
+      "copy": "Copier",
+      "copied": "Copié !",
+      "done": "Terminé, je l'ai enregistrée"
+    },
+    "regenerateDialog": {
+      "title": "Régénérer l'URL du flux",
+      "message": "L'URL actuelle cessera de fonctionner immédiatement. Les calendriers abonnés doivent être mis à jour avec la nouvelle URL.",
+      "confirm": "Régénérer"
+    },
+    "revokeDialog": {
+      "title": "Révoquer le flux de calendrier",
+      "message": "L'URL du flux cessera de fonctionner immédiatement. Vous pourrez en générer une nouvelle plus tard.",
+      "confirm": "Révoquer"
+    }
+  },
   "users": {
     "title": "Gestion des utilisateurs",
     "loadError": "Échec du chargement des utilisateurs",

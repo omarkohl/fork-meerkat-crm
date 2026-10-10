@@ -2,17 +2,36 @@ package middleware
 
 import (
 	"meerkat/logger"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
+
+// icsRoutePattern is the route pattern of the public calendar feed, whose path
+// carries the secret token.
+const icsRoutePattern = "/ics/:file"
+
+// IsSecretPath reports whether the request path contains a credential (the ICS feed
+// token) and so must never be logged.
+func IsSecretPath(c *gin.Context) bool {
+	return strings.HasSuffix(c.FullPath(), icsRoutePattern)
+}
+
+// LoggedPath returns the path to write to logs: the route pattern for secret paths.
+func LoggedPath(c *gin.Context) string {
+	if IsSecretPath(c) {
+		return c.FullPath()
+	}
+	return c.Request.URL.Path
+}
 
 // LoggingMiddleware logs HTTP requests with structured logging
 func LoggingMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Start timer
 		start := time.Now()
-		path := c.Request.URL.Path
+		path := LoggedPath(c)
 		query := c.Request.URL.RawQuery
 
 		// Process request
