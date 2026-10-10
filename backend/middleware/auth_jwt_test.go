@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"meerkat/models"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
 )
@@ -105,4 +107,54 @@ func TestAuthMiddleware_JWT_NonHMACMethodRejected(t *testing.T) {
 	code, body := jwtRequest(t, rsHeader+"."+parts[1]+"."+parts[2])
 	assert.Equal(t, http.StatusUnauthorized, code)
 	assert.Equal(t, "Invalid token", body["error"])
+}
+
+func TestAuthMiddleware_JWT_DeletedUserRejected(t *testing.T) {
+	db, router := setupAuthTestRouter()
+	token := signJWT(t, jwt.SigningMethodHS256, jwtTestSecret, validClaims())
+
+	do := func() (int, map[string]any) {
+		req, _ := http.NewRequest("GET", "/protected", nil)
+		req.Header.Set("Authorization", "Bearer "+token)
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+		var body map[string]any
+		_ = json.Unmarshal(w.Body.Bytes(), &body)
+		return w.Code, body
+	}
+
+	code, _ := do()
+	assert.Equal(t, http.StatusOK, code)
+
+	assert.NoError(t, db.Delete(&models.User{}, 1).Error)
+
+	code, body := do()
+	assert.Equal(t, http.StatusUnauthorized, code)
+	assert.Equal(t, "Invalid token", body["error"])
+}
+
+func TestAuthMiddleware_JWT_MissingUserIDRejected(t *testing.T) {
+	claims := validClaims()
+	delete(claims, "user_id")
+	code, body := jwtRequest(t, signJWT(t, jwt.SigningMethodHS256, jwtTestSecret, claims))
+	assert.Equal(t, http.StatusUnauthorized, code)
+	assert.Equal(t, "Invalid token", body["error"])
+}
+
+func TestAuthMiddleware_JWT_UnknownUserRejected(t *testing.T) {
+	claims := validClaims()
+	claims["user_id"] = 999
+	code, _ := jwtRequest(t, signJWT(t, jwt.SigningMethodHS256, jwtTestSecret, claims))
+	assert.Equal(t, http.StatusUnauthorized, code)
+}
+
+func TestAuthMiddleware_JWT_BadUserIDRejected(t *testing.T) {
+	for name, id := range map[string]any{"zero": 0, "negative": -3, "fraction": 1.5, "string": "1", "huge": 1e20} {
+		t.Run(name, func(t *testing.T) {
+			claims := validClaims()
+			claims["user_id"] = id
+			code, _ := jwtRequest(t, signJWT(t, jwt.SigningMethodHS256, jwtTestSecret, claims))
+			assert.Equal(t, http.StatusUnauthorized, code)
+		})
+	}
 }

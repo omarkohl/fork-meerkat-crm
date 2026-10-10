@@ -10,13 +10,13 @@ import (
 	"meerkat/config"
 	apperrors "meerkat/errors"
 	"meerkat/httputil"
+	"meerkat/idutil"
 	"meerkat/logger"
 	"meerkat/models"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/gen2brain/heic"
@@ -28,7 +28,7 @@ import (
 
 func GetProfilePicture(c *gin.Context, cfg *config.Config) {
 	idParam := c.Param("id")
-	contactID, err := strconv.ParseUint(idParam, 10, 64)
+	contactID, err := idutil.Parse(idParam)
 	if err != nil {
 		apperrors.AbortWithError(c, apperrors.ErrValidation("Invalid contact ID"))
 		return
@@ -116,7 +116,7 @@ func AddPhotoToContact(c *gin.Context, cfg *config.Config) {
 	}
 
 	idParam := c.Param("id")
-	contactID, err := strconv.ParseUint(idParam, 10, 64)
+	contactID, err := idutil.Parse(idParam)
 	if err != nil {
 		apperrors.AbortWithError(c, apperrors.ErrValidation("Invalid contact ID"))
 		return

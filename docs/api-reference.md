@@ -228,7 +228,7 @@ Content:
 | `GET` | `/admin/users` | List all users |
 | `GET` | `/admin/users/:id` | Get a user |
 | `PATCH` | `/admin/users/:id` | Update a user (e.g. set admin flag) |
-| `DELETE` | `/admin/users/:id` | Delete a user |
+| `DELETE` | `/admin/users/:id` | Delete a user. Their data, API tokens, calendar feed, CardDAV connection, calendar subscriptions and webhooks are removed and their sessions end immediately (`401`) |
 | `GET` | `/admin/backups` | List the server backups, newest first, with the schedule: `{"backups": [{"name", "size", "created_at"}], "enabled", "time", "retention_count", "directory"}` |
 | `POST` | `/admin/backups` | Create a backup now (`201`, `{"name", "size", "created_at"}`) and prune to `BACKUP_RETENTION_COUNT` |
 | `GET` | `/admin/backups/:name` | Download a backup (`.tar.gz`, `Cache-Control: no-store`) |
