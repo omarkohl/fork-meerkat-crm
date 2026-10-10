@@ -29,10 +29,10 @@ Read first: `.claude/AUTONOMOUS-RUNS.md`, `README-developer.md`, `IMPROVEMENTS.m
 
 ## Steps
 
-- [ ] 0. **Environment check** (no own commit; record in PROGRESS.md with step 1):
+- [x] 0. **Environment check** (no own commit; record in PROGRESS.md with step 1):
       `make precommit` green, whether `make test-e2e` runs. A failure that blocks
       every step goes under `## Blocked`.
-- [ ] 1. **SQLite pragmas (5.2)**: WAL, `busy_timeout`, `foreign_keys=ON`,
+- [x] 1. **SQLite pragmas (5.2)**: WAL, `busy_timeout`, `foreign_keys=ON`,
       `synchronous=NORMAL`. Test that they are active; make sure enabling foreign
       keys breaks no existing test or migration.
 - [ ] 2. **Go lint in CI (1.1)**: `.golangci.yml` (errcheck, staticcheck, gosec,

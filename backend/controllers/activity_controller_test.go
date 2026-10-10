@@ -20,7 +20,7 @@ import (
 func setupRouter() (*gorm.DB, *gin.Engine) {
 	gin.SetMode(gin.ReleaseMode)
 
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(":memory:?_pragma=foreign_keys(1)"), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}
