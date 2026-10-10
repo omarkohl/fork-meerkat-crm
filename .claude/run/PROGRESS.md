@@ -2,7 +2,7 @@
 
 ## Next step
 
-7.
+8.
 
 ## Stack
 
@@ -11,6 +11,7 @@
 - 3: second-sprint/03-trash-followups (PR #18)
 - 4: second-sprint/04-file-robustness (PR #19)
 - 5: second-sprint/05-ics-last-fetched (PR #20)
+- 6: second-sprint/06-api-reference (PR #21)
 
 ## Log
 
@@ -58,6 +59,14 @@
   the real routes (`RegisterRoutes` with OIDC and CardDAV switched on), reads the doc tables and fails in both
   directions (undocumented route, documented route that does not exist); parameter names are ignored and
   `<token>.ics` stands for `:file`. The `/api-tokens` path in the doc was already correct (nothing to fix).
+- 7: all 16 distinct actions in the six workflows are pinned by full SHA with a `# vX.Y.Z` comment (resolved with
+  `git ls-remote`, annotated tags dereferenced; latest release of the major each used). `docker/build-push-action`
+  is v6.19.2 everywhere (publish was v5). Publish now attaches SBOM and `provenance: mode=max`. New
+  `docker-build.yml`: builds the three images without pushing and scans each with Trivy (HIGH/CRITICAL, fixable only,
+  `.trivyignore` for exceptions) on PRs touching Docker/backend/frontend, on main and weekly. `docs.yml` builds the
+  site on PRs touching `docs/**` (no deploy; permissions moved to the jobs). Base images: `golang:1.26-alpine`,
+  `node:22-alpine` (frontend was `node:lts-alpine`), `alpine:3.22` (was `latest` and `3.20`, EOL),
+  `nginx-unprivileged:1.29-alpine`. actionlint is clean. Contributing docs updated.
 
 ## Decisions
 
@@ -77,6 +86,8 @@
 
 ## For review
 
+- Step 7: base image tags (`golang:1.26-alpine`, `alpine:3.22`, `nginx-unprivileged:1.29-alpine`) and the Trivy/docs/Docker workflows could not be tested here (no registry access, docker daemon unusable). The first PR run of `Docker build and scan` is the check: if a tag does not exist or Trivy finds fixable HIGH/CRITICAL issues in a base image, adjust the tag. Tags are minor-level, not digest-pinned (Dependabot keeps them current).
+- Step 7: the Trivy job is a required-looking check on every Docker-related PR and weekly; a new advisory in Alpine/nginx can turn it red without any code change.
 - Step 6: the test allowlist has two entries, both for the CardDAV server (`/carddav/*path`, `/.well-known/carddav`): WebDAV for CardDAV clients, documented in `docs/carddav.md`, not REST. Response shapes in the new doc sections are summarised from the handlers, not exhaustive.
 - Step 2: every authenticated request now does a user lookup; confirm that cost is acceptable.
 - Step 3: `WebhooksSettings.tsx` was not Prettier-clean, so the format check forced a full reformat of the file (the real change is one line, `contact.restored`).

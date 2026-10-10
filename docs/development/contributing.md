@@ -31,6 +31,12 @@ Pull requests run these GitHub Actions workflows, and all must pass:
 - **Lint** (`lint.yml`): golangci-lint, ESLint, `tsc`, and a gofmt/Prettier check of the files the change touches.
 - **Unit tests** and **E2E tests** (`unit-tests.yml`, `e2e-tests.yml`).
 - **Security** (`security.yml`): `govulncheck` and `yarn audit` for production dependencies; also runs weekly.
+- **Docker build and scan** (`docker-build.yml`): builds the three images (all-in-one, backend, frontend) without pushing them when a PR touches a Dockerfile, `backend/`, `frontend/` or `docker/`, and scans each with Trivy. It fails on fixable HIGH and CRITICAL vulnerabilities; unfixed ones are ignored. If a finding cannot be fixed by updating the base image or the dependency, add it to `.trivyignore` with a reason and an expiry date. Also runs on `main` and weekly.
+- **Docs** (`docs.yml`): builds the Jekyll site on PRs that touch `docs/**` (deploys only from `main`). To build locally: `cd docs && bundle install && bundle exec jekyll build`.
+
+Release images (`docker-publish.yml`) are pushed for `linux/amd64` and `linux/arm64` with an SBOM and SLSA provenance attestation attached (`docker buildx imagetools inspect <image> --format '{{ json .SBOM }}'`).
+
+**Pinning.** Every GitHub Action is pinned to a full commit SHA with the version in a trailing comment (`uses: actions/checkout@<sha> # v4.4.0`), and Docker base images to a version tag (`golang:1.26-alpine`, `node:22-alpine`, `alpine:3.22`, `nginx-unprivileged:1.29-alpine`). Do not use `@v4`-style or `latest` references. Dependabot updates the SHAs and tags (and the comment) in its weekly PRs. To pin a new action, look up the commit of its release tag, for a tag that is annotated the commit it points to: `git ls-remote https://github.com/<owner>/<repo> 'refs/tags/<tag>*'` and use the `^{}` line if there is one. Check workflows with [actionlint](https://github.com/rhysd/actionlint).
 
 Dependabot (`.github/dependabot.yml`) opens weekly update PRs for Go modules, npm, GitHub Actions, Docker and the docs' Ruby gems, with minor and patch updates grouped.
 

@@ -65,7 +65,7 @@ context is above 200k at the end of a step, then start a new one. Reviewer is al
 - [x] 6. **Complete API reference**: document every route group missing (webhooks, calendars,
       CardDAV connections, Monica import, OIDC, enabled-contact-fields, trash, backups, ICS, fix
       `/api-tokens` path); Go test that every registered route appears in the doc.
-- [ ] 7. **Supply chain**: pin actions by SHA, align `docker/build-push-action`, pin Docker base
+- [x] 7. **Supply chain**: pin actions by SHA, align `docker/build-push-action`, pin Docker base
       tags, Trivy scan of the built image, SBOM and provenance on publish, build (no push) the image
       on PRs, build the docs on PRs touching `docs/**` (Jekyll via the workflow container).
 - [ ] 8. **Test infrastructure**: `go test -race` in CI, coverage for Go and Vitest uploaded as
