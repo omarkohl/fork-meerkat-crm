@@ -24,6 +24,17 @@ nav_order: 5
 
 **Frontend:** TypeScript strict mode and MUI for all UI components. All user-facing strings through `i18next`. Custom hooks for data fetching, not inline `useEffect` + `fetch`.
 
+## Continuous integration
+
+Pull requests also run these GitHub Actions workflows:
+
+- **Docker build and scan** (`docker-build.yml`): builds the three images (all-in-one, backend, frontend) without pushing them when a PR touches a Dockerfile, `backend/`, `frontend/` or `docker/`, and scans each with Trivy. It fails on fixable HIGH and CRITICAL vulnerabilities; unfixed ones are ignored. If a finding cannot be fixed by updating the base image or the dependency, add it to `.trivyignore` with a reason and an expiry date. Also runs on `main` and weekly.
+- **Docs** (`docs.yml`): builds the Jekyll site on PRs that touch `docs/**` (deploys only from `main`). To build locally: `cd docs && bundle install && bundle exec jekyll build`.
+
+Release images (`docker-publish.yml`) are pushed for `linux/amd64` and `linux/arm64` with an SBOM and SLSA provenance attestation attached (`docker buildx imagetools inspect <image> --format '{{ json .SBOM }}'`).
+
+**Pinning.** Every GitHub Action is pinned to a full commit SHA with the version in a trailing comment (`uses: actions/checkout@<sha> # v4.4.0`), and Docker base images to a version tag (`golang:1.27-alpine`, `node:22-alpine`, `alpine:3.22`, `nginx-unprivileged:1.30-alpine`). Do not use `@v4`-style or `latest` references. Dependabot updates the SHAs and tags (and the comment) in its weekly PRs. To pin a new action, look up the commit of its release tag, for a tag that is annotated the commit it points to: `git ls-remote https://github.com/<owner>/<repo> 'refs/tags/<tag>*'` and use the `^{}` line if there is one. Check workflows with [actionlint](https://github.com/rhysd/actionlint).
+
 ## Pull Requests
 
 - Keep PRs focused with one feature or fix per PR.

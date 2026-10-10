@@ -8,7 +8,7 @@
 # =============================================================================
 # Stage 1: Build Go backend (cross-compiled, CGO disabled - pure-Go SQLite)
 # =============================================================================
-FROM --platform=$BUILDPLATFORM golang:alpine AS backend-builder
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine AS backend-builder
 
 ARG TARGETOS
 ARG TARGETARCH
@@ -52,7 +52,7 @@ RUN if [ -f yarn.lock ]; then yarn build; else npm run build; fi
 # =============================================================================
 # Stage 3: Runtime - nginx + Go backend under supervisord
 # =============================================================================
-FROM alpine:3.20
+FROM alpine:3.22
 
 # Runtime dependencies. shadow provides usermod/groupmod for PUID/PGID remap.
 # No sqlite package needed - the backend uses a pure-Go SQLite driver.
