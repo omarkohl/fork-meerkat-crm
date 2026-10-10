@@ -32,6 +32,12 @@ func SendEmail(cfg config.Config, msg EmailMessage) error {
 		return nil
 	}
 
+	// The recipient and subject end up in message headers: a line break would let the
+	// value add headers (Bcc:) or start the body.
+	if strings.ContainsAny(msg.To, "\r\n") || strings.ContainsAny(msg.Subject, "\r\n") {
+		return fmt.Errorf("refusing to send email: line break in recipient or subject")
+	}
+
 	if !cfg.EmailEnabled() {
 		logger.Warn().Str("to", msg.To).Msg("No email channel configured; email not sent")
 		return nil

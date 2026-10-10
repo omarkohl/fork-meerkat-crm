@@ -3,6 +3,8 @@ package carddav
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/binary"
+	"hash/crc32"
 	"image"
 	"image/color"
 	"image/jpeg"
@@ -129,5 +131,23 @@ func TestSaveContactPhotoUsesPrivateModes(t *testing.T) {
 	}
 	if di.Mode().Perm()&0o007 != 0 || fi.Mode().Perm()&0o137 != 0 {
 		t.Errorf("dir %v, file %v: others must have no access, file must not be executable or group-writable", di.Mode().Perm(), fi.Mode().Perm())
+	}
+}
+
+func TestSaveContactPhotoRefusesHugeDimensions(t *testing.T) {
+	var small bytes.Buffer
+	if err := png.Encode(&small, image.NewGray(image.Rect(0, 0, 1, 1))); err != nil {
+		t.Fatal(err)
+	}
+	data := small.Bytes()
+	binary.BigEndian.PutUint32(data[16:], 30000)
+	binary.BigEndian.PutUint32(data[20:], 30000)
+	binary.BigEndian.PutUint32(data[29:], crc32.ChecksumIEEE(data[12:29]))
+	dir := t.TempDir()
+	if _, _, err := SaveContactPhoto(data, "image/png", dir); err == nil {
+		t.Fatal("expected an error for a 900 megapixel image")
+	}
+	if entries, _ := os.ReadDir(dir); len(entries) != 0 {
+		t.Fatalf("nothing may be written, found %d files", len(entries))
 	}
 }

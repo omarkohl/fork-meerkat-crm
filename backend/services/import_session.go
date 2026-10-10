@@ -97,7 +97,7 @@ func (m *ImportSessionManager) get(sessionID string, userID uint) (*importSessio
 	}
 
 	if sessionData.session.UserID != userID {
-		return nil, apperrors.ErrUnauthorized("Session does not belong to current user")
+		return nil, apperrors.ErrNotFound("Import session expired or not found")
 	}
 
 	if time.Now().After(sessionData.session.ExpiresAt) {

@@ -114,6 +114,14 @@ func UpdateCalendarSubscription(c *gin.Context) {
 		return
 	}
 
+	// The stored password was entered for the old server and must not follow a URL
+	// change to another one (host, port or scheme): ask for it again instead of
+	// silently dropping it.
+	if subscription.PasswordEncrypted != "" && input.Password == "" && !input.ClearPassword && !sameServer(subscription.URL, input.URL) {
+		apperrors.AbortWithError(c, apperrors.ErrInvalidInput("password", "password required when the server address changes"))
+		return
+	}
+
 	subscription.Name = input.Name
 	subscription.URL = input.URL
 	subscription.Username = input.Username

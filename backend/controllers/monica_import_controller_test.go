@@ -352,7 +352,7 @@ func TestMonicaSessionOwnershipEnforced(t *testing.T) {
 	otherRouter.GET("/import/monica/status", GetMonicaImportStatus)
 
 	w = getPath(otherRouter, "/import/monica/status?session_id="+connectResp.SessionID)
-	assert.Equal(t, http.StatusUnauthorized, w.Code)
+	assert.Equal(t, http.StatusNotFound, w.Code)
 
 	// Unknown sessions 404.
 	w = getPath(router, "/import/monica/status?session_id=doesnotexist")

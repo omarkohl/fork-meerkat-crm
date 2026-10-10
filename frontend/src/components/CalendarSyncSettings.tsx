@@ -38,6 +38,7 @@ import {
   syncCalendarSubscription,
   CalendarSubscription,
 } from '../api/calendars';
+import { ApiError } from '../api/client';
 
 interface CalendarFormState {
   name: string;
@@ -64,6 +65,7 @@ export default function CalendarSyncSettings() {
   const [calendars, setCalendars] = useState<CalendarSubscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [dialogError, setDialogError] = useState('');
   const [success, setSuccess] = useState('');
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -96,6 +98,7 @@ export default function CalendarSyncSettings() {
   }, [loadCalendars]);
 
   const openCreate = () => {
+    setDialogError('');
     setEditingId(null);
     setEditingHasPassword(false);
     setEditingUsername('');
@@ -104,6 +107,7 @@ export default function CalendarSyncSettings() {
   };
 
   const openEdit = (cal: CalendarSubscription) => {
+    setDialogError('');
     setEditingId(cal.id);
     setEditingHasPassword(cal.has_password);
     setEditingUsername(cal.username);
@@ -127,6 +131,7 @@ export default function CalendarSyncSettings() {
   const handleSave = async () => {
     setSaving(true);
     setError('');
+    setDialogError('');
     setSuccess('');
     const input = {
       name: form.name.trim(),
@@ -149,17 +154,21 @@ export default function CalendarSyncSettings() {
     try {
       if (editingId !== null) {
         const updated = await updateCalendarSubscription(editingId, input);
-        setCalendars(prev => prev.map(c => (c.id === editingId ? updated : c)));
+        setCalendars((prev) => prev.map((c) => (c.id === editingId ? updated : c)));
         setDialogOpen(false);
       } else {
         const created = await createCalendarSubscription(input);
-        setCalendars(prev => [...prev, created]);
+        setCalendars((prev) => [...prev, created]);
         setDialogOpen(false);
         // Trigger the first sync right away so the user gets feedback.
         await handleSync(created);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('settings.calendarSync.saveError'));
+      if (err instanceof ApiError && err.details?.field === 'password') {
+        setDialogError(t('settings.calendarSync.passwordRequiredForNewServer'));
+      } else {
+        setDialogError(err instanceof Error ? err.message : t('settings.calendarSync.saveError'));
+      }
     } finally {
       setSaving(false);
     }
@@ -175,7 +184,7 @@ export default function CalendarSyncSettings() {
     setDeleting(true);
     try {
       await deleteCalendarSubscription(calendarToDelete.id);
-      setCalendars(prev => prev.filter(c => c.id !== calendarToDelete.id));
+      setCalendars((prev) => prev.filter((c) => c.id !== calendarToDelete.id));
       setDeleteDialogOpen(false);
       setCalendarToDelete(null);
     } catch (err) {
@@ -187,7 +196,7 @@ export default function CalendarSyncSettings() {
   };
 
   const handleSync = async (cal: CalendarSubscription) => {
-    setSyncing(prev => ({ ...prev, [cal.id]: true }));
+    setSyncing((prev) => ({ ...prev, [cal.id]: true }));
     setSuccess('');
     setError('');
     try {
@@ -197,12 +206,12 @@ export default function CalendarSyncSettings() {
           created: result.created,
           updated: result.updated,
           skipped: result.skipped,
-        })
+        }),
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : t('settings.calendarSync.syncError'));
     } finally {
-      setSyncing(prev => ({ ...prev, [cal.id]: false }));
+      setSyncing((prev) => ({ ...prev, [cal.id]: false }));
       await loadCalendars();
     }
   };
@@ -235,8 +244,16 @@ export default function CalendarSyncSettings() {
             <Typography variant="body2" color="text.secondary">
               {t('settings.calendarSync.description')}
             </Typography>
-            {error && <Alert severity="error" sx={{ py: 0 }} onClose={() => setError('')}>{error}</Alert>}
-            {success && <Alert severity="success" sx={{ py: 0 }} onClose={() => setSuccess('')}>{success}</Alert>}
+            {error && (
+              <Alert severity="error" sx={{ py: 0 }} onClose={() => setError('')}>
+                {error}
+              </Alert>
+            )}
+            {success && (
+              <Alert severity="success" sx={{ py: 0 }} onClose={() => setSuccess('')}>
+                {success}
+              </Alert>
+            )}
 
             {loading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
@@ -248,7 +265,7 @@ export default function CalendarSyncSettings() {
               </Typography>
             ) : (
               <List dense disablePadding>
-                {calendars.map(cal => (
+                {calendars.map((cal) => (
                   <ListItem
                     key={cal.id}
                     divider
@@ -256,16 +273,8 @@ export default function CalendarSyncSettings() {
                       <Stack direction="row" spacing={0.5}>
                         <Tooltip title={t('settings.calendarSync.syncNow')}>
                           <span>
-                            <IconButton
-                              size="small"
-                              onClick={() => handleSync(cal)}
-                              disabled={!!syncing[cal.id]}
-                            >
-                              {syncing[cal.id] ? (
-                                <CircularProgress size={18} />
-                              ) : (
-                                <SyncIcon fontSize="small" />
-                              )}
+                            <IconButton size="small" onClick={() => handleSync(cal)} disabled={!!syncing[cal.id]}>
+                              {syncing[cal.id] ? <CircularProgress size={18} /> : <SyncIcon fontSize="small" />}
                             </IconButton>
                           </span>
                         </Tooltip>
@@ -284,9 +293,7 @@ export default function CalendarSyncSettings() {
                           <Typography variant="body2" sx={{ fontWeight: 500 }}>
                             {cal.name}
                           </Typography>
-                          {!cal.sync_enabled && (
-                            <Chip size="small" label={t('settings.calendarSync.disabled')} />
-                          )}
+                          {!cal.sync_enabled && <Chip size="small" label={t('settings.calendarSync.disabled')} />}
                           {cal.last_sync_status === 'error' && (
                             <Tooltip title={cal.last_sync_error}>
                               <Chip size="small" color="error" label={t('settings.calendarSync.syncFailed')} />
@@ -310,19 +317,22 @@ export default function CalendarSyncSettings() {
 
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>
-          {editingId !== null
-            ? t('settings.calendarSync.editTitle')
-            : t('settings.calendarSync.addTitle')}
+          {editingId !== null ? t('settings.calendarSync.editTitle') : t('settings.calendarSync.addTitle')}
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <Alert severity="info" sx={{ py: 0.5 }}>
               {t('settings.calendarSync.dialogInfo')}
             </Alert>
+            {dialogError && (
+              <Alert severity="error" sx={{ py: 0 }}>
+                {dialogError}
+              </Alert>
+            )}
             <TextField
               label={t('settings.calendarSync.name')}
               value={form.name}
-              onChange={e => setForm(prev => ({ ...prev, name: e.target.value }))}
+              onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
               fullWidth
               required
               size="small"
@@ -330,7 +340,7 @@ export default function CalendarSyncSettings() {
             <TextField
               label={t('settings.calendarSync.url')}
               value={form.url}
-              onChange={e => setForm(prev => ({ ...prev, url: e.target.value }))}
+              onChange={(e) => setForm((prev) => ({ ...prev, url: e.target.value }))}
               fullWidth
               required
               size="small"
@@ -347,7 +357,7 @@ export default function CalendarSyncSettings() {
               <TextField
                 label={t('settings.calendarSync.username')}
                 value={form.username}
-                onChange={e => setForm(prev => ({ ...prev, username: e.target.value }))}
+                onChange={(e) => setForm((prev) => ({ ...prev, username: e.target.value }))}
                 fullWidth
                 size="small"
                 helperText={t('settings.calendarSync.credentialsOptional')}
@@ -356,14 +366,12 @@ export default function CalendarSyncSettings() {
                 label={t('settings.calendarSync.password')}
                 type="password"
                 value={form.password}
-                onChange={e => setForm(prev => ({ ...prev, password: e.target.value }))}
+                onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
                 fullWidth
                 size="small"
                 autoComplete="new-password"
                 helperText={
-                  editingId !== null && editingHasPassword
-                    ? t('settings.calendarSync.passwordKeep')
-                    : undefined
+                  editingId !== null && editingHasPassword ? t('settings.calendarSync.passwordKeep') : undefined
                 }
               />
             </Box>
@@ -372,7 +380,7 @@ export default function CalendarSyncSettings() {
                 label={t('settings.calendarSync.pastDays')}
                 type="number"
                 value={form.past_days}
-                onChange={e => setForm(prev => ({ ...prev, past_days: e.target.value }))}
+                onChange={(e) => setForm((prev) => ({ ...prev, past_days: e.target.value }))}
                 inputProps={{ min: 0, max: 3650 }}
                 size="small"
               />
@@ -380,7 +388,7 @@ export default function CalendarSyncSettings() {
                 label={t('settings.calendarSync.futureDays')}
                 type="number"
                 value={form.future_days}
-                onChange={e => setForm(prev => ({ ...prev, future_days: e.target.value }))}
+                onChange={(e) => setForm((prev) => ({ ...prev, future_days: e.target.value }))}
                 inputProps={{ min: 0, max: 3650 }}
                 size="small"
               />
@@ -389,7 +397,7 @@ export default function CalendarSyncSettings() {
               control={
                 <Switch
                   checked={form.sync_enabled}
-                  onChange={e => setForm(prev => ({ ...prev, sync_enabled: e.target.checked }))}
+                  onChange={(e) => setForm((prev) => ({ ...prev, sync_enabled: e.target.checked }))}
                 />
               }
               label={t('settings.calendarSync.autoSync')}
