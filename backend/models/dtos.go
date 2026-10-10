@@ -339,3 +339,19 @@ type TrashResponse struct {
 	Contacts      []TrashedContact `json:"contacts"`
 	RetentionDays int              `json:"retention_days"`
 }
+
+// BackupResponse describes one stored backup.
+type BackupResponse struct {
+	Name      string    `json:"name"`
+	Size      int64     `json:"size"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// BackupListResponse is the backup list plus the settings that drive the schedule.
+type BackupListResponse struct {
+	Backups        []BackupResponse `json:"backups"`
+	Enabled        bool             `json:"enabled"`
+	Time           string           `json:"time"`
+	RetentionCount int              `json:"retention_count"`
+	Directory      string           `json:"directory"`
+}

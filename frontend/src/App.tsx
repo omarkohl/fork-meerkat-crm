@@ -7,6 +7,7 @@ import DashboardPage from './DashboardPage';
 import SettingsPage from './SettingsPage';
 import NetworkPage from './NetworkPage';
 import UsersPage from './UsersPage';
+import BackupsPage from './BackupsPage';
 import ApiTokensPage from './ApiTokensPage';
 import TrashPage from './TrashPage';
 import DataSettingsPage from './DataSettingsPage';
@@ -51,6 +52,7 @@ import HubIcon from '@mui/icons-material/Hub';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import SettingsIcon from '@mui/icons-material/Settings';
 import PeopleIcon from '@mui/icons-material/People';
+import BackupIcon from '@mui/icons-material/Backup';
 import TokenIcon from '@mui/icons-material/Token';
 import StorageIcon from '@mui/icons-material/Storage';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -164,6 +166,7 @@ function AppContent({ token, setToken }: { token: string | null; setToken: (toke
     ];
     if (userIsAdmin) {
       items.push({ text: t('nav.users'), icon: <PeopleIcon />, path: '/users' });
+      items.push({ text: t('nav.backups'), icon: <BackupIcon />, path: '/backups' });
     }
     return items;
   }, [t, userIsAdmin]);
@@ -183,6 +186,7 @@ function AppContent({ token, setToken }: { token: string | null; setToken: (toke
   const isSettingsActive =
     location.pathname.startsWith('/settings') ||
     location.pathname.startsWith('/users') ||
+    location.pathname.startsWith('/backups') ||
     location.pathname.startsWith('/api-tokens');
 
   // Check if current path matches the nav item (handle exact match for "/" and prefix match for others)
@@ -636,6 +640,20 @@ function AppContent({ token, setToken }: { token: string | null; setToken: (toke
                 }
               >
                 <UsersPage />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/backups"
+            element={
+              <Suspense
+                fallback={
+                  <Box display="flex" justifyContent="center" mt={4}>
+                    <CircularProgress />
+                  </Box>
+                }
+              >
+                <BackupsPage />
               </Suspense>
             }
           />

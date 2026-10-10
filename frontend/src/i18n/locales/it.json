@@ -15,6 +15,7 @@
     "settings": "Impostazioni",
     "profile": "Profilo",
     "users": "Utenti",
+    "backups": "Backup",
     "apiTokens": "Token API",
     "integrations": "Integrazioni",
     "data": "Dati",
@@ -877,6 +878,31 @@
       "message_one": "Eliminare definitivamente {{count}} contatto? L'operazione non può essere annullata.",
       "message_other": "Eliminare definitivamente tutti i {{count}} contatti? L'operazione non può essere annullata.",
       "confirm": "Svuota cestino"
+    }
+  },
+  "backups": {
+    "title": "Backup",
+    "listTitle": "Backup del server",
+    "createButton": "Crea backup ora",
+    "creating": "Creazione…",
+    "warning": "Ogni backup contiene i dati di TUTTI gli utenti di questo server (contatti, note, promemoria, dati degli account e hash delle password) e tutte le foto. Conservalo e condividilo con la massima cautela.",
+    "scheduleOn": "Un backup viene creato automaticamente ogni giorno alle {{time}}; vengono conservati i {{count}} più recenti.",
+    "scheduleOff": "I backup automatici sono disattivati (BACKUP_ENABLED).",
+    "location": "Salvati sul server in {{directory}}.",
+    "empty": "Non ci sono ancora backup.",
+    "download": "Scarica",
+    "delete": "Elimina",
+    "downloadAria": "Scarica {{name}}",
+    "deleteAria": "Elimina {{name}}",
+    "createSuccess": "Backup creato",
+    "createError": "Impossibile creare il backup",
+    "downloadError": "Impossibile scaricare il backup",
+    "deleteSuccess": "Backup eliminato",
+    "deleteError": "Impossibile eliminare il backup",
+    "deleteDialog": {
+      "title": "Elimina backup",
+      "message": "Eliminare {{name}}? L'operazione non può essere annullata.",
+      "confirm": "Elimina"
     }
   },
   "users": {
