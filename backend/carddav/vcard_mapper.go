@@ -21,7 +21,7 @@ import (
 	"github.com/emersion/go-vcard"
 	"github.com/gen2brain/heic"
 	"github.com/google/uuid"
-	"github.com/nfnt/resize"
+	"golang.org/x/image/draw"
 	"golang.org/x/image/webp"
 )
 
@@ -520,7 +520,7 @@ func SaveContactPhoto(photoData []byte, mediaType string, photoDir string) (stri
 	bounds := img.Bounds()
 	photoImg := img
 	if bounds.Dx() > maxPhotoSize || bounds.Dy() > maxPhotoSize {
-		photoImg = resize.Resize(maxPhotoSize, maxPhotoSize, img, resize.Lanczos3)
+		photoImg = resizeTo(img, maxPhotoSize)
 	}
 	fullPhotoPath := filepath.Join(photoDir, photoPath)
 	outFile, err := os.Create(fullPhotoPath) //nolint:gosec // path built from the configured photo directory
@@ -534,7 +534,7 @@ func SaveContactPhoto(photoData []byte, mediaType string, photoDir string) (stri
 	}
 
 	// Create thumbnail and encode as base64 data URL (48x48)
-	thumbnail := resize.Resize(48, 48, img, resize.Lanczos3)
+	thumbnail := resizeTo(img, 48)
 	var thumbnailBuf bytes.Buffer
 	if err := jpeg.Encode(&thumbnailBuf, thumbnail, &jpeg.Options{Quality: 85}); err != nil {
 		return "", "", err
@@ -936,4 +936,12 @@ func extractUnmappedProperties(card vcard.Card) VCardExtra {
 	}
 
 	return extra
+}
+
+// resizeTo scales img to exactly size x size pixels. x/image/draw offers no
+// Lanczos kernel; CatmullRom is the closest high-quality (bicubic) choice.
+func resizeTo(img image.Image, size int) image.Image {
+	dst := image.NewRGBA(image.Rect(0, 0, size, size))
+	draw.CatmullRom.Scale(dst, dst.Bounds(), img, img.Bounds(), draw.Src, nil)
+	return dst
 }
