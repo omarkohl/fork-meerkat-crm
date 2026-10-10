@@ -44,7 +44,7 @@ func FuzzVCardToContact(f *testing.F) {
 			ParseRevision(card)
 
 			// The contact must survive being served again.
-			out := ContactToVCard(contact, t.TempDir())
+			out := ContactToVCard(contact, "")
 			var buf bytes.Buffer
 			if err := vcard.NewEncoder(&buf).Encode(out); err != nil {
 				return // the encoder refuses some cards; that is an error, not a panic

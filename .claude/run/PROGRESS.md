@@ -14,7 +14,7 @@
 - 6: second-sprint/06-api-reference (PR #21)
 - 7: second-sprint/07-supply-chain (PR #22)
 - 8: second-sprint/08-test-infra (PR #23)
-- 9: second-sprint/09-fuzz
+- 9: second-sprint/09-fuzz (PR #24)
 
 ## Log
 
@@ -90,11 +90,12 @@
   runs all of `./services/` (not only `TestContactSync`), image `3.8.3.0`; `@vitest/coverage-v8` is `^3.2.4`
   like vitest; coverage config moved above the localStorage comment; `coverage.out` and `coverage.html` ignored.
 
-- 9: six Go fuzz targets: `FuzzVCardToContact` (carddav; decode, map, re-encode, decode again), `FuzzCSVImport`,
+- 9: Go fuzz targets: `FuzzVCardToContact` (carddav; decode, map, re-encode, decode again), `FuzzCSVImport`,
   `FuzzImportValueParsers`, `FuzzMonicaMapping` (JSON into every Monica type and mapper), `FuzzICSText`,
-  `FuzzBuildICSFeed` (services). Each ran 1 to 2 minutes locally (hundreds of thousands of executions). One bug: `foldICSLine`
-  never ended for 75+ UTF-8 continuation bytes (cut position fell to 0); unreachable today because `escapeICSText` turns
-  invalid bytes into U+FFFD, but fixed with a regression test. The other finding was a wrong property of mine
+  `FuzzBuildICSFeed` (services). Each ran 1 to 2 minutes locally (hundreds of thousands of executions). No reachable bug; one
+  hardening: `foldICSLine` never ended for 75+ UTF-8 continuation bytes (cut position fell to 0). Callers escape first
+  (invalid bytes become U+FFFD), so it was not reachable; fixed with a regression test. A seventh target,
+  `FuzzDecodePhoto`, covers the image decode of `SaveContactPhoto` (extracted as the pure `decodePhoto`); 60 s clean. The other finding was a wrong property of mine
   (`NormalizeBirthday` returns unknown formats unchanged, by design). New workflow `fuzz.yml`: nightly 03:17 UTC and
   manual (`fuzztime` input), one matrix job per target, 30 s default, `contents: read`, uploads untracked files under
   `testdata/fuzz` as `fuzz-failing-input-<Target>` on failure; actionlint clean. Docs: `docs/development/testing.md`.

@@ -36,6 +36,7 @@ Go native fuzz targets cover the parsers that read untrusted input:
 | Target | Package | What it feeds |
 | --- | --- | --- |
 | `FuzzVCardToContact` | `carddav` | vCard bytes through the decoder, `VCardToContact`, and back through `ContactToVCard` (CardDAV, VCF import) |
+| `FuzzDecodePhoto` | `carddav` | untrusted image bytes (upload, vCard PHOTO, remote photo) through the decoder behind `SaveContactPhoto`, crop and resize; nothing is written |
 | `FuzzCSVImport` | `services` | CSV through `ParseCSV`, `SuggestColumnMappings`, `BuildContactFromRow`, validation |
 | `FuzzImportValueParsers` | `services` | birthday, phone, gender and circle parsers |
 | `FuzzMonicaMapping` | `services` | arbitrary JSON decoded into the Monica types and run through every mapper |

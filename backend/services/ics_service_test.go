@@ -68,8 +68,9 @@ func TestFoldICSLineKeepsMultibyteCharactersWhole(t *testing.T) {
 	assert.Equal(t, long, strings.ReplaceAll(strings.TrimSuffix(folded, "\r\n"), "\r\n ", ""))
 }
 
-// Found by FuzzICSText: a run of 75 or more UTF-8 continuation bytes made the fold loop
-// find no rune start to cut at and spin forever.
+// Hardening found by FuzzICSText: a run of 75 or more UTF-8 continuation bytes made the fold
+// loop find no rune start to cut at and spin forever. Current callers escape their input first
+// (which replaces invalid bytes), so this was not reachable from outside.
 func TestFoldICSLineTerminatesOnInvalidUTF8(t *testing.T) {
 	in := strings.Repeat("\x80", 200)
 	done := make(chan string, 1)
