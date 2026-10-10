@@ -202,6 +202,10 @@ func foldICSLine(s string) string {
 		for cut > 0 && !utf8.RuneStart(s[cut]) {
 			cut--
 		}
+		if cut == 0 {
+			// Hardening: no rune start within the limit (not valid UTF-8); cut anywhere instead of looping forever.
+			cut = limit
+		}
 		b.WriteString(s[:cut])
 		b.WriteString("\r\n ")
 		s = s[cut:]

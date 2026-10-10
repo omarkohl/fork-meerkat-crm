@@ -1,5 +1,5 @@
-import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, within, fireEvent, cleanup } from '@testing-library/react';
+import { describe, test, expect, vi, beforeEach } from 'vitest';
+import { render, screen, waitFor, within, fireEvent } from '@testing-library/react';
 import i18n from './i18n/config';
 import { SnackbarProvider } from './context/SnackbarContext';
 import { DateFormatProvider } from './DateFormatProvider';
@@ -40,7 +40,6 @@ function renderPage() {
 }
 
 describe('TrashPage', () => {
-  afterEach(cleanup);
   beforeEach(async () => {
     vi.resetAllMocks();
     await i18n.changeLanguage('en');
