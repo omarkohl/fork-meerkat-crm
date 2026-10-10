@@ -20,7 +20,8 @@
     "integrations": "Integraciones",
     "data": "Datos",
     "collapseSidebar": "Contraer barra lateral",
-    "expandSidebar": "Expandir barra lateral"
+    "expandSidebar": "Expandir barra lateral",
+    "auditLog": "Registro de auditoría"
   },
   "dashboard": {
     "welcome": "Bienvenido al Panel de Meerkat CRM",
@@ -945,5 +946,82 @@
     "triggerReminders": "Enviar Emails de Recordatorio",
     "triggerRemindersSuccess": "Emails de recordatorio enviados exitosamente",
     "triggerRemindersError": "Error al enviar los emails de recordatorio"
+  },
+  "sessions": {
+    "title": "Sesiones activas",
+    "description": "Navegadores y dispositivos con la sesión iniciada en tu cuenta. Cierra los que no reconozcas, o todos si tienes dudas.",
+    "signOutAll": "Cerrar sesión en todas partes",
+    "current": "Este dispositivo",
+    "unknownDevice": "Dispositivo desconocido",
+    "signedInAt": "Inicio de sesión {{date}}",
+    "lastActive": "última actividad {{date}}",
+    "revoke": "Cerrar sesión",
+    "revokeAria": "Cerrar la sesión de {{device}}",
+    "revokeSuccess": "Sesión cerrada.",
+    "revokeError": "No se pudo cerrar la sesión.",
+    "loadError": "No se pudieron cargar las sesiones.",
+    "signOutAllError": "No se pudo cerrar la sesión en todas partes.",
+    "signOutAllDialog": {
+      "title": "¿Cerrar sesión en todas partes?",
+      "message": "Se cerrará la sesión en todos los navegadores y dispositivos, incluido este, y tendrás que volver a iniciarla. Los tokens de API y el feed del calendario siguen funcionando.",
+      "confirm": "Cerrar sesión en todas partes"
+    }
+  },
+  "auditLog": {
+    "title": "Registro de auditoría",
+    "retention": "Las entradas se conservan {{days}} días.",
+    "retentionForever": "Las entradas se conservan hasta que se borren de la base de datos.",
+    "filterEvent": "Evento",
+    "allEvents": "Todos los eventos",
+    "filterUser": "Usuario",
+    "time": "Hora",
+    "event": "Evento",
+    "user": "Usuario",
+    "ip": "Dirección IP",
+    "detail": "Detalles",
+    "empty": "Sin entradas.",
+    "loadError": "No se pudo cargar el registro de auditoría.",
+    "events": {
+      "login": "Inicio de sesión",
+      "login_failed": "Inicio de sesión fallido",
+      "logout": "Cierre de sesión",
+      "password_changed": "Contraseña cambiada",
+      "password_reset": "Contraseña restablecida",
+      "session_revoked": "Sesión cerrada",
+      "sign_out_everywhere": "Sesión cerrada en todas partes",
+      "export": "Exportación de datos",
+      "api_token_created": "Token de API creado",
+      "api_token_revoked": "Token de API revocado",
+      "ics_feed_created": "Feed del calendario creado",
+      "ics_feed_revoked": "Feed del calendario revocado",
+      "backup_created": "Copia de seguridad creada",
+      "backup_downloaded": "Copia de seguridad descargada",
+      "backup_deleted": "Copia de seguridad eliminada",
+      "admin_user_updated": "Usuario modificado por el admin",
+      "admin_user_deleted": "Usuario eliminado por el admin",
+      "admin_reminders_triggered": "Recordatorios activados por el admin"
+    },
+    "keys": {
+      "reason": "Motivo",
+      "method": "Método",
+      "format": "Formato",
+      "token": "Token de API",
+      "backup": "Copia de seguridad",
+      "user": "Usuario",
+      "changed": "Cambiado"
+    },
+    "values": {
+      "unknown_account": "Cuenta desconocida",
+      "wrong_password": "Contraseña incorrecta",
+      "wrong_password_locked": "Contraseña incorrecta, cuenta bloqueada",
+      "oidc": "Inicio de sesión único (OIDC)",
+      "csv": "CSV",
+      "vcf": "vCard",
+      "username": "Nombre de usuario",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "is_admin": "Derechos de administrador"
+    },
+    "userAgent": "Dispositivo"
   }
 }

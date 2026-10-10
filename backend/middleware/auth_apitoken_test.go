@@ -27,7 +27,7 @@ func setupAuthTestRouter() (*gorm.DB, *gin.Engine) {
 	if err != nil {
 		panic("failed to open test db")
 	}
-	db.AutoMigrate(&models.User{}, &models.ApiToken{})
+	db.AutoMigrate(&models.User{}, &models.ApiToken{}, &models.Session{})
 
 	user := models.User{Username: "authtest", Email: "authtest@example.com", Password: "password"}
 	if err := db.Create(&user).Error; err != nil {
@@ -165,7 +165,7 @@ func TestAdminMiddleware_BlocksApiToken(t *testing.T) {
 	if err != nil {
 		panic("failed to open test db")
 	}
-	db.AutoMigrate(&models.User{}, &models.ApiToken{})
+	db.AutoMigrate(&models.User{}, &models.ApiToken{}, &models.Session{})
 
 	user := models.User{Username: "admintest", Email: "admin@example.com", Password: "pw", IsAdmin: true}
 	db.Create(&user)

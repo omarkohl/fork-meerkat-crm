@@ -99,6 +99,17 @@ func main() {
 		} else if n > 0 {
 			logger.Info().Int("contacts", n).Msg("Purged expired contacts from the trash")
 		}
+		// Same daily slot: ended sessions and old audit entries
+		if n, err := services.PurgeSessions(db, time.Now()); err != nil {
+			logger.Error().Err(err).Msg("Error purging ended sessions")
+		} else if n > 0 {
+			logger.Info().Int64("sessions", n).Msg("Purged ended sessions")
+		}
+		if n, err := services.PurgeAuditLog(db, cfg.AuditLogRetentionDays, time.Now()); err != nil {
+			logger.Error().Err(err).Msg("Error purging the audit log")
+		} else if n > 0 {
+			logger.Info().Int64("entries", n).Msg("Purged old audit log entries")
+		}
 	}
 	backupTask := func() {
 		b, err := services.RunScheduledBackup(db, cfg.BackupDir, cfg.ProfilePhotoDir, cfg.BackupRetentionCount, time.Now())

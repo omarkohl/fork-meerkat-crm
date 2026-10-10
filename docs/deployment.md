@@ -81,6 +81,12 @@ Several features make the server fetch an address a user typed in: webhooks, Cal
 - Not covered, on purpose: the OIDC provider (`OIDC_PROVIDER_URL`) and the SMTP host. Only the administrator sets them, and they are often internal services.
 
 
+## Sessions and audit log
+
+**Sessions.** Every login creates a session. Users see their sessions under Settings, Profile (browser, IP address, when it was created and last active), can sign out one or all of them, and changing the password signs out every other browser. A reset of the password by e-mail or by an admin ends all sessions. A signed token stops working at once when its session is revoked, even though the token itself would be valid for `JWT_EXPIRY_HOURS`. "Sign out everywhere" also raises the user's token version, which invalidates tokens issued before sessions existed. Tokens issued by an older version keep working until they expire, unless the user signs out everywhere. API tokens and the calendar feed are managed separately and are not affected.
+
+**Audit log.** Admins see it under Settings, Audit log (filter by event and user). It records logins and failed logins (with the account, never what was typed for an unknown account), logouts, password changes and resets, sessions signed out, data exports, API token, calendar feed and backup actions, and admin changes to users. Each entry has the time, user, IP address (behind a proxy this is the address of the proxy unless `TRUSTED_PROXIES` is set) and user agent. Entries of deleted accounts stay until the retention period ends. Entries older than `AUDIT_LOG_RETENTION_DAYS` (default 365, `0` = keep) are deleted daily at 03:30, together with ended sessions.
+
 ## Database storage
 
 Meerkat stores everything in one SQLite file (`meerkat.db`, `SQLITE_DB_PATH`). It opens it in WAL mode with `busy_timeout` of 5 seconds, `synchronous=NORMAL` and foreign keys enforced, so you will see `meerkat.db-wal` and `meerkat.db-shm` next to it (see [The WAL files](#the-wal-files)). WAL needs shared memory between processes on the same machine, so **keep the database on a local disk**. Network file systems (NFS, SMB/CIFS and the like) are not supported and can corrupt the database. Mount `DATA_PATH` from a local disk, and run only one Meerkat instance per database.
