@@ -14,7 +14,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func setupICSTestDB(t *testing.T) *gorm.DB {
+func setupICSTestDB(t testing.TB) *gorm.DB {
 	t.Helper()
 	require.NoError(t, i18n.Init())
 	db, err := gorm.Open(sqlite.Open(":memory:?_pragma=foreign_keys(1)"), &gorm.Config{})
@@ -26,7 +26,7 @@ func setupICSTestDB(t *testing.T) *gorm.DB {
 	return db
 }
 
-func icsUser(t *testing.T, db *gorm.DB, name string) models.User {
+func icsUser(t testing.TB, db *gorm.DB, name string) models.User {
 	t.Helper()
 	u := models.User{Username: name, Password: "password123!A", Email: name + "@example.com"}
 	require.NoError(t, db.Create(&u).Error)
@@ -66,6 +66,23 @@ func TestFoldICSLineKeepsMultibyteCharactersWhole(t *testing.T) {
 		assert.True(t, strings.ToValidUTF8(l, "") == l, "no split rune")
 	}
 	assert.Equal(t, long, strings.ReplaceAll(strings.TrimSuffix(folded, "\r\n"), "\r\n ", ""))
+}
+
+// Found by FuzzICSText: a run of 75 or more UTF-8 continuation bytes made the fold loop
+// find no rune start to cut at and spin forever.
+func TestFoldICSLineTerminatesOnInvalidUTF8(t *testing.T) {
+	in := strings.Repeat("\x80", 200)
+	done := make(chan string, 1)
+	go func() { done <- foldICSLine(in) }()
+	select {
+	case out := <-done:
+		assert.Equal(t, in, strings.ReplaceAll(strings.TrimSuffix(out, "\r\n"), "\r\n ", ""))
+		for _, l := range strings.Split(strings.TrimSuffix(out, "\r\n"), "\r\n") {
+			assert.LessOrEqual(t, len(l), icsLineLimit)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("foldICSLine did not terminate")
+	}
 }
 
 func TestBuildICSFeedBirthdays(t *testing.T) {

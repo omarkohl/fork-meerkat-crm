@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("BEGIN:VCARD\x0d\x0aVERSION:4.0\x0d\x0aFN:A\x0d\x0aEND:VCARD\x0d\x0aBEGIN:VCARD\x0d\x0aVERSION:3.0\x0d\x0aN:;B;;;\x0d\x0aBDAY:19900229\x0d\x0aEND:VCARD\x0d\x0a")

@@ -71,7 +71,7 @@ context is above 200k at the end of a step, then start a new one. Reviewer is al
 - [x] 8. **Test infrastructure**: `go test -race` in CI, coverage for Go and Vitest uploaded as
       artifact and printed in the job summary, migration test (all up, all down, up again on seeded
       data), Radicale CardDAV integration tests as a service container.
-- [ ] 9. **Fuzz and parser tests**: fuzz targets for the vCard mapper, CSV import, Monica import
+- [x] 9. **Fuzz and parser tests**: fuzz targets for the vCard mapper, CSV import, Monica import
       parsing and ICS building; a short fuzz run (30 s each) in a nightly workflow; fix what they find.
 - [ ] 10. **Tests for untested logic**: `birthday_service`, `webhook_service` (signature, retries,
       SSRF), `credential_crypto`, `mailer`, and controllers for oidc, photo, calendar, carddav,

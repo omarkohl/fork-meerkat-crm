@@ -2,7 +2,7 @@
 
 ## Next step
 
-9.
+10.
 
 ## Stack
 
@@ -14,6 +14,7 @@
 - 6: second-sprint/06-api-reference (PR #21)
 - 7: second-sprint/07-supply-chain (PR #22)
 - 8: second-sprint/08-test-infra (PR #23)
+- 9: second-sprint/09-fuzz
 
 ## Log
 
@@ -89,8 +90,22 @@
   runs all of `./services/` (not only `TestContactSync`), image `3.8.3.0`; `@vitest/coverage-v8` is `^3.2.4`
   like vitest; coverage config moved above the localStorage comment; `coverage.out` and `coverage.html` ignored.
 
+- 9: six Go fuzz targets: `FuzzVCardToContact` (carddav; decode, map, re-encode, decode again), `FuzzCSVImport`,
+  `FuzzImportValueParsers`, `FuzzMonicaMapping` (JSON into every Monica type and mapper), `FuzzICSText`,
+  `FuzzBuildICSFeed` (services). Each ran 1 to 2 minutes locally (hundreds of thousands of executions). One bug: `foldICSLine`
+  never ended for 75+ UTF-8 continuation bytes (cut position fell to 0); unreachable today because `escapeICSText` turns
+  invalid bytes into U+FFFD, but fixed with a regression test. The other finding was a wrong property of mine
+  (`NormalizeBirthday` returns unknown formats unchanged, by design). New workflow `fuzz.yml`: nightly 03:17 UTC and
+  manual (`fuzztime` input), one matrix job per target, 30 s default, `contents: read`, uploads untracked files under
+  `testdata/fuzz` as `fuzz-failing-input-<Target>` on failure; actionlint clean. Docs: `docs/development/testing.md`.
+  Separate commit before it: the flaky `IcsFeedSettings` Vitest run (react-transition-group timer after teardown, about 1 in 8)
+  came from Testing Library's auto-cleanup not being active (Vitest has no globals); `afterEach(cleanup)` is now in `setupTests.ts`.
+
 ## Decisions
 
+- Step 9: the fuzz targets live next to the code as `*_fuzz_test.go` and run over their seeds in every `go test`;
+  seed files in `testdata/fuzz` are a handful of hand-written edge cases. The workflow does not run on pull requests.
+  Fuzzing does not cover the DB-backed `ParseVCF`/`GenerateCSVPreview` (they call the fuzzed parsers and mappers).
 - Step 5: the stamp is written synchronously (a single indexed UPDATE), not in a goroutine like API-token
   `last_used_at`, so tests are deterministic and no write can outlive the DB at shutdown. Regenerating replaces
   the row, so the new URL starts with no fetch time. The card does not poll: it shows the value at page load.
@@ -107,6 +122,7 @@
 
 ## For review
 
+- Step 9: the first scheduled run of `Fuzz` is the check of the workflow (matrix, artifact collection with `git ls-files --others`). A nightly red run means a new input crashed a parser: download the artifact, add it under `testdata/fuzz`, fix.
 - Step 8: Radicale runs via `docker run` after checkout, not as a `services:` container, because it needs `docker/radicale` mounted as config (service containers start before checkout). Image `tomsquest/docker-radicale:3.8.3.0` (also pinned in `docker-compose.carddav-test.yml`, was `latest`): the tag and the compatibility of `docker/radicale/config` with Radicale 3.8 could not be checked from here, and the job has never run. Fix the tag if the first CI run says it does not exist.
 - Step 8: the frontend coverage is low (17% of statements, only 9 test files; the UI is covered by Playwright). No threshold is enforced, numbers are informational.
 - Step 7: base image tags (`golang:1.26-alpine`, `alpine:3.22`, `nginx-unprivileged:1.30-alpine`) and the Trivy/docs/Docker workflows could not be tested here (no registry access, docker daemon unusable). The first PR run of `Docker build and scan` is the check: if a tag does not exist or Trivy finds fixable HIGH/CRITICAL issues in a base image, adjust the tag. Tags are minor-level, not digest-pinned (Dependabot keeps them current).

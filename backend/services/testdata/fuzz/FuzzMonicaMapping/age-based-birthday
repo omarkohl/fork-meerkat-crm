@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("{\x22id\x22:1,\x22first_name\x22:\x22A\x22,\x22information\x22:{\x22dates\x22:{\x22birthdate\x22:{\x22date\x22:\x221999-05-05T00:00:00Z\x22,\x22is_age_based\x22:true,\x22is_year_unknown\x22:false}}}}")

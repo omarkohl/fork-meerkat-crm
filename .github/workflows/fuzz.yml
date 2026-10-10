@@ -1,0 +1,73 @@
+name: Fuzz
+
+# Short fuzz runs of the parsers that read untrusted input. Nightly and on demand, not on
+# pull requests (a run is a lottery, a red PR check for it would be noise). A failing
+# input is uploaded as an artifact; copy it to backend/<package>/testdata/fuzz/<Target>/
+# and it becomes a regression test that `go test` runs every time.
+
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+    inputs:
+      fuzztime:
+        description: 'Time per target (Go duration, e.g. 30s, 5m)'
+        required: false
+        default: '30s'
+
+permissions:
+  contents: read
+
+jobs:
+  fuzz:
+    name: ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { package: ./carddav, target: FuzzVCardToContact }
+          - { package: ./services, target: FuzzCSVImport }
+          - { package: ./services, target: FuzzImportValueParsers }
+          - { package: ./services, target: FuzzMonicaMapping }
+          - { package: ./services, target: FuzzICSText }
+          - { package: ./services, target: FuzzBuildICSFeed }
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Set up Go
+        uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
+        with:
+          go-version: '1.26'
+          check-latest: true
+          cache-dependency-path: backend/go.sum
+
+      - name: Fuzz
+        working-directory: backend
+        env:
+          PACKAGE: ${{ matrix.package }}
+          TARGET: ${{ matrix.target }}
+          FUZZTIME: ${{ inputs.fuzztime || '30s' }}
+        run: go test "$PACKAGE" -run '^$' -fuzz "^${TARGET}\$" -fuzztime "$FUZZTIME"
+
+      # Go writes a failing input to testdata/fuzz/<Target>/ next to the committed seeds;
+      # only the files that are not tracked are new.
+      - name: Collect failing inputs
+        if: ${{ failure() }}
+        run: |
+          mkdir -p failing-inputs
+          git ls-files --others --exclude-standard -- 'backend/**/testdata/fuzz/**' |
+            while read -r f; do mkdir -p "failing-inputs/$(dirname "$f")"; cp "$f" "failing-inputs/$f"; done
+          find failing-inputs -type f
+
+      - name: Upload failing inputs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: fuzz-failing-input-${{ matrix.target }}
+          path: failing-inputs
+          if-no-files-found: ignore
+          retention-days: 30

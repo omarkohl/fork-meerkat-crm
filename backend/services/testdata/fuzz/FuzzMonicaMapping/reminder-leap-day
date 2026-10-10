@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("{\x22id\x22:1,\x22title\x22:\x22x\x22,\x22initial_date\x22:\x222020-02-29T00:00:00Z\x22,\x22frequency_type\x22:\x22year\x22,\x22frequency_number\x22:1,\x22next_expected_date\x22:\x222021-02-28T00:00:00Z\x22}")
