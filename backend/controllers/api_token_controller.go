@@ -5,10 +5,10 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
+	"meerkat/idutil"
 	"meerkat/middleware"
 	"meerkat/models"
 	"net/http"
-	"strconv"
 	"time"
 
 	apperrors "meerkat/errors"
@@ -99,7 +99,7 @@ func RevokeApiToken(c *gin.Context) {
 	}
 
 	idParam := c.Param("id")
-	id, err := strconv.ParseUint(idParam, 10, 64)
+	id, err := idutil.Parse(idParam)
 	if err != nil {
 		apperrors.AbortWithError(c, apperrors.ErrInvalidInput("id", "must be a positive integer"))
 		return

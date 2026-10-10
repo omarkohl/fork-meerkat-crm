@@ -3,6 +3,7 @@ package controllers
 import (
 	"errors"
 	apperrors "meerkat/errors"
+	"meerkat/idutil"
 	"meerkat/middleware"
 	"meerkat/models"
 	"net/http"
@@ -92,7 +93,7 @@ func CreateRelationship(c *gin.Context) {
 
 	// Get the contact ID from the request parameters
 	contactIDParam := c.Param("id")
-	contactID, err := strconv.ParseUint(contactIDParam, 10, 64)
+	contactID, err := idutil.Parse(contactIDParam)
 	if err != nil {
 		apperrors.AbortWithError(c, apperrors.ErrInvalidInput("contact_id", "Invalid contact ID"))
 		return
@@ -122,7 +123,7 @@ func CreateRelationship(c *gin.Context) {
 		Gender:           input.Gender,
 		Birthday:         input.Birthday,
 		RelatedContactID: input.RelatedContactID,
-		ContactID:        uint(contactID),
+		ContactID:        contactID,
 		UserID:           userID,
 	}
 

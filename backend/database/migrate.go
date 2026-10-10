@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"embed"
 	"fmt"
+	"math"
 	"meerkat/logger"
 	"strings"
 
@@ -121,7 +122,10 @@ func RunMigrations(db *sql.DB) error {
 
 	if dirty {
 		logger.Warn().Uint("version", version).Msg("Database is in dirty state, forcing version")
-		if err := m.Force(int(version)); err != nil { //nolint:gosec // migration version, small and positive
+		if version > math.MaxInt32 {
+			return fmt.Errorf("migration version %d out of range", version)
+		}
+		if err := m.Force(int(version)); err != nil {
 			return fmt.Errorf("failed to force version: %w", err)
 		}
 	}

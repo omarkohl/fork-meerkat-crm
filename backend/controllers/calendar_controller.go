@@ -3,12 +3,12 @@ package controllers
 import (
 	"errors"
 	apperrors "meerkat/errors"
+	"meerkat/idutil"
 	"meerkat/logger"
 	"meerkat/middleware"
 	"meerkat/models"
 	"meerkat/services"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -224,7 +224,7 @@ func calendarSyncError(err error) *apperrors.AppError {
 }
 
 func findCalendarSubscription(c *gin.Context, db *gorm.DB, userID uint) (models.CalendarSubscription, bool) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	id, err := idutil.Parse(c.Param("id"))
 	if err != nil {
 		apperrors.AbortWithError(c, apperrors.ErrInvalidInput("id", "must be a positive integer"))
 		return models.CalendarSubscription{}, false

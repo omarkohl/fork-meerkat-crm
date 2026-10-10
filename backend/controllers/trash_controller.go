@@ -4,9 +4,9 @@ import (
 	"errors"
 	"net/http"
 	"os"
-	"strconv"
 
 	apperrors "meerkat/errors"
+	"meerkat/idutil"
 	"meerkat/models"
 	"meerkat/services"
 
@@ -32,12 +32,12 @@ func trashPhotoDir(c *gin.Context) string {
 }
 
 func trashContactID(c *gin.Context) (uint, bool) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	if err != nil || id == 0 {
+	id, err := idutil.Parse(c.Param("id"))
+	if err != nil {
 		apperrors.AbortWithError(c, apperrors.ErrNotFound("Contact").WithDetails("id", c.Param("id")))
 		return 0, false
 	}
-	return uint(id), true
+	return id, true
 }
 
 // GetTrash lists the current user's deleted contacts.

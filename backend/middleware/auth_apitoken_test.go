@@ -257,3 +257,20 @@ func TestAdminMiddleware_BlocksNonAdminUser(t *testing.T) {
 
 	assert.Equal(t, http.StatusForbidden, w.Code)
 }
+
+func TestAuthMiddleware_ApiTokenOfDeletedUserRejected(t *testing.T) {
+	db, router := setupAuthTestRouter()
+
+	var user models.User
+	db.First(&user)
+	plaintext := "meerkat_deleteduser123456789"
+	db.Create(&models.ApiToken{UserID: user.ID, Name: "test", TokenHash: hashToken(plaintext)})
+	assert.NoError(t, db.Delete(&user).Error)
+
+	req, _ := http.NewRequest("GET", "/protected", nil)
+	req.Header.Set("Authorization", "Bearer "+plaintext)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusUnauthorized, w.Code)
+}

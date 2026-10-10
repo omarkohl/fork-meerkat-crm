@@ -3,11 +3,11 @@ package controllers
 import (
 	"errors"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"meerkat/config"
 	apperrors "meerkat/errors"
+	"meerkat/idutil"
 	"meerkat/logger"
 	"meerkat/middleware"
 	"meerkat/models"
@@ -120,19 +120,19 @@ func GetUser(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
 
 	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := idutil.Parse(idStr)
 	if err != nil {
 		apperrors.AbortWithError(c, apperrors.ErrInvalidInput("id", "Invalid user ID"))
 		return
 	}
 
 	var user models.User
-	if err := db.First(&user, uint(id)).Error; err != nil {
+	if err := db.First(&user, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			apperrors.AbortWithError(c, apperrors.ErrNotFound("User"))
 			return
 		}
-		log.Error().Err(err).Uint64("user_id", id).Msg("Failed to get user")
+		log.Error().Err(err).Uint("user_id", id).Msg("Failed to get user")
 		apperrors.AbortWithError(c, apperrors.ErrDatabase("get user").WithError(err))
 		return
 	}
@@ -160,7 +160,7 @@ func UpdateUser(c *gin.Context) {
 	}
 
 	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := idutil.Parse(idStr)
 	if err != nil {
 		apperrors.AbortWithError(c, apperrors.ErrInvalidInput("id", "Invalid user ID"))
 		return
@@ -173,12 +173,12 @@ func UpdateUser(c *gin.Context) {
 	}
 
 	var user models.User
-	if err := db.First(&user, uint(id)).Error; err != nil {
+	if err := db.First(&user, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			apperrors.AbortWithError(c, apperrors.ErrNotFound("User"))
 			return
 		}
-		log.Error().Err(err).Uint64("user_id", id).Msg("Failed to get user for update")
+		log.Error().Err(err).Uint("user_id", id).Msg("Failed to get user for update")
 		apperrors.AbortWithError(c, apperrors.ErrDatabase("get user").WithError(err))
 		return
 	}
@@ -260,25 +260,25 @@ func DeleteUser(c *gin.Context) {
 	}
 
 	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := idutil.Parse(idStr)
 	if err != nil {
 		apperrors.AbortWithError(c, apperrors.ErrInvalidInput("id", "Invalid user ID"))
 		return
 	}
 
 	// Prevent admin from deleting themselves
-	if uint(id) == currentUserID {
+	if id == currentUserID {
 		apperrors.AbortWithError(c, apperrors.ErrForbidden("Cannot delete your own account"))
 		return
 	}
 
 	var user models.User
-	if err := db.First(&user, uint(id)).Error; err != nil {
+	if err := db.First(&user, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			apperrors.AbortWithError(c, apperrors.ErrNotFound("User"))
 			return
 		}
-		log.Error().Err(err).Uint64("user_id", id).Msg("Failed to get user for deletion")
+		log.Error().Err(err).Uint("user_id", id).Msg("Failed to get user for deletion")
 		apperrors.AbortWithError(c, apperrors.ErrDatabase("get user").WithError(err))
 		return
 	}
@@ -299,7 +299,7 @@ func DeleteUser(c *gin.Context) {
 
 	// Delete user's data in a transaction
 	err = db.Transaction(func(tx *gorm.DB) error {
-		userID := uint(id)
+		userID := id
 
 		// Delete reminders
 		if err := tx.Where("user_id = ?", userID).Delete(&models.Reminder{}).Error; err != nil {
@@ -337,6 +337,33 @@ func DeleteUser(c *gin.Context) {
 			return err
 		}
 
+		// API tokens would otherwise stay valid for a soft-deleted user (the auth
+		// middleware also refuses them, this keeps the table clean)
+		if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.ApiToken{}).Error; err != nil {
+			return err
+		}
+
+		// Stored credentials and background syncs: nothing of the user may remain.
+		// Links go first (they reference the connection or subscription).
+		if err := tx.Unscoped().Where("connection_id IN (?)", tx.Model(&models.CardDAVConnection{}).Unscoped().Select("id").Where("user_id = ?", userID)).Delete(&models.CardDAVContactLink{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.CardDAVConnection{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Unscoped().Where("subscription_id IN (?)", tx.Model(&models.CalendarSubscription{}).Unscoped().Select("id").Where("user_id = ?", userID)).Delete(&models.CalendarEventLink{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.CalendarSubscription{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Unscoped().Where("webhook_id IN (?)", tx.Model(&models.Webhook{}).Unscoped().Select("id").Where("user_id = ?", userID)).Delete(&models.WebhookDelivery{}).Error; err != nil {
+			return err
+		}
+		if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.Webhook{}).Error; err != nil {
+			return err
+		}
+
 		// Delete user
 		if err := tx.Delete(&user).Error; err != nil {
 			return err
@@ -346,7 +373,7 @@ func DeleteUser(c *gin.Context) {
 	})
 
 	if err != nil {
-		log.Error().Err(err).Uint64("user_id", id).Msg("Failed to delete user")
+		log.Error().Err(err).Uint("user_id", id).Msg("Failed to delete user")
 		apperrors.AbortWithError(c, apperrors.ErrDatabase("delete user").WithError(err))
 		return
 	}
