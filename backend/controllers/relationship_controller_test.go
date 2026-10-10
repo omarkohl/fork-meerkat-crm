@@ -101,12 +101,16 @@ func TestUpdateRelationship(t *testing.T) {
 	db.First(&user)
 	router.PUT("/relationships/:rid", withValidated(func() any { return &models.RelationshipInput{} }), UpdateRelationship)
 
+	contact := models.Contact{UserID: user.ID, Firstname: "Jane", Lastname: "Doe"}
+	db.Create(&contact)
+
 	// Create a relationship to update
 	existingRelationship := models.Relationship{
-		UserID: user.ID,
-		Name:   "Colleague",
-		Type:   "Work",
-		Gender: "Male",
+		UserID:    user.ID,
+		ContactID: contact.ID,
+		Name:      "Colleague",
+		Type:      "Work",
+		Gender:    "Male",
 	}
 	db.Create(&existingRelationship)
 
@@ -139,12 +143,16 @@ func TestDeleteRelationship(t *testing.T) {
 	db.First(&user)
 	router.DELETE("/relationships/:rid", DeleteRelationship)
 
+	contact := models.Contact{UserID: user.ID, Firstname: "Jane", Lastname: "Doe"}
+	db.Create(&contact)
+
 	// Create a relationship to delete
 	relationshipToDelete := models.Relationship{
-		UserID: user.ID,
-		Name:   "Cousin",
-		Type:   "Family",
-		Gender: "Female",
+		UserID:    user.ID,
+		ContactID: contact.ID,
+		Name:      "Cousin",
+		Type:      "Family",
+		Gender:    "Female",
 	}
 	db.Create(&relationshipToDelete)
 

@@ -21,7 +21,7 @@ func main() {
 	migrationsPath := "file://database/migrations"
 
 	// Open database connection
-	db, err := sql.Open("sqlite", dbPath)
+	db, err := sql.Open("sqlite", dbPath+"?_pragma=busy_timeout(5000)")
 	if err != nil {
 		log.Fatalf("Failed to open database: %v", err)
 	}

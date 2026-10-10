@@ -12,15 +12,15 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
 	"github.com/glebarez/sqlite"
+	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 )
 
 func setupAuthTestRouter() (*gorm.DB, *gin.Engine) {
 	gin.SetMode(gin.ReleaseMode)
 
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(":memory:?_pragma=foreign_keys(1)"), &gorm.Config{})
 	if err != nil {
 		panic("failed to open test db")
 	}
@@ -158,7 +158,7 @@ func TestAuthMiddleware_MissingAuthorizationHeader(t *testing.T) {
 func TestAdminMiddleware_BlocksApiToken(t *testing.T) {
 	gin.SetMode(gin.ReleaseMode)
 
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(":memory:?_pragma=foreign_keys(1)"), &gorm.Config{})
 	if err != nil {
 		panic("failed to open test db")
 	}
@@ -195,7 +195,7 @@ func TestAdminMiddleware_BlocksApiToken(t *testing.T) {
 func TestAdminMiddleware_AllowsAdminUser(t *testing.T) {
 	gin.SetMode(gin.ReleaseMode)
 
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(":memory:?_pragma=foreign_keys(1)"), &gorm.Config{})
 	if err != nil {
 		panic("failed to open test db")
 	}
@@ -227,7 +227,7 @@ func TestAdminMiddleware_AllowsAdminUser(t *testing.T) {
 func TestAdminMiddleware_BlocksNonAdminUser(t *testing.T) {
 	gin.SetMode(gin.ReleaseMode)
 
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(":memory:?_pragma=foreign_keys(1)"), &gorm.Config{})
 	if err != nil {
 		panic("failed to open test db")
 	}

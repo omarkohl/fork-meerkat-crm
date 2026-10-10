@@ -16,7 +16,7 @@ func TestHealthCheck(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	// Create a test database
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(":memory:?_pragma=foreign_keys(1)"), &gorm.Config{})
 	if err != nil {
 		t.Fatalf("Failed to create test database: %v", err)
 	}
@@ -73,7 +73,7 @@ func TestHealthCheck_UnhealthyDatabase(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	// Create a database that will be closed
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(":memory:?_pragma=foreign_keys(1)"), &gorm.Config{})
 	if err != nil {
 		t.Fatalf("Failed to create test database: %v", err)
 	}
