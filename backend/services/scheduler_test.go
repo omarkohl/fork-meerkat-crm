@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-type taskCounters struct{ reminders, webhooks, calendars, contacts, trash atomic.Int32 }
+type taskCounters struct{ reminders, webhooks, calendars, contacts, trash, backup atomic.Int32 }
 
 func (c *taskCounters) tasks() SchedulerTasks {
 	return SchedulerTasks{
@@ -16,6 +16,7 @@ func (c *taskCounters) tasks() SchedulerTasks {
 		CalendarSync:   func() { c.calendars.Add(1) },
 		ContactSync:    func() { c.contacts.Add(1) },
 		TrashPurge:     func() { c.trash.Add(1) },
+		Backup:         func() { c.backup.Add(1) },
 	}
 }
 
@@ -155,5 +156,47 @@ func TestSchedulerStopIsClean(t *testing.T) {
 	case <-done:
 	case <-time.After(5 * time.Second):
 		t.Fatal("Stop did not return")
+	}
+}
+
+func TestSchedulerBackupJobIsOptionalAndDaily(t *testing.T) {
+	// Disabled: no job at all.
+	c := &taskCounters{}
+	off := newTestScheduler(t, schedulerTestConfig(), c)
+	off.Start()
+	if _, ok := off.NextRuns()[JobBackup]; ok {
+		t.Error("backup job registered although backups are disabled")
+	}
+	off.Stop()
+
+	cfg := schedulerTestConfig()
+	cfg.BackupEnabled = true
+	cfg.BackupTime = "02:15"
+	c = &taskCounters{}
+	s := newTestScheduler(t, cfg, c)
+	s.Start()
+	defer s.Stop()
+	time.Sleep(200 * time.Millisecond)
+
+	next := s.NextRuns()[JobBackup].In(cfg.GetReminderLocation())
+	if next.IsZero() {
+		t.Fatal("backup job is not scheduled")
+	}
+	if next.Hour() != 2 || next.Minute() != 15 {
+		t.Errorf("backup next run at %s, want 02:15 Europe/Berlin", next)
+	}
+	if now := time.Now(); !next.After(now) || next.After(now.Add(26*time.Hour)) {
+		t.Errorf("backup next run %s not within the next day", next)
+	}
+	if n := c.backup.Load(); n != 0 {
+		t.Errorf("backup ran %d times at start, want 0", n)
+	}
+	s.RunAll()
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) && c.backup.Load() == 0 {
+		time.Sleep(10 * time.Millisecond)
+	}
+	if c.backup.Load() != 1 {
+		t.Errorf("RunAll ran the backup job %d times, want 1", c.backup.Load())
 	}
 }

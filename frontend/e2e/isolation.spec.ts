@@ -115,4 +115,27 @@ test.describe('Multi-user isolation', () => {
       await page.request.delete(`${API_BASE_URL}/trash/contacts/${contactA.ID}`).catch(() => {});
     }
   });
+  test('a normal user cannot list, create, download or delete backups', async ({ page }) => {
+    // The seeded user is the first account and therefore an admin.
+    const created = await page.request.post(`${API_BASE_URL}/admin/backups`);
+    expect(created.status()).toBe(201);
+    const { name } = await created.json();
+
+    const ctx = await request.newContext();
+    try {
+      await ctx.post(`${API_BASE_URL}/register`, { data: USER_B }).catch(() => {});
+      const login = await ctx.post(`${API_BASE_URL}/login`, {
+        data: { identifier: USER_B.username, password: USER_B.password },
+      });
+      expect(login.ok(), 'userB login should succeed').toBeTruthy();
+
+      expect((await ctx.get(`${API_BASE_URL}/admin/backups`)).status()).toBe(403);
+      expect((await ctx.post(`${API_BASE_URL}/admin/backups`)).status()).toBe(403);
+      expect((await ctx.get(`${API_BASE_URL}/admin/backups/${name}`)).status()).toBe(403);
+      expect((await ctx.delete(`${API_BASE_URL}/admin/backups/${name}`)).status()).toBe(403);
+    } finally {
+      await ctx.dispose();
+      await page.request.delete(`${API_BASE_URL}/admin/backups/${name}`).catch(() => {});
+    }
+  });
 });

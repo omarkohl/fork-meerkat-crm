@@ -50,7 +50,7 @@ Read first: `.claude/AUTONOMOUS-RUNS.md`, `README-developer.md`, `IMPROVEMENTS.m
       i18n (5 locales), isolation test, docs/api-reference.md.
 - [x] 9. **Trash page (feature)**: list soft-deleted contacts, restore, purge,
       auto-purge after 30 days via the scheduler; API, UI, i18n, isolation test.
-- [ ] 10. **Built-in backups (5.3)**: scheduled `VACUUM INTO` plus photos tarball,
+- [x] 10. **Built-in backups (5.3)**: scheduled `VACUUM INTO` plus photos tarball,
       retention, admin download endpoint and UI, i18n, tests, docs.
 - [ ] 11. **Docs**: README, `docs/`, `docs/api-reference.md`, deployment notes for
       backups. Full `make precommit` and `make test-e2e`.

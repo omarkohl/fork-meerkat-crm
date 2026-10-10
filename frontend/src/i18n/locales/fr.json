@@ -15,6 +15,7 @@
     "settings": "Paramètres",
     "profile": "Profil",
     "users": "Utilisateurs",
+    "backups": "Sauvegardes",
     "apiTokens": "Jetons API",
     "integrations": "Intégrations",
     "data": "Données",
@@ -877,6 +878,31 @@
       "message_one": "Supprimer {{count}} contact définitivement ? Cette action est irréversible.",
       "message_other": "Supprimer les {{count}} contacts définitivement ? Cette action est irréversible.",
       "confirm": "Vider la corbeille"
+    }
+  },
+  "backups": {
+    "title": "Sauvegardes",
+    "listTitle": "Sauvegardes du serveur",
+    "createButton": "Créer une sauvegarde maintenant",
+    "creating": "Création…",
+    "warning": "Chaque sauvegarde contient les données de TOUS les utilisateurs de ce serveur (contacts, notes, rappels, données de compte et hachages de mots de passe) et toutes les photos. Conservez-la et partagez-la avec la plus grande prudence.",
+    "scheduleOn": "Une sauvegarde est créée automatiquement chaque jour à {{time}} ; les {{count}} plus récentes sont conservées.",
+    "scheduleOff": "Les sauvegardes automatiques sont désactivées (BACKUP_ENABLED).",
+    "location": "Stockées sur le serveur dans {{directory}}.",
+    "empty": "Aucune sauvegarde pour le moment.",
+    "download": "Télécharger",
+    "delete": "Supprimer",
+    "downloadAria": "Télécharger {{name}}",
+    "deleteAria": "Supprimer {{name}}",
+    "createSuccess": "Sauvegarde créée",
+    "createError": "Échec de la création de la sauvegarde",
+    "downloadError": "Échec du téléchargement de la sauvegarde",
+    "deleteSuccess": "Sauvegarde supprimée",
+    "deleteError": "Échec de la suppression de la sauvegarde",
+    "deleteDialog": {
+      "title": "Supprimer la sauvegarde",
+      "message": "Supprimer {{name}} ? Cette action est irréversible.",
+      "confirm": "Supprimer"
     }
   },
   "users": {

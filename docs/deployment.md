@@ -78,11 +78,29 @@ Database migrations run automatically on startup.
 
 ## Backups
 
-Back up the SQLite database file and photo directory:
+Meerkat has built-in backups. Every day at `BACKUP_TIME` (default `02:30`, in `REMINDER_TIMEZONE`) it writes one file, `meerkat-backup-YYYYMMDD-HHMMSS.tar.gz`, into `BACKUP_DIR` (default: the `backups` directory next to the database, e.g. `/app/data/backups` in the Docker image, so it is on your data volume) and keeps the `BACKUP_RETENTION_COUNT` (default 7) most recent ones. Set `BACKUP_ENABLED=false` to turn the schedule off. See [Getting started](getting-started.md#environment-variables) for all settings.
 
-```sh
-cp /path/to/data/meerkat.db /backups/meerkat-$(date +%F).db
-rsync -a /path/to/photos/ /backups/photos/
-```
+Each archive holds:
 
-The database can be copied while the app is running (SQLite WAL mode).
+- `meerkat.db`: a consistent snapshot of the whole SQLite database, taken with `VACUUM INTO`. This is safe while the app is running and the database is in WAL mode.
+- `photos/`: all profile photo files.
+
+**A backup contains the data of all users** (contacts, notes, reminders, account data and password hashes, CardDAV and calendar credentials in encrypted form). Treat it like the database itself: the directory is created (or, if it exists, set) to mode `0700` and the files with `0600`, and downloads are limited to administrators.
+
+Administrators manage backups under **Settings > Backups**: list, **Create backup now**, download and delete. The same is available through the [admin API](api-reference.md#admin).
+
+Backups live on the same disk as your data, so they do not protect against losing the disk. Copy them regularly to another machine (for example `rsync -a /path/to/data/backups/ backup-host:meerkat/`) or download them from the admin page. Creating and downloading a backup are exempt from `HTTP_WRITE_TIMEOUT`, so big backups do not time out. The browser download holds the whole archive in memory before saving it, so for very large backups copy the file from `BACKUP_DIR` (for example with `rsync`) instead.
+
+### The WAL files
+
+Meerkat runs SQLite in WAL mode, so next to `meerkat.db` you will see `meerkat.db-wal` and `meerkat.db-shm`. Recent changes can live only in the `-wal` file. Copying `meerkat.db` alone while the app runs can therefore give you a stale or inconsistent database. Use the built-in backup (or `sqlite3 meerkat.db "VACUUM INTO 'copy.db'"`) instead of copying the file, or stop the app first and copy all three files.
+
+### Restoring a backup
+
+**Keep `JWT_SECRET_KEY` and your `.env` file safe alongside the backups.** The `.env` file is not in the archive. CardDAV and CalDAV passwords in the database are encrypted with a key derived from `JWT_SECRET_KEY`, so a restore needs the same `JWT_SECRET_KEY`; with a different one those connections must be set up again. Without your `.env` you also lose the other settings (SMTP, OIDC and so on).
+
+1. Stop Meerkat (`docker compose down`).
+2. Unpack the archive in an empty directory: `tar -xzf meerkat-backup-YYYYMMDD-HHMMSS.tar.gz`.
+3. On the host, in the directory mounted at `/app/data` in the container (`DATA_PATH`, default `./data`), move the current `meerkat.db`, `meerkat.db-wal` and `meerkat.db-shm` out of the way, then put the unpacked `meerkat.db` in their place. Do not keep the old `-wal`/`-shm` files: they belong to the old database.
+4. Replace the contents of the photo directory with the unpacked `photos/` directory. Do this on the host too, in the directory mounted at `/app/static/photos` in the container (`PHOTOS_PATH`, default `./photos`).
+5. Make sure the files are owned by the user the container runs as, then start Meerkat. Migrations run on startup, so a backup from an older version is upgraded.

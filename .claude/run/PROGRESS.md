@@ -2,7 +2,7 @@
 
 ## Next step
 
-10. Built-in backups (5.3).
+11. Docs.
 
 ## Stack
 
@@ -15,7 +15,8 @@
 - 6: `first-sprint/06-jwt-v5`, PR #9 (base `first-sprint/05-replace-nfnt-resize`)
 - 7: `first-sprint/07-gocron-v2`, PR #10 (base `first-sprint/06-jwt-v5`)
 - 8: `first-sprint/08-ics-feed`, PR #11 (base `first-sprint/07-gocron-v2`)
-- 9: `first-sprint/09-trash`, PR pending (base `first-sprint/08-ics-feed`)
+- 9: `first-sprint/09-trash`, PR #12 (base `first-sprint/08-ics-feed`)
+- 10: `first-sprint/10-backups`, PR pending (base `first-sprint/09-trash`)
 
 ## Log
 
@@ -110,7 +111,44 @@
   skips a link whose contact was purged instead of re-importing it. Purge selects only the needed columns;
   `purgedOn` reads as future tense in all locales; docs note the pre-trash contacts caveat. Tests for each.
 
+- Step 10 (built-in backups): tests first (service: `VACUUM INTO` snapshot of a file DB in WAL mode with rows
+  that live only in the `-wal` file, both users' data, photos tarball incl. symlink skip and backup dir inside
+  the photo dir, 0700/0600, same-second names, retention pruning, strict name validation; controller: non-admin
+  403 on all four endpoints, create/list/download/delete, retention, path traversal; scheduler: job optional,
+  daily at `BACKUP_TIME`, not run at start, `RunAll`). Then `services/backup_service.go`,
+  `controllers/backup_controller.go`, admin routes `GET/POST /admin/backups`, `GET/DELETE /admin/backups/:name`,
+  config (`BACKUP_ENABLED`, `BACKUP_TIME`, `BACKUP_RETENTION_COUNT`, `BACKUP_DIR`), `backup` scheduler job wired in
+  `main.go`, `api/backups.ts`, `BackupsPage` (Settings > Backups, admins only), i18n (5 locales; no backend
+  strings needed), docs (deployment: WAL files note and restore procedure; api-reference; env tables; .env
+  examples). Vitest (7), `e2e/backups.spec.ts` (2), isolation case. `make precommit`, `golangci-lint` (0 issues)
+  and `make test-e2e` (37) green.
+- Step 10 review fixes (amended): create and download lift the server write deadline for their request
+  (`http.NewResponseController(...).SetWriteDeadline(time.Time{})`; tested with a recording writer), docs
+  updated. Stale `.tmp-*` dirs in `BACKUP_DIR` are removed at the start of each backup (under the mutex). An
+  existing `BACKUP_DIR` is chmod-ed to 0700. The archive is `Sync`ed before rename. Real-route test
+  (`routes/backup_routes_test.go`) that an admin's API token gets 403 on all four routes. `BACKUP_TIME` is
+  validated only when `BACKUP_ENABLED`. Docs: `JWT_SECRET_KEY`/`.env` must be kept with backups (CardDAV/CalDAV
+  credentials are encrypted with it), restore steps name the host mount directories, browser download buffers
+  the archive in memory (documented, not changed).
+
 ## Decisions
+
+- Step 10: enabled by default (`BACKUP_ENABLED=true`, daily 02:30 in the reminder timezone, keep 7): the point of
+  the item is that most self-hosters have no backup, and an opt-in switch would leave them without one. It costs
+  disk (up to 7 copies of database plus photos); `BACKUP_ENABLED=false` turns it off. Manual create, list,
+  download and delete work regardless. A backup is one `meerkat-backup-YYYYMMDD-HHMMSS.tar.gz` (UTC stamp; a
+  `-N` suffix for several in one second) holding `meerkat.db` and `photos/...`, written to a temp dir inside
+  `BACKUP_DIR` and renamed into place, so a failed run leaves no partial backup. `BACKUP_DIR` defaults to
+  `<dir of SQLITE_DB_PATH>/backups` (on the data volume in Docker). Manual create also prunes to the retention
+  count. The snapshot is `VACUUM INTO` through the app's own connection (never a file copy). Only regular
+  photo files are archived (symlinks skipped, backup dir skipped when inside the photo dir). The file name in
+  the URL is matched against `^meerkat-backup-\d{8}-\d{6}(-\d{1,3})?\.tar\.gz$` before touching the file
+  system; anything else answers 404 (not 400, to reveal nothing). The endpoints sit in the existing admin group
+  (`AdminMiddleware` refuses API tokens too). Logs carry the backup name and size only. The admin UI is a
+  separate page `/backups` in the Settings submenu next to Users, not a section of the Users page. The list
+  response includes the server directory path (admins only) so they know what to copy. Create and download run
+  inside the request with the write deadline lifted, so `HTTP_WRITE_TIMEOUT` does not bound them. No
+  restore endpoint: restoring replaces the live database, which stays a documented manual procedure.
 
 - Step 9 review: (a) `TrashContact` lives in `models`, not `services`, because `services` imports the
   `carddav` package, which needs it (import cycle). (b) Pull-only tombstone: when a link points at a missing
@@ -219,6 +257,9 @@
 
 ## For review
 
+- Step 10: backups are ON by default (daily, keep 7) and contain every user's data including password hashes;
+  check you agree with the default and with the warning text on the Backups page. The Settings > Backups
+  menu entry is shown to admins only. Restore is manual (docs/deployment.md), there is no restore button.
 - Step 9 review: `App.tsx` stays Prettier-reformatted in full: `make format-check` checks every file changed since the base, so a route and nav entry in it cannot be a minimal diff.
 - Step 9: UI is a top-level "Trash" page (sidebar, under Network) with one card listing deleted contacts
   (avatar, name, "Deleted <date> - Will be deleted permanently on <date>"), icon buttons Restore and Delete permanently
@@ -249,6 +290,10 @@
   `table -> parent` with the number of orphan rows an existing database holds.
 
 ## Questions
+
+- Step 10: `docker-compose.yml` does not list the new `BACKUP_*` variables (it passes the env file through like
+  the other settings); worth confirming that a bind-mounted `./data` volume is writable by the container user,
+  as the default backup directory lives there.
 
 - CardDAV pull-only connections: a purged contact leaves its link behind (see Decisions). If the remote card is
   edited later, the sync's "link points at a vanished row" branch re-creates the contact from the remote, whereas

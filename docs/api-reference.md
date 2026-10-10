@@ -229,6 +229,12 @@ Content:
 | `GET` | `/admin/users/:id` | Get a user |
 | `PATCH` | `/admin/users/:id` | Update a user (e.g. set admin flag) |
 | `DELETE` | `/admin/users/:id` | Delete a user |
+| `GET` | `/admin/backups` | List the server backups, newest first, with the schedule: `{"backups": [{"name", "size", "created_at"}], "enabled", "time", "retention_count", "directory"}` |
+| `POST` | `/admin/backups` | Create a backup now (`201`, `{"name", "size", "created_at"}`) and prune to `BACKUP_RETENTION_COUNT` |
+| `GET` | `/admin/backups/:name` | Download a backup (`.tar.gz`, `Cache-Control: no-store`) |
+| `DELETE` | `/admin/backups/:name` | Delete a backup |
+
+A backup contains the data of **all users** (every table, including password hashes) and all profile photos, so these endpoints are for admins only and are refused for API tokens. `:name` must be exactly a name returned by the list (`meerkat-backup-YYYYMMDD-HHMMSS.tar.gz`, optionally with a `-N` suffix); anything else answers `404`. See [Backups](deployment.md#backups).
 
 ### Health
 

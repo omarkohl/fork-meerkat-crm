@@ -86,12 +86,21 @@ func main() {
 			logger.Info().Int("contacts", n).Msg("Purged expired contacts from the trash")
 		}
 	}
+	backupTask := func() {
+		b, err := services.RunScheduledBackup(db, cfg.BackupDir, cfg.ProfilePhotoDir, cfg.BackupRetentionCount, time.Now())
+		if err != nil {
+			logger.Error().Err(err).Msg("Scheduled backup failed")
+			return
+		}
+		logger.Info().Str("backup", b.Name).Int64("bytes", b.Size).Msg("Scheduled backup created")
+	}
 	s, err := services.NewScheduler(cfg, services.SchedulerTasks{
 		Reminders:      reminderTask,
 		WebhookRetries: func() { services.ProcessWebhookRetries(db, *cfg) },
 		CalendarSync:   calendarSyncTask,
 		ContactSync:    contactSyncTask,
 		TrashPurge:     trashPurgeTask,
+		Backup:         backupTask,
 	})
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to create scheduler")
