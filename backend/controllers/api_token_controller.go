@@ -79,6 +79,8 @@ func CreateApiToken(c *gin.Context) {
 		return
 	}
 
+	audit(c, db, models.AuditAPITokenCreated, "token: "+token.Name)
+
 	c.JSON(http.StatusCreated, models.ApiTokenCreateResponse{
 		ApiTokenResponse: models.ApiTokenResponse{
 			ID:         token.ID,
@@ -116,6 +118,8 @@ func RevokeApiToken(c *gin.Context) {
 		apperrors.AbortWithError(c, apperrors.ErrDatabase("update"))
 		return
 	}
+
+	audit(c, db, models.AuditAPITokenRevoked, "token: "+token.Name)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Token revoked successfully"})
 }

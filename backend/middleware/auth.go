@@ -120,9 +120,14 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 				return
 			}
 
-			// Users are soft-deleted; a signed token must not outlive its account.
+			// Users are soft-deleted; a signed token must not outlive its account. The same
+			// lookup yields the token version ("sign out everywhere" raises it).
 			db := c.MustGet("db").(*gorm.DB)
-			if !userExists(c, db, userID) {
+			version, found := userTokenVersion(c, db, userID)
+			if !found {
+				return
+			}
+			if !sessionStillValid(c, db, userID, version, claims) {
 				return
 			}
 			c.Set("userID", userID)
@@ -151,5 +156,79 @@ func userExists(c *gin.Context, db *gorm.DB, userID uint) bool {
 		c.Abort()
 		return false
 	}
+	return true
+}
+
+// userTokenVersion returns the user's token version. Like userExists, it has already
+// answered when it returns false.
+func userTokenVersion(c *gin.Context, db *gorm.DB, userID uint) (int, bool) {
+	var user models.User
+	err := db.Select("id", "token_version").Where("id = ?", userID).Take(&user).Error
+	switch {
+	case err == nil:
+		return user.TokenVersion, true
+	case errors.Is(err, gorm.ErrRecordNotFound):
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+	default:
+		logger.Logger.Error().Err(err).Uint("user_id", userID).Msg("Failed to look up the authenticated user")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+	}
+	c.Abort()
+	return 0, false
+}
+
+// sessionStillValid checks the token's version ("tv", absent in tokens issued before it
+// existed, which count as 0) against the user's, and the session ("sid") against the
+// sessions table: revoked and expired sessions are refused even though the JWT is valid.
+// Tokens without a "sid" are from before sessions existed and have no session to check.
+// It has already answered when it returns false.
+func sessionStillValid(c *gin.Context, db *gorm.DB, userID uint, version int, claims jwt.MapClaims) bool {
+	refuse := func(msg string) bool {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": msg})
+		c.Abort()
+		return false
+	}
+
+	tokenVersion := 0
+	if raw, present := claims["tv"]; present {
+		f, isNumber := raw.(float64)
+		if !isNumber || f != float64(int(f)) {
+			return refuse("Invalid token")
+		}
+		tokenVersion = int(f)
+	}
+	if tokenVersion != version {
+		return refuse("Session revoked")
+	}
+
+	raw, present := claims["sid"]
+	if !present {
+		return true
+	}
+	sid, isString := raw.(string)
+	if !isString || sid == "" {
+		return refuse("Invalid token")
+	}
+	var live int64
+	err := db.Model(&models.Session{}).
+		Where("public_id = ? AND user_id = ? AND revoked_at IS NULL AND expires_at > ?", sid, userID, time.Now()).
+		Count(&live).Error
+	if err != nil {
+		logger.Logger.Error().Err(err).Uint("user_id", userID).Msg("Failed to look up the session")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		c.Abort()
+		return false
+	}
+	if live == 0 {
+		return refuse("Session revoked")
+	}
+	// Stamp last_seen_at at most once a minute.
+	now := time.Now()
+	if err := db.Model(&models.Session{}).
+		Where("public_id = ? AND (last_seen_at IS NULL OR last_seen_at < ?)", sid, now.Add(-time.Minute)).
+		Update("last_seen_at", now).Error; err != nil {
+		logger.Logger.Warn().Err(err).Msg("Failed to update session last_seen_at")
+	}
+	c.Set("sessionID", sid)
 	return true
 }

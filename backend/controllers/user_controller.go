@@ -134,6 +134,8 @@ func LoginUser(context *gin.Context, cfg *config.Config) {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// Record failed attempt even for non-existent users to prevent enumeration
 			accountLimiter.RecordFailedAttempt(identifier)
+			// No user id and no identifier: what was typed may be a password.
+			auditFor(context, db, nil, models.AuditLoginFailed, "unknown account")
 			apperrors.AbortWithError(context, apperrors.ErrInvalidCredentials())
 		} else {
 			apperrors.AbortWithError(context, apperrors.ErrDatabase("Failed to query user").WithError(err))
@@ -145,6 +147,11 @@ func LoginUser(context *gin.Context, cfg *config.Config) {
 	if err := bcrypt.CompareHashAndPassword([]byte(foundUser.Password), []byte(input.Password)); err != nil {
 		// Record failed attempt for password mismatch
 		isLocked, lockoutSecs := accountLimiter.RecordFailedAttempt(identifier)
+		failedDetail := "wrong password"
+		if isLocked {
+			failedDetail = "wrong password, account locked"
+		}
+		auditFor(context, db, &foundUser.ID, models.AuditLoginFailed, failedDetail)
 		if isLocked {
 			context.JSON(http.StatusTooManyRequests, gin.H{
 				"error":          "Account temporarily locked",
@@ -163,11 +170,12 @@ func LoginUser(context *gin.Context, cfg *config.Config) {
 	accountLimiter.RecordSuccessfulLogin(identifier)
 
 	// Create JWT token
-	tokenString, err := services.GenerateToken(foundUser, cfg)
+	tokenString, err := services.IssueSession(db, foundUser, cfg, context.ClientIP(), context.Request.UserAgent())
 	if err != nil {
 		apperrors.AbortWithError(context, apperrors.ErrInternal("Could not generate token").WithError(err))
 		return
 	}
+	auditFor(context, db, &foundUser.ID, models.AuditLogin, "")
 
 	// Set httpOnly cookie with the JWT token
 	maxAge := cfg.JWTExpiryHours * 3600 // Convert hours to seconds
@@ -191,6 +199,14 @@ func LoginUser(context *gin.Context, cfg *config.Config) {
 
 // LogoutUser clears the auth cookie to log out the user
 func LogoutUser(context *gin.Context, cfg *config.Config) {
+	// The route is public: revoke the session named by the cookie, if it is one of ours.
+	if raw, err := context.Cookie("auth_token"); err == nil && raw != "" {
+		if sid := services.SessionIDFromToken(raw, cfg); sid != "" {
+			if v, ok := context.Get("db"); ok {
+				revokeSessionOnLogout(context, v.(*gorm.DB), sid)
+			}
+		}
+	}
 	context.SetSameSite(http.SameSiteLaxMode)
 	context.SetCookie(
 		"auth_token",     // name
@@ -359,6 +375,12 @@ func ConfirmPasswordReset(context *gin.Context) {
 		apperrors.AbortWithError(context, apperrors.ErrDatabase("update user").WithError(err))
 		return
 	}
+
+	// A reset is what you do when the password may be known to someone else: end every session.
+	if err := services.RevokeAllSessions(db, user.ID); err != nil {
+		log.Error().Err(err).Uint("user_id", user.ID).Msg("Failed to revoke sessions after password reset")
+	}
+	auditFor(context, db, &user.ID, models.AuditPasswordReset, "")
 
 	context.JSON(http.StatusOK, gin.H{"message": "Password reset successful"})
 }
@@ -687,5 +709,31 @@ func ChangePassword(context *gin.Context) {
 		return
 	}
 
+	// Every other browser is signed out; this one gets a fresh session.
+	if err := services.RevokeAllSessions(db, user.ID); err != nil {
+		log.Error().Err(err).Uint("user_id", user.ID).Msg("Failed to revoke sessions after password change")
+	} else if cfg := currentConfig(context); cfg.JWTSecretKey != "" && !context.GetBool("isAPIToken") {
+		fresh := user
+		fresh.TokenVersion++
+		if token, err := services.IssueSession(db, fresh, &cfg, context.ClientIP(), context.Request.UserAgent()); err == nil {
+			context.SetSameSite(http.SameSiteLaxMode)
+			context.SetCookie("auth_token", token, cfg.JWTExpiryHours*3600, "/", cfg.CookieDomain, cfg.CookieSecure, true)
+		} else {
+			log.Error().Err(err).Msg("Failed to start a new session after password change")
+		}
+	}
+	auditFor(context, db, &user.ID, models.AuditPasswordChanged, "")
+
 	context.JSON(http.StatusOK, gin.H{"message": "Password updated successfully"})
+}
+
+func revokeSessionOnLogout(c *gin.Context, db *gorm.DB, sid string) {
+	var session models.Session
+	if err := db.Where("public_id = ?", sid).Take(&session).Error; err != nil {
+		return
+	}
+	if revoked, err := services.RevokeSession(db, session.UserID, sid); err == nil && revoked {
+		uid := session.UserID
+		auditFor(c, db, &uid, models.AuditLogout, "")
+	}
 }

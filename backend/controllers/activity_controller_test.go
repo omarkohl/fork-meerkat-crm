@@ -28,7 +28,7 @@ func setupRouter() (*gorm.DB, *gin.Engine) {
 	sqlDB, _ := db.DB()
 	sqlDB.SetMaxOpenConns(1)
 
-	db.AutoMigrate(&models.Contact{}, &models.Activity{}, &models.Note{}, models.Relationship{}, models.Reminder{}, models.User{}, models.ApiToken{}, models.CardDAVConnection{}, models.CardDAVContactLink{}, models.CalendarSubscription{}, models.CalendarEventLink{}, models.Webhook{}, models.WebhookDelivery{})
+	db.AutoMigrate(&models.Contact{}, &models.Activity{}, &models.Note{}, models.Relationship{}, models.Reminder{}, models.User{}, models.ApiToken{}, models.CardDAVConnection{}, models.CardDAVContactLink{}, models.CalendarSubscription{}, models.CalendarEventLink{}, models.Webhook{}, models.WebhookDelivery{}, models.Session{}, models.AuditLog{})
 
 	user := models.User{Username: "tester", Password: "password123", Email: "tester@example.com"}
 	if err := db.Create(&user).Error; err != nil {

@@ -84,7 +84,7 @@ context is above 200k at the end of a step, then start a new one. Reviewer is al
 - [x] 13. **Security headers and CSP**: audit `security_headers.go`, `frame-ancestors`, CSP for
       the SPA (served by nginx too), report-only first then enforcing if the e2e suite passes;
       docs for reverse proxies.
-- [ ] 14. **Sessions and audit log**: list/revoke sessions (token version per user, "sign out
+- [x] 14. **Sessions and audit log**: list/revoke sessions (token version per user, "sign out
       everywhere"), audit log table (login, failed login, export, token/ICS/backup actions, admin
       actions) with retention, admin page with filter, i18n, tests.
 - [ ] 15. **TOTP two-factor**: enrol with QR and recovery codes, enforce at login, admin can reset,

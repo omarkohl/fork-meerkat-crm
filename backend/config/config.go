@@ -57,6 +57,7 @@ type Config struct {
 	CardDAVSyncIntervalHours int    // Interval in hours for the scheduled CardDAV contact sync job
 	CardDAVBlockPrivateURLs  bool   // Block contact sync requests to private/loopback addresses (defaults to CALDAV_BLOCK_PRIVATE_URLS)
 	MonicaBlockPrivateURLs   bool   // Block Monica import requests to private/loopback addresses (useful for cloud deployments)
+	AuditLogRetentionDays    int    // Days audit log entries are kept (0 = forever)
 	TrashRetentionDays       int    // Days a deleted contact stays in the trash before it is purged for good
 	BackupEnabled            bool   // Run the scheduled backup (admins can always create one by hand)
 	BackupTime               string // Time of day (HH:MM, in the reminder timezone) of the scheduled backup
@@ -124,6 +125,11 @@ func LoadConfig() *Config {
 	if cfg.TrashRetentionDays < 1 {
 		log.Println("WARN: TRASH_RETENTION_DAYS must be at least 1, using 30")
 		cfg.TrashRetentionDays = 30
+	}
+	cfg.AuditLogRetentionDays = getIntEnv("AUDIT_LOG_RETENTION_DAYS", 365)
+	if cfg.AuditLogRetentionDays < 0 {
+		log.Println("WARN: AUDIT_LOG_RETENTION_DAYS must not be negative, using 365")
+		cfg.AuditLogRetentionDays = 365
 	}
 	cfg.BackupEnabled = getBoolEnv("BACKUP_ENABLED", true)
 	cfg.BackupTime = getEnv("BACKUP_TIME", "02:30")

@@ -7,6 +7,7 @@ import (
 
 	"meerkat/config"
 	"meerkat/logger"
+	"meerkat/models"
 	"meerkat/services"
 
 	"github.com/gin-gonic/gin"
@@ -129,12 +130,14 @@ func OIDCCallbackHandler(provider *services.OIDCProvider, cfg *config.Config) gi
 			return
 		}
 
-		tokenString, err := services.GenerateToken(*user, cfg)
+		tokenString, err := services.IssueSession(db, *user, cfg, c.ClientIP(), c.Request.UserAgent())
 		if err != nil {
 			log.Error().Err(err).Uint("user_id", user.ID).Msg("OIDC: failed to generate JWT")
 			c.Redirect(http.StatusFound, "/login?error=oidc_error")
 			return
 		}
+
+		auditFor(c, db, &user.ID, models.AuditLogin, "oidc")
 
 		maxAge := cfg.JWTExpiryHours * 3600
 		c.SetSameSite(http.SameSiteLaxMode)

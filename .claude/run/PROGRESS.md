@@ -2,7 +2,7 @@
 
 ## Next step
 
-14.
+15.
 
 ## Stack
 
@@ -18,7 +18,8 @@
 - 10: second-sprint/10-untested-logic (PR #25)
 - 11: second-sprint/11-i18n-check (PR #26)
 - 12: second-sprint/12-ssrf-switch (PR #27)
-- 13: (branch and PR set by the orchestrator)
+- 13: second-sprint/13-security-headers
+- 14: second-sprint/14-sessions-audit (PR set by the orchestrator)
 
 ## Log
 
@@ -138,8 +139,11 @@
 
 - 13: audit: the backend sent XFO, nosniff, Referrer-Policy and HSTS (COOKIE_SECURE only); both nginx configs already had an enforcing CSP, but copied four times each (every location repeats `add_header`), no Permissions-Policy/COOP/CORP, and the server-level `add_header` was also inherited by proxied API locations, so API responses got the backend's headers and nginx's SPA CSP (duplicates). The e2e server (`scripts/e2e-stack.mjs`) sent no headers at all, so the CSP had never been tested. Now: `frontend/security-headers.conf` is the single source (included per static location in `frontend/nginx.conf` and `docker/nginx.conf`, copied to `/etc/nginx/` by both Dockerfiles); proxied locations add nothing, so the backend's API headers (new: `default-src 'none'; frame-ancestors 'none'`, Permissions-Policy, COOP same-origin, CORP same-site) pass through once. CSP gained `manifest-src`, `worker-src`, `object-src 'none'`, `base-uri`, `form-action`. HSTS: nginx via `$forwarded_proto`/`$hsts_header` maps (empty on plain HTTP, so no header), backend when COOKIE_SECURE, TLS or `X-Forwarded-Proto: https`; nginx now forwards an incoming `X-Forwarded-Proto` instead of overwriting it with its own scheme. The e2e server applies the same snippet; `fixtures.ts` `test` fails any test on a CSP violation (console message or `securitypolicyviolation`); `security-headers.spec.ts` checks the SPA and API headers and that an inline script is blocked. `scripts/security-headers.mjs` + test (run by `make i18n-check`/precommit/CI lint job) verify both configs: no stray `add_header`, include in every static location, none in proxied ones, both Dockerfiles copy the snippet, the configs differ only in the upstream. Go test for the middleware. Docs: deployment.md "Security headers". CSP is ENFORCING: all 42 e2e tests pass under it with no violation (no inline scripts in the CRA build, service worker is unregistered, no external fonts/tiles/images).
 
+- 14: migration 27: `users.token_version`, `sessions` (public_id = the JWT `sid` claim, user agent, IP, last_seen_at, expires_at, revoked_at), `audit_logs` (no foreign key; username copied). Logins (password and OIDC) go through `services.IssueSession`, tokens carry `sid` and `tv`. `AuthMiddleware` (one extra query for the token version, one for the session when `sid` is present) refuses revoked, expired and foreign sessions and a stale `tv`; `last_seen_at` is stamped at most once a minute. Tokens without `sid`/`tv` (issued before) still work at version 0 and die on "sign out everywhere". API: `GET /sessions`, `DELETE /sessions/:id`, `POST /sessions/revoke-all` (refused for API tokens), `GET /admin/audit-log` (event, username substring, pagination). Password change signs out the other browsers (and starts a new session for this one), password reset and an admin-set password sign out everywhere, logout revokes the session behind the cookie, admin delete removes the user's sessions. Audit events: login, login_failed, logout, password_changed/reset, session_revoked, sign_out_everywhere, export (csv/vcf), API token, ICS feed, backup create/download/delete, admin user update/delete, admin reminders. Failed login for an unknown account stores no identifier. `AUDIT_LOG_RETENTION_DAYS` (365, 0 = forever); the daily 03:30 trash task also purges ended sessions and old entries. UI: "Active sessions" card on the profile page, admin "Audit log" page (event and user filters, pagination), five locales. Tests: services (issue, revoke, touch throttle, purge), middleware (sid, tv, legacy), controllers (login/logout/revoke/isolation/sign-out-everywhere/password change/reset/delete/audit list), migration up/down, config, Vitest for both components, e2e `sessions.spec.ts`. `make precommit`, golangci-lint, `go test -race` and `make test-e2e` (46) pass. Prettier forced a reformat of `SettingsPage.tsx`.
+
 ## Decisions
 
+- Step 14: tokens from before the upgrade (no `sid`) are accepted so nobody is logged out by the update, which means such a token cannot be revoked one by one, only by "sign out everywhere" or when it expires. Sessions are a table (not only a token version) because listing and revoking single sessions needs rows. Audit rows of deleted accounts are kept until retention (security record); they hold the username, IP and user agent. The IP is `c.ClientIP()`, so behind a proxy it needs `TRUSTED_PROXIES`. Audit writes never fail a request (errors are logged). Not audited: contact/note changes (not security events), CardDAV/ICS fetches.
 - Step 13: enforcing, not report-only: production nginx already enforced a CSP (so report-only would have loosened it), the whole e2e suite passes under it, and report-only needs a report endpoint nobody reads. `style-src 'unsafe-inline'` stays (emotion injects style tags; a nonce is not possible with static nginx). COOP `same-origin` and CORP `same-origin` on the SPA, CORP `same-site` on the API (a SPA on a sibling subdomain can still show photos). The backend does not trust `X-Forwarded-Proto` for anything but HSTS.
 - Step 12: OIDC discovery and the SMTP host are exempt from the guard: only the administrator sets them (environment), and they are often internal. Documented in deployment.md. The warning counts non-deleted users (more than one) and fires when any of the four features is unblocked.
 - Step 11: plural keys (`_one`, `_other`, `_many`, ...) are compared by base name, because languages differ in their plural forms. "Unused" means no string literal equals the key and no literal or template prefix (`'a.b.'`, `` `a.${x}` ``) covers it, so dynamic keys are tolerated; it is a heuristic and only warns.
@@ -163,6 +167,8 @@
 
 ## For review
 
+- Step 14: the audit log stores IP addresses and user agents for the retention period (default 365 days); check that is acceptable for the instances you care about (`AUDIT_LOG_RETENTION_DAYS`).
+- Step 14: one extra indexed query per authenticated JWT request (session lookup) next to the user lookup.
 - Step 13: the nginx changes (maps, `include`, X-Forwarded-Proto forwarding) could not be run here (no nginx binary, no Docker): the check is a static test plus the e2e run against the Node server that mimics it. CI's `docker-compose.test.yml` E2E run goes through the real nginx with the new CSP guard, so it is the first real test. If it fails with a map or include error, fix `frontend/nginx.conf` and `docker/nginx.conf` together.
 - Step 13: `frontend/e2e/fixtures.ts` was reformatted by Prettier (the format check forced it).
 - Step 13: a deployment with the API on another origin (`REACT_APP_API_URL` set) needs `connect-src` relaxed; see deployment.md.

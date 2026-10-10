@@ -71,6 +71,7 @@ func CreateBackup(c *gin.Context) {
 		log.Warn().Err(err).Msg("Failed to prune old backups")
 	}
 	log.Info().Str("backup", b.Name).Int64("bytes", b.Size).Msg("Backup created")
+	audit(c, db, models.AuditBackupCreated, b.Name)
 	c.JSON(http.StatusCreated, backupResponse(b))
 }
 
@@ -94,6 +95,7 @@ func DownloadBackup(c *gin.Context) {
 		return
 	}
 	liftWriteDeadline(c)
+	audit(c, c.MustGet("db").(*gorm.DB), models.AuditBackupDownloaded, c.Param("name"))
 	c.Header("Cache-Control", "no-store")
 	c.Header("X-Content-Type-Options", "nosniff")
 	c.FileAttachment(path, c.Param("name"))
@@ -111,6 +113,7 @@ func DeleteBackup(c *gin.Context) {
 	case err != nil:
 		apperrors.AbortWithError(c, apperrors.ErrInternal("Failed to delete backup").WithError(err))
 	default:
+		audit(c, c.MustGet("db").(*gorm.DB), models.AuditBackupDeleted, c.Param("name"))
 		logger.FromContext(c).Info().Str("backup", c.Param("name")).Msg("Backup deleted")
 		c.JSON(http.StatusOK, gin.H{"message": "Backup deleted"})
 	}

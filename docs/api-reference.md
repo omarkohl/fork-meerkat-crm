@@ -247,6 +247,18 @@ Syncs contacts with an external CardDAV server (Nextcloud, Radicale, ...). Each 
 | `POST` | `/carddav/discover` | Body `{"base_url", "username", "password"}`. Lists the address books on the server: `{"address_books": [...]}`. An empty `password` reuses the stored one, but only when `base_url` has the same host, port and scheme as the saved connection |
 | `POST` | `/carddav/connection/sync` | Start a sync in the background (`202`) |
 
+### Sessions
+
+Every browser login is a session; a revoked or expired session is refused even though its token has not expired yet. These endpoints are refused for API tokens (`403`).
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/sessions` | The user's live sessions, newest first: `{"sessions": [{"id", "user_agent", "ip", "created_at", "last_seen_at", "expires_at", "current"}]}`. `last_seen_at` is updated at most once a minute |
+| `DELETE` | `/sessions/:id` | Sign one session out (`404` for an unknown, foreign or ended id). Revoking the current session is a logout |
+| `POST` | `/sessions/revoke-all` | Sign out everywhere: revokes all sessions, this one included, and invalidates older tokens (token version). API tokens and the calendar feed stay valid |
+
+Changing the password through `/users/change-password` signs out all other browsers (the current one gets a new session); resetting it by e-mail or an admin setting a new password signs out everywhere.
+
 ### API Tokens
 
 | Method | Path | Description |
@@ -288,6 +300,7 @@ Content:
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/admin/system-status` | Operational warnings: `{"private_urls_allowed", "user_count", "private_url_warning", "setting", "features"}`. `private_url_warning` is true when outbound features may reach private addresses and more than one user exists (fix: `BLOCK_PRIVATE_URLS=true`); `features` lists the features (`webhooks`, `caldav`, `carddav`, `monica`) that still allow private addresses. Shown as a banner on the Users page |
+| `GET` | `/admin/audit-log` | Security events, newest first: `{"entries": [{"id", "created_at", "user_id", "username", "event", "ip", "user_agent", "detail"}], "total", "page", "limit", "events", "retention_days"}`. Query: `event` (exact, one of `events`), `username` (substring), `page`, `limit`. Events: login, failed login, logout, password change/reset, session revoked, sign out everywhere, export, API token, calendar feed and backup actions, admin user changes and reminder runs. A failed login for an unknown account has no user and never stores what was typed. Entries older than `AUDIT_LOG_RETENTION_DAYS` (default 365, `0` = keep) are purged daily |
 | `GET` | `/admin/users` | List all users |
 | `GET` | `/admin/users/:id` | Get a user |
 | `PATCH` | `/admin/users/:id` | Update a user (e.g. set admin flag) |

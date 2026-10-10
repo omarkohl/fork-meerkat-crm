@@ -21,4 +21,5 @@ type User struct {
 	EnabledContactFields     []string   `gorm:"type:text;serializer:json" json:"enabled_contact_fields"`
 	OIDCSubject              *string    `gorm:"column:oidc_subject"`
 	OIDCProvider             *string    `gorm:"column:oidc_provider"`
+	TokenVersion             int        `gorm:"not null;default:0" json:"-"`
 }

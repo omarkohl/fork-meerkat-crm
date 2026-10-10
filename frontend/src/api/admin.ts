@@ -119,3 +119,46 @@ export function ssrfBannerSignature(status: { setting: string; features?: string
   const bucket = n <= 2 ? '2' : n <= 5 ? '3-5' : n <= 10 ? '6-10' : n <= 50 ? '11-50' : '51+';
   return [status.setting, [...(status.features ?? [])].sort().join(','), bucket].join('|');
 }
+
+export interface AuditEntry {
+  id: number;
+  created_at: string;
+  user_id: number | null;
+  username: string;
+  event: string;
+  ip: string;
+  user_agent: string;
+  detail: string;
+}
+
+export interface AuditLogPage {
+  entries: AuditEntry[];
+  total: number;
+  page: number;
+  limit: number;
+  events: string[];
+  retention_days: number;
+}
+
+export interface AuditLogQuery {
+  page: number;
+  limit: number;
+  event?: string;
+  username?: string;
+}
+
+// Security events, newest first (admin only)
+export async function getAuditLog(query: AuditLogQuery): Promise<AuditLogPage> {
+  const params = new URLSearchParams({ page: String(query.page), limit: String(query.limit) });
+  if (query.event) params.set('event', query.event);
+  if (query.username) params.set('username', query.username);
+
+  const response = await apiFetch(`${API_BASE_URL}/admin/audit-log?${params}`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+  if (!response.ok) {
+    throw await parseErrorResponse(response);
+  }
+  return response.json();
+}

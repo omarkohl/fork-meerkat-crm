@@ -20,7 +20,8 @@
     "integrations": "Integration",
     "data": "Daten",
     "collapseSidebar": "Seitenleiste einklappen",
-    "expandSidebar": "Seitenleiste ausklappen"
+    "expandSidebar": "Seitenleiste ausklappen",
+    "auditLog": "Prüfprotokoll"
   },
   "dashboard": {
     "welcome": "Willkommen zum Meerkat CRM Dashboard",
@@ -945,5 +946,60 @@
     "triggerReminders": "Erinnerungs-E-Mails senden",
     "triggerRemindersSuccess": "Erinnerungs-E-Mails erfolgreich gesendet",
     "triggerRemindersError": "Fehler beim Senden der Erinnerungs-E-Mails"
+  },
+  "sessions": {
+    "title": "Aktive Sitzungen",
+    "description": "Browser und Geräte, die bei Ihrem Konto angemeldet sind. Melden Sie unbekannte ab, oder überall, wenn Sie unsicher sind.",
+    "signOutAll": "Überall abmelden",
+    "current": "Dieses Gerät",
+    "unknownDevice": "Unbekanntes Gerät",
+    "signedInAt": "Angemeldet {{date}}",
+    "lastActive": "zuletzt aktiv {{date}}",
+    "revoke": "Abmelden",
+    "revokeAria": "{{device}} abmelden",
+    "revokeSuccess": "Sitzung abgemeldet.",
+    "revokeError": "Die Sitzung konnte nicht abgemeldet werden.",
+    "loadError": "Die Sitzungen konnten nicht geladen werden.",
+    "signOutAllError": "Überall abmelden ist fehlgeschlagen.",
+    "signOutAllDialog": {
+      "title": "Überall abmelden?",
+      "message": "Alle Browser und Geräte, auch dieses, werden abgemeldet und Sie müssen sich neu anmelden. API-Tokens und der Kalender-Feed funktionieren weiter.",
+      "confirm": "Überall abmelden"
+    }
+  },
+  "auditLog": {
+    "title": "Prüfprotokoll",
+    "retention": "Einträge werden {{days}} Tage aufbewahrt.",
+    "retentionForever": "Einträge bleiben, bis sie aus der Datenbank gelöscht werden.",
+    "filterEvent": "Ereignis",
+    "allEvents": "Alle Ereignisse",
+    "filterUser": "Benutzer",
+    "time": "Zeit",
+    "event": "Ereignis",
+    "user": "Benutzer",
+    "ip": "IP-Adresse",
+    "detail": "Details",
+    "empty": "Keine Einträge.",
+    "loadError": "Das Prüfprotokoll konnte nicht geladen werden.",
+    "events": {
+      "login": "Anmeldung",
+      "login_failed": "Fehlgeschlagene Anmeldung",
+      "logout": "Abmeldung",
+      "password_changed": "Passwort geändert",
+      "password_reset": "Passwort zurückgesetzt",
+      "session_revoked": "Sitzung abgemeldet",
+      "sign_out_everywhere": "Überall abgemeldet",
+      "export": "Datenexport",
+      "api_token_created": "API-Token erstellt",
+      "api_token_revoked": "API-Token widerrufen",
+      "ics_feed_created": "Kalender-Feed erstellt",
+      "ics_feed_revoked": "Kalender-Feed widerrufen",
+      "backup_created": "Backup erstellt",
+      "backup_downloaded": "Backup heruntergeladen",
+      "backup_deleted": "Backup gelöscht",
+      "admin_user_updated": "Benutzer vom Admin geändert",
+      "admin_user_deleted": "Benutzer vom Admin gelöscht",
+      "admin_reminders_triggered": "Erinnerungen vom Admin ausgelöst"
+    }
   }
 }

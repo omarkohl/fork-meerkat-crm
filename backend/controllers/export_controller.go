@@ -27,6 +27,8 @@ func ExportData(c *gin.Context) {
 		return
 	}
 
+	audit(c, db, models.AuditExport, "csv")
+
 	// Fetch user to get custom field names
 	var user models.User
 	if err := db.First(&user, userID).Error; err != nil {
@@ -346,6 +348,8 @@ func ExportContactsAsVCF(c *gin.Context, photoDir string) {
 	if !ok {
 		return
 	}
+
+	audit(c, db, models.AuditExport, "vcf")
 
 	// Fetch all user contacts
 	var contacts []models.Contact
