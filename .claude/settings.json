@@ -1,0 +1,80 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(make install *)",
+      "Bash(make format *)",
+      "Bash(make format-check *)",
+      "Bash(make lint *)",
+      "Bash(make typecheck *)",
+      "Bash(make test *)",
+      "Bash(make test-e2e *)",
+      "Bash(make precommit *)",
+      "Bash(make build *)",
+      "Bash(go test *)",
+      "Bash(go vet *)",
+      "Bash(go build *)",
+      "Bash(gofmt *)",
+      "Bash(corepack yarn test *)",
+      "Bash(npx vitest *)",
+      "Bash(npx tsc *)",
+      "Bash(npx eslint *)",
+      "Bash(npx playwright test *)",
+      "Bash(node scripts/e2e-stack.mjs *)",
+      "Bash(git status *)",
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "Bash(git diff *)",
+      "Bash(jj st *)",
+      "Bash(jj status *)",
+      "Bash(jj log *)",
+      "Bash(jj show *)",
+      "Bash(jj diff *)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-start.sh",
+            "timeout": 600
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard-bash.mjs"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/format-file.mjs"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/stop-continue.mjs"
+          }
+        ]
+      }
+    ]
+  }
+}
