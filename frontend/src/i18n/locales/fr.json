@@ -1000,6 +1000,28 @@
       "admin_user_updated": "Utilisateur modifié par l'admin",
       "admin_user_deleted": "Utilisateur supprimé par l'admin",
       "admin_reminders_triggered": "Rappels déclenchés par l'admin"
-    }
+    },
+    "keys": {
+      "reason": "Motif",
+      "method": "Méthode",
+      "format": "Format",
+      "token": "Jeton d'API",
+      "backup": "Sauvegarde",
+      "user": "Utilisateur",
+      "changed": "Modifié"
+    },
+    "values": {
+      "unknown_account": "Compte inconnu",
+      "wrong_password": "Mot de passe incorrect",
+      "wrong_password_locked": "Mot de passe incorrect, compte verrouillé",
+      "oidc": "Authentification unique (OIDC)",
+      "csv": "CSV",
+      "vcf": "vCard",
+      "username": "Nom d'utilisateur",
+      "email": "E-mail",
+      "password": "Mot de passe",
+      "is_admin": "Droits d'administrateur"
+    },
+    "userAgent": "Appareil"
   }
 }

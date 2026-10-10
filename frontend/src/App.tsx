@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense, useMemo, MouseEvent as ReactMouseEvent } from 'react';
+import { useState, useEffect, Suspense, lazy, useMemo, MouseEvent as ReactMouseEvent } from 'react';
 import ContactsPage from './ContactsPage';
 import ContactDetailPage from './ContactDetailPage';
 import ActivitiesPage from './ActivitiesPage';
@@ -8,7 +8,6 @@ import SettingsPage from './SettingsPage';
 import NetworkPage from './NetworkPage';
 import UsersPage from './UsersPage';
 import BackupsPage from './BackupsPage';
-import AuditLogPage from './AuditLogPage';
 import ApiTokensPage from './ApiTokensPage';
 import TrashPage from './TrashPage';
 import DataSettingsPage from './DataSettingsPage';
@@ -63,6 +62,8 @@ import ExpandMore from '@mui/icons-material/ExpandMore';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import './App.css';
+
+const AuditLogPage = lazy(() => import('./AuditLogPage'));
 
 const EXPANDED_DRAWER_WIDTH = 240;
 const COLLAPSED_DRAWER_WIDTH = 64;

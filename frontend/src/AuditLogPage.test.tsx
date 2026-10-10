@@ -52,11 +52,12 @@ describe('AuditLogPage', () => {
 
   test('lists entries with translated event names and the retention', async () => {
     vi.mocked(adminApi.getAuditLog).mockResolvedValue(
-      page([entry({}), entry({ id: 2, event: 'login_failed', username: '', detail: 'unknown account' })]),
+      page([entry({}), entry({ id: 2, event: 'login_failed', username: '', detail: 'reason:unknown_account' })]),
     );
     renderIt();
     expect(await screen.findByText('Failed login')).toBeInTheDocument();
-    expect(screen.getByText('unknown account')).toBeInTheDocument();
+    expect(screen.getByText('Reason: Unknown account')).toBeInTheDocument();
+    expect(screen.getAllByText('Firefox')).toHaveLength(2);
     expect(screen.getByText('alice')).toBeInTheDocument();
     expect(screen.getByText('Entries are kept for 365 days.')).toBeInTheDocument();
   });

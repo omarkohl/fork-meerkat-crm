@@ -79,7 +79,7 @@ func CreateApiToken(c *gin.Context) {
 		return
 	}
 
-	audit(c, db, models.AuditAPITokenCreated, "token: "+token.Name)
+	audit(c, db, models.AuditAPITokenCreated, "token:"+auditValue(token.Name))
 
 	c.JSON(http.StatusCreated, models.ApiTokenCreateResponse{
 		ApiTokenResponse: models.ApiTokenResponse{
@@ -119,7 +119,7 @@ func RevokeApiToken(c *gin.Context) {
 		return
 	}
 
-	audit(c, db, models.AuditAPITokenRevoked, "token: "+token.Name)
+	audit(c, db, models.AuditAPITokenRevoked, "token:"+auditValue(token.Name))
 
 	c.JSON(http.StatusOK, gin.H{"message": "Token revoked successfully"})
 }

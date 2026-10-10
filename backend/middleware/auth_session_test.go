@@ -75,7 +75,7 @@ func TestAuthMiddleware_RevokedExpiredOrUnknownSessionIsRefused(t *testing.T) {
 
 func TestAuthMiddleware_TokenVersion(t *testing.T) {
 	bump := func(db *gorm.DB) {
-		require.NoError(t, db.Model(&models.User{}).Where("id = 1").Update("token_version", 2).Error)
+		require.NoError(t, db.Exec("UPDATE users SET token_version = 2 WHERE id = 1").Error)
 	}
 	live := func(db *gorm.DB) {
 		bump(db)

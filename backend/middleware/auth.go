@@ -8,6 +8,7 @@ import (
 	"meerkat/idutil"
 	"meerkat/logger"
 	"meerkat/models"
+	"meerkat/session"
 	"net/http"
 	"strings"
 	"time"
@@ -209,24 +210,18 @@ func sessionStillValid(c *gin.Context, db *gorm.DB, userID uint, version int, cl
 	if !isString || sid == "" {
 		return refuse("Invalid token")
 	}
-	var live int64
-	err := db.Model(&models.Session{}).
-		Where("public_id = ? AND user_id = ? AND revoked_at IS NULL AND expires_at > ?", sid, userID, time.Now()).
-		Count(&live).Error
+	live, err := session.Find(db, userID, sid)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return refuse("Session revoked")
+	}
 	if err != nil {
 		logger.Logger.Error().Err(err).Uint("user_id", userID).Msg("Failed to look up the session")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 		c.Abort()
 		return false
 	}
-	if live == 0 {
-		return refuse("Session revoked")
-	}
-	// Stamp last_seen_at at most once a minute.
-	now := time.Now()
-	if err := db.Model(&models.Session{}).
-		Where("public_id = ? AND (last_seen_at IS NULL OR last_seen_at < ?)", sid, now.Add(-time.Minute)).
-		Update("last_seen_at", now).Error; err != nil {
+	// Writes only when last_seen_at is older than a minute.
+	if err := session.Touch(db, live); err != nil {
 		logger.Logger.Warn().Err(err).Msg("Failed to update session last_seen_at")
 	}
 	c.Set("sessionID", sid)

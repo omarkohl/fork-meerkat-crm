@@ -1000,6 +1000,28 @@
       "admin_user_updated": "Usuario modificado por el admin",
       "admin_user_deleted": "Usuario eliminado por el admin",
       "admin_reminders_triggered": "Recordatorios activados por el admin"
-    }
+    },
+    "keys": {
+      "reason": "Motivo",
+      "method": "Método",
+      "format": "Formato",
+      "token": "Token de API",
+      "backup": "Copia de seguridad",
+      "user": "Usuario",
+      "changed": "Cambiado"
+    },
+    "values": {
+      "unknown_account": "Cuenta desconocida",
+      "wrong_password": "Contraseña incorrecta",
+      "wrong_password_locked": "Contraseña incorrecta, cuenta bloqueada",
+      "oidc": "Inicio de sesión único (OIDC)",
+      "csv": "CSV",
+      "vcf": "vCard",
+      "username": "Nombre de usuario",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "is_admin": "Derechos de administrador"
+    },
+    "userAgent": "Dispositivo"
   }
 }

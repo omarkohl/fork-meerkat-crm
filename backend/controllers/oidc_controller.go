@@ -137,7 +137,7 @@ func OIDCCallbackHandler(provider *services.OIDCProvider, cfg *config.Config) gi
 			return
 		}
 
-		auditFor(c, db, &user.ID, models.AuditLogin, "oidc")
+		auditFor(c, db, &user.ID, models.AuditLogin, "method:oidc")
 
 		maxAge := cfg.JWTExpiryHours * 3600
 		c.SetSameSite(http.SameSiteLaxMode)

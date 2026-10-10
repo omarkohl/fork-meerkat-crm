@@ -14,10 +14,8 @@ import (
 )
 
 const (
-	// sessionTouchInterval bounds how often a session's last_seen_at is written.
-	sessionTouchInterval = time.Minute
-	maxUserAgentLen      = 255
-	maxAuditDetailLen    = 1000
+	maxUserAgentLen   = 255
+	maxAuditDetailLen = 1000
 	// sessionRetentionAfterEnd is how long an expired or revoked session row is kept.
 	sessionRetentionAfterEnd = 24 * time.Hour
 )
@@ -59,25 +57,6 @@ func activeSessions(db *gorm.DB, userID uint) *gorm.DB {
 	return db.Where("user_id = ? AND revoked_at IS NULL AND expires_at > ?", userID, time.Now())
 }
 
-// SessionActive reports whether the user has a session with this id that is neither
-// revoked nor expired.
-func SessionActive(db *gorm.DB, userID uint, publicID string) bool {
-	var n int64
-	err := activeSessions(db, userID).Model(&models.Session{}).Where("public_id = ?", publicID).Count(&n).Error
-	return err == nil && n > 0
-}
-
-// TouchSession stamps last_seen_at, at most once a minute (one conditional UPDATE).
-func TouchSession(db *gorm.DB, publicID string) {
-	now := time.Now()
-	err := db.Model(&models.Session{}).
-		Where("public_id = ? AND (last_seen_at IS NULL OR last_seen_at < ?)", publicID, now.Add(-sessionTouchInterval)).
-		Update("last_seen_at", now).Error
-	if err != nil {
-		logger.Warn().Err(err).Msg("Failed to update session last_seen_at")
-	}
-}
-
 // ListSessions returns the user's live sessions, newest first.
 func ListSessions(db *gorm.DB, userID uint) ([]models.Session, error) {
 	var sessions []models.Session
@@ -96,8 +75,8 @@ func RevokeSession(db *gorm.DB, userID uint, publicID string) (bool, error) {
 // version is raised, which also kills tokens issued before sessions existed.
 func RevokeAllSessions(db *gorm.DB, userID uint) error {
 	return db.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&models.User{}).Where("id = ?", userID).
-			UpdateColumn("token_version", gorm.Expr("token_version + 1")).Error; err != nil {
+		// Raw SQL: the field is read-only for gorm so that Save() cannot overwrite it.
+		if err := tx.Exec("UPDATE users SET token_version = token_version + 1 WHERE id = ?", userID).Error; err != nil {
 			return err
 		}
 		return tx.Model(&models.Session{}).Where("user_id = ? AND revoked_at IS NULL", userID).

@@ -1000,6 +1000,28 @@
       "admin_user_updated": "Benutzer vom Admin geändert",
       "admin_user_deleted": "Benutzer vom Admin gelöscht",
       "admin_reminders_triggered": "Erinnerungen vom Admin ausgelöst"
-    }
+    },
+    "keys": {
+      "reason": "Grund",
+      "method": "Methode",
+      "format": "Format",
+      "token": "API-Token",
+      "backup": "Backup",
+      "user": "Benutzer",
+      "changed": "Geändert"
+    },
+    "values": {
+      "unknown_account": "Unbekanntes Konto",
+      "wrong_password": "Falsches Passwort",
+      "wrong_password_locked": "Falsches Passwort, Konto gesperrt",
+      "oidc": "Single Sign-On (OIDC)",
+      "csv": "CSV",
+      "vcf": "vCard",
+      "username": "Benutzername",
+      "email": "E-Mail",
+      "password": "Passwort",
+      "is_admin": "Admin-Rechte"
+    },
+    "userAgent": "Gerät"
   }
 }

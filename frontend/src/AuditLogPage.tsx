@@ -22,6 +22,7 @@ import {
 } from '@mui/material';
 import { AuditEntry, getAuditLog } from './api/admin';
 import { isAdmin } from './auth';
+import { describeAuditDetail } from './utils/auditDetail';
 
 export default function AuditLogPage() {
   const { t } = useTranslation();
@@ -126,19 +127,20 @@ export default function AuditLogPage() {
               <TableCell>{t('auditLog.user')}</TableCell>
               <TableCell>{t('auditLog.ip')}</TableCell>
               <TableCell>{t('auditLog.detail')}</TableCell>
+              <TableCell>{t('auditLog.userAgent')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {loading && (
               <TableRow>
-                <TableCell colSpan={5} align="center">
+                <TableCell colSpan={6} align="center">
                   <CircularProgress size={24} />
                 </TableCell>
               </TableRow>
             )}
             {!loading && entries.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} align="center">
+                <TableCell colSpan={6} align="center">
                   {t('auditLog.empty')}
                 </TableCell>
               </TableRow>
@@ -150,7 +152,8 @@ export default function AuditLogPage() {
                   <TableCell>{eventLabel(entry.event)}</TableCell>
                   <TableCell>{entry.username || '–'}</TableCell>
                   <TableCell>{entry.ip}</TableCell>
-                  <TableCell title={entry.user_agent}>{entry.detail}</TableCell>
+                  <TableCell>{describeAuditDetail(entry.detail, t)}</TableCell>
+                  <TableCell sx={{ maxWidth: 260, wordBreak: 'break-word' }}>{entry.user_agent}</TableCell>
                 </TableRow>
               ))}
           </TableBody>

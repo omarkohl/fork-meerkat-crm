@@ -135,7 +135,7 @@ func LoginUser(context *gin.Context, cfg *config.Config) {
 			// Record failed attempt even for non-existent users to prevent enumeration
 			accountLimiter.RecordFailedAttempt(identifier)
 			// No user id and no identifier: what was typed may be a password.
-			auditFor(context, db, nil, models.AuditLoginFailed, "unknown account")
+			auditFor(context, db, nil, models.AuditLoginFailed, "reason:unknown_account")
 			apperrors.AbortWithError(context, apperrors.ErrInvalidCredentials())
 		} else {
 			apperrors.AbortWithError(context, apperrors.ErrDatabase("Failed to query user").WithError(err))
@@ -147,9 +147,9 @@ func LoginUser(context *gin.Context, cfg *config.Config) {
 	if err := bcrypt.CompareHashAndPassword([]byte(foundUser.Password), []byte(input.Password)); err != nil {
 		// Record failed attempt for password mismatch
 		isLocked, lockoutSecs := accountLimiter.RecordFailedAttempt(identifier)
-		failedDetail := "wrong password"
+		failedDetail := "reason:wrong_password"
 		if isLocked {
-			failedDetail = "wrong password, account locked"
+			failedDetail = "reason:wrong_password_locked"
 		}
 		auditFor(context, db, &foundUser.ID, models.AuditLoginFailed, failedDetail)
 		if isLocked {
@@ -370,16 +370,19 @@ func ConfirmPasswordReset(context *gin.Context) {
 	user.PasswordResetExpiresAt = nil
 	user.PasswordResetRequestedAt = nil
 
-	if err := db.Save(&user).Error; err != nil {
+	// A reset is what you do when the password may be known to someone else: the new
+	// password and the end of every session are one change, or the request fails.
+	if err := db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Save(&user).Error; err != nil {
+			return err
+		}
+		return services.RevokeAllSessions(tx, user.ID)
+	}); err != nil {
 		log.Error().Err(err).Uint("user_id", user.ID).Msg("Failed to persist password reset")
 		apperrors.AbortWithError(context, apperrors.ErrDatabase("update user").WithError(err))
 		return
 	}
 
-	// A reset is what you do when the password may be known to someone else: end every session.
-	if err := services.RevokeAllSessions(db, user.ID); err != nil {
-		log.Error().Err(err).Uint("user_id", user.ID).Msg("Failed to revoke sessions after password reset")
-	}
 	auditFor(context, db, &user.ID, models.AuditPasswordReset, "")
 
 	context.JSON(http.StatusOK, gin.H{"message": "Password reset successful"})
@@ -703,16 +706,20 @@ func ChangePassword(context *gin.Context) {
 	user.PasswordResetExpiresAt = nil
 	user.PasswordResetRequestedAt = nil
 
-	if err := db.Save(&user).Error; err != nil {
+	// New password and the end of all other sessions are one change, or the request fails.
+	if err := db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Save(&user).Error; err != nil {
+			return err
+		}
+		return services.RevokeAllSessions(tx, user.ID)
+	}); err != nil {
 		log.Error().Err(err).Uint("user_id", user.ID).Msg("Failed to persist password change")
 		apperrors.AbortWithError(context, apperrors.ErrDatabase("update user").WithError(err))
 		return
 	}
 
 	// Every other browser is signed out; this one gets a fresh session.
-	if err := services.RevokeAllSessions(db, user.ID); err != nil {
-		log.Error().Err(err).Uint("user_id", user.ID).Msg("Failed to revoke sessions after password change")
-	} else if cfg := currentConfig(context); cfg.JWTSecretKey != "" && !context.GetBool("isAPIToken") {
+	if cfg := currentConfig(context); cfg.JWTSecretKey != "" && !context.GetBool("isAPIToken") {
 		fresh := user
 		fresh.TokenVersion++
 		if token, err := services.IssueSession(db, fresh, &cfg, context.ClientIP(), context.Request.UserAgent()); err == nil {
