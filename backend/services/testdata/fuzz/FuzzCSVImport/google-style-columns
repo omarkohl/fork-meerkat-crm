@@ -1,0 +1,2 @@
+go test fuzz v1
+string("First Name,E-mail 1 - Label,E-mail 1 - Value,E-mail 2 - Value,Phone 1 - Value\x0aA,Home,a@b.c,d@e.f,123\x0a")

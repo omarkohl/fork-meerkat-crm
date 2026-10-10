@@ -450,6 +450,49 @@ func SaveContactPhoto(photoData []byte, mediaType string, photoDir string) (stri
 		return "", "", nil
 	}
 
+	img, err := decodePhoto(photoData, mediaType)
+	if err != nil {
+		return "", "", err
+	}
+
+	// Crop to centered square if rectangular
+	img = cropToSquare(img)
+
+	// Generate unique filename
+	baseFilename := uuid.New().String()
+	photoPath := baseFilename + "_photo.jpg"
+
+	// Ensure directory exists
+	if err := photofile.EnsureDir(photoDir); err != nil {
+		return "", "", err
+	}
+
+	// Save photo (max 400x400, only downscale - smaller images keep their size)
+	const maxPhotoSize = 400
+	bounds := img.Bounds()
+	photoImg := img
+	if bounds.Dx() > maxPhotoSize || bounds.Dy() > maxPhotoSize {
+		photoImg = resizeTo(img, maxPhotoSize)
+	}
+	// Create thumbnail and encode as base64 data URL (48x48)
+	thumbnail := resizeTo(img, 48)
+	var thumbnailBuf bytes.Buffer
+	if err := jpeg.Encode(&thumbnailBuf, thumbnail, &jpeg.Options{Quality: 85}); err != nil {
+		return "", "", err
+	}
+	thumbnailBase64 := "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(thumbnailBuf.Bytes())
+
+	fullPhotoPath := filepath.Join(photoDir, photoPath)
+	if err := photofile.SaveJPEG(fullPhotoPath, photoImg); err != nil {
+		return "", "", err
+	}
+
+	return photoPath, thumbnailBase64, nil
+}
+
+// decodePhoto decodes untrusted image bytes (JPEG, PNG, GIF, WebP, HEIC), using the
+// media type as a hint and falling back to sniffing. It writes nothing.
+func decodePhoto(photoData []byte, mediaType string) (image.Image, error) {
 	// Detect content type if not provided
 	if mediaType == "" {
 		mediaType = http.DetectContentType(photoData)
@@ -501,42 +544,9 @@ func SaveContactPhoto(photoData []byte, mediaType string, photoDir string) (stri
 		}
 	}
 	if err != nil {
-		return "", "", err
+		return nil, err
 	}
-
-	// Crop to centered square if rectangular
-	img = cropToSquare(img)
-
-	// Generate unique filename
-	baseFilename := uuid.New().String()
-	photoPath := baseFilename + "_photo.jpg"
-
-	// Ensure directory exists
-	if err := photofile.EnsureDir(photoDir); err != nil {
-		return "", "", err
-	}
-
-	// Save photo (max 400x400, only downscale - smaller images keep their size)
-	const maxPhotoSize = 400
-	bounds := img.Bounds()
-	photoImg := img
-	if bounds.Dx() > maxPhotoSize || bounds.Dy() > maxPhotoSize {
-		photoImg = resizeTo(img, maxPhotoSize)
-	}
-	// Create thumbnail and encode as base64 data URL (48x48)
-	thumbnail := resizeTo(img, 48)
-	var thumbnailBuf bytes.Buffer
-	if err := jpeg.Encode(&thumbnailBuf, thumbnail, &jpeg.Options{Quality: 85}); err != nil {
-		return "", "", err
-	}
-	thumbnailBase64 := "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(thumbnailBuf.Bytes())
-
-	fullPhotoPath := filepath.Join(photoDir, photoPath)
-	if err := photofile.SaveJPEG(fullPhotoPath, photoImg); err != nil {
-		return "", "", err
-	}
-
-	return photoPath, thumbnailBase64, nil
+	return img, nil
 }
 
 // cropToSquare crops an image to a centered square

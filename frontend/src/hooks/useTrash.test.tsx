@@ -1,5 +1,5 @@
-import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, waitFor, act, cleanup } from '@testing-library/react';
+import { describe, test, expect, vi, beforeEach } from 'vitest';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { useTrash } from './useTrash';
 import * as trashApi from '../api/trash';
 
@@ -18,7 +18,6 @@ const contact = {
 };
 
 describe('useTrash', () => {
-  afterEach(cleanup);
   beforeEach(() => vi.resetAllMocks());
 
   test('loads the trash and the retention period', async () => {

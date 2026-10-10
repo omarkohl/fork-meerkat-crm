@@ -1,0 +1,2 @@
+go test fuzz v1
+string("x\x0d\x0aBEGIN:VEVENT\x0d\x0aEND:VCALENDAR")

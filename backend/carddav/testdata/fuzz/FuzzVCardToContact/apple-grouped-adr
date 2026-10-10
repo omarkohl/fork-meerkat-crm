@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("BEGIN:VCARD\x0d\x0aVERSION:3.0\x0d\x0aFN:G\x0d\x0aitem1.ADR;type=HOME:;;1 Main;Town;;1;X\x0d\x0aitem1.X-ABLabel:Cabin\x0d\x0aitem2.TEL:123\x0d\x0aitem2.X-ABLabel:_$!<Mobile>!$_\x0d\x0aEND:VCARD\x0d\x0a")
