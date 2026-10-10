@@ -10,6 +10,7 @@
     "activities": "Activities",
     "notes": "Notes",
     "network": "Network",
+    "trash": "Trash",
     "reminders": "Reminders",
     "settings": "Settings",
     "profile": "Profile",
@@ -282,7 +283,7 @@
     "female": "Female",
     "other": "Other",
     "deleteContact": "Delete Contact",
-    "confirmDeleteContact": "Are you sure you want to delete {{name}}? This action cannot be undone and will also delete all notes, activities, and reminders associated with this contact.",
+    "confirmDeleteContact": "Are you sure you want to delete {{name}}? The contact moves to the Trash together with its notes, activities and reminders. You can restore it there until it is deleted permanently.",
     "deleteContactError": "Failed to delete contact. Please try again.",
     "updateError": "Failed to update contact. Please check your input and try again.",
     "firstNameRequired": "First name is required",
@@ -844,6 +845,38 @@
       "title": "Revoke calendar feed",
       "message": "The feed URL will stop working immediately. You can generate a new one later.",
       "confirm": "Revoke"
+    }
+  },
+  "trash": {
+    "title": "Trash",
+    "contactsTitle": "Deleted contacts",
+    "description_one": "Deleted contacts stay here for {{count}} day. After that they are deleted permanently, together with their notes, reminders and photo.",
+    "description_other": "Deleted contacts stay here for {{count}} days. After that they are deleted permanently, together with their notes, reminders and photo.",
+    "empty": "The trash is empty.",
+    "deletedOn": "Deleted {{date}}",
+    "purgedOn": "Will be deleted permanently on {{date}}",
+    "restore": "Restore",
+    "purge": "Delete permanently",
+    "restoreAria": "Restore {{name}}",
+    "purgeAria": "Delete {{name}} permanently",
+    "restoreSuccess": "{{name}} restored",
+    "restoreError": "Failed to restore the contact",
+    "purgeSuccess": "{{name}} deleted permanently",
+    "purgeError": "Failed to delete the contact permanently",
+    "emptyButton": "Empty trash",
+    "emptySuccess_one": "{{count}} contact deleted permanently",
+    "emptySuccess_other": "{{count}} contacts deleted permanently",
+    "emptyError": "Failed to empty the trash",
+    "purgeDialog": {
+      "title": "Delete permanently",
+      "message": "Delete {{name}} permanently? The contact and its notes, reminders and photo cannot be recovered.",
+      "confirm": "Delete permanently"
+    },
+    "emptyDialog": {
+      "title": "Empty trash",
+      "message_one": "Delete {{count}} contact permanently? This cannot be undone.",
+      "message_other": "Delete all {{count}} contacts permanently? This cannot be undone.",
+      "confirm": "Empty trash"
     }
   },
   "users": {

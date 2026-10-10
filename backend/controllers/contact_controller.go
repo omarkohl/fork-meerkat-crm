@@ -8,8 +8,6 @@ import (
 	"meerkat/models"
 	"meerkat/services"
 	"net/http"
-	"os"
-	"path/filepath"
 	"slices"
 	"strings"
 	"time"
@@ -433,34 +431,11 @@ func DeleteContact(c *gin.Context) {
 		return
 	}
 
-	// Start a transaction to ensure all deletes succeed together
+	// Soft-delete the contact and its notes, reminders and relationships together.
+	// Activity links and photo files stay so that restoring from the trash is lossless;
+	// the purge (services.PurgeTrashedContacts) removes them for good.
 	err := db.Transaction(func(tx *gorm.DB) error {
-		// Manually delete associated reminders (soft delete doesn't trigger CASCADE)
-		if err := tx.Where("contact_id = ? AND user_id = ?", id, userID).Delete(&models.Reminder{}).Error; err != nil {
-			return err
-		}
-
-		// Manually delete associated notes
-		if err := tx.Where("contact_id = ? AND user_id = ?", id, userID).Delete(&models.Note{}).Error; err != nil {
-			return err
-		}
-
-		// Manually delete associated relationships
-		if err := tx.Where("contact_id = ? AND user_id = ?", id, userID).Delete(&models.Relationship{}).Error; err != nil {
-			return err
-		}
-
-		// Delete activity associations (many-to-many)
-		if err := tx.Exec("DELETE FROM activity_contacts WHERE contact_id = ? AND activity_id IN (SELECT id FROM activities WHERE user_id = ?)", id, userID).Error; err != nil {
-			return err
-		}
-
-		// Finally, delete the contact
-		if err := tx.Delete(&contact).Error; err != nil {
-			return err
-		}
-
-		return nil
+		return models.TrashContact(tx, userID, contact.ID)
 	})
 
 	if err != nil {
@@ -468,43 +443,8 @@ func DeleteContact(c *gin.Context) {
 		return
 	}
 
-	// Cleanup profile photos after successful database transaction
-	// This is done outside the transaction since file deletion cannot be rolled back
-	deleteContactPhotos(c, contact)
-
 	go services.TriggerWebhooks(db, currentConfig(c), userID, "contact.deleted", gin.H{"id": contact.ID})
 	c.JSON(http.StatusOK, gin.H{"message": "Contact deleted"})
-}
-
-// deleteContactPhotos removes the profile photo file for a contact
-// Note: thumbnails are stored as base64 in the database, not as files
-func deleteContactPhotos(c *gin.Context, contact models.Contact) {
-	uploadDir := os.Getenv("PROFILE_PHOTO_DIR")
-	if uploadDir == "" {
-		return
-	}
-
-	log := logger.FromContext(c)
-
-	// Delete main photo if it exists
-	if contact.Photo != "" {
-		photoPath := filepath.Join(uploadDir, contact.Photo)
-		if err := os.Remove(photoPath); err != nil && !os.IsNotExist(err) {
-			log.Warn().Err(err).Str("path", photoPath).Msg("Failed to delete contact photo")
-		} else if err == nil {
-			log.Debug().Str("path", photoPath).Msg("Deleted contact photo")
-		}
-	}
-
-	// Delete legacy file-based thumbnail if it exists (not base64 data URL)
-	if contact.PhotoThumbnail != "" && !strings.HasPrefix(contact.PhotoThumbnail, "data:") {
-		thumbnailPath := filepath.Join(uploadDir, contact.PhotoThumbnail)
-		if err := os.Remove(thumbnailPath); err != nil && !os.IsNotExist(err) {
-			log.Warn().Err(err).Str("path", thumbnailPath).Msg("Failed to delete contact thumbnail")
-		} else if err == nil {
-			log.Debug().Str("path", thumbnailPath).Msg("Deleted contact thumbnail")
-		}
-	}
 }
 
 // GetCircles returns all unique circles associated with contacts.
@@ -520,7 +460,7 @@ func GetCircles(c *gin.Context) {
 	// Raw SQL query to extract unique circle names
 	err := db.Raw(`SELECT DISTINCT json_each.value AS circle
 	               FROM contacts, json_each(contacts.circles)
-	               WHERE contacts.user_id = ?`, userID).Scan(&circleNames).Error
+	               WHERE contacts.user_id = ? AND contacts.deleted_at IS NULL`, userID).Scan(&circleNames).Error
 	if err != nil {
 		apperrors.AbortWithError(c, apperrors.ErrDatabase("Failed to retrieve circles").WithError(err))
 		return

@@ -48,7 +48,7 @@ Read first: `.claude/AUTONOMOUS-RUNS.md`, `README-developer.md`, `IMPROVEMENTS.m
 - [x] 8. **ICS feed export (feature)**: token-protected subscribable URL for
       birthdays and reminders; migration, controller, API client, settings UI,
       i18n (5 locales), isolation test, docs/api-reference.md.
-- [ ] 9. **Trash page (feature)**: list soft-deleted contacts, restore, purge,
+- [x] 9. **Trash page (feature)**: list soft-deleted contacts, restore, purge,
       auto-purge after 30 days via the scheduler; API, UI, i18n, isolation test.
 - [ ] 10. **Built-in backups (5.3)**: scheduled `VACUUM INTO` plus photos tarball,
       retention, admin download endpoint and UI, i18n, tests, docs.

@@ -10,6 +10,7 @@
     "activities": "Attività",
     "notes": "Note",
     "network": "Rete",
+    "trash": "Cestino",
     "reminders": "Promemoria",
     "settings": "Impostazioni",
     "profile": "Profilo",
@@ -282,7 +283,7 @@
     "female": "Femmina",
     "other": "Altro",
     "deleteContact": "Elimina Contatto",
-    "confirmDeleteContact": "Sei sicuro di voler eliminare {{name}}? Questa azione non può essere annullata ed eliminerà anche tutte le note, attività e promemoria associati a questo contatto.",
+    "confirmDeleteContact": "Sei sicuro di voler eliminare {{name}}? Il contatto viene spostato nel Cestino insieme a note, attività e promemoria. Puoi ripristinarlo da lì finché non viene eliminato definitivamente.",
     "deleteContactError": "Impossibile eliminare il contatto. Riprova.",
     "updateError": "Impossibile aggiornare il contatto. Controlla i dati inseriti e riprova.",
     "firstNameRequired": "Il nome è obbligatorio",
@@ -844,6 +845,38 @@
       "title": "Revoca feed del calendario",
       "message": "L'URL del feed smetterà di funzionare subito. Potrai generarne uno nuovo in seguito.",
       "confirm": "Revoca"
+    }
+  },
+  "trash": {
+    "title": "Cestino",
+    "contactsTitle": "Contatti eliminati",
+    "description_one": "I contatti eliminati restano qui per {{count}} giorno. Poi vengono eliminati definitivamente insieme a note, promemoria e foto.",
+    "description_other": "I contatti eliminati restano qui per {{count}} giorni. Poi vengono eliminati definitivamente insieme a note, promemoria e foto.",
+    "empty": "Il cestino è vuoto.",
+    "deletedOn": "Eliminato il {{date}}",
+    "purgedOn": "Verrà rimosso definitivamente il {{date}}",
+    "restore": "Ripristina",
+    "purge": "Elimina definitivamente",
+    "restoreAria": "Ripristina {{name}}",
+    "purgeAria": "Elimina definitivamente {{name}}",
+    "restoreSuccess": "{{name}} ripristinato",
+    "restoreError": "Impossibile ripristinare il contatto",
+    "purgeSuccess": "{{name}} eliminato definitivamente",
+    "purgeError": "Impossibile eliminare definitivamente il contatto",
+    "emptyButton": "Svuota cestino",
+    "emptySuccess_one": "{{count}} contatto eliminato definitivamente",
+    "emptySuccess_other": "{{count}} contatti eliminati definitivamente",
+    "emptyError": "Impossibile svuotare il cestino",
+    "purgeDialog": {
+      "title": "Elimina definitivamente",
+      "message": "Eliminare definitivamente {{name}}? Il contatto con note, promemoria e foto non può essere recuperato.",
+      "confirm": "Elimina definitivamente"
+    },
+    "emptyDialog": {
+      "title": "Svuota cestino",
+      "message_one": "Eliminare definitivamente {{count}} contatto? L'operazione non può essere annullata.",
+      "message_other": "Eliminare definitivamente tutti i {{count}} contatti? L'operazione non può essere annullata.",
+      "confirm": "Svuota cestino"
     }
   },
   "users": {

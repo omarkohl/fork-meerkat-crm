@@ -18,6 +18,7 @@ You can add **custom fields** through the settings menu. These will appear on ev
 
 You can **archive** contacts to hide them from default search results and the dashboard. Archiving permanently deletes all active reminders for that contact. Notes, activities and relationships are preserved. Archived contacts are still synced via CardDAV (as often you might have phone contacts that you want to keep but do not want them to show up in Meerkat CRM).
 
+**Deleting** a contact moves it to the **Trash** (sidebar). The contact keeps its notes, reminders, relationships, activity links and photo there, and **Restore** brings everything back. While in the trash the contact is hidden from lists, search, birthdays, the network graph, the calendar feed and reminders. **Delete permanently** removes one contact for good, **Empty trash** removes all of them, and anything that has been in the trash for more than 30 days (`TRASH_RETENTION_DAYS`) is removed automatically once a day. Activities themselves are never deleted with a contact. Contacts deleted before the trash existed already lost their activity links and photo files, so restoring them shows no activities and may show a missing photo. If the contact is synced with a CardDAV address book, deleting it deletes the remote card on the next sync, and restoring it uploads the card again.
 
 ## Activities
 

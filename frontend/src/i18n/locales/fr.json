@@ -10,6 +10,7 @@
     "activities": "Activités",
     "notes": "Notes",
     "network": "Réseau",
+    "trash": "Corbeille",
     "reminders": "Rappels",
     "settings": "Paramètres",
     "profile": "Profil",
@@ -282,7 +283,7 @@
     "female": "Femme",
     "other": "Autre",
     "deleteContact": "Supprimer le contact",
-    "confirmDeleteContact": "Êtes-vous sûr de vouloir supprimer {{name}} ? Cette action est irréversible et supprimera également toutes les notes, activités et rappels associés à ce contact.",
+    "confirmDeleteContact": "Êtes-vous sûr de vouloir supprimer {{name}} ? Le contact est déplacé dans la Corbeille avec ses notes, activités et rappels. Vous pouvez l'y restaurer jusqu'à sa suppression définitive.",
     "deleteContactError": "Échec de la suppression du contact. Veuillez réessayer.",
     "updateError": "Échec de la mise à jour du contact. Veuillez vérifier votre saisie et réessayer.",
     "firstNameRequired": "Le prénom est requis",
@@ -844,6 +845,38 @@
       "title": "Révoquer le flux de calendrier",
       "message": "L'URL du flux cessera de fonctionner immédiatement. Vous pourrez en générer une nouvelle plus tard.",
       "confirm": "Révoquer"
+    }
+  },
+  "trash": {
+    "title": "Corbeille",
+    "contactsTitle": "Contacts supprimés",
+    "description_one": "Les contacts supprimés restent ici {{count}} jour. Ensuite, ils sont supprimés définitivement avec leurs notes, rappels et photo.",
+    "description_other": "Les contacts supprimés restent ici {{count}} jours. Ensuite, ils sont supprimés définitivement avec leurs notes, rappels et photo.",
+    "empty": "La corbeille est vide.",
+    "deletedOn": "Supprimé le {{date}}",
+    "purgedOn": "Sera supprimé définitivement le {{date}}",
+    "restore": "Restaurer",
+    "purge": "Supprimer définitivement",
+    "restoreAria": "Restaurer {{name}}",
+    "purgeAria": "Supprimer {{name}} définitivement",
+    "restoreSuccess": "{{name}} restauré",
+    "restoreError": "Impossible de restaurer le contact",
+    "purgeSuccess": "{{name}} supprimé définitivement",
+    "purgeError": "Impossible de supprimer le contact définitivement",
+    "emptyButton": "Vider la corbeille",
+    "emptySuccess_one": "{{count}} contact supprimé définitivement",
+    "emptySuccess_other": "{{count}} contacts supprimés définitivement",
+    "emptyError": "Impossible de vider la corbeille",
+    "purgeDialog": {
+      "title": "Supprimer définitivement",
+      "message": "Supprimer {{name}} définitivement ? Le contact, ses notes, rappels et sa photo ne pourront pas être récupérés.",
+      "confirm": "Supprimer définitivement"
+    },
+    "emptyDialog": {
+      "title": "Vider la corbeille",
+      "message_one": "Supprimer {{count}} contact définitivement ? Cette action est irréversible.",
+      "message_other": "Supprimer les {{count}} contacts définitivement ? Cette action est irréversible.",
+      "confirm": "Vider la corbeille"
     }
   },
   "users": {

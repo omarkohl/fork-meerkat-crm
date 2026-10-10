@@ -19,6 +19,7 @@ const (
 	JobWebhookRetries = "webhook-retries"
 	JobCalendarSync   = "calendar-sync"
 	JobContactSync    = "contact-sync"
+	JobTrashPurge     = "trash-purge"
 )
 
 // SchedulerTasks are the functions the scheduler runs periodically.
@@ -27,6 +28,7 @@ type SchedulerTasks struct {
 	WebhookRetries func()
 	CalendarSync   func()
 	ContactSync    func()
+	TrashPurge     func()
 }
 
 // Scheduler runs the recurring background jobs.
@@ -36,7 +38,7 @@ type Scheduler struct {
 
 // NewScheduler registers the recurring jobs: reminders daily at cfg.ReminderTime
 // (in the reminder timezone), webhook retries every 5 minutes, and calendar and
-// contact syncs every configured number of hours. Interval jobs also run once as
+// contact syncs every configured number of hours, and the trash purge daily at 03:30. Interval jobs also run once as
 // soon as the scheduler starts. Registration failures are logged and skipped.
 func NewScheduler(cfg *config.Config, t SchedulerTasks) (*Scheduler, error) {
 	s, err := gocron.NewScheduler(gocron.WithLocation(cfg.GetReminderLocation()),
@@ -56,6 +58,7 @@ func NewScheduler(cfg *config.Config, t SchedulerTasks) (*Scheduler, error) {
 	register(s, JobWebhookRetries, gocron.DurationJob(5*time.Minute), t.WebhookRetries, startNow)
 	register(s, JobCalendarSync, gocron.DurationJob(time.Duration(cfg.CalDAVSyncIntervalHours)*time.Hour), t.CalendarSync, startNow)
 	register(s, JobContactSync, gocron.DurationJob(time.Duration(cfg.CardDAVSyncIntervalHours)*time.Hour), t.ContactSync, startNow)
+	register(s, JobTrashPurge, gocron.DailyJob(1, gocron.NewAtTimes(gocron.NewAtTime(3, 30, 0))), t.TrashPurge)
 	return &Scheduler{s: s}, nil
 }
 

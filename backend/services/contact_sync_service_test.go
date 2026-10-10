@@ -29,7 +29,8 @@ func newContactSyncDB(t *testing.T) *gorm.DB {
 	require.NoError(t, err)
 	sqlDB.SetMaxOpenConns(1)
 	require.NoError(t, db.AutoMigrate(
-		&models.User{}, &models.Contact{}, &models.JobExecution{},
+		&models.User{}, &models.Contact{}, &models.JobExecution{}, &models.Activity{}, &models.Note{},
+		&models.Relationship{}, &models.Reminder{}, &models.ReminderCompletion{},
 		&models.CardDAVConnection{}, &models.CardDAVContactLink{},
 	))
 	return db
@@ -744,4 +745,132 @@ func TestDiscoverFiltersGeneratedAddressBooks(t *testing.T) {
 				"ordinary address books must still be discoverable")
 		})
 	}
+}
+
+// Trash interplay: a contact purged before the next sync must still be removed
+// from the server (its link survives the purge) and not come back.
+func TestContactSyncPurgedContactIsDeletedRemotelyAndStaysGone(t *testing.T) {
+	runContactSync(t, models.CardDAVDirectionTwoWay, func(t *testing.T, env *contactSyncEnv) {
+		local := env.createContact(t, "Pat", "Purged", "pat@example.com")
+		env.sync(t)
+
+		require.NoError(t, env.db.Delete(&models.Contact{}, local.ID).Error)
+		n, err := PurgeTrashedContacts(env.db, local.UserID, nil, "")
+		require.NoError(t, err)
+		require.Equal(t, 1, n)
+
+		stats := env.sync(t)
+		assert.Equal(t, 1, stats.PushedDeleted)
+		assert.Zero(t, env.remote.count(t))
+		assert.Empty(t, env.links(t))
+		stats = env.sync(t)
+		assert.Zero(t, stats.PulledCreated)
+		assert.Empty(t, env.localContacts(t))
+	})
+}
+
+// Restoring after the deletion reached the server uploads the contact again
+// under its old UID, without creating a second copy.
+func TestContactSyncRestoredContactIsPushedAgainOnce(t *testing.T) {
+	runContactSync(t, models.CardDAVDirectionTwoWay, func(t *testing.T, env *contactSyncEnv) {
+		local := env.createContact(t, "Rita", "Restored", "rita@example.com")
+		env.sync(t)
+		require.NoError(t, env.db.Delete(&models.Contact{}, local.ID).Error)
+		env.sync(t)
+		require.Zero(t, env.remote.count(t))
+
+		_, err := RestoreTrashedContact(env.db, local.UserID, local.ID)
+		require.NoError(t, err)
+		stats := env.sync(t)
+
+		assert.Equal(t, 1, stats.PushedCreated)
+		assert.Equal(t, 1, env.remote.count(t))
+		assert.Len(t, env.localContacts(t), 1)
+		stats = env.sync(t)
+		assert.Zero(t, stats.PushedCreated+stats.PulledCreated)
+	})
+}
+
+// Restoring before the deletion is synced leaves nothing to do.
+func TestContactSyncRestoreBeforeSyncKeepsRemoteUntouched(t *testing.T) {
+	runContactSync(t, models.CardDAVDirectionTwoWay, func(t *testing.T, env *contactSyncEnv) {
+		local := env.createContact(t, "Sam", "Same", "sam@example.com")
+		env.sync(t)
+		require.NoError(t, env.db.Delete(&models.Contact{}, local.ID).Error)
+		_, err := RestoreTrashedContact(env.db, local.UserID, local.ID)
+		require.NoError(t, err)
+
+		stats := env.sync(t)
+		assert.Zero(t, stats.PushedDeleted)
+		assert.Equal(t, 1, env.remote.count(t))
+		assert.Len(t, env.localContacts(t), 1)
+	})
+}
+
+// Pull-only never tells the server about local deletions, so the soft-deleted
+// row is the only thing keeping a remote object from being imported again.
+// Purging it must not turn the next remote edit into a re-import.
+func TestContactSyncPullOnlyPurgedContactIsNotReimported(t *testing.T) {
+	runContactSync(t, models.CardDAVDirectionPull, func(t *testing.T, env *contactSyncEnv) {
+		env.remote.putContact(t, "uid-pru", "Pru", "Remote", "pru@example.com")
+		env.sync(t)
+		var local models.Contact
+		require.NoError(t, env.db.Where("vcard_uid = ?", "uid-pru").First(&local).Error)
+		require.NoError(t, env.db.Delete(&local).Error)
+		n, err := PurgeTrashedContacts(env.db, env.user.ID, nil, "")
+		require.NoError(t, err)
+		require.Equal(t, 1, n)
+
+		env.remote.putContact(t, "uid-pru", "Pru", "Edited", "pru@example.com")
+		stats := env.sync(t)
+		env.sync(t)
+
+		assert.Zero(t, stats.PulledCreated)
+		assert.Empty(t, env.localContacts(t))
+		assert.Len(t, env.links(t), 1)
+		assert.Zero(t, env.remote.methodCount(http.MethodDelete))
+	})
+}
+
+func TestContactSyncRemoteDeleteTrashesDependants(t *testing.T) {
+	runContactSync(t, models.CardDAVDirectionTwoWay, func(t *testing.T, env *contactSyncEnv) {
+		env.remote.putContact(t, "uid-rem", "Rem", "Gone", "rem@example.com")
+		env.sync(t)
+		var local models.Contact
+		require.NoError(t, env.db.Where("vcard_uid = ?", "uid-rem").First(&local).Error)
+		cid := local.ID
+		require.NoError(t, env.db.Create(&models.Reminder{UserID: env.user.ID, Message: "r", RemindAt: time.Now(), Recurrence: "once", ContactID: &cid}).Error)
+		require.NoError(t, env.db.Create(&models.Note{UserID: env.user.ID, Content: "n", Date: time.Now(), ContactID: &cid}).Error)
+
+		env.remote.deleteContact(t, "uid-rem")
+		env.sync(t)
+
+		var live int64
+		require.NoError(t, env.db.Model(&models.Reminder{}).Where("contact_id = ?", cid).Count(&live).Error)
+		assert.Zero(t, live, "reminders of a trashed contact must not stay live")
+		require.NoError(t, env.db.Model(&models.Note{}).Where("contact_id = ?", cid).Count(&live).Error)
+		assert.Zero(t, live)
+	})
+}
+
+func TestContactSyncEditBeatsDeleteRestoresDependants(t *testing.T) {
+	runContactSync(t, models.CardDAVDirectionTwoWay, func(t *testing.T, env *contactSyncEnv) {
+		env.remote.putContact(t, "uid-dep", "Dep", "Base", "dep@example.com")
+		env.sync(t)
+		var local models.Contact
+		require.NoError(t, env.db.Where("vcard_uid = ?", "uid-dep").First(&local).Error)
+		cid := local.ID
+		require.NoError(t, env.db.Create(&models.Reminder{UserID: env.user.ID, Message: "r", RemindAt: time.Now(), Recurrence: "once", ContactID: &cid}).Error)
+		require.NoError(t, env.db.Create(&models.Note{UserID: env.user.ID, Content: "n", Date: time.Now(), ContactID: &cid}).Error)
+		require.NoError(t, models.TrashContact(env.db, env.user.ID, cid))
+		env.remote.putContact(t, "uid-dep", "Dep", "Edited", "dep@example.com")
+
+		env.sync(t)
+
+		var n int64
+		require.NoError(t, env.db.Model(&models.Reminder{}).Where("contact_id = ?", cid).Count(&n).Error)
+		assert.EqualValues(t, 1, n)
+		require.NoError(t, env.db.Model(&models.Note{}).Where("contact_id = ?", cid).Count(&n).Error)
+		assert.EqualValues(t, 1, n)
+	})
 }

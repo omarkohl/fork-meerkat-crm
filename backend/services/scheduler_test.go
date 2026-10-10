@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-type taskCounters struct{ reminders, webhooks, calendars, contacts atomic.Int32 }
+type taskCounters struct{ reminders, webhooks, calendars, contacts, trash atomic.Int32 }
 
 func (c *taskCounters) tasks() SchedulerTasks {
 	return SchedulerTasks{
@@ -15,6 +15,7 @@ func (c *taskCounters) tasks() SchedulerTasks {
 		WebhookRetries: func() { c.webhooks.Add(1) },
 		CalendarSync:   func() { c.calendars.Add(1) },
 		ContactSync:    func() { c.contacts.Add(1) },
+		TrashPurge:     func() { c.trash.Add(1) },
 	}
 }
 
@@ -56,7 +57,7 @@ func TestSchedulerNextRuns(t *testing.T) {
 	runs := s.NextRuns()
 	now := time.Now()
 
-	for _, name := range []string{JobReminders, JobWebhookRetries, JobCalendarSync, JobContactSync} {
+	for _, name := range []string{JobReminders, JobWebhookRetries, JobCalendarSync, JobContactSync, JobTrashPurge} {
 		if runs[name].IsZero() {
 			t.Fatalf("job %q is not scheduled (got %v)", name, runs)
 		}
@@ -70,6 +71,15 @@ func TestSchedulerNextRuns(t *testing.T) {
 	// 26h allows for a DST change between now and the next run.
 	if !r.After(now) || r.After(now.Add(26*time.Hour)) {
 		t.Errorf("reminder next run %s not within the next day", r)
+	}
+
+	// Trash purge: daily at 03:30 in the same timezone, not at start.
+	p := runs[JobTrashPurge].In(cfg.GetReminderLocation())
+	if p.Hour() != 3 || p.Minute() != 30 {
+		t.Errorf("trash purge next run at %s, want 03:30 Europe/Berlin", p)
+	}
+	if !p.After(now) || p.After(now.Add(26*time.Hour)) {
+		t.Errorf("trash purge next run %s not within the next day", p)
 	}
 
 	// After their immediate first run, the others repeat every interval.
@@ -98,13 +108,13 @@ func TestSchedulerRunAllRunsJobs(t *testing.T) {
 
 	deadline := time.Now().Add(2 * time.Second)
 	for time.Now().Before(deadline) {
-		if c.reminders.Load() == 1 && c.webhooks.Load() >= 1 && c.calendars.Load() >= 1 && c.contacts.Load() >= 1 {
+		if c.reminders.Load() == 1 && c.trash.Load() == 1 && c.webhooks.Load() >= 1 && c.calendars.Load() >= 1 && c.contacts.Load() >= 1 {
 			return
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
-	t.Errorf("runs: reminders=%d webhooks=%d calendars=%d contacts=%d",
-		c.reminders.Load(), c.webhooks.Load(), c.calendars.Load(), c.contacts.Load())
+	t.Errorf("runs: reminders=%d trash=%d webhooks=%d calendars=%d contacts=%d",
+		c.reminders.Load(), c.trash.Load(), c.webhooks.Load(), c.calendars.Load(), c.contacts.Load())
 }
 
 // The interval jobs run once as soon as the scheduler starts (the services are
@@ -130,6 +140,9 @@ func TestSchedulerStartRunsIntervalJobsImmediately(t *testing.T) {
 	}
 	if n := c.reminders.Load(); n != 0 {
 		t.Errorf("reminder job ran %d times at start, want 0", n)
+	}
+	if n := c.trash.Load(); n != 0 {
+		t.Errorf("trash purge job ran %d times at start, want 0", n)
 	}
 }
 

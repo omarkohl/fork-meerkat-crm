@@ -68,6 +68,11 @@ func RegisterRoutes(router *gin.Engine, cfg *config.Config, db *gorm.DB, oidcPro
 			protected.GET("/contacts/:id", controllers.GetContact)
 			protected.PUT("/contacts/:id", middleware.ValidateJSONMiddleware(&models.ContactInput{}), controllers.UpdateContact)
 			protected.DELETE("/contacts/:id", controllers.DeleteContact)
+			// Trash: soft-deleted contacts (restore, purge, empty)
+			protected.GET("/trash/contacts", controllers.GetTrash)
+			protected.DELETE("/trash/contacts", controllers.EmptyTrash)
+			protected.POST("/trash/contacts/:id/restore", controllers.RestoreTrashedContact)
+			protected.DELETE("/trash/contacts/:id", controllers.PurgeTrashedContact)
 			protected.POST("/contacts/:id/archive", controllers.ArchiveContact)
 			protected.POST("/contacts/:id/unarchive", controllers.UnarchiveContact)
 

@@ -2,7 +2,7 @@
 
 ## Next step
 
-9. Trash page.
+10. Built-in backups (5.3).
 
 ## Stack
 
@@ -14,7 +14,8 @@
 - 5: `first-sprint/05-replace-nfnt-resize`, PR #8 (base `first-sprint/04-dependabot-govulncheck`)
 - 6: `first-sprint/06-jwt-v5`, PR #9 (base `first-sprint/05-replace-nfnt-resize`)
 - 7: `first-sprint/07-gocron-v2`, PR #10 (base `first-sprint/06-jwt-v5`)
-- 8: `first-sprint/08-ics-feed`, PR pending (base `first-sprint/07-gocron-v2`)
+- 8: `first-sprint/08-ics-feed`, PR #11 (base `first-sprint/07-gocron-v2`)
+- 9: `first-sprint/09-trash`, PR pending (base `first-sprint/08-ics-feed`)
 
 ## Log
 
@@ -86,7 +87,60 @@
   create retries once on the unique constraint; reminder dates use `RemindAt.UTC()`;
   the copy timeout is cleared on unmount; docs note proxy logs and recurrence drift.
 
+- Step 9 (Trash): investigation first. `DeleteContact` already soft-deleted the contact,
+  its notes, reminders and relationships in one transaction, but hard-deleted the
+  `activity_contacts` rows and the photo files, so a restore would have lost both; and
+  nothing ever purged. Tests first (service, controller, scheduler, CardDAV sync), then
+  `services/trash_service.go` (list, restore, purge, expired purge), `controllers/trash_controller.go`,
+  routes `GET/DELETE /trash/contacts`, `POST /trash/contacts/:id/restore`, `DELETE /trash/contacts/:id`,
+  daily `trash-purge` scheduler job (03:30 in the reminder timezone, not run at start; main also runs it once
+  at startup), `TRASH_RETENTION_DAYS` (default 30, below 1 falls back to 30), `api/trash.ts`,
+  `useTrash`, `TrashPage` + sidebar entry, i18n (5 locales; the delete confirmation text no longer
+  says "cannot be undone"), docs. No migration (`deleted_at` is already indexed on all tables). Three raw SQL
+  queries ignored `deleted_at` and were fixed: `GetCircles`, the activity search join on contacts and the
+  relationship-birthday join. Vitest (page 7, hook 2), `e2e/trash.spec.ts` (3) and an isolation case.
+  `make precommit`, `golangci-lint` (0 issues) and `make test-e2e` (34) green. Prettier reformatted
+  `App.tsx` in full (see step 3 note).
+- Step 9 review fixes (amended): purge re-selects inside its transaction
+  (`id IN ? AND user_id = ? AND deleted_at IS NOT NULL`, same `deleted_at` as listed) and purges/counts/removes photos
+  only for that set, so a concurrent restore (or restore plus new delete) keeps its dependants and photo files
+  (tests with a stale listing). New `models.TrashContact(tx, userID, id)` is the one soft-delete used by the
+  controller, the built-in CardDAV `DeleteAddressObject` and the sync's remote deletion (reminders no longer
+  stay live there); sync's edit-beats-delete now reuses the restore logic (dependants come back). Pull-only sync
+  skips a link whose contact was purged instead of re-importing it. Purge selects only the needed columns;
+  `purgedOn` reads as future tense in all locales; docs note the pre-trash contacts caveat. Tests for each.
+
 ## Decisions
+
+- Step 9 review: (a) `TrashContact` lives in `models`, not `services`, because `services` imports the
+  `carddav` package, which needs it (import cycle). (b) Pull-only tombstone: when a link points at a missing
+  contact row and the connection cannot push, the sync adopts the remote etag and skips (no re-import); the
+  kept link is the marker, so purge needs no extra row and startup purge is safe. Two-way/push keep the old
+  behaviour (a remote edit after a purge recreates the contact, i.e. edit beats delete; without an edit the
+  remote card is deleted). (c) The purge confirms a candidate only if its `deleted_at` is unchanged since the
+  listing, so a restore followed by a fresh deletion is not purged early.
+
+- Step 9: scope is contacts only (the only soft-deleted thing a user can see and expect to undo;
+  notes, reminders, relationships and activities deleted on their own stay deleted). Delete keeps the
+  contact's dependants soft-deleted (as before), now also keeps `activity_contacts` rows and photo files; these
+  are the "dependants kept while in trash". Restore revives the contact and the notes, reminders and
+  relationships whose `deleted_at` is within 10 s of the contact's (compared in Go; works for contacts
+  deleted before this change and does not revive a note the user deleted earlier). Activity joins hide the
+  trashed contact because GORM scopes preloads; no schema change. Purge (single, empty, auto) runs in a
+  transaction per 200 contacts: it hard-deletes activity links, notes, reminders, reminder completions,
+  relationships (rows of the contact), clears `related_contact_id` on other contacts' relationships that point
+  at it (foreign keys are enforced and have no cascade there), then the contact; photo files are removed after
+  the commit. Only rows with `deleted_at` set and the user's `user_id` can be purged, so a live contact is never
+  deletable through the trash API. Auto purge works on every user's trash, so contacts of soft-deleted users are
+  eventually removed too. Restore cannot hit a unique conflict: `(user_id, vcard_uid)` is unique over soft-deleted
+  rows too, so the row holds its own value. CardDAV: restoring before the deletion is synced changes nothing;
+  restoring after it was pushed re-uploads the card under the same UID (no duplicate); purge keeps the
+  `carddav_contact_links` row, because a link without a contact is what makes the next sync delete the remote
+  object (tested), and the sync drops the link itself. Tests pin all three. Endpoints take no body, so no
+  `ValidateJSONMiddleware`. The delete webhook `contact.deleted` still fires on delete; no restore/purge events.
+  The trash list is not paginated (trashes are small and bounded by retention). Nav entry "Trash" sits in the
+  main sidebar below Network. Photo directory for purge: `cfg.ProfilePhotoDir`, falling back to `PROFILE_PHOTO_DIR`.
+  No backend locale strings were needed (API errors are English like the rest).
 
 - Step 8 review: RRULE for day 29-31 starts is `BYMONTHDAY=28..D;BYSETPOS=-1` (D=31 gives
   the last day), which mirrors the app's clamp-to-last-day but not its drift (the app adds
@@ -165,6 +219,13 @@
 
 ## For review
 
+- Step 9 review: `App.tsx` stays Prettier-reformatted in full: `make format-check` checks every file changed since the base, so a route and nav entry in it cannot be a minimal diff.
+- Step 9: UI is a top-level "Trash" page (sidebar, under Network) with one card listing deleted contacts
+  (avatar, name, "Deleted <date> - Will be deleted permanently on <date>"), icon buttons Restore and Delete permanently
+  per row, and a red "Empty trash" button in the card header; both destructive actions confirm in a dialog,
+  restore does not. Dates use the user's date format. The contact delete confirmation now says the contact moves
+  to the Trash (it used to say it cannot be undone). The delete itself changed behaviour: photos of a deleted
+  contact stay on disk until purge.
 - Step 8: UI is a "Calendar feed (ICS)" card on the Integrations page (`/api-tokens`),
   below Webhooks, not on the Settings page, because API tokens and webhooks live there.
   Generate shows the URL once in a dialog with a copy button (same pattern as API
@@ -189,6 +250,15 @@
 
 ## Questions
 
+- CardDAV pull-only connections: a purged contact leaves its link behind (see Decisions). If the remote card is
+  edited later, the sync's "link points at a vanished row" branch re-creates the contact from the remote, whereas
+  a soft-deleted tombstone used to block that. It only happens after a purge (manual or 30 days) in pull-only mode.
+  Should purge drop such links and remember the remote UID somewhere instead?
+- No `contact.restored` / purge webhook events were added; the webhook event list is unchanged. Wanted?
+- Deleting a user (admin) soft-deletes their contacts but leaves them to the 30-day auto purge, which now also
+  removes their photo files; the user's `api_tokens` gap above is unchanged.
+- E2E tests never use "Empty trash" on the seeded user (it would race with parallel specs); the empty-trash
+  UI path is covered by Vitest and the API path by Go tests and the isolation spec.
 - API tokens have the same gap as the ICS feed had: users are soft-deleted and `DeleteUser`
   does not remove their `api_tokens`, so a deleted user's API token may still authenticate
   (not fixed here).
