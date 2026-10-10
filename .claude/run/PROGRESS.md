@@ -2,18 +2,16 @@
 
 ## Next step
 
-3. Frontend lint/format/type gates in CI.
+4. Dependabot and govulncheck.
 
 ## Stack
 
 <!-- step: branch, PR number (base) -->
 - 1: `first-sprint/01-sqlite-pragmas`, PR #4 (base `claude/workflow-clarification-kb7ca1`)
-- 2: `first-sprint/02-golangci-lint`, PR pending (base `first-sprint/01-sqlite-pragmas`)
+- 2: `first-sprint/02-golangci-lint`, PR #5 (base `first-sprint/01-sqlite-pragmas`)
+- 3: `first-sprint/03-frontend-ci-gates`, PR pending (base `first-sprint/02-golangci-lint`)
 
 ## Log
-
-- Step 2 (Go lint): `golangci-lint run` reports 0 issues; a probe with an unchecked
-  `os.Open` was flagged. `make precommit` green.
 
 - Step 0 (environment check): `make precommit` green on a clean tree. `make test-e2e`
   fails out of the box (Playwright wants chromium_headless_shell-1243, not installed;
@@ -28,8 +26,22 @@
   parameter so every pooled connection gets them. New test
   `backend/database/pragmas_test.go`. `make precommit` and E2E (28) green with foreign
   keys on.
+- Step 2 (Go lint): `golangci-lint run` reports 0 issues; a probe with an unchecked
+  `os.Open` was flagged. `make precommit` green.
+- Step 3 (frontend CI gates): `.github/workflows/lint.yml` gained `frontend` (ESLint
+  `--max-warnings=0`, `tsc --noEmit`) and `format` (gofmt + Prettier, changed files only)
+  jobs. Prettier 3 added as a devDependency with `frontend/.prettierrc.json`
+  (single quotes, width 120); `make format`/`format-check` now cover frontend files
+  changed since BASE. Verified a badly formatted new file fails `make format-check`.
+  `make precommit` green.
 
 ## Decisions
+
+- Step 3: the `format` CI job takes the base from the pull request's base SHA (the
+  previous branch for stacked PRs) or the push's `before` SHA, with full history. The
+  `pull_request` triggers of `unit-tests.yml` and `e2e-tests.yml` lost their
+  `branches: [main]` filter too, so stacked PRs run all checks. ESLint and tsc already
+  existed in `make lint`/`typecheck`; CI now gates them.
 
 - Step 2: golangci-lint v2.5.0 baseline in `backend/.golangci.yml`, run by a new
   `.github/workflows/lint.yml`. Not added to `make precommit` (needs the binary). The workflow's `pull_request`
@@ -48,6 +60,11 @@
   fail. The migration connection is now closed after migrating (it was leaked before).
 
 ## For review
+
+- Step 3: 87 of 113 frontend TS files do not pass the Prettier config (single quotes,
+  width 120), so touching one forces a whole-file reformat in that change. The config
+  is kept as is; the alternative is a one-off repo-wide reformat commit, which the plan
+  rules out.
 
 - Step 1: SQLite now runs in WAL mode, so the database directory holds `-wal` and
   `-shm` files next to the `.db` file. The data directory must not be on a network

@@ -35,8 +35,8 @@ The main session is the orchestrator. Per step:
 
 Run from the repository root. All must pass before a commit:
 
-- `make precommit`: gofmt on changed Go files, `go vet`, ESLint, `tsc`, Go tests,
-  Vitest.
+- `make precommit`: gofmt on changed Go files, Prettier on changed frontend files,
+  `go vet`, ESLint, `tsc`, Go tests, Vitest.
 - `make test-e2e` when the step changes UI or API behaviour. It runs Playwright
   against a local stack without Docker (`scripts/e2e-stack.mjs`). Use
   `E2E_SKIP_BUILD=1` to reuse builds; `ARGS=e2e/contacts.spec.ts` to narrow.

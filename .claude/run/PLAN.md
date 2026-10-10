@@ -37,7 +37,7 @@ Read first: `.claude/AUTONOMOUS-RUNS.md`, `README-developer.md`, `IMPROVEMENTS.m
       keys breaks no existing test or migration.
 - [x] 2. **Go lint in CI (1.1)**: `.golangci.yml` (errcheck, staticcheck, gosec,
       revive, bodyclose, sqlclosecheck), CI job, fix or justify findings.
-- [ ] 3. **Frontend lint/format/type gates in CI (1.3-1.5)**: ESLint, `tsc --noEmit`
+- [x] 3. **Frontend lint/format/type gates in CI (1.3-1.5)**: ESLint, `tsc --noEmit`
       and Prettier check (changed files) as CI jobs; add `gofmt` check.
 - [ ] 4. **Dependabot and govulncheck (3.1, 3.3)**: npm, github-actions, docker,
       bundler ecosystems with grouped minor/patch; `govulncheck` and npm audit job.
