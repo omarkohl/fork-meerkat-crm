@@ -26,7 +26,7 @@ Use Activities to document events or interactions with one or more contacts (eg.
 
 Activities appear on each linked contact's detail page in the **Timeline** tab, most recent activities show first.
 
-The global **Activities** page lists every activity across all contacts and offers searching and a date range filter.
+The global **Activities** page lists every activity across all contacts and offers searching and a date range filter. Searching (contacts, activities and unassigned notes) ignores case and accents and matches the start of each word you type, so `zoe mül` finds `Zoë Müller`; it does not match the middle of a word (`ller` does not find `Müller`). Two kinds of input are searched as plain substrings instead, as before: text that is only digits and phone punctuation (`795550` finds `+41795550101`), and Chinese, Japanese and Korean text, which has no spaces between words. Only the contact list ranks by relevance (the page offers "Best match" while you search); notes and activities stay newest first. Search terms are cut at 200 characters and 32 words.
 
 
 ## Notes

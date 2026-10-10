@@ -6,6 +6,7 @@ import (
 	"meerkat/logger"
 	"meerkat/middleware"
 	"meerkat/models"
+	searchlib "meerkat/search"
 	"meerkat/services"
 	"net/http"
 	"strings"
@@ -132,19 +133,23 @@ func GetActivities(c *gin.Context) {
 	}
 
 	if search != "" {
-		like := "%" + search + "%"
-		searchClause := db.Where("LOWER(activities.title) LIKE ?", like).
-			Or("LOWER(activities.description) LIKE ?", like).
-			Or("LOWER(activities.location) LIKE ?", like).
-			Or("LOWER(COALESCE(contacts.firstname, '')) LIKE ?", like).
-			Or("LOWER(COALESCE(contacts.lastname, '')) LIKE ?", like).
-			Or("LOWER(COALESCE(contacts.nickname, '')) LIKE ?", like)
-
 		baseQuery = baseQuery.
 			Select("DISTINCT activities.*").
 			Joins("LEFT JOIN activity_contacts ON activity_contacts.activity_id = activities.id").
-			Joins("LEFT JOIN contacts ON contacts.id = activity_contacts.contact_id AND contacts.user_id = ? AND contacts.deleted_at IS NULL", userID).
-			Where(searchClause)
+			Joins("LEFT JOIN contacts ON contacts.id = activity_contacts.contact_id AND contacts.user_id = ? AND contacts.deleted_at IS NULL", userID)
+		if match, ok := searchlib.MatchQuery(search); ok && searchlib.Available(db, "activities_fts") && searchlib.Available(db, "contacts_fts") {
+			baseQuery = baseQuery.Where(
+				"activities.id IN (SELECT rowid FROM activities_fts WHERE activities_fts MATCH ?) OR contacts.id IN (SELECT rowid FROM contacts_fts WHERE contacts_fts MATCH ?)",
+				match, searchlib.ContactNames(match))
+		} else {
+			like := "%" + search + "%"
+			baseQuery = baseQuery.Where(db.Where("LOWER(activities.title) LIKE ?", like).
+				Or("LOWER(activities.description) LIKE ?", like).
+				Or("LOWER(activities.location) LIKE ?", like).
+				Or("LOWER(COALESCE(contacts.firstname, '')) LIKE ?", like).
+				Or("LOWER(COALESCE(contacts.lastname, '')) LIKE ?", like).
+				Or("LOWER(COALESCE(contacts.nickname, '')) LIKE ?", like))
+		}
 	}
 
 	countQuery := baseQuery.Session(&gorm.Session{})
