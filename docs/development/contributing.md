@@ -15,14 +15,24 @@ nav_order: 5
 ## Development Workflow
 
 1. Make your changes with tests.
-2. Run `go test ./...` (backend) and the Playwright E2E suite (frontend)
+2. Run `make precommit` from the repository root: checks gofmt and Prettier formatting of the files you changed (`make format` fixes it), `go vet`, ESLint, `tsc` and the Go and Vitest unit tests. Run `make test-e2e` (Playwright, no Docker needed) when you change the UI or API behaviour. `make help` lists all targets.
 3. Open a pull request against `main`.
 
 ## Code Style
 
-**Backend:** Standard Go formatting (`gofmt`). Follow existing controller and service patterns with thin controllers, logic in services, always scope queries by `user_id`.
+**Backend:** Standard Go formatting (`gofmt`), checked together with `golangci-lint` (config in `backend/.golangci.yml`: errcheck, staticcheck, gosec, revive, bodyclose, sqlclosecheck). Run `cd backend && golangci-lint run` locally. Follow existing controller and service patterns with thin controllers, logic in services, always scope queries by `user_id`.
 
-**Frontend:** TypeScript strict mode and MUI for all UI components. All user-facing strings through `i18next`. Custom hooks for data fetching, not inline `useEffect` + `fetch`.
+**Frontend:** Prettier formatting (`make format` fixes the files you changed), ESLint without warnings and `tsc --noEmit`. TypeScript strict mode and MUI for all UI components. All user-facing strings through `i18next`. Custom hooks for data fetching, not inline `useEffect` + `fetch`.
+
+## Continuous integration
+
+Pull requests run these GitHub Actions workflows, and all must pass:
+
+- **Lint** (`lint.yml`): golangci-lint, ESLint, `tsc`, and a gofmt/Prettier check of the files the change touches.
+- **Unit tests** and **E2E tests** (`unit-tests.yml`, `e2e-tests.yml`).
+- **Security** (`security.yml`): `govulncheck` and `yarn audit` for production dependencies; also runs weekly.
+
+Dependabot (`.github/dependabot.yml`) opens weekly update PRs for Go modules, npm, GitHub Actions, Docker and the docs' Ruby gems, with minor and patch updates grouped.
 
 ## Pull Requests
 

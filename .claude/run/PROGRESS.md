@@ -2,7 +2,7 @@
 
 ## Next step
 
-11. Docs.
+12. Finish.
 
 ## Stack
 
@@ -16,7 +16,8 @@
 - 7: `first-sprint/07-gocron-v2`, PR #10 (base `first-sprint/06-jwt-v5`)
 - 8: `first-sprint/08-ics-feed`, PR #11 (base `first-sprint/07-gocron-v2`)
 - 9: `first-sprint/09-trash`, PR #12 (base `first-sprint/08-ics-feed`)
-- 10: `first-sprint/10-backups`, PR pending (base `first-sprint/09-trash`)
+- 10: `first-sprint/10-backups`, PR #13 (base `first-sprint/09-trash`)
+- 11: `first-sprint/11-docs`, PR pending (base `first-sprint/10-backups`)
 
 ## Log
 
@@ -130,8 +131,20 @@
   validated only when `BACKUP_ENABLED`. Docs: `JWT_SECRET_KEY`/`.env` must be kept with backups (CardDAV/CalDAV
   credentials are encrypted with it), restore steps name the host mount directories, browser download buffers
   the archive in memory (documented, not changed).
+- Step 11 (docs audit): `docs/api-reference.md` listed the API token routes as `/admin/api-tokens`; the router
+  has them at `/api-tokens` (session or API token, not admin), fixed, and the admin note says API tokens are
+  refused on `/admin/*`. Added the missing `POST /admin/trigger-reminders` row (every route
+  added in steps 1-10 was already listed exactly once; older routes were not audited, see Questions). New: deployment "Database storage" (WAL,
+  busy_timeout, no network file systems, one instance), settings.md Trash and Backups sections, contributing
+  (make targets, golangci-lint, Prettier, CI workflows, Dependabot), backend.md SQLite settings, README
+  features (ICS, trash, backups), README-developer (golangci-lint, WAL, Dependabot). Env tables, `.env`
+  examples were already complete (TRASH_*, BACKUP_*). Jekyll is not installed here, so the docs build was not
+  run (only Markdown edits, no new pages or front matter). `make precommit` and `make test-e2e` green.
 
 ## Decisions
+
+- Step 11: only gaps were fixed; no page was rewritten. The exact-route-list check covers routes added in steps
+  1-10; the admin `trigger-reminders` row was added as it sits in a table touched by step 10.
 
 - Step 10: enabled by default (`BACKUP_ENABLED=true`, daily 02:30 in the reminder timezone, keep 7): the point of
   the item is that most self-hosters have no backup, and an opt-in switch would leave them without one. It costs
@@ -291,6 +304,8 @@
 
 ## Questions
 
+- Step 11: `docs/api-reference.md` does not document older route groups: webhooks, calendars, CardDAV connections,
+  Monica import, OIDC, `/users/enabled-contact-fields`. Out of scope for the sprint; worth a follow-up.
 - Step 10: `docker-compose.yml` does not list the new `BACKUP_*` variables (it passes the env file through like
   the other settings); worth confirming that a bind-mounted `./data` volume is writable by the container user,
   as the default backup directory lives there.

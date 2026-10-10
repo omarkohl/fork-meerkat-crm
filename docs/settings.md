@@ -38,3 +38,13 @@ The feed contains the birthdays of your contacts (repeating every year, archived
 Anyone who has the URL can read the feed, without logging in. Keep it private. Meerkat does not write the URL to its own logs, but reverse proxies and load balancers in front of it (e.g. nginx access logs) record the full request path, token included, so protect those logs too. **Regenerate URL** replaces the secret and immediately stops the old URL from working (update your calendar apps with the new one); **Revoke feed** switches the feed off. The instance must be reachable from your calendar app, since the app fetches the feed itself.
 
 Reminders are exported with their next date. A reminder set to recur from completion moves forward when you complete it, but the calendar repeats it at the fixed interval from that date, so the two can drift apart after a late completion. Monthly, quarterly and six-monthly reminders that start on the 29th to 31st fall on the last day of shorter months. A birthday on 29 February falls on 28 February in non-leap years. Dates are taken in UTC.
+
+
+## Trash
+
+Deleted contacts move to the **Trash** (sidebar, under Network), where you can restore them or delete them permanently. They are removed for good after `TRASH_RETENTION_DAYS` days (default 30). See [Contacts](data-model.html).
+
+
+## Backups (administrators)
+
+Administrators find **Settings > Backups**, where the automatic backups can be listed, created, downloaded and deleted. See [Backups](deployment.html#backups).
