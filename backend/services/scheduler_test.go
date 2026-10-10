@@ -85,7 +85,7 @@ func TestSchedulerNextRuns(t *testing.T) {
 
 	// After their immediate first run, the others repeat every interval.
 	for name, interval := range map[string]time.Duration{
-		JobWebhookRetries: 5 * time.Minute,
+		JobWebhookRetries: time.Minute,
 		JobCalendarSync:   6 * time.Hour,
 		JobContactSync:    3 * time.Hour,
 	} {

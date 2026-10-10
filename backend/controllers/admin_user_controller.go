@@ -400,6 +400,9 @@ func DeleteUser(c *gin.Context) {
 		if err := tx.Unscoped().Where("user_id = ?", userID).Delete(&models.Webhook{}).Error; err != nil {
 			return err
 		}
+		if err := tx.Where("user_id = ?", userID).Delete(&models.EmailOutbox{}).Error; err != nil {
+			return err
+		}
 
 		// The row stays (soft delete), so release what is unique on it: the person must be
 		// able to register or log in again (OIDC) as a new account. The partial unique

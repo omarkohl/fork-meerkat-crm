@@ -5,15 +5,25 @@ import (
 	"fmt"
 	"mime"
 	"net"
+	"net/http"
 	"net/smtp"
 	"strconv"
 	"strings"
+	"time"
 
 	"meerkat/config"
 	"meerkat/logger"
 	"meerkat/metrics"
 
 	"github.com/resend/resend-go/v2"
+)
+
+// Timeouts of one send. The outbox lock (outboxLockTimeout) must outlast both channels
+// together, or a live send would lose its claim and be sent twice.
+const (
+	smtpDialTimeout = 10 * time.Second
+	smtpTimeout     = 30 * time.Second // whole SMTP conversation
+	resendTimeout   = 30 * time.Second
 )
 
 // EmailMessage is a transport-agnostic, already-rendered email ready for delivery.
@@ -84,7 +94,7 @@ func SendEmail(cfg config.Config, msg EmailMessage) error {
 
 // delivers the message through the Resend API.
 func sendViaResend(cfg config.Config, msg EmailMessage) error {
-	client := resend.NewClient(cfg.ResendAPIKey)
+	client := resend.NewCustomClient(&http.Client{Timeout: resendTimeout}, cfg.ResendAPIKey)
 
 	params := &resend.SendEmailRequest{
 		From:    cfg.ResendFromEmail,
@@ -112,26 +122,39 @@ func sendViaSMTP(cfg config.Config, msg EmailMessage) error {
 		auth = smtp.PlainAuth("", cfg.SMTPUsername, cfg.SMTPPassword, cfg.SMTPHost)
 	}
 
-	if cfg.SMTPUseTLS {
-		if err := sendSMTPImplicitTLS(cfg, addr, auth, msg.To, body); err != nil {
-			return err
-		}
-	} else {
-		// smtp.SendMail upgrades to STARTTLS automatically when the server advertises it.
-		if err := smtp.SendMail(addr, auth, cfg.SMTPFromEmail, []string{msg.To}, body); err != nil {
-			return err
-		}
+	if err := sendSMTPMessage(cfg, addr, auth, msg.To, body); err != nil {
+		return err
 	}
 
 	logger.Info().Str("to", msg.To).Msg("Email sent via SMTP")
 	return nil
 }
 
-// sendSMTPImplicitTLS sends a message over a connection that is wrapped in TLS (implicit TLS, typically port 465).
-func sendSMTPImplicitTLS(cfg config.Config, addr string, auth smtp.Auth, to string, body []byte) error {
-	conn, err := tls.Dial("tcp", addr, &tls.Config{ServerName: cfg.SMTPHost, MinVersion: tls.VersionTLS12})
-	if err != nil {
-		return fmt.Errorf("tls dial: %w", err)
+// sendSMTPMessage runs one SMTP conversation with dial and overall deadlines, so a server
+// that stops answering cannot hold the sender (and its outbox claim) for long. With
+// cfg.SMTPUseTLS the connection is wrapped in TLS from the start (implicit TLS, typically
+// port 465); otherwise STARTTLS is used when the server offers it.
+func sendSMTPMessage(cfg config.Config, addr string, auth smtp.Auth, to string, body []byte) error {
+	dialer := &net.Dialer{Timeout: smtpDialTimeout}
+	tlsConfig := &tls.Config{ServerName: cfg.SMTPHost, MinVersion: tls.VersionTLS12}
+	var (
+		conn net.Conn
+		err  error
+	)
+	if cfg.SMTPUseTLS {
+		conn, err = tls.DialWithDialer(dialer, "tcp", addr, tlsConfig)
+		if err != nil {
+			return fmt.Errorf("tls dial: %w", err)
+		}
+	} else {
+		conn, err = dialer.Dial("tcp", addr)
+		if err != nil {
+			return fmt.Errorf("dial: %w", err)
+		}
+	}
+	defer func() { _ = conn.Close() }()
+	if err := conn.SetDeadline(time.Now().Add(smtpTimeout)); err != nil {
+		return fmt.Errorf("smtp deadline: %w", err)
 	}
 
 	client, err := smtp.NewClient(conn, cfg.SMTPHost)
@@ -140,6 +163,13 @@ func sendSMTPImplicitTLS(cfg config.Config, addr string, auth smtp.Auth, to stri
 	}
 	defer client.Close()
 
+	if !cfg.SMTPUseTLS {
+		if ok, _ := client.Extension("STARTTLS"); ok {
+			if err := client.StartTLS(tlsConfig); err != nil {
+				return fmt.Errorf("smtp starttls: %w", err)
+			}
+		}
+	}
 	if auth != nil {
 		if err := client.Auth(auth); err != nil {
 			return fmt.Errorf("smtp auth: %w", err)

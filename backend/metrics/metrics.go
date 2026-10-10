@@ -312,6 +312,8 @@ var (
 		"Email sends by result (failure: every configured channel failed).", "result")
 	jobRuns = Default.Counter("meerkat_job_runs_total",
 		"Scheduled job runs by result (success, failure, or skipped by the rate limit or another instance's lock).", "job", "result")
+	outboxDead = Default.Counter("meerkat_outbox_dead_total",
+		"Outbox entries that gave up after the last try, by kind (webhook, email).", "kind")
 	defaultHTTP = NewHTTPMetrics(Default)
 )
 
@@ -341,6 +343,9 @@ func WebhookDelivery(ok bool) { webhookDeliveries.Inc(result(ok)) }
 
 // EmailSent counts one email send (after all channels were tried).
 func EmailSent(ok bool) { emailsSent.Inc(result(ok)) }
+
+// OutboxDead counts one outbox entry that moved to the dead letter state.
+func OutboxDead(kind string) { outboxDead.Inc(kind) }
 
 // Results of a scheduled job run. A run that the rate limit or another instance's lock
 // turned away is "skipped", not a success.
