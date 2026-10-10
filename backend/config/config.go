@@ -63,6 +63,9 @@ type Config struct {
 	BackupTime               string // Time of day (HH:MM, in the reminder timezone) of the scheduled backup
 	BackupRetentionCount     int    // Number of most recent backups to keep
 	BackupDir                string // Where backups are stored (holds every user's data; keep it private)
+	MetricsEnabled           bool   // Serve Prometheus metrics (off by default)
+	MetricsToken             string // Optional bearer token required to read /metrics
+	MetricsAddr              string // Optional separate listen address (e.g. 127.0.0.1:9090); empty = /metrics on the main port
 	OIDC                     OIDCConfig
 }
 
@@ -139,6 +142,9 @@ func LoadConfig() *Config {
 		cfg.BackupRetentionCount = 7
 	}
 	cfg.BackupDir = getEnv("BACKUP_DIR", filepath.Join(filepath.Dir(cfg.DBPath), "backups"))
+	cfg.MetricsEnabled = getBoolEnv("METRICS_ENABLED", false)
+	cfg.MetricsToken = getEnv("METRICS_TOKEN", "")
+	cfg.MetricsAddr = getEnv("METRICS_ADDR", "")
 	cfg.CardDAVBlockPrivateURLs = getBoolEnv("CARDDAV_BLOCK_PRIVATE_URLS", cfg.CalDAVBlockPrivateURLs)
 	applyBlockPrivateURLs(cfg)
 

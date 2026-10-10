@@ -2,7 +2,7 @@
 
 ## Next step
 
-18.
+19.
 
 ## Stack
 
@@ -23,6 +23,7 @@
 - 15: second-sprint/15-totp (PR set by the orchestrator)
 - 16: second-sprint/16-fts-search (PR set by the orchestrator)
 - 17: second-sprint/17-thumbnails (PR set by the orchestrator)
+- 18: second-sprint/18-metrics (PR set by the orchestrator)
 
 ## Log
 
@@ -152,7 +153,11 @@
 
 - 17: thumbnails out of the database. Migration 30 adds `contacts.photo_thumbnail_file`; the old `photo_thumbnail` column (base64 data URL) is renamed `LegacyThumbnail` in the model and left untouched. `services.ExportLegacyThumbnails` (called in `main.go` after the migrations and before serving) writes every data URL that has no file yet to `<uuid>_thumb.jpg` (mode 0640, includes trashed contacts) and records the name; idempotent (only rows without a file, conditional update so a concurrent upload wins, bad rows are logged and skipped, an existing file name is never replaced), the blob stays as the rollback copy. New uploads, CardDAV/vCard/CSV/Monica imports and contact sync write `<uuid>_photo.jpg` + `<uuid>_thumb.jpg` and clear the legacy copy; replacing a photo deletes the old photo and thumbnail files; purge removes both. `GET /contacts/:id/profile_picture?thumbnail=true` serves the file with `ETag`, `Cache-Control: private, max-age=31536000, immutable` and 304 (and falls back to the legacy blob for a contact not exported yet); file names are checked against traversal. API: `photo_thumbnail` in contact lists, trash, birthdays and graph is now a URL (`/api/v1/contacts/:id/profile_picture?thumbnail=true&v=<uuid>`, empty = none), the version changes with the picture. List queries select `photo_thumbnail_file` instead of the blob (`fields=...photo_thumbnail` still works), birthdays and the full contact fetch omit the legacy column, activity preloads no longer select a thumbnail. The backup already archives the whole photo directory, so thumbnails are included. Frontend: `thumbnailSrc()` (prefixes `REACT_APP_API_URL`) for the avatars. Tests: migration up/down, export (idempotent, bad rows, existing file, trashed), file removal incl. traversal, serving/ETag/304/scoping/traversal/legacy fallback, list size without base64, upload and replace, 20 existing photo tests adapted, Vitest, e2e `thumbnails.spec.ts`. `make precommit`, golangci-lint, `make test-e2e` (50) pass. Prettier forced a reformat of `ContactsPage.tsx` and `DashboardPage.tsx`.
 
+- 18: Prometheus metrics. New dependency-free package `backend/metrics` (counters, histograms, scrape-time gauges, text format 0.0.4; Prometheus client_golang is not in go.mod and the handful of series do not justify it). `METRICS_ENABLED` (default false: no route), `METRICS_TOKEN` (bearer, constant-time compare), `METRICS_ADDR` (separate listener serving only `/metrics`; then the main port has no such route). Without token and address a startup warning says it is open. Series: `meerkat_http_requests_total{method,route,status}` and `meerkat_http_request_duration_seconds` (route = gin pattern, `unmatched` without a route, unknown methods `OTHER`, so no cardinality from URLs/ids/ICS token; the middleware is first, so recovered panics count as 500), `meerkat_job_last_success_timestamp_seconds{job}` and `meerkat_job_running{job}` read from `job_executions` at scrape time, `meerkat_job_runs_total{job,result}` (reminders, trash-purge, backup; the sync jobs report per-connection errors in their own rows and logs, not a job result), `meerkat_webhook_deliveries_total{result}` (counted in `saveDelivery`, so retries and blocked targets count), `meerkat_emails_total{result}` (after all channels were tried; no-op sends are not counted), Go goroutines/heap and process start. Tests: exposition format, escaping, token, route labels, config, route on/off/separate listener, job gauges, webhook and email counters. Docs: deployment.md "Monitoring with Prometheus" (scrape config, alert ideas), env tables, `.env.example`, api-reference (`/metrics`; the route test enables metrics). No UI change, so no E2E run.
+
 ## Decisions
+
+- Step 18: `/metrics` is not versioned and not proxied by the bundled nginx (it only proxies /api, /health, /carddav), so exposing it needs a deliberate choice; the metrics middleware is only installed when enabled.
 
 - Step 17: the legacy column is kept (not cleared) after export so that a rollback of the migration or the binary loses nothing; this means the database file does not shrink until a later migration drops `photo_thumbnail` (see Questions). The API field name `photo_thumbnail` stays but holds a URL now, so the frontend `src` code is unchanged; the URL is root-relative (`/api/v1/...`), which assumes the web app and API share an origin (or `REACT_APP_API_URL`, handled by `thumbnailSrc`). Thumbnails need the login cookie like everything else (no public image URLs). The export runs synchronously at startup, because list queries no longer read the blob and a contact without a file shows no thumbnail; for 20k contacts it is a few seconds once.
 

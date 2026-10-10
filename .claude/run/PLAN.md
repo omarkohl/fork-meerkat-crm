@@ -96,7 +96,7 @@ context is above 200k at the end of a step, then start a new one. Reviewer is al
 - [x] 17. **Thumbnails out of the database**: move `PhotoThumbnail` to files with ETag and cache
       headers, migration that exports existing blobs, drop the column in a later migration; list
       queries get smaller; backup includes the files.
-- [ ] 18. **Prometheus metrics**: `/metrics` (off by default, optional bearer token or separate
+- [x] 18. **Prometheus metrics**: `/metrics` (off by default, optional bearer token or separate
       listener), request latency, job results from `job_execution`, webhook and email failures;
       docs with an example scrape config and Grafana-free alert hints.
 - [ ] 19. **Outbox for webhooks and email**: table-backed queue with retries and backoff, survives

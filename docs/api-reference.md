@@ -335,3 +335,4 @@ A backup contains the data of **all users** (every table, including password has
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/health` | Health check (no auth, no versioning). Accessible directly (without prepending base URL). |
+| `GET` | `/metrics` | Prometheus metrics (text format). Only exists when `METRICS_ENABLED=true` and `METRICS_ADDR` is empty; with `METRICS_TOKEN` it needs `Authorization: Bearer <token>`. Not versioned and not proxied by the bundled nginx. See [Monitoring](deployment.md#monitoring-with-prometheus). |

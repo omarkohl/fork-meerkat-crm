@@ -87,6 +87,54 @@ Several features make the server fetch an address a user typed in: webhooks, Cal
 
 **Audit log.** Admins see it under Settings, Audit log (filter by event and user). It records logins and failed logins (with the account, never what was typed for an unknown account), logouts, password changes and resets, sessions signed out, data exports, API token, calendar feed and backup actions, and admin changes to users. Each entry has the time, user, IP address (behind a proxy this is the address of the proxy unless `TRUSTED_PROXIES` is set) and user agent. Entries of deleted accounts stay until the retention period ends. Entries older than `AUDIT_LOG_RETENTION_DAYS` (default 365, `0` = keep) are deleted daily at 03:30, together with ended sessions.
 
+## Monitoring with Prometheus
+
+Meerkat can expose metrics in the Prometheus text format. It is **off by default**. Set `METRICS_ENABLED=true` and choose how to protect it:
+
+| Variable | Meaning |
+|---|---|
+| `METRICS_ENABLED` | `true` to serve `/metrics`. Default `false` (no route exists) |
+| `METRICS_TOKEN` | If set, scrapers must send `Authorization: Bearer <token>` (compared in constant time) |
+| `METRICS_ADDR` | If set (for example `127.0.0.1:9090` or `:9090` on a private Docker network), `/metrics` is served only on this extra listener and not on the main port |
+
+The bundled nginx proxies only `/api/`, `/health` and `/carddav/`, so `/metrics` on the main port is not reachable through it. If your own reverse proxy forwards everything, set a token or use `METRICS_ADDR`. Without either, Meerkat logs a warning at startup. The metrics contain no user data (routes are patterns such as `/api/v1/contacts/:id`, never URLs), but they reveal traffic and failure patterns.
+
+| Metric | Type | Meaning |
+|---|---|---|
+| `meerkat_http_requests_total{method,route,status}` | counter | Requests by route pattern (`unmatched` for 404s without a route) |
+| `meerkat_http_request_duration_seconds{method,route}` | histogram | Latency |
+| `meerkat_job_last_success_timestamp_seconds{job}` | gauge | Last successful run of the jobs kept in the `job_executions` table (`daily_reminders`, `calendar_sync`, `carddav_contact_sync`) |
+| `meerkat_job_running{job}` | gauge | 1 while the job holds its lock |
+| `meerkat_job_runs_total{job,result}` | counter | Runs of `reminders`, `trash-purge` and `backup` since the process started, `success` or `failure` |
+| `meerkat_webhook_deliveries_total{result}` | counter | Webhook delivery attempts (every retry counts) |
+| `meerkat_emails_total{result}` | counter | Emails where at least one channel succeeded (`success`) or all failed (`failure`) |
+| `go_goroutines`, `go_memstats_alloc_bytes`, `process_start_time_seconds` | gauge | Process basics |
+
+Example scrape config:
+
+```yaml
+scrape_configs:
+  - job_name: meerkat
+    metrics_path: /metrics
+    authorization:
+      type: Bearer
+      credentials_file: /etc/prometheus/meerkat-token
+    static_configs:
+      - targets: ["meerkat-backend:8080"]   # or the METRICS_ADDR host and port
+```
+
+Alert ideas (adapt the thresholds):
+
+- Backend down: `up{job="meerkat"} == 0` for 5 minutes.
+- Reminders did not run for over 26 hours: `time() - meerkat_job_last_success_timestamp_seconds{job="daily_reminders"} > 26 * 3600`. The same for `calendar_sync` and `carddav_contact_sync`, with your sync interval.
+- A scheduled job failed: `increase(meerkat_job_runs_total{result="failure"}[1h]) > 0`.
+- Email failing: `increase(meerkat_emails_total{result="failure"}[1h]) > 0`.
+- Many failing webhooks: `increase(meerkat_webhook_deliveries_total{result="failure"}[1h]) > 10`.
+- Server errors: `sum(rate(meerkat_http_requests_total{status=~"5.."}[5m])) > 0.05`.
+- Slow API: `histogram_quantile(0.95, sum by (le) (rate(meerkat_http_request_duration_seconds_bucket[5m]))) > 1`.
+
+Counters start at zero on every restart and the metrics are per instance. Job run counters of a job that never ran do not exist yet; use `absent()` with care.
+
 ## Two-factor authentication
 
 Each user can turn on a second login step (TOTP, works with any authenticator app) under Settings, Profile: scan the QR code (or type the key), enter the code the app shows, and save the ten recovery codes, which are shown only once. From then on a password login also asks for a code from the app, or for one recovery code (each works once). Turning it on needs the password and a code from the app; disabling it and creating new recovery codes need the password and a code. Turning it on or off signs out the account's other sessions. Accounts without a password (single sign-on only) cannot use it.
