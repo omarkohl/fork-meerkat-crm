@@ -2,7 +2,7 @@
 
 ## Next step
 
-17.
+18.
 
 ## Stack
 
@@ -22,6 +22,7 @@
 - 14: second-sprint/14-sessions-audit (PR set by the orchestrator)
 - 15: second-sprint/15-totp (PR set by the orchestrator)
 - 16: second-sprint/16-fts-search (PR set by the orchestrator)
+- 17: second-sprint/17-thumbnails (PR set by the orchestrator)
 
 ## Log
 
@@ -149,7 +150,11 @@
 
 - 16: FTS5 search. The pure-Go driver (modernc via glebarez) has FTS5 compiled in (checked with a probe before designing: `unicode61 remove_diacritics 2` and prefix queries work). Migration 29: `contacts_fts` (firstname, lastname, nickname, email, phone, and the values of the `emails`/`phones` JSON), `notes_fts` (content), `activities_fts` (title, description, location); plain FTS5 tables with rowid = row id, `AFTER INSERT/UPDATE OF .../DELETE` triggers, built from existing rows by the migration; rows are indexed whatever `deleted_at`, queries filter on the real table and `user_id`. New package `search` (`MatchQuery` quotes every word as a prefix term, so input is never FTS syntax; punctuation-only input falls back to LIKE). Contacts list: FTS join, best match first (bm25) unless `sort` is given; total/pagination unchanged. Unassigned notes and activities (title/description/location, or a linked contact's name via a column filter) use their index. When the FTS tables are missing the old LIKE code runs (tests using AutoMigrate still cover it). 20k contacts: word search 1.3 ms, prefix 3.6 ms, the LIKE search it replaces 72 ms. Tests: migration (build, triggers, down), `search`, controllers (accents, prefix, order-free words, syntax injection, scoping, trash/archive, ranking vs sort, pagination, notes, activities, 20k timing), e2e accent search. `make precommit`, golangci-lint, race and `make test-e2e` pass.
 
+- 17: thumbnails out of the database. Migration 30 adds `contacts.photo_thumbnail_file`; the old `photo_thumbnail` column (base64 data URL) is renamed `LegacyThumbnail` in the model and left untouched. `services.ExportLegacyThumbnails` (called in `main.go` after the migrations and before serving) writes every data URL that has no file yet to `<uuid>_thumb.jpg` (mode 0640, includes trashed contacts) and records the name; idempotent (only rows without a file, conditional update so a concurrent upload wins, bad rows are logged and skipped, an existing file name is never replaced), the blob stays as the rollback copy. New uploads, CardDAV/vCard/CSV/Monica imports and contact sync write `<uuid>_photo.jpg` + `<uuid>_thumb.jpg` and clear the legacy copy; replacing a photo deletes the old photo and thumbnail files; purge removes both. `GET /contacts/:id/profile_picture?thumbnail=true` serves the file with `ETag`, `Cache-Control: private, max-age=31536000, immutable` and 304 (and falls back to the legacy blob for a contact not exported yet); file names are checked against traversal. API: `photo_thumbnail` in contact lists, trash, birthdays and graph is now a URL (`/api/v1/contacts/:id/profile_picture?thumbnail=true&v=<uuid>`, empty = none), the version changes with the picture. List queries select `photo_thumbnail_file` instead of the blob (`fields=...photo_thumbnail` still works), birthdays and the full contact fetch omit the legacy column, activity preloads no longer select a thumbnail. The backup already archives the whole photo directory, so thumbnails are included. Frontend: `thumbnailSrc()` (prefixes `REACT_APP_API_URL`) for the avatars. Tests: migration up/down, export (idempotent, bad rows, existing file, trashed), file removal incl. traversal, serving/ETag/304/scoping/traversal/legacy fallback, list size without base64, upload and replace, 20 existing photo tests adapted, Vitest, e2e `thumbnails.spec.ts`. `make precommit`, golangci-lint, `make test-e2e` (50) pass. Prettier forced a reformat of `ContactsPage.tsx` and `DashboardPage.tsx`.
+
 ## Decisions
+
+- Step 17: the legacy column is kept (not cleared) after export so that a rollback of the migration or the binary loses nothing; this means the database file does not shrink until a later migration drops `photo_thumbnail` (see Questions). The API field name `photo_thumbnail` stays but holds a URL now, so the frontend `src` code is unchanged; the URL is root-relative (`/api/v1/...`), which assumes the web app and API share an origin (or `REACT_APP_API_URL`, handled by `thumbnailSrc`). Thumbnails need the login cookie like everything else (no public image URLs). The export runs synchronously at startup, because list queries no longer read the blob and a contact without a file shows no thumbnail; for 20k contacts it is a few seconds once.
 
 - Step 16: search is now word-prefix, not substring: `ller` no longer finds `Müller` (it did with LIKE), `555` still finds `+41 79 555 0101` (digits are separate words), `5550101` does not. This is what the plan asks for ("prefix match") and is documented. Only the existing search endpoints changed (contacts list, unassigned notes, activities); there is no new global search endpoint. The activities page still matches contact names only, not their e-mail or phone. Notes and activities keep their date order (a chronological list), contacts rank by relevance when no sort is given. The migration is plain SQL and assumes FTS5 (always true for this driver); the LIKE fallback exists for databases without the tables, not as a runtime switch for a missing extension.
 
@@ -207,6 +212,8 @@
 - Step 5: `IcsFeedSettings.test.tsx` and `e2e/ics-feed.spec.ts` were reformatted by Prettier (small diffs only).
 
 ## Questions
+
+- Step 17: drop `contacts.photo_thumbnail` in a later migration once nobody needs to roll back (it frees the space and removes `LegacyThumbnail` and the fallback in `serveLegacyThumbnail`/`ContactToVCard`). Not done here because it would make the export irreversible; decide when to do it.
 
 - Step 10: `FindOrProvisionUser` links a verified-email OIDC login to an existing account even if that account is already linked to a different subject (the link is overwritten). Left as is; consider refusing. Not tested/changed.
 - Step 10: not covered in depth: the sync paths behind `SyncCardDAVConnection`/`SyncCalendarSubscription` (covered by the services tests) and `DiscoverCardDAVAddressBooks` (needs a CardDAV server).

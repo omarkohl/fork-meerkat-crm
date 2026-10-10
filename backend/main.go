@@ -63,6 +63,14 @@ func main() {
 		logger.Fatal().Err(err).Msg("Failed to initialize database")
 	}
 
+	// Thumbnails used to live in the database as base64: move them into files (idempotent,
+	// before serving, so lists never miss a thumbnail).
+	if n, err := services.ExportLegacyThumbnails(db, cfg.ProfilePhotoDir); err != nil {
+		logger.Error().Err(err).Msg("Could not move contact thumbnails out of the database; thumbnails stay hidden until this works (is PROFILE_PHOTO_DIR writable?)")
+	} else if n > 0 {
+		logger.Info().Int("thumbnails", n).Msg("Moved contact thumbnails from the database into files")
+	}
+
 	if warn, users, err := controllers.PrivateURLWarning(db, cfg.PrivateURLsAllowed()); err != nil {
 		logger.Warn().Err(err).Msg("Could not check the private URL setting")
 	} else if warn {

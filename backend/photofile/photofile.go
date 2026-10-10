@@ -34,6 +34,15 @@ func SaveJPEG(path string, img image.Image) error {
 	})
 }
 
+// WriteFile writes data into a new file at path with the same rules as SaveJPEG: no
+// overwrite, private mode, partial file removed on failure.
+func WriteFile(path string, data []byte) error {
+	return write(path, func(f *os.File) error {
+		_, err := f.Write(data)
+		return err
+	})
+}
+
 func write(path string, fill func(*os.File) error) (err error) {
 	f, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, FileMode) //nolint:gosec // path built from the configured photo directory
 	if err != nil {

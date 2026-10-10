@@ -61,7 +61,7 @@ func GetTrash(c *gin.Context) {
 			Lastname:       ct.Lastname,
 			Nickname:       ct.Nickname,
 			Email:          ct.Email,
-			PhotoThumbnail: ct.PhotoThumbnail,
+			PhotoThumbnail: models.ThumbnailURL(ct.ID, ct.PhotoThumbnailFile),
 			DeletedAt:      ct.DeletedAt.Time,
 			PurgeAt:        services.TrashPurgeAt(ct.DeletedAt.Time, days),
 		}

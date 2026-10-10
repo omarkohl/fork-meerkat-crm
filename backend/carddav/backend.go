@@ -265,7 +265,7 @@ func (b *Backend) PutAddressObject(ctx context.Context, urlPath string, card vca
 
 	// Handle photo if provided (embedded base64)
 	if len(photoData) > 0 {
-		photoPath, thumbnailBase64, err := SaveContactPhoto(photoData, photoMediaType, b.getPhotoDir(ctx))
+		photoPath, thumbnailFile, err := SaveContactPhoto(photoData, photoMediaType, b.getPhotoDir(ctx))
 		if err != nil {
 			logger.Warn().
 				Err(err).
@@ -275,7 +275,7 @@ func (b *Backend) PutAddressObject(ctx context.Context, urlPath string, card vca
 				Msg("CardDAV: failed to save contact photo")
 		} else {
 			updatedContact.Photo = photoPath
-			updatedContact.PhotoThumbnail = thumbnailBase64
+			updatedContact.PhotoThumbnailFile = thumbnailFile
 		}
 	} else if photoURL != "" {
 		// Handle URL-based photo - fetch and save
@@ -287,7 +287,7 @@ func (b *Backend) PutAddressObject(ctx context.Context, urlPath string, card vca
 				Str("photo_url", photoURL).
 				Msg("CardDAV: failed to fetch photo from URL")
 		} else if len(fetchedData) > 0 {
-			photoPath, thumbnailBase64, err := SaveContactPhoto(fetchedData, fetchedMediaType, b.getPhotoDir(ctx))
+			photoPath, thumbnailFile, err := SaveContactPhoto(fetchedData, fetchedMediaType, b.getPhotoDir(ctx))
 			if err != nil {
 				logger.Warn().
 					Err(err).
@@ -296,7 +296,7 @@ func (b *Backend) PutAddressObject(ctx context.Context, urlPath string, card vca
 					Msg("CardDAV: failed to save fetched photo")
 			} else {
 				updatedContact.Photo = photoPath
-				updatedContact.PhotoThumbnail = thumbnailBase64
+				updatedContact.PhotoThumbnailFile = thumbnailFile
 			}
 		}
 	}

@@ -750,12 +750,12 @@ func (m *MonicaImportManager) processAvatars(db *gorm.DB, s *monicaImportSession
 		if err != nil {
 			log.Warn().Err(err).Uint("contact_id", task.contactID).Str("source", task.source).Msg("Failed to fetch Monica avatar")
 		} else {
-			photoPath, thumbnailData, saveErr := carddav.SaveContactPhoto(photoData, mediaType, cfg.ProfilePhotoDir)
+			photoPath, thumbnailFile, saveErr := carddav.SaveContactPhoto(photoData, mediaType, cfg.ProfilePhotoDir)
 			if saveErr != nil {
 				log.Warn().Err(saveErr).Uint("contact_id", task.contactID).Msg("Failed to save Monica avatar")
 			} else if updateErr := db.Model(&models.Contact{}).Where("id = ?", task.contactID).Updates(map[string]interface{}{
-				"photo":           photoPath,
-				"photo_thumbnail": thumbnailData,
+				"photo":                photoPath,
+				"photo_thumbnail_file": thumbnailFile,
 			}).Error; updateErr != nil {
 				log.Warn().Err(updateErr).Uint("contact_id", task.contactID).Msg("Failed to update contact with avatar")
 			} else {

@@ -1089,7 +1089,8 @@ func (r *contactSyncRun) applyPhoto(contact *models.Contact, photoData []byte, m
 		return
 	}
 	contact.Photo = photoPath
-	contact.PhotoThumbnail = thumbnail
+	contact.PhotoThumbnailFile = thumbnail
+	contact.LegacyThumbnail = ""
 }
 
 // reconcileRemoteDeletions handles objects that disappeared from the server.

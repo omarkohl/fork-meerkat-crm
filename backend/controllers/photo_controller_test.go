@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/binary"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -125,11 +124,10 @@ func TestProcessAndSavePhotoSizes(t *testing.T) {
 			}
 			assertCentre(t, "photo", photoImg)
 
-			const prefix = "data:image/jpeg;base64,"
-			if !strings.HasPrefix(thumb, prefix) {
-				t.Fatalf("thumbnail is not a JPEG data URL: %.30s", thumb)
+			if !strings.HasSuffix(thumb, "_thumb.jpg") || strings.HasPrefix(thumb, "data:") {
+				t.Fatalf("thumbnail is not a file name: %.30s", thumb)
 			}
-			raw, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(thumb, prefix))
+			raw, err := os.ReadFile(filepath.Join(dir, thumb))
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -222,8 +220,9 @@ func TestAddPhotoValidation(t *testing.T) {
 	w = photoRequest(t, router, mine.ID, "../../evil.php", good.Bytes())
 	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
 	entries, _ = os.ReadDir(cfg.ProfilePhotoDir)
-	require.Len(t, entries, 1)
+	require.Len(t, entries, 2)
 	assert.True(t, strings.HasSuffix(entries[0].Name(), "_photo.jpg"))
+	assert.True(t, strings.HasSuffix(entries[1].Name(), "_thumb.jpg"))
 }
 
 func TestGetProfilePictureIsScopedAndSafe(t *testing.T) {

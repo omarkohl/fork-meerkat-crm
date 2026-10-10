@@ -86,6 +86,19 @@ func contactFTSMatch(db *gorm.DB, searchTerm string) string {
 
 // filters a contacts query by a free-text term: the FTS index (accent- and case-insensitive,
 // every word a prefix) when there is one, otherwise a LIKE search
+// thumbnailColumns maps the API field "photo_thumbnail" to the column that holds the
+// thumbnail's file name; the legacy base64 column is never selected by list queries.
+func thumbnailColumns(fields []string) []string {
+	out := make([]string, len(fields))
+	for i, f := range fields {
+		if f == "photo_thumbnail" {
+			f = "photo_thumbnail_file"
+		}
+		out[i] = f
+	}
+	return out
+}
+
 func applyContactSearch(query *gorm.DB, searchTerm, ftsMatch string) *gorm.DB {
 	if ftsMatch != "" {
 		return query.Joins("JOIN "+search.Hits("contacts_fts")+" AS hits ON hits.hit_id = contacts.id", ftsMatch)
@@ -124,6 +137,7 @@ func GetContacts(c *gin.Context) {
 	} else {
 		selectedFields = allowedFields // Use all allowed fields if none are specified
 	}
+	selectedFields = thumbnailColumns(selectedFields)
 
 	// Parse relationships to include with validation
 	var relationshipMap = map[string]bool{
@@ -249,7 +263,7 @@ func GetContacts(c *gin.Context) {
 	for i, contact := range contacts {
 		contactResponses[i] = models.ContactResponse{
 			Contact:        contact,
-			PhotoThumbnail: contact.PhotoThumbnail,
+			PhotoThumbnail: models.ThumbnailURL(contact.ID, contact.PhotoThumbnailFile),
 		}
 	}
 
@@ -270,7 +284,7 @@ func GetContactsRandom(c *gin.Context) {
 		return
 	}
 
-	var selectedFields = []string{"ID", "firstname", "lastname", "nickname", "circles", "photo_thumbnail"}
+	var selectedFields = []string{"ID", "firstname", "lastname", "nickname", "circles", "photo_thumbnail_file"}
 
 	var contacts []models.Contact
 	query := db.Model(&models.Contact{}).Where("user_id = ?", userID).Where("archived = ?", false)
@@ -293,7 +307,7 @@ func GetContactsRandom(c *gin.Context) {
 	for i, contact := range contacts {
 		contactResponses[i] = models.ContactResponse{
 			Contact:        contact,
-			PhotoThumbnail: contact.PhotoThumbnail,
+			PhotoThumbnail: models.ThumbnailURL(contact.ID, contact.PhotoThumbnailFile),
 		}
 	}
 
@@ -349,10 +363,10 @@ func GetContact(c *gin.Context) {
 
 	if len(selectedFields) > 0 {
 		// Partial fetch: only select requested fields, skip preloading associations
-		query = query.Select(selectedFields)
+		query = query.Select(thumbnailColumns(selectedFields))
 	} else {
-		// Full fetch: preload all associations
-		query = query.
+		// Full fetch: preload all associations (the legacy thumbnail blob is never needed)
+		query = query.Omit("photo_thumbnail").
 			Preload("Notes", "notes.user_id = ?", userID).
 			Preload("Activities", "activities.user_id = ?", userID).
 			Preload("Relationships", "relationships.user_id = ?", userID).

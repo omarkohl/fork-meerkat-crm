@@ -144,7 +144,7 @@ Meerkat has built-in backups. Every day at `BACKUP_TIME` (default `02:30`, in `R
 Each archive holds:
 
 - `meerkat.db`: a consistent snapshot of the whole SQLite database, taken with `VACUUM INTO`. This is safe while the app is running and the database is in WAL mode.
-- `photos/`: all profile photo files.
+- `photos/`: all profile photo files, including the small thumbnails (`*_thumb.jpg`). Thumbnails used to be stored inside the database; at startup after the upgrade Meerkat copies them into this directory once (the old copy stays in the database, so a downgrade keeps working for them, and a later version removes it). The photo directory must therefore be writable; if it is not, thumbnails stay hidden and the log says so. Thumbnails of photos added after the upgrade exist only as files.
 
 **A backup contains the data of all users** (contacts, notes, reminders, account data and password hashes, CardDAV and calendar credentials in encrypted form). Treat it like the database itself: the directory is created (or, if it exists, set) to mode `0700` and the files with `0600`, and downloads are limited to administrators.
 

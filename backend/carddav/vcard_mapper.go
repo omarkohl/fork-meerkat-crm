@@ -443,8 +443,8 @@ func VCardToContact(card vcard.Card, existing *models.Contact) (*models.Contact,
 	return contact, photoData, photoMediaType, photoURL
 }
 
-// SaveContactPhoto saves photo data to disk and generates thumbnail
-// Returns the photo filename and base64 thumbnail data URL
+// SaveContactPhoto saves photo data to disk and writes the 48px thumbnail next to it.
+// Returns the photo filename and the thumbnail filename (both in photoDir).
 func SaveContactPhoto(photoData []byte, mediaType string, photoDir string) (string, string, error) {
 	if len(photoData) == 0 {
 		return "", "", nil
@@ -458,9 +458,10 @@ func SaveContactPhoto(photoData []byte, mediaType string, photoDir string) (stri
 	// Crop to centered square if rectangular
 	img = cropToSquare(img)
 
-	// Generate unique filename
+	// Generate unique filenames
 	baseFilename := uuid.New().String()
 	photoPath := baseFilename + "_photo.jpg"
+	thumbnailPath := baseFilename + "_thumb.jpg"
 
 	// Ensure directory exists
 	if err := photofile.EnsureDir(photoDir); err != nil {
@@ -474,20 +475,17 @@ func SaveContactPhoto(photoData []byte, mediaType string, photoDir string) (stri
 	if bounds.Dx() > maxPhotoSize || bounds.Dy() > maxPhotoSize {
 		photoImg = resizeTo(img, maxPhotoSize)
 	}
-	// Create thumbnail and encode as base64 data URL (48x48)
-	thumbnail := resizeTo(img, 48)
-	var thumbnailBuf bytes.Buffer
-	if err := jpeg.Encode(&thumbnailBuf, thumbnail, &jpeg.Options{Quality: 85}); err != nil {
-		return "", "", err
-	}
-	thumbnailBase64 := "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(thumbnailBuf.Bytes())
 
 	fullPhotoPath := filepath.Join(photoDir, photoPath)
 	if err := photofile.SaveJPEG(fullPhotoPath, photoImg); err != nil {
 		return "", "", err
 	}
+	if err := photofile.SaveJPEG(filepath.Join(photoDir, thumbnailPath), resizeTo(img, 48)); err != nil {
+		os.Remove(fullPhotoPath)
+		return "", "", err
+	}
 
-	return photoPath, thumbnailBase64, nil
+	return photoPath, thumbnailPath, nil
 }
 
 // decodePhoto decodes untrusted image bytes (JPEG, PNG, GIF, WebP, HEIC), using the
@@ -607,10 +605,15 @@ func readContactPhoto(contact *models.Contact, photoDir string) (string, string)
 		}
 	}
 
-	// Fall back to thumbnail (already base64)
-	if contact.PhotoThumbnail != "" && strings.HasPrefix(contact.PhotoThumbnail, "data:") {
+	// Fall back to the thumbnail file, then to a legacy base64 thumbnail
+	if contact.PhotoThumbnailFile != "" && photoDir != "" && !strings.Contains(contact.PhotoThumbnailFile, "..") && !filepath.IsAbs(contact.PhotoThumbnailFile) {
+		if data, err := os.ReadFile(filepath.Join(photoDir, contact.PhotoThumbnailFile)); err == nil { //nolint:gosec // name checked above, directory from config
+			return base64.StdEncoding.EncodeToString(data), http.DetectContentType(data)
+		}
+	}
+	if contact.LegacyThumbnail != "" && strings.HasPrefix(contact.LegacyThumbnail, "data:") {
 		// Parse data URL: data:image/jpeg;base64,<data>
-		parts := strings.SplitN(contact.PhotoThumbnail, ",", 2)
+		parts := strings.SplitN(contact.LegacyThumbnail, ",", 2)
 		if len(parts) == 2 {
 			// Extract media type from first part
 			mediaType := "image/jpeg"

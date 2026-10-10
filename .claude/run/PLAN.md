@@ -93,7 +93,7 @@ context is above 200k at the end of a step, then start a new one. Reviewer is al
 - [x] 16. **Search with SQLite FTS5**: contacts, notes, activities; triggers keep the index in
       sync; diacritics folding and prefix match; ranked results; migration builds the index; falls
       back to LIKE if FTS5 is unavailable; tests and performance check on 20k contacts.
-- [ ] 17. **Thumbnails out of the database**: move `PhotoThumbnail` to files with ETag and cache
+- [x] 17. **Thumbnails out of the database**: move `PhotoThumbnail` to files with ETag and cache
       headers, migration that exports existing blobs, drop the column in a later migration; list
       queries get smaller; backup includes the files.
 - [ ] 18. **Prometheus metrics**: `/metrics` (off by default, optional bearer token or separate

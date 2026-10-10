@@ -2,6 +2,7 @@ package models
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/google/uuid"
@@ -43,18 +44,34 @@ type ContactAddress struct {
 	Country string `json:"country" validate:"max=100"`
 }
 
+// ThumbnailURL is where a contact's thumbnail is served ("" when there is none). The
+// version in the query is the file's unique name, so the URL changes with the picture and
+// can be cached for good.
+func ThumbnailURL(contactID uint, file string) string {
+	if file == "" {
+		return ""
+	}
+	version := strings.TrimSuffix(file, "_thumb.jpg")
+	return fmt.Sprintf("/api/v1/contacts/%d/profile_picture?thumbnail=true&v=%s", contactID, url.QueryEscape(version))
+}
+
 type Contact struct {
 	gorm.Model
-	UserID             uint           `gorm:"not null;index" json:"-"`
-	Firstname          string         `gorm:"type:text not null COLLATE NOCASE" json:"firstname" validate:"required,min=1,max=100"`
-	Lastname           string         `gorm:"type:text COLLATE NOCASE" json:"lastname" validate:"max=100"`
-	Nickname           string         `gorm:"type:text COLLATE NOCASE" json:"nickname" validate:"max=50"`
-	Gender             string         `json:"gender" validate:"omitempty,oneof=male female other prefer_not_to_say"`
-	Email              string         `gorm:"type:text COLLATE NOCASE" json:"email" validate:"omitempty,email"`
-	Phone              string         `json:"phone" validate:"omitempty,phone"`
-	Birthday           string         `json:"birthday" validate:"omitempty,birthday"`
-	Photo              string         `json:"photo"`                                     // Path to the profile photo
-	PhotoThumbnail     string         `json:"-"`                                         // Base64 data URL of thumbnail (not exposed in JSON directly)
+	UserID    uint   `gorm:"not null;index" json:"-"`
+	Firstname string `gorm:"type:text not null COLLATE NOCASE" json:"firstname" validate:"required,min=1,max=100"`
+	Lastname  string `gorm:"type:text COLLATE NOCASE" json:"lastname" validate:"max=100"`
+	Nickname  string `gorm:"type:text COLLATE NOCASE" json:"nickname" validate:"max=50"`
+	Gender    string `json:"gender" validate:"omitempty,oneof=male female other prefer_not_to_say"`
+	Email     string `gorm:"type:text COLLATE NOCASE" json:"email" validate:"omitempty,email"`
+	Phone     string `json:"phone" validate:"omitempty,phone"`
+	Birthday  string `json:"birthday" validate:"omitempty,birthday"`
+	Photo     string `json:"photo"` // Path to the profile photo
+	// PhotoThumbnailFile is the name of the 48px thumbnail in the photo directory ("" = none).
+	PhotoThumbnailFile string `gorm:"column:photo_thumbnail_file;not null;default:''" json:"-"`
+	// LegacyThumbnail is the old base64 data URL column. Nothing writes it any more;
+	// services.ExportLegacyThumbnails moves its content into files at startup and the
+	// column stays until a later migration drops it (so a downgrade loses nothing).
+	LegacyThumbnail    string         `gorm:"column:photo_thumbnail" json:"-"`
 	Relationships      []Relationship `gorm:"foreignKey:ContactID" json:"relationships"` // Has many relationships
 	Address            string         `json:"address" validate:"max=500"`                // Full address as a string
 	HowWeMet           string         `json:"how_we_met" validate:"max=1000"`            // Text field

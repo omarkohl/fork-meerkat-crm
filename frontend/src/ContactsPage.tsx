@@ -21,11 +21,12 @@ import {
   Pagination,
   Button,
   FormControlLabel,
-  Switch
+  Switch,
 } from '@mui/material';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import FileUploadIcon from '@mui/icons-material/FileUpload';
 import { ContactListSkeleton } from './components/LoadingSkeletons';
+import { thumbnailSrc } from './utils/thumbnail';
 
 export default function ContactsPage() {
   const { t } = useTranslation();
@@ -54,28 +55,34 @@ export default function ContactsPage() {
   }, [sortOption]);
 
   // Helper to update page in URL
-  const setPage = useCallback((newPage: number) => {
-    setSearchParams(prev => {
-      const params = new URLSearchParams(prev);
-      if (newPage === 1) {
-        params.delete('page');
-      } else {
-        params.set('page', String(newPage));
-      }
-      return params;
-    });
-  }, [setSearchParams]);
+  const setPage = useCallback(
+    (newPage: number) => {
+      setSearchParams((prev) => {
+        const params = new URLSearchParams(prev);
+        if (newPage === 1) {
+          params.delete('page');
+        } else {
+          params.set('page', String(newPage));
+        }
+        return params;
+      });
+    },
+    [setSearchParams],
+  );
 
   // Memoize params to prevent infinite re-renders
-  const contactParams = useMemo(() => ({
-    page,
-    limit: pageSize,
-    search: searchQuery,
-    circle: selectedCircle,
-    sort: sortField,
-    order: sortOrder,
-    includeArchived: showArchived,
-  }), [page, searchQuery, selectedCircle, sortField, sortOrder, showArchived]);
+  const contactParams = useMemo(
+    () => ({
+      page,
+      limit: pageSize,
+      search: searchQuery,
+      circle: selectedCircle,
+      sort: sortField,
+      order: sortOrder,
+      includeArchived: showArchived,
+    }),
+    [page, searchQuery, selectedCircle, sortField, sortOrder, showArchived],
+  );
 
   // Use custom hook for fetching contacts
   const { contacts, total: totalContacts, loading, refetch } = useContacts(contactParams);
@@ -84,10 +91,7 @@ export default function ContactsPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [circlesData, user] = await Promise.all([
-          getCircles(),
-          getCurrentUser()
-        ]);
+        const [circlesData, user] = await Promise.all([getCircles(), getCurrentUser()]);
         setCircles(Array.isArray(circlesData) ? circlesData : []);
         setCustomFieldNames(user.custom_field_names ?? []);
         setEnabledFields(resolveEnabledFields(user.enabled_contact_fields));
@@ -126,7 +130,7 @@ export default function ContactsPage() {
       console.error('Error fetching circles:', err);
     }
   };
-  
+
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', mt: 2, p: 2 }}>
       <Typography variant="h5" gutterBottom sx={{ mb: 2 }}>
@@ -139,11 +143,13 @@ export default function ContactsPage() {
             labelId="circle-select-label"
             value={selectedCircle}
             label={t('contacts.filterByCircle')}
-            onChange={e => setSelectedCircle(e.target.value)}
+            onChange={(e) => setSelectedCircle(e.target.value)}
           >
             <MenuItem value="">{t('contacts.allCircles')}</MenuItem>
-            {circles.map(circle => (
-              <MenuItem key={circle} value={circle}>{circle}</MenuItem>
+            {circles.map((circle) => (
+              <MenuItem key={circle} value={circle}>
+                {circle}
+              </MenuItem>
             ))}
           </Select>
         </FormControl>
@@ -153,7 +159,7 @@ export default function ContactsPage() {
             labelId="sort-select-label"
             value={sortOption}
             label={t('contacts.sortBy')}
-            onChange={e => setSortOption(e.target.value)}
+            onChange={(e) => setSortOption(e.target.value)}
           >
             <MenuItem value="id-desc">{t('contacts.sort.recentlyAdded')}</MenuItem>
             <MenuItem value="id-asc">{t('contacts.sort.oldestFirst')}</MenuItem>
@@ -163,13 +169,7 @@ export default function ContactsPage() {
           </Select>
         </FormControl>
         <FormControlLabel
-          control={
-            <Switch
-              checked={showArchived}
-              onChange={(e) => setShowArchived(e.target.checked)}
-              size="small"
-            />
-          }
+          control={<Switch checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} size="small" />}
           label={t('contacts.showArchived')}
           sx={{ ml: 0.5, whiteSpace: 'nowrap' }}
         />
@@ -191,29 +191,44 @@ export default function ContactsPage() {
         </Button>
       </Stack>
       {(totalContacts > 0 || searchQuery || selectedCircle) && (
-        <Box sx={{ mb: 2, p: 1.5, bgcolor: 'action.hover', borderRadius: 1, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+        <Box
+          sx={{
+            mb: 2,
+            p: 1.5,
+            bgcolor: 'action.hover',
+            borderRadius: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            flexWrap: 'wrap',
+          }}
+        >
           <Typography variant="body2" sx={{ flexGrow: 1 }}>
             {searchQuery && selectedCircle
-              ? t('contacts.filteredBySearchAndCircle', { search: searchQuery, circle: selectedCircle, count: totalContacts })
+              ? t('contacts.filteredBySearchAndCircle', {
+                  search: searchQuery,
+                  circle: selectedCircle,
+                  count: totalContacts,
+                })
               : searchQuery
                 ? t('contacts.filteredBySearch', { search: searchQuery, count: totalContacts })
                 : selectedCircle
-                  ? t('contacts.filteredMessage', { count: filteredContacts.length, total: totalContacts, circle: selectedCircle })
-                  : t('contacts.totalContacts', { count: totalContacts })
-            }
+                  ? t('contacts.filteredMessage', {
+                      count: filteredContacts.length,
+                      total: totalContacts,
+                      circle: selectedCircle,
+                    })
+                  : t('contacts.totalContacts', { count: totalContacts })}
           </Typography>
-          {searchQuery && (
-            <Chip 
-              label={`"${searchQuery}"`} 
-              size="small" 
-              onDelete={() => navigate('/contacts')} 
-            />
-          )}
+          {searchQuery && <Chip label={`"${searchQuery}"`} size="small" onDelete={() => navigate('/contacts')} />}
           {selectedCircle && (
-            <Chip 
-              label={selectedCircle} 
-              size="small" 
-              onDelete={() => { setSelectedCircle(''); setPage(1); }} 
+            <Chip
+              label={selectedCircle}
+              size="small"
+              onDelete={() => {
+                setSelectedCircle('');
+                setPage(1);
+              }}
             />
           )}
         </Box>
@@ -223,7 +238,7 @@ export default function ContactsPage() {
       ) : (
         <>
           <Stack spacing={2}>
-            {filteredContacts.map(contact => (
+            {filteredContacts.map((contact) => (
               <Card
                 key={contact.ID}
                 component={Link}
@@ -237,17 +252,22 @@ export default function ContactsPage() {
                   color: 'inherit',
                   bgcolor: contact.archived ? 'action.disabledBackground' : undefined,
                   '&:hover': {
-                    bgcolor: 'action.hover'
-                  }
+                    bgcolor: 'action.hover',
+                  },
                 }}
               >
-                <Avatar src={contact.photo_thumbnail || undefined} sx={{ width: 48, height: 48, mr: 1.5, bgcolor: 'primary.main' }}>
+                <Avatar
+                  src={thumbnailSrc(contact.photo_thumbnail)}
+                  sx={{ width: 48, height: 48, mr: 1.5, bgcolor: 'primary.main' }}
+                >
                   {contact.firstname.charAt(0)}
                 </Avatar>
                 <Box sx={{ flex: 1 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                      {[contact.firstname, contact.nickname && `"${contact.nickname}"`, contact.lastname].filter(Boolean).join(' ')}
+                      {[contact.firstname, contact.nickname && `"${contact.nickname}"`, contact.lastname]
+                        .filter(Boolean)
+                        .join(' ')}
                     </Typography>
                     {contact.archived && (
                       <Chip
@@ -259,17 +279,25 @@ export default function ContactsPage() {
                     )}
                   </Box>
                   <Stack direction="row" spacing={0.5} mt={0.5} flexWrap="wrap" gap={0.5}>
-                    {contact.circles && contact.circles.filter((circle, idx, arr) => arr.indexOf(circle) === idx).map((circle: string) => (
-                      <Chip
-                        key={`${contact.ID}-${circle}`}
-                        label={circle}
-                        size="small"
-                        variant="outlined"
-                        clickable
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedCircle(circle); setPage(1); }}
-                        sx={{ height: 20, fontSize: '0.75rem' }}
-                      />
-                    ))}
+                    {contact.circles &&
+                      contact.circles
+                        .filter((circle, idx, arr) => arr.indexOf(circle) === idx)
+                        .map((circle: string) => (
+                          <Chip
+                            key={`${contact.ID}-${circle}`}
+                            label={circle}
+                            size="small"
+                            variant="outlined"
+                            clickable
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setSelectedCircle(circle);
+                              setPage(1);
+                            }}
+                            sx={{ height: 20, fontSize: '0.75rem' }}
+                          />
+                        ))}
                   </Stack>
                 </Box>
               </Card>
