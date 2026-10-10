@@ -66,6 +66,7 @@ func main() {
 			fmt.Printf("Current version: %d (dirty: %v)\n", version, dirty)
 		}
 	default:
-		log.Fatalf("Unknown command: %s. Use 'up', 'down', or 'version'", command)
+		fmt.Fprintf(os.Stderr, "Unknown command: %q. Use 'up', 'down', or 'version'\n", command)
+		os.Exit(1)
 	}
 }
