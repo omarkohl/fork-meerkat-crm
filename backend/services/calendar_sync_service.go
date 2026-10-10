@@ -11,6 +11,7 @@ import (
 	"meerkat/i18n"
 	"meerkat/logger"
 	"meerkat/models"
+	"meerkat/netguard"
 	"net/http"
 	"net/url"
 	"sort"
@@ -79,11 +80,12 @@ type CalendarSyncService struct {
 // NewCalendarSyncService builds a sync service. When blockPrivateURLs is set,
 // connections to private/loopback/link-local addresses are refused (SSRF
 // protection for cloud deployments; self-hosted setups usually sync from LAN
-// servers like Nextcloud, so this is opt-in via CALDAV_BLOCK_PRIVATE_URLS).
+// servers like Nextcloud, so this is opt-in via BLOCK_PRIVATE_URLS or the older
+// CALDAV_BLOCK_PRIVATE_URLS).
 func NewCalendarSyncService(blockPrivateURLs bool) *CalendarSyncService {
 	transport := &http.Transport{}
 	if blockPrivateURLs {
-		transport.DialContext = newPrivateBlockingDialContext(ErrCalendarUnreachable, ErrCalendarPrivateAddress)
+		transport = netguard.NewTransport(ErrCalendarUnreachable, ErrCalendarPrivateAddress)
 	}
 	return &CalendarSyncService{
 		client: &http.Client{

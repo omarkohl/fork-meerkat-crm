@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"meerkat/config"
+	"meerkat/controllers"
 	"meerkat/database"
 	apperrors "meerkat/errors"
 	"meerkat/i18n"
@@ -60,6 +61,13 @@ func main() {
 	db, err := database.InitDB(cfg.DBPath)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to initialize database")
+	}
+
+	if warn, users, err := controllers.PrivateURLWarning(db, cfg.PrivateURLsAllowed()); err != nil {
+		logger.Warn().Err(err).Msg("Could not check the private URL setting")
+	} else if warn {
+		logger.Warn().Int64("users", users).Msg("Webhooks, calendar/contact sync and Monica import may reach private and loopback addresses " +
+			"on an instance with several users. Set BLOCK_PRIVATE_URLS=true to block them (see docs/deployment.md)")
 	}
 
 	logger.Info().Msg("Initializing i18n translations...")

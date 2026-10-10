@@ -11,6 +11,7 @@ import (
 	"meerkat/config"
 	"meerkat/logger"
 	"meerkat/models"
+	"meerkat/netguard"
 	"net"
 	"net/http"
 	"net/url"
@@ -56,21 +57,17 @@ func buildPayloadBody(eventType string, data interface{}) ([]byte, error) {
 	return json.Marshal(payload)
 }
 
-// isBlockedIP reports whether ip is an address a webhook must not reach when private
-// URLs are blocked. The unspecified address counts: connecting to 0.0.0.0 reaches the
-// local host on Linux.
-func isBlockedIP(ip net.IP) bool {
-	return ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified()
-}
-
 // blockingDeliveryClient returns a client that refuses to connect to blocked addresses.
 // The check happens at dial time on the address actually used, so it also covers
 // redirects to internal hosts and DNS rebinding (a name that resolves to a public
 // address for the pre-check and to a private one for the connection).
 func blockingDeliveryClient() *http.Client {
 	blockingClientOnce.Do(func() {
-		transport := http.DefaultTransport.(*http.Transport).Clone()
-		transport.DialContext = newPrivateBlockingDialContext(errWebhookUnreachable, errWebhookPrivateAddress)
+		// netguard.NewTransport ignores HTTP(S)_PROXY: a proxy would be dialled instead of the target.
+		transport := netguard.NewTransport(errWebhookUnreachable, errWebhookPrivateAddress)
+		transport.TLSHandshakeTimeout = 10 * time.Second
+		transport.MaxIdleConns = 10
+		transport.IdleConnTimeout = 90 * time.Second
 		blockingClient = &http.Client{Timeout: deliveryClient.Timeout, Transport: transport}
 	})
 	return blockingClient
@@ -88,7 +85,7 @@ func isPrivateURL(rawURL string) bool {
 	}
 	for _, addr := range addrs {
 		ip := net.ParseIP(addr)
-		if ip != nil && isBlockedIP(ip) {
+		if ip != nil && netguard.IsBlockedIP(ip) {
 			return true
 		}
 	}

@@ -199,6 +199,7 @@ func RegisterRoutes(router *gin.Engine, cfg *config.Config, db *gorm.DB, oidcPro
 		admin.Use(middleware.AuthMiddleware(cfg))
 		admin.Use(middleware.AdminMiddleware())
 		{
+			admin.GET("/system-status", controllers.SystemStatus)
 			admin.GET("/users", controllers.ListUsers)
 			admin.GET("/users/:id", controllers.GetUser)
 			admin.PATCH("/users/:id", middleware.ValidateJSONMiddleware(&models.AdminUserUpdateInput{}), controllers.UpdateUser)

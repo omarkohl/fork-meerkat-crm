@@ -911,6 +911,7 @@
     }
   },
   "users": {
+    "privateUrlsWarning": "Les webhooks, la synchronisation des calendriers et des contacts et l'import Monica peuvent atteindre des adresses réseau privées et internes, et cette instance compte plusieurs utilisateurs. Définissez {{setting}}=true dans l'environnement du serveur pour le bloquer.",
     "title": "Gestion des utilisateurs",
     "loadError": "Échec du chargement des utilisateurs",
     "noUsers": "Aucun utilisateur trouvé",

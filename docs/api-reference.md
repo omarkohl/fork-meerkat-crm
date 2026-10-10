@@ -183,7 +183,7 @@ Imports contacts from a [Monica](https://www.monicahq.com/) instance through its
 
 | Method | Path | Description |
 |---|---|---|
-| `POST` | `/contacts/import/monica/connect` | Body `{"base_url", "api_token"}`. Checks the connection and returns a `session_id`. Private addresses are refused when `MONICA_BLOCK_PRIVATE_URLS` is set |
+| `POST` | `/contacts/import/monica/connect` | Body `{"base_url", "api_token"}`. Checks the connection and returns a `session_id`. Private addresses are refused when `BLOCK_PRIVATE_URLS` (or `MONICA_BLOCK_PRIVATE_URLS`) is set |
 | `POST` | `/contacts/import/monica/fetch` | Body `{"session_id", "include_relationships", "include_extras", "collapse_reciprocal_relationships"}`. Starts fetching in the background (`202`) |
 | `GET` | `/contacts/import/monica/status` | Progress of the fetch. Query parameter `session_id` is required (`400` without) |
 | `GET` | `/contacts/import/monica/preview` | The fetched contacts with duplicate detection. Query parameter `session_id` is required (`400` without) |
@@ -217,7 +217,7 @@ Webhooks send a signed HTTP `POST` to your URL when something happens. The `secr
 | `POST` | `/webhooks/:id/test` | Send a test event now: `{"delivery": {...}}` |
 | `GET` | `/webhooks/:id/deliveries` | Recent deliveries with status: `{"deliveries": [...]}` |
 
-A user can have at most 20 webhooks (`409` beyond that). URLs pointing at private addresses are refused when `WEBHOOK_BLOCK_PRIVATE_URLS` is set.
+A user can have at most 20 webhooks (`409` beyond that). URLs pointing at private addresses are refused when `BLOCK_PRIVATE_URLS` (or `WEBHOOK_BLOCK_PRIVATE_URLS`) is set.
 
 Events: `contact.created`, `contact.updated`, `contact.deleted`, `contact.restored`, `note.created`, `note.updated`, `note.deleted`, `activity.created`, `activity.updated`, `activity.deleted`, `reminder.triggered`, `birthday.occurred`.
 
@@ -233,11 +233,11 @@ Import events of a CalDAV or iCalendar URL as activities. Stored passwords are e
 | `DELETE` | `/calendars/:id` | Delete a subscription |
 | `POST` | `/calendars/:id/sync` | Sync now: `{"message", "created", "updated", "skipped"}` |
 
-A user can have at most 10 subscriptions (`409` beyond that). `PUT` replaces the subscription, so the body needs at least `name` and `url`. URLs pointing at private addresses are refused when `CALDAV_BLOCK_PRIVATE_URLS` is set.
+A user can have at most 10 subscriptions (`409` beyond that). `PUT` replaces the subscription, so the body needs at least `name` and `url`. URLs pointing at private addresses are refused when `BLOCK_PRIVATE_URLS` (or `CALDAV_BLOCK_PRIVATE_URLS`) is set.
 
 ### CardDAV Connection
 
-Syncs contacts with an external CardDAV server (Nextcloud, Radicale, ...). Each user has at most one connection. This is the client side; Meerkat's own CardDAV server is described in [CardDAV](carddav.md). Stored passwords are encrypted and never returned. Private addresses are refused when `CARDDAV_BLOCK_PRIVATE_URLS` (default: `CALDAV_BLOCK_PRIVATE_URLS`) is set.
+Syncs contacts with an external CardDAV server (Nextcloud, Radicale, ...). Each user has at most one connection. This is the client side; Meerkat's own CardDAV server is described in [CardDAV](carddav.md). Stored passwords are encrypted and never returned. Private addresses are refused when `BLOCK_PRIVATE_URLS` (or `CARDDAV_BLOCK_PRIVATE_URLS`, default: `CALDAV_BLOCK_PRIVATE_URLS`) is set.
 
 | Method | Path | Description |
 |---|---|---|
@@ -287,6 +287,7 @@ Content:
 
 | Method | Path | Description |
 |---|---|---|
+| `GET` | `/admin/system-status` | Operational warnings: `{"private_urls_allowed", "user_count", "private_url_warning", "setting", "features"}`. `private_url_warning` is true when outbound features may reach private addresses and more than one user exists (fix: `BLOCK_PRIVATE_URLS=true`); `features` lists the features (`webhooks`, `caldav`, `carddav`, `monica`) that still allow private addresses. Shown as a banner on the Users page |
 | `GET` | `/admin/users` | List all users |
 | `GET` | `/admin/users/:id` | Get a user |
 | `PATCH` | `/admin/users/:id` | Update a user (e.g. set admin flag) |

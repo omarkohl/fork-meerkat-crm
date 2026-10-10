@@ -911,6 +911,7 @@
     }
   },
   "users": {
+    "privateUrlsWarning": "Webhook, sincronizzazione di calendari e contatti e importazione da Monica possono raggiungere indirizzi di rete privati e interni, e questa istanza ha più utenti. Imposta {{setting}}=true nell'ambiente del server per bloccarlo.",
     "title": "Gestione Utenti",
     "loadError": "Caricamento utenti fallito",
     "noUsers": "Nessun utente trovato",
