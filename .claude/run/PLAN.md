@@ -76,7 +76,7 @@ context is above 200k at the end of a step, then start a new one. Reviewer is al
 - [x] 10. **Tests for untested logic**: `birthday_service`, `webhook_service` (signature, retries,
       SSRF), `credential_crypto`, `mailer`, and controllers for oidc, photo, calendar, carddav,
       graph, import, admin_user. Fix bugs found (one commit, list them).
-- [ ] 11. **i18n checker and local hooks**: script that fails when a key is missing in any locale
+- [x] 11. **i18n checker and local hooks**: script that fails when a key is missing in any locale
       (frontend and backend), also detects unused/duplicate keys as warnings; CI job; `lefthook`
       config (fmt, lint, i18n on staged files) documented as optional.
 - [ ] 12. **Unified SSRF switch**: `BLOCK_PRIVATE_URLS`, CardDAV coverage, warning and admin banner,

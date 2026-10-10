@@ -1,4 +1,4 @@
-.PHONY: help install format format-check lint typecheck test test-e2e precommit build
+.PHONY: help install format format-check lint typecheck i18n-check test test-e2e precommit build
 
 YARN ?= corepack yarn
 # Base for format-check: only files changed since it are checked, so legacy
@@ -38,6 +38,10 @@ lint: ## go vet + eslint
 typecheck: ## TypeScript type check
 	cd frontend && npx tsc --noEmit
 
+i18n-check: ## Locale files: missing/extra keys fail, unused/duplicate keys warn (scripts/i18n-check.mjs)
+	node --test scripts/*.test.mjs
+	node scripts/i18n-check.mjs
+
 test: ## Backend and frontend unit tests
 	cd backend && go test ./...
 	cd frontend && $(YARN) test
@@ -45,7 +49,7 @@ test: ## Backend and frontend unit tests
 test-e2e: ## Playwright E2E against a local stack (no Docker; see scripts/e2e-stack.mjs)
 	node scripts/e2e-stack.mjs -- npx playwright test $(ARGS)
 
-precommit: format-check lint typecheck test ## All checks except E2E
+precommit: format-check lint typecheck i18n-check test ## All checks except E2E
 
 build: ## Build backend binary and frontend bundle
 	cd backend && go build -o meerkat .

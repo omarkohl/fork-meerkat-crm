@@ -2,7 +2,7 @@
 
 ## Next step
 
-11.
+12.
 
 ## Stack
 
@@ -16,6 +16,7 @@
 - 8: second-sprint/08-test-infra (PR #23)
 - 9: second-sprint/09-fuzz (PR #24)
 - 10: second-sprint/10-untested-logic (PR #25)
+- 11: (branch and PR set by the orchestrator)
 
 ## Log
 
@@ -120,8 +121,11 @@
   7. Import sessions answered 401 for another user's session id (the frontend treats 401 as an expired login and logs out, and it
      confirmed the id exists); now the same 404 as an unknown id (CSV/VCF and Monica).
 
+- 11: `scripts/i18n-check.mjs` (plain Node, no dependencies; tests in `scripts/i18n-check.test.mjs` run with `node --test`) checks `frontend/src/i18n/locales` and `backend/i18n/locales`: a key missing in de/it/es/fr, a key not in en and non-string values are errors; duplicate keys (JSON.parse hides them, so there is a small parser) and keys no source seems to use are warnings. The existing locales had no gaps (0 errors); 27 frontend keys are reported as unused (warnings, left alone). `make i18n-check` is part of `make precommit` (about 0.2 s) and of a new `i18n` job in lint.yml; `lefthook.yml` is optional and documented in contributing.md. No UI strings changed, so no E2E run.
+
 ## Decisions
 
+- Step 11: plural keys (`_one`, `_other`, `_many`, ...) are compared by base name, because languages differ in their plural forms. "Unused" means no string literal equals the key and no literal or template prefix (`'a.b.'`, `` `a.${x}` ``) covers it, so dynamic keys are tolerated; it is a heuristic and only warns.
 - Step 10 review fixes: (a) webhook blocking client is one package-level client cloned from `http.DefaultTransport` using the shared `newPrivateBlockingDialContext`, which now tries every safe address; a mixed answer (public + private) connects only to the public one. A dial-time block is recorded failed without retry, like the pre-check. (b) `DeleteUser` rewrites the soft-deleted row's email (`deleted+<id>@deleted.invalid`) and username (`deleted-<id>`) and sets `oidc_subject`/`oidc_provider` to NULL (the partial unique index ignores NULL), so the person can log in again as a new account; the username count error in provisioning is no longer ignored. (c) `photofile.MaxPixels` is 100 MP (48/50 MP phones). The header check now fails closed for formats with a registered decoder (an unreadable JPEG/PNG/GIF/HEIC header is refused) and passes unregistered formats to the decoder. HEIC: valid photos still pass (tested with the decoder's `test8.heic`, brands heic and mif1); the `mif1` brand has no registered decoder, so the upload path calls `heic.DecodeConfig` directly and fails closed. (d) A server change with a stored password is a 400 (field `password`) instead of a silent drop; the UI hint says so in all five locales and the dialogs show a translated error. (e) One `sameServer` helper (scheme with webcal as https, lowercase host, default-normalised port) for calendars, CardDAV update and Discover.
 - Step 9: the fuzz targets live next to the code as `*_fuzz_test.go` and run over their seeds in every `go test`;
   seed files in `testdata/fuzz` are a handful of hand-written edge cases. The workflow does not run on pull requests.
@@ -142,6 +146,7 @@
 
 ## For review
 
+- Step 11: the 27 "unused" warnings (e.g. `activities.deleteConfirm`, `relationships.saveFailed`) are candidates for removal from all locales; not done here.
 - Step 10: behaviour changes besides pure fixes: changing the CalDAV/CardDAV server (host, port or scheme) with a stored password answers 400 until a new password (or clear) is sent; another user's import session id is 404 instead of 401; photo uploads over 100 megapixels are refused.
 - Step 9: the first scheduled run of `Fuzz` is the check of the workflow (matrix, artifact collection with `git ls-files --others`). A nightly red run means a new input crashed a parser: download the artifact, add it under `testdata/fuzz`, fix.
 - Step 8: Radicale runs via `docker run` after checkout, not as a `services:` container, because it needs `docker/radicale` mounted as config (service containers start before checkout). Image `tomsquest/docker-radicale:3.8.3.0` (also pinned in `docker-compose.carddav-test.yml`, was `latest`): the tag and the compatibility of `docker/radicale/config` with Radicale 3.8 could not be checked from here, and the job has never run. Fix the tag if the first CI run says it does not exist.
