@@ -34,6 +34,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { getApiTokens, createApiToken, revokeApiToken, ApiToken, ApiTokenCreateResponse } from './api/apiTokens';
 import { useSnackbar } from './context/SnackbarContext';
 import WebhooksSettings from './components/WebhooksSettings';
+import IcsFeedSettings from './components/IcsFeedSettings';
 
 export default function ApiTokensPage() {
   const { t } = useTranslation();
@@ -128,6 +129,8 @@ export default function ApiTokensPage() {
 
       <WebhooksSettings />
 
+      <IcsFeedSettings />
+
       <Card sx={{ mb: 2 }}>
         <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
@@ -137,12 +140,7 @@ export default function ApiTokensPage() {
                 {t('apiTokens.title')}
               </Typography>
             </Box>
-            <Button
-              variant="outlined"
-              size="small"
-              startIcon={<AddIcon />}
-              onClick={() => setCreateDialogOpen(true)}
-            >
+            <Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={() => setCreateDialogOpen(true)}>
               {t('apiTokens.createButton')}
             </Button>
           </Box>
@@ -189,7 +187,10 @@ export default function ApiTokensPage() {
                               <IconButton
                                 size="small"
                                 color="error"
-                                onClick={() => { setRevokingToken(token); setRevokeDialogOpen(true); }}
+                                onClick={() => {
+                                  setRevokingToken(token);
+                                  setRevokeDialogOpen(true);
+                                }}
                               >
                                 <BlockIcon fontSize="small" />
                               </IconButton>
@@ -215,7 +216,9 @@ export default function ApiTokensPage() {
             label={t('apiTokens.createDialog.nameLabel')}
             value={newTokenName}
             onChange={(e) => setNewTokenName(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') handleCreate(); }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleCreate();
+            }}
             fullWidth
             margin="normal"
             inputProps={{ maxLength: 100 }}
@@ -264,9 +267,7 @@ export default function ApiTokensPage() {
       <Dialog open={revokeDialogOpen} onClose={() => setRevokeDialogOpen(false)}>
         <DialogTitle>{t('apiTokens.revokeDialog.title')}</DialogTitle>
         <DialogContent>
-          <Typography>
-            {t('apiTokens.revokeDialog.message', { name: revokingToken?.name || '' })}
-          </Typography>
+          <Typography>{t('apiTokens.revokeDialog.message', { name: revokingToken?.name || '' })}</Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setRevokeDialogOpen(false)} disabled={revokeLoading}>

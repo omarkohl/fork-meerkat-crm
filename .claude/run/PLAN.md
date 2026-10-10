@@ -45,7 +45,7 @@ Read first: `.claude/AUTONOMOUS-RUNS.md`, `README-developer.md`, `IMPROVEMENTS.m
       prove output sizes unchanged.
 - [x] 6. **`golang-jwt` v4 to v5 (6.2)**; auth tests cover the migration.
 - [x] 7. **`gocron` v1 to v2 (6.3)**; scheduler tests still pass.
-- [ ] 8. **ICS feed export (feature)**: token-protected subscribable URL for
+- [x] 8. **ICS feed export (feature)**: token-protected subscribable URL for
       birthdays and reminders; migration, controller, API client, settings UI,
       i18n (5 locales), isolation test, docs/api-reference.md.
 - [ ] 9. **Trash page (feature)**: list soft-deleted contacts, restore, purge,

@@ -2,7 +2,7 @@
 
 ## Next step
 
-8. ICS feed export.
+9. Trash page.
 
 ## Stack
 
@@ -13,7 +13,8 @@
 - 4: `first-sprint/04-dependabot-govulncheck`, PR #7 (base `first-sprint/03-frontend-ci-gates`)
 - 5: `first-sprint/05-replace-nfnt-resize`, PR #8 (base `first-sprint/04-dependabot-govulncheck`)
 - 6: `first-sprint/06-jwt-v5`, PR #9 (base `first-sprint/05-replace-nfnt-resize`)
-- 7: `first-sprint/07-gocron-v2`, PR pending (base `first-sprint/06-jwt-v5`)
+- 7: `first-sprint/07-gocron-v2`, PR #10 (base `first-sprint/06-jwt-v5`)
+- 8: `first-sprint/08-ics-feed`, PR pending (base `first-sprint/07-gocron-v2`)
 
 ## Log
 
@@ -68,8 +69,50 @@
   clean `Stop`. Green on v1 (also with `-race`), then migrated to v2.22.0 with the tests
   unchanged apart from the constructor now returning an error. `main.go` shrank.
   `golangci-lint` 0 issues, `make precommit` and `make test-e2e` (28) green.
+- Step 8 (ICS feed): tests first (service: escaping, 75-octet folding on rune boundaries,
+  RRULE mapping, scoping; controller: valid/invalid/regenerated/revoked token, tampered
+  token, isolation, header injection; migration up/down + FK cascade), then
+  `ics_feeds` (migration 000024), `services/ics_service.go`, `controllers/ics_feed_controller.go`,
+  public `GET /api/v1/ics/:file` plus `GET/POST/DELETE /api/v1/ics-feed`, `IcsFeedSettings`
+  card on the Integrations page, i18n (5 frontend + 5 backend locales), docs. Vitest
+  (4 component tests), new `e2e/ics-feed.spec.ts` and an isolation case. `make precommit`,
+  `golangci-lint` (0 issues) and `make test-e2e` (30) green. Prettier reformatted
+  `ApiTokensPage.tsx` and `isolation.spec.ts` in full (see step 3 note).
+- Step 8 review fixes (amended): the token is no longer logged: `LoggingMiddleware` logs
+  the route pattern for the ICS route and gin's access logger skips it (`gin.Default()`
+  became `gin.New()` plus `LoggerWithConfig{Skip}` and `Recovery`); test captures the log.
+  RRULEs no longer skip short months or non-leap Feb 29 (verified with python-dateutil).
+  `DeleteUser` removes the feed; `ServeIcsFeed` 404s when the owner is gone; concurrent
+  create retries once on the unique constraint; reminder dates use `RemindAt.UTC()`;
+  the copy timeout is cleared on unmount; docs note proxy logs and recurrence drift.
 
 ## Decisions
+
+- Step 8 review: RRULE for day 29-31 starts is `BYMONTHDAY=28..D;BYSETPOS=-1` (D=31 gives
+  the last day), which mirrors the app's clamp-to-last-day but not its drift (the app adds
+  months to the clamped date, so Jan 31 -> Feb 28 -> Mar 28, the calendar goes back to
+  Mar 31). Feb 29 (birthday or yearly reminder) uses `BYMONTH=2;BYMONTHDAY=-1`. Reminder
+  dates are the UTC date of `remind_at`, matching `CalculateNextReminderTime`; a reminder
+  created at local midnight east of UTC therefore shows the previous day.
+- Step 8: one feed per user (table `ics_feeds`, unique `user_id`, SHA-256 of a 32-byte
+  base64url token, same scheme as API tokens). Regenerate = replace the row in a
+  transaction, revoke = delete the row (no soft delete; hard delete keeps the unique
+  constraints simple). Public route `/api/v1/ics/:file` is registered outside the
+  protected group with only the per-IP API rate limiter; the handler ignores any
+  session user, answers 404 for every failure (bad format, unknown, revoked), sets
+  `Cache-Control: private, max-age=900`, `ETag` (304 on match), `noindex`,
+  `Referrer-Policy: no-referrer`. The token format is checked before the DB lookup,
+  and the stored hash is compared with `subtle.ConstantTimeCompare`. The management
+  endpoints take no JSON body, so no `ValidateJSONMiddleware` (like `/reminders/:id/complete`).
+  The server never builds an absolute URL (it does not know its public address
+  behind a proxy); the frontend builds it from `API_BASE_URL` and `window.location.origin`.
+  Content: non-archived contact birthdays (yearly RRULE; `--MM-DD` starts in 1972, a leap
+  year after 1970) and non-completed reminders as all-day events, recurrences weekly,
+  monthly, quarterly (`INTERVAL=3`), six-months (`INTERVAL=6`), yearly mapped to RRULE,
+  `once` without. Relationship-only birthdays (no contact) and anniversaries are not
+  exported. `DTSTAMP` is the row's `updated_at`, so output is deterministic and the
+  ETag only changes with data. Event titles use the owner's language (`ics.*` keys in
+  `backend/i18n/locales`).
 
 - Step 7: v1 ran interval jobs immediately at start (found by the characterisation
   test); v2's `DurationJob` waits a full interval by default, so `WithStartImmediately`
@@ -122,6 +165,16 @@
 
 ## For review
 
+- Step 8: UI is a "Calendar feed (ICS)" card on the Integrations page (`/api-tokens`),
+  below Webhooks, not on the Settings page, because API tokens and webhooks live there.
+  Generate shows the URL once in a dialog with a copy button (same pattern as API
+  tokens); Regenerate and Revoke ask for confirmation. Existing users lose nothing; the
+  feature is off until someone generates a URL. The URL is a bearer secret in a query-free
+  path: it can land in reverse proxy access logs and calendar-provider caches (Google
+  Calendar fetches it server side, so an instance behind a VPN will not work with it).
+- Step 8: reminders are exported with the date part of `remind_at` (as stored, reminders
+  are midnight in the creator's timezone), not as timed events, so they show as all-day.
+
 - Step 3: 87 of 113 frontend TS files do not pass the Prettier config (single quotes,
   width 120), so touching one forces a whole-file reformat in that change. The config
   is kept as is; the alternative is a one-off repo-wide reformat commit, which the plan
@@ -135,6 +188,15 @@
   `table -> parent` with the number of orphan rows an existing database holds.
 
 ## Questions
+
+- API tokens have the same gap as the ICS feed had: users are soft-deleted and `DeleteUser`
+  does not remove their `api_tokens`, so a deleted user's API token may still authenticate
+  (not fixed here).
+
+- `docs/api-reference.md` lists the API token endpoints as `/admin/api-tokens`, but the
+  routes are `/api-tokens` (pre-existing, not touched).
+- The ICS feed has no "last fetched" indicator (the API-token list has `last_used_at`);
+  not added to keep the step small. Worth it?
 
 - The startup goroutines in `main.go` (`go reminderTask()` etc.) are not tracked during
   shutdown, so the database can close under a running startup sync; pre-existing, not

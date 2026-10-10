@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	apperrors "meerkat/errors"
 	"meerkat/config"
+	apperrors "meerkat/errors"
 	"meerkat/logger"
 	"meerkat/middleware"
 	"meerkat/models"
@@ -328,6 +328,12 @@ func DeleteUser(c *gin.Context) {
 
 		// Delete contacts
 		if err := tx.Where("user_id = ?", userID).Delete(&models.Contact{}).Error; err != nil {
+			return err
+		}
+
+		// Delete the calendar feed (the user row is soft-deleted, so the foreign key
+		// cascade does not remove it and the token would stay valid)
+		if err := tx.Where("user_id = ?", userID).Delete(&models.IcsFeed{}).Error; err != nil {
 			return err
 		}
 

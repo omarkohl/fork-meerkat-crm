@@ -814,6 +814,38 @@
       "confirm": "Revocar"
     }
   },
+  "icsFeed": {
+    "title": "Feed de calendario (ICS)",
+    "description": "Suscríbete a tus cumpleaños y recordatorios desde cualquier aplicación de calendario. Cualquiera que tenga la URL del feed puede leerlo, así que mantenla privada.",
+    "inactive": "Aún no hay feed de calendario.",
+    "active": "Feed activo desde {{date}}.",
+    "generateButton": "Generar URL del feed",
+    "regenerateButton": "Regenerar URL",
+    "revokeButton": "Revocar feed",
+    "loadError": "No se pudo cargar el feed de calendario",
+    "createError": "No se pudo crear el feed de calendario",
+    "revokeError": "No se pudo revocar el feed de calendario",
+    "revokeSuccess": "Feed de calendario revocado",
+    "copyError": "No se pudo copiar al portapapeles",
+    "createdDialog": {
+      "title": "URL del feed de calendario",
+      "warning": "Esta URL no se volverá a mostrar. Cópiala ahora y añádela a tu aplicación de calendario como suscripción.",
+      "urlLabel": "URL del feed",
+      "copy": "Copiar",
+      "copied": "¡Copiado!",
+      "done": "Hecho, la he guardado"
+    },
+    "regenerateDialog": {
+      "title": "Regenerar URL del feed",
+      "message": "La URL actual dejará de funcionar de inmediato. Los calendarios suscritos deben actualizarse con la nueva URL.",
+      "confirm": "Regenerar"
+    },
+    "revokeDialog": {
+      "title": "Revocar feed de calendario",
+      "message": "La URL del feed dejará de funcionar de inmediato. Podrás generar una nueva más tarde.",
+      "confirm": "Revocar"
+    }
+  },
   "users": {
     "title": "Gestión de Usuarios",
     "loadError": "Error al cargar los usuarios",

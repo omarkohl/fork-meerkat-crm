@@ -36,5 +36,10 @@
       "debtYouOwe": "Debt (imported from Monica): I owe {{amount}}",
       "debtTheyOwe": "Debt (imported from Monica): owes me {{amount}}"
     }
+  },
+  "ics": {
+    "calendarName": "Meerkat CRM",
+    "birthday": "{{name}}'s birthday",
+    "contact": "Contact: {{name}}"
   }
 }
