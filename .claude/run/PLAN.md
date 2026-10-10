@@ -62,7 +62,7 @@ context is above 200k at the end of a step, then start a new one. Reviewer is al
       WaitGroup, shutdown waits bounded. Remove the matching gosec suppressions.
 - [x] 5. **ICS feed "last fetched"**: column, update throttled to once a minute, shown on the
       Integrations card, i18n, tests.
-- [ ] 6. **Complete API reference**: document every route group missing (webhooks, calendars,
+- [x] 6. **Complete API reference**: document every route group missing (webhooks, calendars,
       CardDAV connections, Monica import, OIDC, enabled-contact-fields, trash, backups, ICS, fix
       `/api-tokens` path); Go test that every registered route appears in the doc.
 - [ ] 7. **Supply chain**: pin actions by SHA, align `docker/build-push-action`, pin Docker base

@@ -2,7 +2,7 @@
 
 ## Next step
 
-6.
+7.
 
 ## Stack
 
@@ -10,6 +10,7 @@
 - 2: second-sprint/02-deleted-users (PR #17)
 - 3: second-sprint/03-trash-followups (PR #18)
 - 4: second-sprint/04-file-robustness (PR #19)
+- 5: second-sprint/05-ics-last-fetched (PR #20)
 
 ## Log
 
@@ -52,6 +53,11 @@
   "Last fetched: <date and time>." or "Not fetched yet." (five locales). Tests: migration up/down/up, throttle,
   304, 404, per-user, reset on regenerate; Vitest; e2e. The e2e run needed `PLAYWRIGHT_BROWSERS_PATH` with
   symlinks to `/opt/pw-browsers` (no config change).
+- 6: `docs/api-reference.md` now covers every route: OIDC, enabled-contact-fields, Monica import, webhooks,
+  calendar subscriptions, CardDAV connection (28 routes were missing). New `routes/api_reference_test.go` registers
+  the real routes (`RegisterRoutes` with OIDC and CardDAV switched on), reads the doc tables and fails in both
+  directions (undocumented route, documented route that does not exist); parameter names are ignored and
+  `<token>.ics` stands for `:file`. The `/api-tokens` path in the doc was already correct (nothing to fix).
 
 ## Decisions
 
@@ -71,6 +77,7 @@
 
 ## For review
 
+- Step 6: the test allowlist has two entries, both for the CardDAV server (`/carddav/*path`, `/.well-known/carddav`): WebDAV for CardDAV clients, documented in `docs/carddav.md`, not REST. Response shapes in the new doc sections are summarised from the handlers, not exhaustive.
 - Step 2: every authenticated request now does a user lookup; confirm that cost is acceptable.
 - Step 3: `WebhooksSettings.tsx` was not Prettier-clean, so the format check forced a full reformat of the file (the real change is one line, `contact.restored`).
 - Step 3: the sync never writes `purged_at` back (`saveLink` and the link saves omit it), so a purge during a running sync keeps its tombstone.
