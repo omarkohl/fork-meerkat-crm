@@ -234,3 +234,5 @@
 - The down migration of 000008 leaves `contacts.etag`, `vcard_extra` and `vcard_uid` in place (it predates `DROP COLUMN`). Harmless, but a rollback below version 8 is not byte-identical to a fresh schema. Left as is; the migration test tolerates it.
 
 ## Blocked
+
+- Run paused by the user's request (2026-10-10): finish in-flight steps (17–19 with review fixes), push as PRs (#32, #33, #34), then stop. Steps 20–36 remain open; remove this entry to resume.
