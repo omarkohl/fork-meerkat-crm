@@ -13,6 +13,7 @@ import (
 	"meerkat/idutil"
 	"meerkat/logger"
 	"meerkat/models"
+	"meerkat/photofile"
 	"mime/multipart"
 	"net/http"
 	"os"
@@ -150,7 +151,7 @@ func AddPhotoToContact(c *gin.Context, cfg *config.Config) {
 		}
 
 		// Use validated upload directory from config
-		if err := os.MkdirAll(cfg.ProfilePhotoDir, os.ModePerm); err != nil { //nolint:gosec // photo directory is shared with the web server; mode kept as-is
+		if err := photofile.EnsureDir(cfg.ProfilePhotoDir); err != nil {
 			apperrors.AbortWithError(c, apperrors.ErrInternal("Failed to create upload directory").WithError(err))
 			return
 		}
@@ -250,7 +251,7 @@ func processAndSavePhoto(file *multipart.FileHeader, uploadDir string) (string, 
 	photoPath := baseFilename + "_photo.jpg" // Always save as JPG
 
 	// Create the output directory
-	if err := os.MkdirAll(uploadDir, os.ModePerm); err != nil { //nolint:gosec // photo directory is shared with the web server; mode kept as-is
+	if err := photofile.EnsureDir(uploadDir); err != nil {
 		return "", "", err
 	}
 
@@ -261,11 +262,6 @@ func processAndSavePhoto(file *multipart.FileHeader, uploadDir string) (string, 
 	if bounds.Dx() > maxPhotoSize || bounds.Dy() > maxPhotoSize {
 		photoImg = resizeTo(img, maxPhotoSize)
 	}
-	fullPhotoPath := filepath.Join(uploadDir, photoPath)
-	if err := saveImage(fullPhotoPath, photoImg); err != nil {
-		return "", "", err
-	}
-
 	// Create thumbnail and encode as base64 data URL
 	thumbnail := resizeTo(img, 48)
 	var thumbnailBuf bytes.Buffer
@@ -273,6 +269,11 @@ func processAndSavePhoto(file *multipart.FileHeader, uploadDir string) (string, 
 		return "", "", err
 	}
 	thumbnailBase64 := "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(thumbnailBuf.Bytes())
+
+	fullPhotoPath := filepath.Join(uploadDir, photoPath)
+	if err := photofile.SaveJPEG(fullPhotoPath, photoImg); err != nil {
+		return "", "", err
+	}
 
 	return photoPath, thumbnailBase64, nil
 }
@@ -310,17 +311,6 @@ func cropToSquare(img image.Image) image.Image {
 	}
 
 	return cropped
-}
-
-func saveImage(path string, img image.Image) error {
-	out, err := os.Create(path) //nolint:gosec // path built from the configured photo directory
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	// Always encode as JPEG
-	return jpeg.Encode(out, img, &jpeg.Options{Quality: 85})
 }
 
 // ProxyImage fetches an image from a URL and returns it to the client.

@@ -22,6 +22,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// backgroundShutdownTimeout bounds the wait for startup tasks at shutdown. It adds
+// to the scheduler stop (5s) and the HTTP server's own 30s limit, so the worst
+// case is about 40s; a container stop grace period below that kills the process
+// first, which is safe (SQLite is crash-consistent).
+const backgroundShutdownTimeout = 5 * time.Second
+
 func main() {
 	// Initialize logger first
 	logLevel := os.Getenv("LOG_LEVEL")
@@ -106,10 +112,19 @@ func main() {
 		logger.Fatal().Err(err).Msg("Failed to create scheduler")
 	}
 	// Run once on startup (rate-limited to prevent duplicates)
-	go reminderTask()
-	go calendarSyncTask()
-	go contactSyncTask()
-	go trashPurgeTask()
+	bg := services.NewBackground()
+	for name, task := range map[string]func(){
+		"reminders":     reminderTask,
+		"calendar-sync": calendarSyncTask,
+		"contact-sync":  contactSyncTask,
+		"trash-purge":   trashPurgeTask,
+	} {
+		bg.Go(name, func(ctx context.Context) {
+			if ctx.Err() == nil {
+				task()
+			}
+		})
+	}
 	s.Start()
 
 	// gin.Default() equivalent, except that gin's access log skips requests whose path
@@ -228,6 +243,11 @@ func main() {
 	// Attempt graceful shutdown of HTTP server
 	if err := srv.Shutdown(ctx); err != nil {
 		logger.Error().Err(err).Msg("Server forced to shutdown")
+	}
+
+	// The startup tasks may still use the database: wait for them, bounded.
+	if !bg.Shutdown(backgroundShutdownTimeout) {
+		logger.Warn().Dur("timeout", backgroundShutdownTimeout).Msg("Startup tasks still running at shutdown")
 	}
 
 	// Close database connection
