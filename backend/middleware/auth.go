@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"meerkat/config"
+	"meerkat/idutil"
 	"meerkat/logger"
 	"meerkat/models"
 	"net/http"
@@ -50,6 +51,9 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 			if err := db.Where("token_hash = ? AND revoked_at IS NULL", hash).First(&apiToken).Error; err != nil {
 				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 				c.Abort()
+				return
+			}
+			if !userExists(c, db, apiToken.UserID) {
 				return
 			}
 			c.Set("userID", apiToken.UserID)
@@ -107,26 +111,45 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 				c.Set("username", username)
 			}
 
-			if idValue, exists := claims["user_id"]; exists {
-				switch v := idValue.(type) {
-				case float64:
-					c.Set("userID", uint(v))
-				case int:
-					c.Set("userID", uint(v)) //nolint:gosec // JWT float64 claim from a signed token
-				case uint:
-					c.Set("userID", v)
-				default:
-					c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
-					c.Abort()
-					return
-				}
-			} else {
+			// Tokens are issued with a numeric user_id, which JSON decodes as float64.
+			idValue, _ := claims["user_id"].(float64)
+			userID, ok := idutil.FromFloat(idValue)
+			if !ok {
 				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
 				c.Abort()
 				return
 			}
+
+			// Users are soft-deleted; a signed token must not outlive its account.
+			db := c.MustGet("db").(*gorm.DB)
+			if !userExists(c, db, userID) {
+				return
+			}
+			c.Set("userID", userID)
+		} else {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+			c.Abort()
+			return
 		}
 
 		c.Next()
 	}
+}
+
+// userExists reports whether the (not soft-deleted) user exists. Otherwise it has
+// already answered: 401 when the user is gone, 500 on a database error.
+func userExists(c *gin.Context, db *gorm.DB, userID uint) bool {
+	var count int64
+	if err := db.Model(&models.User{}).Where("id = ?", userID).Count(&count).Error; err != nil {
+		logger.Logger.Error().Err(err).Uint("user_id", userID).Msg("Failed to look up the authenticated user")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		c.Abort()
+		return false
+	}
+	if count == 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.Abort()
+		return false
+	}
+	return true
 }

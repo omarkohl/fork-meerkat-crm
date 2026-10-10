@@ -5,11 +5,11 @@ import (
 	"encoding/base64"
 	"errors"
 	apperrors "meerkat/errors"
+	"meerkat/idutil"
 	"meerkat/middleware"
 	"meerkat/models"
 	"meerkat/services"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -191,7 +191,7 @@ func GetWebhookDeliveries(c *gin.Context) {
 
 func findWebhook(c *gin.Context, db *gorm.DB, userID uint) (models.Webhook, bool) {
 	idParam := c.Param("id")
-	id, err := strconv.ParseUint(idParam, 10, 64)
+	id, err := idutil.Parse(idParam)
 	if err != nil {
 		apperrors.AbortWithError(c, apperrors.ErrInvalidInput("id", "must be a positive integer"))
 		return models.Webhook{}, false

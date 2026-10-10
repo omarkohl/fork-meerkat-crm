@@ -51,7 +51,7 @@ context is above 200k at the end of a step, then start a new one. Reviewer is al
 - [x] 0. **Environment check**: `make precommit` green, whether `make test-e2e` runs.
 - [x] 1. **CI fixes** (branch `second-sprint/01-ci-fixes`, done before the plan): bump `x/net` for
       govulncheck, golangci-lint v2.14.0, two new lint findings fixed.
-- [ ] 2. **Deleted users lose access**: JWT middleware checks the user is active on every request;
+- [x] 2. **Deleted users lose access**: JWT middleware checks the user is active on every request;
       `DeleteUser` removes API tokens and the ICS feed and invalidates sessions; same for admin
       disable if it exists. Simplify `user_id` claim handling to the one real type, range-checked
       helper for uint conversions (removes the G115 suppressions). Tests, isolation case.
