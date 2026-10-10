@@ -2,9 +2,11 @@ package services
 
 import (
 	"bytes"
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"meerkat/config"
@@ -46,6 +48,45 @@ func buildPayloadBody(eventType string, data interface{}) ([]byte, error) {
 	return json.Marshal(payload)
 }
 
+// isBlockedIP reports whether ip is an address a webhook must not reach when private
+// URLs are blocked. The unspecified address counts: connecting to 0.0.0.0 reaches the
+// local host on Linux.
+func isBlockedIP(ip net.IP) bool {
+	return ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsUnspecified()
+}
+
+// blockingDeliveryClient returns a client that refuses to connect to blocked addresses.
+// The check happens at dial time on the address actually used, so it also covers
+// redirects to internal hosts and DNS rebinding (a name that resolves to a public
+// address for the pre-check and to a private one for the connection).
+func blockingDeliveryClient() *http.Client {
+	dialer := &net.Dialer{Timeout: 10 * time.Second}
+	return &http.Client{
+		Timeout: deliveryClient.Timeout,
+		Transport: &http.Transport{
+			DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+				host, port, err := net.SplitHostPort(addr)
+				if err != nil {
+					return nil, err
+				}
+				ips, err := net.DefaultResolver.LookupIPAddr(ctx, host)
+				if err != nil {
+					return nil, err
+				}
+				for _, ip := range ips {
+					if isBlockedIP(ip.IP) {
+						return nil, errors.New("webhook URL resolves to a private or loopback address")
+					}
+				}
+				if len(ips) == 0 {
+					return nil, errors.New("no address for host")
+				}
+				return dialer.DialContext(ctx, network, net.JoinHostPort(ips[0].IP.String(), port))
+			},
+		},
+	}
+}
+
 // returns true if the URL resolves to a loopback, private, or link-local address
 func isPrivateURL(rawURL string) bool {
 	u, err := url.Parse(rawURL)
@@ -58,7 +99,7 @@ func isPrivateURL(rawURL string) bool {
 	}
 	for _, addr := range addrs {
 		ip := net.ParseIP(addr)
-		if ip != nil && (ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast()) {
+		if ip != nil && isBlockedIP(ip) {
 			return true
 		}
 	}
@@ -132,7 +173,11 @@ func deliverWebhook(db *gorm.DB, cfg config.Config, wh models.Webhook, eventType
 	req.Header.Set("X-Webhook-Signature", "sha256="+sig)
 	req.Header.Set("X-Meerkat-Event", eventType)
 
-	resp, err := deliveryClient.Do(req)
+	client := deliveryClient
+	if cfg.WebhookBlockPrivateURLs {
+		client = blockingDeliveryClient()
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		errStr := err.Error()
 		return saveDelivery(db, wh.ID, eventType, string(body), nil, &errStr, attempt, retryAt(attempt))

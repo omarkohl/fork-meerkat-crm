@@ -2,7 +2,7 @@
 
 ## Next step
 
-10.
+11.
 
 ## Stack
 
@@ -102,6 +102,23 @@
   Separate commit before it: the flaky `IcsFeedSettings` Vitest run (react-transition-group timer after teardown, about 1 in 8)
   came from Testing Library's auto-cleanup not being active (Vitest has no globals); `afterEach(cleanup)` is now in `setupTests.ts`.
 
+- 10: new tests for `birthday_service`, `webhook_service`, `credential_crypto`, `mailer`, OIDC service provisioning and
+  controllers for oidc (a fake IdP with signed ID tokens: state, nonce, audience, expiry, cookies), photo, calendar, carddav,
+  graph, import and admin users (non-admin refused on every route, own/last admin guards). Bugs found and fixed:
+  1. Webhooks with `WEBHOOK_BLOCK_PRIVATE_URLS`: only the URL was checked, so a redirect or a DNS rebinding reached internal
+     hosts, and `0.0.0.0` was allowed. The delivery client now checks the resolved address at dial time; unspecified addresses count.
+  2. Mailer: a line break in recipient or subject could add SMTP headers; `SendEmail` now refuses it.
+  3. OIDC auto-provisioning failed with a unique-constraint error when the derived username belonged to a soft-deleted user.
+  4. Photo upload: unsupported/corrupt/empty files answered 500 (now 400), and the decoders allocated from the header
+     dimensions (a 10 MB file could ask for gigabytes): `photofile.CheckDimensions` (40 MP) guards the upload, `SaveContactPhoto`
+     (CardDAV, VCF import) and so the fuzz target too.
+  5. Graph: relationships and activities involving archived contacts produced edges (and activity nodes) pointing at nodes that
+     are not drawn.
+  6. CalDAV and CardDAV: changing the URL to another host kept the stored password, which the next sync sent to the new host.
+     Now it is dropped unless the request carries a new one (same host keeps it).
+  7. Import sessions answered 401 for another user's session id (the frontend treats 401 as an expired login and logs out, and it
+     confirmed the id exists); now the same 404 as an unknown id (CSV/VCF and Monica).
+
 ## Decisions
 
 - Step 9: the fuzz targets live next to the code as `*_fuzz_test.go` and run over their seeds in every `go test`;
@@ -123,6 +140,7 @@
 
 ## For review
 
+- Step 10: behaviour changes besides pure fixes: a CalDAV/CardDAV password is dropped when the host changes (users re-enter it); another user's import session id is 404 instead of 401; photo uploads over 40 megapixels are refused.
 - Step 9: the first scheduled run of `Fuzz` is the check of the workflow (matrix, artifact collection with `git ls-files --others`). A nightly red run means a new input crashed a parser: download the artifact, add it under `testdata/fuzz`, fix.
 - Step 8: Radicale runs via `docker run` after checkout, not as a `services:` container, because it needs `docker/radicale` mounted as config (service containers start before checkout). Image `tomsquest/docker-radicale:3.8.3.0` (also pinned in `docker-compose.carddav-test.yml`, was `latest`): the tag and the compatibility of `docker/radicale/config` with Radicale 3.8 could not be checked from here, and the job has never run. Fix the tag if the first CI run says it does not exist.
 - Step 8: the frontend coverage is low (17% of statements, only 9 test files; the UI is covered by Playwright). No threshold is enforced, numbers are informational.
@@ -137,6 +155,8 @@
 
 ## Questions
 
+- Step 10: `FindOrProvisionUser` links a verified-email OIDC login to an existing account even if that account is already linked to a different subject (the link is overwritten). Left as is; consider refusing. Not tested/changed.
+- Step 10: not covered in depth: the sync paths behind `SyncCardDAVConnection`/`SyncCalendarSubscription` (covered by the services tests) and `DiscoverCardDAVAddressBooks` (needs a CardDAV server).
 - The down migration of 000008 leaves `contacts.etag`, `vcard_extra` and `vcard_uid` in place (it predates `DROP COLUMN`). Harmless, but a rollback below version 8 is not byte-identical to a fresh schema. Left as is; the migration test tolerates it.
 
 ## Blocked

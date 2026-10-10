@@ -76,6 +76,12 @@ func SaveCardDAVConnection(c *gin.Context) {
 	// re-pair losslessly by UID).
 	addressBookChanged := !isNew && (conn.BaseURL != baseURL || conn.AddressBookPath != input.AddressBookPath)
 
+	// The stored password was entered for the old server: it does not follow a change
+	// of host (the request can carry a new one).
+	if !isNew && !sameHost(conn.BaseURL, baseURL) {
+		conn.PasswordEncrypted = ""
+	}
+
 	conn.UserID = userID
 	conn.BaseURL = baseURL
 	conn.AddressBookPath = input.AddressBookPath

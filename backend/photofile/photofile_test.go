@@ -1,9 +1,13 @@
 package photofile
 
 import (
+	"bytes"
+	"encoding/binary"
 	"errors"
+	"hash/crc32"
 	"image"
 	"image/color"
+	"image/png"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -83,4 +87,21 @@ func TestSaveJPEGRefusesExistingPath(t *testing.T) {
 	data, err := os.ReadFile(path)
 	require.NoError(t, err)
 	assert.Equal(t, "keep", string(data), "an existing file must be neither overwritten nor removed")
+}
+
+func TestCheckDimensionsRefusesDecompressionBombs(t *testing.T) {
+	// A valid 1x1 PNG whose header claims 20000x20000 pixels (CRC recomputed).
+	var small bytes.Buffer
+	require.NoError(t, png.Encode(&small, image.NewGray(image.Rect(0, 0, 1, 1))))
+	data := small.Bytes()
+	binary.BigEndian.PutUint32(data[16:], 20000)
+	binary.BigEndian.PutUint32(data[20:], 20000)
+	binary.BigEndian.PutUint32(data[29:], crc32.ChecksumIEEE(data[12:29]))
+
+	assert.ErrorIs(t, CheckDimensions(data), ErrTooLarge)
+
+	var ok bytes.Buffer
+	require.NoError(t, png.Encode(&ok, image.NewGray(image.Rect(0, 0, 100, 100))))
+	assert.NoError(t, CheckDimensions(ok.Bytes()))
+	assert.NoError(t, CheckDimensions([]byte("not an image")), "unknown formats are left to the decoder")
 }

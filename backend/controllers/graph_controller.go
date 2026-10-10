@@ -63,10 +63,26 @@ func GetGraph(c *gin.Context) {
 		})
 	}
 
-	// Add activity nodes (only for activities with 2+ contacts)
+	// Archived contacts are not nodes, so nothing may point at them: edges are only
+	// drawn between nodes that exist.
+	visibleContacts := make(map[uint]bool, len(contacts))
+	for _, contact := range contacts {
+		visibleContacts[contact.ID] = true
+	}
+	participants := func(a models.Activity) []models.Contact {
+		visible := make([]models.Contact, 0, len(a.Contacts))
+		for _, contact := range a.Contacts {
+			if visibleContacts[contact.ID] {
+				visible = append(visible, contact)
+			}
+		}
+		return visible
+	}
+
+	// Add activity nodes (only for activities with 2+ visible contacts)
 	activityNodeIDs := make(map[uint]bool)
 	for _, activity := range activities {
-		if len(activity.Contacts) >= 2 {
+		if len(participants(activity)) >= 2 {
 			nodes = append(nodes, models.GraphNode{
 				ID:    fmt.Sprintf("a-%d", activity.ID),
 				Type:  "activity",
@@ -81,7 +97,7 @@ func GetGraph(c *gin.Context) {
 
 	// Add relationship edges (contact -> contact)
 	for _, rel := range relationships {
-		if rel.RelatedContactID != nil {
+		if rel.RelatedContactID != nil && visibleContacts[rel.ContactID] && visibleContacts[*rel.RelatedContactID] {
 			edges = append(edges, models.GraphEdge{
 				ID:     fmt.Sprintf("r-%d", rel.ID),
 				Source: fmt.Sprintf("c-%d", rel.ContactID),
@@ -96,7 +112,7 @@ func GetGraph(c *gin.Context) {
 	for _, activity := range activities {
 		if activityNodeIDs[activity.ID] {
 			activityNodeID := fmt.Sprintf("a-%d", activity.ID)
-			for _, contact := range activity.Contacts {
+			for _, contact := range participants(activity) {
 				edges = append(edges, models.GraphEdge{
 					ID:     fmt.Sprintf("ae-%d-%d", activity.ID, contact.ID),
 					Source: activityNodeID,

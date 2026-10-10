@@ -3,8 +3,12 @@
 package photofile
 
 import (
+	"bytes"
+	"errors"
 	"image"
+	_ "image/gif" // registers the GIF decoder for image.DecodeConfig
 	"image/jpeg"
+	_ "image/png" // registers the PNG decoder for image.DecodeConfig
 	"os"
 )
 
@@ -46,4 +50,25 @@ func write(path string, fill func(*os.File) error) (err error) {
 		}
 	}()
 	return fill(f)
+}
+
+// MaxPixels bounds the size of an image that is decoded. Decoders allocate from the
+// dimensions in the header, so a few hundred bytes can ask for gigabytes.
+const MaxPixels = 40_000_000
+
+// ErrTooLarge is returned for an image with more than MaxPixels pixels.
+var ErrTooLarge = errors.New("image dimensions are too large")
+
+// CheckDimensions reads only the header of data and refuses images over MaxPixels.
+// Data in a format without a registered decoder, or with an unreadable header, passes
+// (the real decode reports that).
+func CheckDimensions(data []byte) error {
+	cfg, _, err := image.DecodeConfig(bytes.NewReader(data))
+	if err != nil {
+		return nil
+	}
+	if int64(cfg.Width)*int64(cfg.Height) > MaxPixels {
+		return ErrTooLarge
+	}
+	return nil
 }

@@ -73,7 +73,7 @@ context is above 200k at the end of a step, then start a new one. Reviewer is al
       data), Radicale CardDAV integration tests as a service container.
 - [x] 9. **Fuzz and parser tests**: fuzz targets for the vCard mapper, CSV import, Monica import
       parsing and ICS building; a short fuzz run (30 s each) in a nightly workflow; fix what they find.
-- [ ] 10. **Tests for untested logic**: `birthday_service`, `webhook_service` (signature, retries,
+- [x] 10. **Tests for untested logic**: `birthday_service`, `webhook_service` (signature, retries,
       SSRF), `credential_crypto`, `mailer`, and controllers for oidc, photo, calendar, carddav,
       graph, import, admin_user. Fix bugs found (one commit, list them).
 - [ ] 11. **i18n checker and local hooks**: script that fails when a key is missing in any locale

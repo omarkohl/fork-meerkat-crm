@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"image"
 	"image/jpeg"
 	"image/png"
+	"io"
 	"meerkat/config"
 	apperrors "meerkat/errors"
 	"meerkat/httputil"
@@ -156,6 +158,10 @@ func AddPhotoToContact(c *gin.Context, cfg *config.Config) {
 			return
 		}
 		photoPath, thumbnailPath, err := processAndSavePhoto(file, cfg.ProfilePhotoDir)
+		if errors.Is(err, errInvalidPhoto) {
+			apperrors.AbortWithError(c, apperrors.ErrInvalidInput("photo", "must be a valid JPEG, PNG or HEIC image of reasonable size").WithError(err))
+			return
+		}
 		if err != nil {
 			apperrors.AbortWithError(c, apperrors.ErrInternal("Failed to process photo").WithError(err))
 			return
@@ -190,6 +196,9 @@ func AddPhotoToContact(c *gin.Context, cfg *config.Config) {
 	c.JSON(http.StatusOK, contact)
 }
 
+// errInvalidPhoto marks upload problems the user can fix (wrong format, corrupt or oversized image).
+var errInvalidPhoto = errors.New("invalid photo")
+
 // processAndSavePhoto processes an uploaded photo and returns:
 // - photoPath: filename of the saved full-size photo
 // - thumbnailBase64: base64 data URL of the thumbnail (stored in DB)
@@ -203,10 +212,11 @@ func processAndSavePhoto(file *multipart.FileHeader, uploadDir string) (string, 
 
 	// Detect the image format
 	buf := make([]byte, 512)
-	_, err = src.Read(buf)
-	if err != nil {
+	n, err := io.ReadFull(src, buf)
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) && !errors.Is(err, io.EOF) {
 		return "", "", err
 	}
+	buf = buf[:n]
 	contentType := http.DetectContentType(buf)
 
 	// Check for HEIC/HEIF format (http.DetectContentType doesn't recognize it)
@@ -223,24 +233,34 @@ func processAndSavePhoto(file *multipart.FileHeader, uploadDir string) (string, 
 	// Validate supported content types
 	if contentType != "image/jpeg" && contentType != "image/png" &&
 		contentType != "image/heic" && contentType != "image/heif" {
-		return "", "", errors.New("unsupported file format")
+		return "", "", fmt.Errorf("%w: unsupported file format", errInvalidPhoto)
 	}
 
-	// Rewind the file reader
-	src.Seek(0, 0)
+	// Decoders allocate from the dimensions in the header: refuse absurd ones first.
+	if _, err := src.Seek(0, io.SeekStart); err != nil {
+		return "", "", err
+	}
+	all, err := io.ReadAll(src)
+	if err != nil {
+		return "", "", err
+	}
+	if err := photofile.CheckDimensions(all); err != nil {
+		return "", "", fmt.Errorf("%w: %w", errInvalidPhoto, err)
+	}
+	reader := bytes.NewReader(all)
 
 	// Decode the image (handle JPEG, PNG, and HEIC)
 	var img image.Image
 	switch contentType {
 	case "image/jpeg":
-		img, err = jpeg.Decode(src)
+		img, err = jpeg.Decode(reader)
 	case "image/png":
-		img, err = png.Decode(src)
+		img, err = png.Decode(reader)
 	case "image/heic", "image/heif":
-		img, err = heic.Decode(src)
+		img, err = heic.Decode(reader)
 	}
 	if err != nil {
-		return "", "", err
+		return "", "", fmt.Errorf("%w: %w", errInvalidPhoto, err)
 	}
 
 	// Crop to centered square if rectangular
