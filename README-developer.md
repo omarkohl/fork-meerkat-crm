@@ -19,7 +19,8 @@
 **Workflows**
 - Root `Makefile` runs both apps: `make install`, `make precommit` (checks gofmt/Prettier formatting of changed files, `make format` fixes it; go vet, ESLint, tsc, unit tests; CI also runs golangci-lint, see [.github/workflows/lint.yml](.github/workflows/lint.yml), config in [backend/.golangci.yml](backend/.golangci.yml)), `make test-e2e`. `make help` lists all targets.
 - Source backend/my_environment.env to `.env` before running the server
-- Start the backend with `go run main.go` (or `make dev`, which is in `backend/Makefile`) from backend/ after `go mod tidy`; migrations are embedded in the binary and auto-run on boot. Use `make migrate-up` (from backend/) or cmd/migrate for manual control during development.
+- `make dev` (root) runs backend and frontend together with no setup; Ctrl+C stops both. Data goes to `.dev/` of the checkout, so checkouts do not share a database. Optional overrides (e.g. `BACKEND_PORT`, `FRONTEND_PORT`, `DEV_DATA_DIR`, any backend variable) go in `dev.env` (git-ignored, shell `KEY=value`); see [scripts/dev.sh](scripts/dev.sh).
+- Start the backend alone with `go run main.go` (or `make dev` in backend/) from backend/ after `go mod tidy`; migrations are embedded in the binary and auto-run on boot. Use `make migrate-up` (from backend/) or cmd/migrate for manual control during development.
 - Frontend uses Yarn: `yarn install` then `yarn start` from frontend/; CRA proxies should point at the backend URL defined in `.env`.
 - Logs use zerolog via [backend/logger/logger.go](backend/logger/logger.go); set LOG_LEVEL and LOG_PRETTY for debugging, and rely on request IDs threaded through middleware.
 - Rate limiting is IP-based via [backend/middleware/rate_limiter.go](backend/middleware/rate_limiter.go); respect separate auth/general buckets when adding endpoints.

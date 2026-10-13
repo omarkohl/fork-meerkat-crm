@@ -1,4 +1,4 @@
-.PHONY: help install format format-check lint typecheck i18n-check test test-e2e precommit build
+.PHONY: help install dev format format-check lint typecheck i18n-check test test-e2e precommit build
 
 YARN ?= corepack yarn
 # Base for format-check: only files changed since it are checked, so legacy
@@ -11,6 +11,9 @@ help: ## Show this help message
 install: ## Install backend and frontend dependencies
 	cd backend && go mod download
 	cd frontend && $(YARN) install --frozen-lockfile
+
+dev: ## Run backend and frontend dev servers (no setup; optional overrides in dev.env)
+	YARN="$(YARN)" ./scripts/dev.sh
 
 # Frontend files (relative to frontend/) changed since BASE, for Prettier. The scope
 # (src/**/*.ts(x) and e2e/*.ts) is deliberate: config, JSON, CSS and generated files are
