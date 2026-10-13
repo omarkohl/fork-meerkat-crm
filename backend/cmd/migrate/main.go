@@ -66,6 +66,6 @@ func main() {
 			fmt.Printf("Current version: %d (dirty: %v)\n", version, dirty)
 		}
 	default:
-		log.Fatalf("Unknown command: %s. Use 'up', 'down', or 'version'", command)
+		log.Fatalf("Unknown command: %s. Use 'up', 'down', or 'version'", command) //nolint:gosec // CLI argument echoed to the operator's own terminal
 	}
 }

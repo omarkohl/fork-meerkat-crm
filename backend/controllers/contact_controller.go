@@ -489,7 +489,7 @@ func deleteContactPhotos(c *gin.Context, contact models.Contact) {
 	// Delete main photo if it exists
 	if contact.Photo != "" {
 		photoPath := filepath.Join(uploadDir, contact.Photo)
-		if err := os.Remove(photoPath); err != nil && !os.IsNotExist(err) {
+		if err := os.Remove(photoPath); err != nil && !os.IsNotExist(err) { //nolint:gosec // file name comes from the contact record, not from the request
 			log.Warn().Err(err).Str("path", photoPath).Msg("Failed to delete contact photo")
 		} else if err == nil {
 			log.Debug().Str("path", photoPath).Msg("Deleted contact photo")
@@ -499,7 +499,7 @@ func deleteContactPhotos(c *gin.Context, contact models.Contact) {
 	// Delete legacy file-based thumbnail if it exists (not base64 data URL)
 	if contact.PhotoThumbnail != "" && !strings.HasPrefix(contact.PhotoThumbnail, "data:") {
 		thumbnailPath := filepath.Join(uploadDir, contact.PhotoThumbnail)
-		if err := os.Remove(thumbnailPath); err != nil && !os.IsNotExist(err) {
+		if err := os.Remove(thumbnailPath); err != nil && !os.IsNotExist(err) { //nolint:gosec // file name comes from the contact record, not from the request
 			log.Warn().Err(err).Str("path", thumbnailPath).Msg("Failed to delete contact thumbnail")
 		} else if err == nil {
 			log.Debug().Str("path", thumbnailPath).Msg("Deleted contact thumbnail")
