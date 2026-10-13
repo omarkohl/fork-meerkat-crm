@@ -257,6 +257,47 @@ func TestApplePseudoLabelImport(t *testing.T) {
 	}
 }
 
+// Regression test: go-vcard upper-cases decoded property names, so labels written
+// as "X-ABLabel" (as Apple does) were never matched to their value and the type was lost.
+func TestApplePseudoLabelImport_FromText(t *testing.T) {
+	card, err := vcard.NewDecoder(strings.NewReader("BEGIN:VCARD\r\n" +
+		"VERSION:3.0\r\n" +
+		"FN:Apple User\r\n" +
+		"item1.TEL:+15551112222\r\n" +
+		"item1.X-ABLabel:_$!<Mobile>!$_\r\n" +
+		"item2.TEL:+15553334444\r\n" +
+		"item2.X-ABLabel:Ski Cabin\r\n" +
+		"END:VCARD\r\n")).Decode()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got, _, _, _ := VCardToContact(card, nil)
+	if len(got.Phones) != 2 || got.Phones[0].Type != "cell" || got.Phones[1].Type != "Ski Cabin" {
+		t.Errorf("labels not applied: %+v", got.Phones)
+	}
+	if got.VCardExtra != "" {
+		t.Errorf("X-ABLabel should not be stored in VCardExtra, got %q", got.VCardExtra)
+	}
+}
+
+func TestTelURIImport(t *testing.T) {
+	card := vcard.Card{}
+	card.SetValue(vcard.FieldFormattedName, "URI User")
+	card.Add(vcard.FieldTelephone, &vcard.Field{
+		Value:  "tel:+49-170-1234567",
+		Params: vcard.Params{"VALUE": {"uri"}, vcard.ParamType: {"cell"}},
+	})
+
+	got, _, _, _ := VCardToContact(card, nil)
+	if len(got.Phones) != 1 || got.Phones[0].Value != "+49-170-1234567" {
+		t.Errorf("tel: prefix not stripped: %+v", got.Phones)
+	}
+	if got.Phone != "+49-170-1234567" {
+		t.Errorf("legacy phone = %q", got.Phone)
+	}
+}
+
 // verifies that REV describes Meerkat's own last edit. A REV arriving with an import belongs to whichever client
 // wrote it; preserving and re-emitting it would advertise a stale revision and let peers discard newer local edits as older.
 func TestRevisionReflectsLocalModification(t *testing.T) {

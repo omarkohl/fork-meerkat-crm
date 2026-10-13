@@ -315,12 +315,17 @@ func VCardToContact(card vcard.Card, existing *models.Contact) (*models.Contact,
 	if fields := card[vcard.FieldTelephone]; len(fields) > 0 {
 		contact.Phones = contact.Phones[:0]
 		for _, f := range fields {
-			if f.Value == "" {
+			// vCard 4.0 writes TEL as a URI ("tel:+1-555-..."); keep only the number.
+			value := f.Value
+			if len(value) >= 4 && strings.EqualFold(value[:4], "tel:") {
+				value = value[4:]
+			}
+			if value == "" {
 				continue
 			}
 			contact.Phones = append(contact.Phones, models.ContactPhone{
 				Type:  typeForField(card, f),
-				Value: f.Value,
+				Value: value,
 			})
 		}
 		if len(contact.Phones) > 0 {
@@ -742,7 +747,8 @@ func typeTokens(t string) []string {
 // fieldABLabel is the (non-standard but ubiquitous) property Apple Contacts and
 // most CardDAV clients use to carry a human-readable custom label for a value,
 // linked to that value via a shared property group (e.g. item1.X-ABLabel).
-const fieldABLabel = "X-ABLabel"
+// Upper case because go-vcard upper-cases every property name it decodes.
+const fieldABLabel = "X-ABLABEL"
 
 // standardTypeTokens are the type values we round-trip as a vCard TYPE parameter.
 // Any other (user-defined) label is emitted as a grouped X-ABLabel instead, which
