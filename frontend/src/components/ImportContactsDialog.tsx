@@ -64,11 +64,7 @@ type ImportType = 'csv' | 'vcf';
 const CSV_STEP_KEYS = ['upload', 'mapColumns', 'review', 'done'] as const;
 const VCF_STEP_KEYS = ['upload', 'review', 'done'] as const;
 
-export default function ImportContactsDialog({
-  open,
-  onClose,
-  onImportComplete,
-}: ImportContactsDialogProps) {
+export default function ImportContactsDialog({ open, onClose, onImportComplete }: ImportContactsDialogProps) {
   const { t } = useTranslation();
   const { showSuccess } = useSnackbar();
 
@@ -127,9 +123,11 @@ export default function ImportContactsDialog({
 
     const maxSize = isVCF ? 10 * 1024 * 1024 : 5 * 1024 * 1024; // 10MB for VCF, 5MB for CSV
     if (file.size > maxSize) {
-      setError(t('contacts.import.errors.fileTooLarge', 'File is too large. Maximum size is {{size}}MB', {
-        size: maxSize / (1024 * 1024),
-      }));
+      setError(
+        t('contacts.import.errors.fileTooLarge', 'File is too large. Maximum size is {{size}}MB', {
+          size: maxSize / (1024 * 1024),
+        }),
+      );
       return;
     }
 
@@ -259,9 +257,10 @@ export default function ImportContactsDialog({
       });
 
       // Use appropriate confirm endpoint based on import type
-      const result = importType === 'vcf'
-        ? await confirmVCFImport(previewResponse.session_id, actions)
-        : await confirmImport(previewResponse.session_id, actions);
+      const result =
+        importType === 'vcf'
+          ? await confirmVCFImport(previewResponse.session_id, actions)
+          : await confirmImport(previewResponse.session_id, actions);
 
       setImportResult(result);
       setStep('result');
@@ -272,7 +271,7 @@ export default function ImportContactsDialog({
           t('contacts.import.result.success', 'Import completed: {{created}} created, {{updated}} updated', {
             created: result.created,
             updated: result.updated,
-          })
+          }),
         );
         onImportComplete();
       }
@@ -360,8 +359,8 @@ export default function ImportContactsDialog({
       new Set(
         mappings
           .filter((m) => m.contact_field && conflictKeys.has(mappingKey(m)))
-          .map((m) => CONTACT_FIELD_LABELS[m.contact_field] || m.contact_field)
-      )
+          .map((m) => CONTACT_FIELD_LABELS[m.contact_field] || m.contact_field),
+      ),
     );
 
     return (
@@ -369,7 +368,7 @@ export default function ImportContactsDialog({
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           {t(
             'contacts.import.mapping.description',
-            "Match your CSV columns to contact fields. Columns marked 'Ignore' will not be imported."
+            "Match your CSV columns to contact fields. Columns marked 'Ignore' will not be imported.",
           )}
         </Typography>
         {conflictLabels.length > 0 && (
@@ -377,7 +376,7 @@ export default function ImportContactsDialog({
             {t(
               'contacts.import.mapping.duplicateWarning',
               'These single-value fields are mapped to more than one column; only the last column will be used: {{fields}}',
-              { fields: conflictLabels.join(', ') }
+              { fields: conflictLabels.join(', ') },
             )}
           </Alert>
         )}
@@ -392,8 +391,7 @@ export default function ImportContactsDialog({
             </TableHead>
             <TableBody>
               {mappings.map((mapping, index) => {
-                const isConflict =
-                  !!mapping.contact_field && conflictKeys.has(mappingKey(mapping));
+                const isConflict = !!mapping.contact_field && conflictKeys.has(mappingKey(mapping));
                 return (
                   <TableRow key={index}>
                     <TableCell>
@@ -499,27 +497,54 @@ export default function ImportContactsDialog({
                   <TableCell>
                     {row.validation_errors.length > 0 ? (
                       <Tooltip title={row.validation_errors.join(', ')}>
-                        <Chip icon={<ErrorIcon />} label={t('contacts.import.preview.error')} size="small" color="error" />
+                        <Chip
+                          icon={<ErrorIcon />}
+                          label={t('contacts.import.preview.error')}
+                          size="small"
+                          color="error"
+                        />
                       </Tooltip>
                     ) : row.duplicate_match?.existing_deleted ? (
                       <Tooltip
-                        title={t('contacts.import.preview.restoreOf', 'Previously deleted: {{name}}. Importing will restore it.', {
-                          name: `${row.duplicate_match.existing_firstname} ${row.duplicate_match.existing_lastname}`,
-                        })}
+                        title={t(
+                          'contacts.import.preview.restoreOf',
+                          'Previously deleted: {{name}}. Importing will restore it.',
+                          {
+                            name: `${row.duplicate_match.existing_firstname} ${row.duplicate_match.existing_lastname}`,
+                          },
+                        )}
                       >
-                        <Chip icon={<RestoreFromTrashIcon />} label={t('contacts.import.preview.restoreStatus', 'Deleted contact')} size="small" color="info" />
+                        <Chip
+                          icon={<RestoreFromTrashIcon />}
+                          label={t('contacts.import.preview.restoreStatus', 'Deleted contact')}
+                          size="small"
+                          color="info"
+                        />
                       </Tooltip>
                     ) : row.duplicate_match ? (
                       <Tooltip
                         title={t('contacts.import.preview.duplicateOf', 'Matches: {{name}} ({{reason}})', {
                           name: `${row.duplicate_match.existing_firstname} ${row.duplicate_match.existing_lastname}`,
-                          reason: t(`contacts.import.preview.matchReason.${row.duplicate_match.match_reason}`, row.duplicate_match.match_reason),
+                          reason: t(
+                            `contacts.import.preview.matchReason.${row.duplicate_match.match_reason}`,
+                            row.duplicate_match.match_reason,
+                          ),
                         })}
                       >
-                        <Chip icon={<WarningIcon />} label={t('contacts.import.preview.duplicateStatus')} size="small" color="warning" />
+                        <Chip
+                          icon={<WarningIcon />}
+                          label={t('contacts.import.preview.duplicateStatus')}
+                          size="small"
+                          color="warning"
+                        />
                       </Tooltip>
                     ) : (
-                      <Chip icon={<CheckCircleIcon />} label={t('contacts.import.preview.valid')} size="small" color="success" />
+                      <Chip
+                        icon={<CheckCircleIcon />}
+                        label={t('contacts.import.preview.valid')}
+                        size="small"
+                        color="success"
+                      />
                     )}
                   </TableCell>
                   <TableCell>
@@ -529,12 +554,8 @@ export default function ImportContactsDialog({
                         onChange={(e) => handleRowActionChange(row.row_index, e.target.value)}
                         disabled={row.validation_errors.length > 0}
                       >
-                        <MenuItem value="skip">
-                          {t('contacts.import.preview.actionSkip', 'Skip')}
-                        </MenuItem>
-                        <MenuItem value="add">
-                          {t('contacts.import.preview.actionAdd', 'Add as New')}
-                        </MenuItem>
+                        <MenuItem value="skip">{t('contacts.import.preview.actionSkip', 'Skip')}</MenuItem>
+                        <MenuItem value="add">{t('contacts.import.preview.actionAdd', 'Add as New')}</MenuItem>
                         {row.duplicate_match && (
                           <MenuItem value="update">
                             {row.duplicate_match.existing_deleted
@@ -620,13 +641,16 @@ export default function ImportContactsDialog({
   const renderActions = () => {
     switch (step) {
       case 'upload':
-        return (
-          <Button onClick={handleClose}>{t('common.cancel', 'Cancel')}</Button>
-        );
+        return <Button onClick={handleClose}>{t('common.cancel', 'Cancel')}</Button>;
       case 'mapping':
         return (
           <>
-            <Button onClick={() => { setStep('upload'); setActiveStep(0); }}>
+            <Button
+              onClick={() => {
+                setStep('upload');
+                setActiveStep(0);
+              }}
+            >
               {t('common.back', 'Back')}
             </Button>
             <Button variant="contained" onClick={handleGeneratePreview} disabled={loading}>
@@ -637,19 +661,21 @@ export default function ImportContactsDialog({
       case 'preview':
         return (
           <>
-            <Button onClick={() => {
-              if (importType === 'vcf') {
-                // VCF goes back to upload (no mapping step)
-                setStep('upload');
-                setActiveStep(0);
-                setPreviewResponse(null);
-                setRowActions(new Map());
-              } else {
-                // CSV goes back to mapping
-                setStep('mapping');
-                setActiveStep(1);
-              }
-            }}>
+            <Button
+              onClick={() => {
+                if (importType === 'vcf') {
+                  // VCF goes back to upload (no mapping step)
+                  setStep('upload');
+                  setActiveStep(0);
+                  setPreviewResponse(null);
+                  setRowActions(new Map());
+                } else {
+                  // CSV goes back to mapping
+                  setStep('mapping');
+                  setActiveStep(1);
+                }
+              }}
+            >
               {t('common.back', 'Back')}
             </Button>
             <Button onClick={handleClose}>{t('common.cancel', 'Cancel')}</Button>
