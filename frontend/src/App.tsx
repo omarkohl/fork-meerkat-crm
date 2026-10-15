@@ -134,6 +134,12 @@ function AppContent({ token, setToken }: { token: string | null; setToken: (toke
     return () => clearTimeout(timer);
   }, [searchQuery, token]);
 
+  // The header search is a quick jump, not a page filter: leaving the page discards it
+  useEffect(() => {
+    setSearchQuery('');
+    setSearchResults([]);
+  }, [location.pathname]);
+
   const handleLogout = async () => {
     await logoutAndRedirect();
   };
@@ -361,6 +367,7 @@ function AppContent({ token, setToken }: { token: string | null; setToken: (toke
           </Typography>
           <Autocomplete
             freeSolo
+            clearOnEscape
             size="small"
             options={searchResults}
             getOptionLabel={(option) =>
@@ -432,10 +439,6 @@ function AppContent({ token, setToken }: { token: string | null; setToken: (toke
                         onClick={() => {
                           setSearchQuery('');
                           setSearchResults([]);
-                          // Clear search filter if on contacts page
-                          if (location.pathname.startsWith('/contacts')) {
-                            navigate('/contacts');
-                          }
                         }}
                         sx={{ color: 'rgba(255, 255, 255, 0.7)', p: 0.5 }}
                       >

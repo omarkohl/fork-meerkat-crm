@@ -25,6 +25,23 @@ test.describe('Contacts', () => {
     await expect(page.getByText('Bob Smith')).toBeVisible();
   });
 
+  test('header search text is discarded on navigation and on Escape', async ({ page }) => {
+    await page.goto('/contacts');
+    await waitForLoading(page);
+    const searchInput = page.locator('header input[placeholder*="earch"]');
+
+    await searchInput.fill('Ali');
+    await page.getByRole('link', { name: 'Activities', exact: true }).first().click();
+    await expect(page).toHaveURL(/\/activities/);
+    await expect(searchInput).toHaveValue('');
+
+    await searchInput.fill('Ali');
+    // The first Escape closes the suggestions when they are open, the next one clears
+    await searchInput.press('Escape');
+    await searchInput.press('Escape');
+    await expect(searchInput).toHaveValue('');
+  });
+
   test('search ignores accents and case and matches the start of every word', async ({ page, request }) => {
     const created = await createTestContact(request, { firstname: 'Zoë', lastname: 'Müllerová' });
     try {
