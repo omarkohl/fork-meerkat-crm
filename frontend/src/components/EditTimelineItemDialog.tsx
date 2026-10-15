@@ -8,7 +8,7 @@ import {
   Box,
   Autocomplete,
   Chip,
-  IconButton
+  IconButton,
 } from '@mui/material';
 import AppDialog from './AppDialog';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -42,7 +42,7 @@ export default function EditTimelineItemDialog({
   type,
   values,
   onChange,
-  allContacts
+  allContacts,
 }: EditTimelineItemDialogProps) {
   const { t } = useTranslation();
 
@@ -58,9 +58,7 @@ export default function EditTimelineItemDialog({
 
   return (
     <AppDialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>
-        {type === 'note' ? t('contactDetail.editNote') : t('contactDetail.editActivity')}
-      </DialogTitle>
+      <DialogTitle>{type === 'note' ? t('contactDetail.editNote') : t('contactDetail.editActivity')}</DialogTitle>
       <DialogContent>
         {type === 'note' ? (
           // Edit Note
@@ -119,7 +117,9 @@ export default function EditTimelineItemDialog({
             <Autocomplete
               multiple
               options={allContacts}
-              getOptionLabel={(contact) => `${contact.firstname}${contact.nickname ? ` "${contact.nickname}"` : ''} ${contact.lastname}`}
+              getOptionLabel={(contact) =>
+                `${contact.firstname}${contact.nickname ? ` "${contact.nickname}"` : ''} ${contact.lastname}`
+              }
               value={values.activityContacts || []}
               onChange={(_, newValue) => onChange({ ...values, activityContacts: newValue })}
               renderInput={(params) => (
@@ -144,11 +144,7 @@ export default function EditTimelineItemDialog({
         )}
       </DialogContent>
       <DialogActions sx={{ justifyContent: 'space-between', px: 3, pb: 2 }}>
-        <IconButton 
-          color="error"
-          onClick={handleDelete}
-          title={t('contactDetail.delete')}
-        >
+        <IconButton color="error" onClick={handleDelete} title={t('contactDetail.delete')}>
           <DeleteIcon />
         </IconButton>
         <Box>

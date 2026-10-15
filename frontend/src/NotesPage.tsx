@@ -1,15 +1,6 @@
 import { useState, useMemo, ChangeEvent, MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Box,
-  Typography,
-  Paper,
-  TextField,
-  Button,
-  IconButton,
-  Pagination,
-  Popover,
-} from '@mui/material';
+import { Box, Typography, Paper, TextField, Button, IconButton, Pagination, Popover } from '@mui/material';
 import {
   Timeline,
   TimelineItem,
@@ -49,17 +40,10 @@ const NotesPage: React.FC = () => {
       fromDate: fromDate || undefined,
       toDate: toDate || undefined,
     }),
-    [page, debouncedSearch, fromDate, toDate]
+    [page, debouncedSearch, fromDate, toDate],
   );
 
-  const {
-    notes,
-    total,
-    page: serverPage,
-    limit,
-    loading,
-    refetch,
-  } = useNotes(undefined, notesParams);
+  const { notes, total, page: serverPage, limit, loading, refetch } = useNotes(undefined, notesParams);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<Note | null>(null);
   const [editValues, setEditValues] = useState<{ noteContent?: string; noteDate?: string }>({});
@@ -163,11 +147,7 @@ const NotesPage: React.FC = () => {
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Box display="flex" alignItems="center" gap={1}>
           <Typography variant="h5">{t('notes.title')}</Typography>
-          <IconButton
-            size="small"
-            aria-describedby={infoPopoverId}
-            onClick={handleInfoClick}
-          >
+          <IconButton size="small" aria-describedby={infoPopoverId} onClick={handleInfoClick}>
             <InfoOutlinedIcon fontSize="small" />
           </IconButton>
         </Box>
@@ -204,7 +184,10 @@ const NotesPage: React.FC = () => {
             value={fromDate}
             onChange={(e) => handleFromDateChange(e.target.value)}
             variant="outlined"
-            slotProps={{ inputLabel: { shrink: true }, input: { placeholder: getDatePlaceholder(), lang: i18n.language } }}
+            slotProps={{
+              inputLabel: { shrink: true },
+              input: { placeholder: getDatePlaceholder(), lang: i18n.language },
+            }}
             sx={{ width: 160 }}
           />
           <TextField
@@ -214,7 +197,10 @@ const NotesPage: React.FC = () => {
             value={toDate}
             onChange={(e) => handleToDateChange(e.target.value)}
             variant="outlined"
-            slotProps={{ inputLabel: { shrink: true }, input: { placeholder: getDatePlaceholder(), lang: i18n.language } }}
+            slotProps={{
+              inputLabel: { shrink: true },
+              input: { placeholder: getDatePlaceholder(), lang: i18n.language },
+            }}
             sx={{ width: 160 }}
           />
         </Box>
@@ -233,9 +219,7 @@ const NotesPage: React.FC = () => {
           {notes.map((note, index) => (
             <TimelineItem key={note.ID}>
               <TimelineOppositeContent color="text.secondary" sx={{ flex: 0.2 }}>
-                <Typography variant="body2">
-                  {formatDate(note.date)}
-                </Typography>
+                <Typography variant="body2">{formatDate(note.date)}</Typography>
               </TimelineOppositeContent>
               <TimelineSeparator>
                 <TimelineDot color="primary">
@@ -288,11 +272,7 @@ const NotesPage: React.FC = () => {
         </Box>
       )}
 
-      <AddNoteDialog
-        open={addDialogOpen}
-        onClose={() => setAddDialogOpen(false)}
-        onSave={handleNoteSave}
-      />
+      <AddNoteDialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} onSave={handleNoteSave} />
 
       {editingNote && (
         <EditTimelineItemDialog
