@@ -212,7 +212,11 @@
         "toUpdate": "{{count}} à mettre à jour",
         "toSkip": "{{count}} à ignorer",
         "errors": "{{count}} avec erreurs",
-        "warnings": "Non importé : {{list}}"
+        "warnings": "Non importé : {{list}}",
+        "withWarnings": "{{count}} avec avertissements",
+        "showing": "{{shown}} lignes sur {{total}}",
+        "filterHint": "Cliquez sur un nombre pour n’afficher que ces lignes.",
+        "setAll": "Action pour toutes les lignes affichées"
       },
       "result": {
         "title": "Importation terminée",

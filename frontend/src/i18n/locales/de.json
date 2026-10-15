@@ -212,7 +212,11 @@
         "toUpdate": "{{count}} zu aktualisieren",
         "toSkip": "{{count}} zu überspringen",
         "errors": "{{count}} mit Fehlern",
-        "warnings": "Nicht importiert: {{list}}"
+        "warnings": "Nicht importiert: {{list}}",
+        "withWarnings": "{{count}} mit Warnungen",
+        "showing": "{{shown}} von {{total}} Zeilen",
+        "filterHint": "Klicken Sie auf eine Anzahl, um nur diese Zeilen zu zeigen.",
+        "setAll": "Aktion für alle gezeigten Zeilen"
       },
       "result": {
         "title": "Import abgeschlossen",

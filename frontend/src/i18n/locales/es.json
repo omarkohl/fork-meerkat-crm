@@ -212,7 +212,11 @@
         "toUpdate": "{{count}} para actualizar",
         "toSkip": "{{count}} para omitir",
         "errors": "{{count}} con errores",
-        "warnings": "No importado: {{list}}"
+        "warnings": "No importado: {{list}}",
+        "withWarnings": "{{count}} con advertencias",
+        "showing": "{{shown}} de {{total}} filas",
+        "filterHint": "Haga clic en un número para ver solo esas filas.",
+        "setAll": "Acción para todas las filas mostradas"
       },
       "result": {
         "title": "Importación Completa",

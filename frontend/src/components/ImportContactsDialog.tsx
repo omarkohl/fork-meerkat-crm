@@ -26,6 +26,7 @@ import {
   LinearProgress,
   IconButton,
   Tooltip,
+  TableSortLabel,
 } from '@mui/material';
 import AppDialog from './AppDialog';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -48,10 +49,12 @@ import {
   ImportPreviewResponse,
   RowImportAction,
   ImportResult,
+  ImportRowPreview,
   IMPORTABLE_CONTACT_FIELDS,
   CONTACT_FIELD_LABELS,
   REPEATABLE_VALUE_FIELDS,
 } from '../api/import';
+import { PreviewFilter, PreviewSort, PreviewSortKey, filterRowIndices, sortRows } from './importPreviewRows';
 
 interface ImportContactsDialogProps {
   open: boolean;
@@ -81,6 +84,8 @@ export default function ImportContactsDialog({ open, onClose, onImportComplete }
   // Preview state
   const [previewResponse, setPreviewResponse] = useState<ImportPreviewResponse | null>(null);
   const [rowActions, setRowActions] = useState<Map<number, string>>(new Map());
+  const [filter, setFilter] = useState<{ key: PreviewFilter; rows: Set<number> } | null>(null);
+  const [sort, setSort] = useState<PreviewSort>({ key: 'row', direction: 'asc' });
 
   // Result state
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
@@ -99,6 +104,8 @@ export default function ImportContactsDialog({ open, onClose, onImportComplete }
     setMappings([]);
     setPreviewResponse(null);
     setRowActions(new Map());
+    setFilter(null);
+    setSort({ key: 'row', direction: 'asc' });
     setImportResult(null);
     setLoading(false);
     setError(null);
@@ -298,6 +305,33 @@ export default function ImportContactsDialog({ open, onClose, onImportComplete }
     return { toCreate, toUpdate, toSkip };
   };
 
+  // Clicking a summary chip shows only its rows; clicking it again shows all.
+  const toggleFilter = (key: PreviewFilter) => {
+    if (!previewResponse || filter?.key === key) {
+      setFilter(null);
+      return;
+    }
+    setFilter({ key, rows: filterRowIndices(previewResponse.rows, rowActions, key) });
+  };
+
+  const toggleSort = (key: PreviewSortKey) => {
+    setSort((prev) => ({
+      key,
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc',
+    }));
+  };
+
+  // Sets one action on every shown row that allows it.
+  const applyActionToRows = (rows: ImportRowPreview[], action: string) => {
+    const newActions = new Map(rowActions);
+    rows.forEach((row) => {
+      if (row.validation_errors.length > 0) return;
+      if (action === 'update' && !row.duplicate_match) return;
+      newActions.set(row.row_index, action);
+    });
+    setRowActions(newActions);
+  };
+
   // Render upload step
   const renderUploadStep = () => (
     <Box sx={{ py: 4 }}>
@@ -444,35 +478,88 @@ export default function ImportContactsDialog({ open, onClose, onImportComplete }
 
     const { toCreate, toUpdate, toSkip } = getSummaryCounts();
     const errorCount = previewResponse.rows.filter((r) => r.validation_errors.length > 0).length;
+    const warningCount = previewResponse.rows.filter((r) => (r.warnings?.length ?? 0) > 0).length;
+    const shownRows = sortRows(
+      filter ? previewResponse.rows.filter((r) => filter.rows.has(r.row_index)) : previewResponse.rows,
+      rowActions,
+      sort,
+    );
+    const chipFilterProps = (key: PreviewFilter) => ({
+      variant: filter?.key === key ? ('filled' as const) : ('outlined' as const),
+      onClick: () => toggleFilter(key),
+      'aria-pressed': filter?.key === key,
+    });
+    const sortHeader = (key: PreviewSortKey, label: string) => (
+      <TableSortLabel
+        active={sort.key === key}
+        direction={sort.key === key ? sort.direction : 'asc'}
+        onClick={() => toggleSort(key)}
+      >
+        {label}
+      </TableSortLabel>
+    );
 
     return (
       <Box>
-        {/* Summary */}
-        <Box sx={{ mb: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+        {/* Summary; each chip filters the table */}
+        <Box sx={{ mb: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           <Chip
             icon={<CheckCircleIcon />}
             label={t('contacts.import.preview.toCreate', '{{count}} to create', { count: toCreate })}
             color="success"
-            variant="outlined"
+            {...chipFilterProps('add')}
           />
           <Chip
             icon={<WarningIcon />}
             label={t('contacts.import.preview.toUpdate', '{{count}} to update', { count: toUpdate })}
             color="warning"
-            variant="outlined"
+            {...chipFilterProps('update')}
           />
           <Chip
             label={t('contacts.import.preview.toSkip', '{{count}} to skip', { count: toSkip })}
-            variant="outlined"
+            {...chipFilterProps('skip')}
           />
           {errorCount > 0 && (
             <Chip
               icon={<ErrorIcon />}
               label={t('contacts.import.preview.errors', '{{count}} with errors', { count: errorCount })}
               color="error"
-              variant="outlined"
+              {...chipFilterProps('errors')}
             />
           )}
+          {warningCount > 0 && (
+            <Chip
+              icon={<ReportProblemOutlinedIcon />}
+              label={t('contacts.import.preview.withWarnings', '{{count}} with warnings', { count: warningCount })}
+              color="warning"
+              {...chipFilterProps('warnings')}
+            />
+          )}
+        </Box>
+        <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+          <Typography variant="body2" color="text.secondary">
+            {filter
+              ? t('contacts.import.preview.showing', 'Showing {{shown}} of {{total}} rows', {
+                  shown: shownRows.length,
+                  total: previewResponse.rows.length,
+                })
+              : t('contacts.import.preview.filterHint', 'Click a count to show only those rows.')}
+          </Typography>
+          <FormControl size="small" sx={{ minWidth: 220 }}>
+            <Select
+              displayEmpty
+              value=""
+              onChange={(e) => applyActionToRows(shownRows, e.target.value)}
+              inputProps={{ 'aria-label': t('contacts.import.preview.setAll', 'Set action for all shown rows') }}
+            >
+              <MenuItem value="" disabled>
+                {t('contacts.import.preview.setAll', 'Set action for all shown rows')}
+              </MenuItem>
+              <MenuItem value="skip">{t('contacts.import.preview.actionSkip', 'Skip')}</MenuItem>
+              <MenuItem value="add">{t('contacts.import.preview.actionAdd', 'Add as New')}</MenuItem>
+              <MenuItem value="update">{t('contacts.import.preview.actionUpdate', 'Update Existing')}</MenuItem>
+            </Select>
+          </FormControl>
         </Box>
 
         {/* Preview table */}
@@ -480,16 +567,16 @@ export default function ImportContactsDialog({ open, onClose, onImportComplete }
           <Table stickyHeader size="small">
             <TableHead>
               <TableRow>
-                <TableCell width={50}>{t('contacts.import.preview.row', 'Row')}</TableCell>
-                <TableCell>{t('contacts.add.firstname', 'First Name')}</TableCell>
-                <TableCell>{t('contacts.add.lastname', 'Last Name')}</TableCell>
-                <TableCell>{t('contacts.add.email', 'Email')}</TableCell>
-                <TableCell width={120}>{t('contacts.import.preview.status', 'Status')}</TableCell>
-                <TableCell width={160}>{t('contacts.import.preview.action', 'Action')}</TableCell>
+                <TableCell width={50}>{sortHeader('row', t('contacts.import.preview.row', 'Row'))}</TableCell>
+                <TableCell>{sortHeader('firstname', t('contacts.add.firstname', 'First Name'))}</TableCell>
+                <TableCell>{sortHeader('lastname', t('contacts.add.lastname', 'Last Name'))}</TableCell>
+                <TableCell>{sortHeader('email', t('contacts.add.email', 'Email'))}</TableCell>
+                <TableCell width={120}>{sortHeader('status', t('contacts.import.preview.status', 'Status'))}</TableCell>
+                <TableCell width={160}>{sortHeader('action', t('contacts.import.preview.action', 'Action'))}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {previewResponse.rows.map((row) => (
+              {shownRows.map((row) => (
                 <TableRow key={row.row_index}>
                   <TableCell>{row.row_index + 1}</TableCell>
                   <TableCell>{row.parsed_contact.firstname || '-'}</TableCell>

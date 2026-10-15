@@ -212,7 +212,11 @@
         "toUpdate": "{{count}} to update",
         "toSkip": "{{count}} to skip",
         "errors": "{{count}} with errors",
-        "warnings": "Not imported: {{list}}"
+        "warnings": "Not imported: {{list}}",
+        "withWarnings": "{{count}} with warnings",
+        "showing": "Showing {{shown}} of {{total}} rows",
+        "filterHint": "Click a count to show only those rows.",
+        "setAll": "Set action for all shown rows"
       },
       "result": {
         "title": "Import Complete",

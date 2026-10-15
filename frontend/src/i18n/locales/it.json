@@ -212,7 +212,11 @@
         "toUpdate": "{{count}} da aggiornare",
         "toSkip": "{{count}} da saltare",
         "errors": "{{count}} con errori",
-        "warnings": "Non importato: {{list}}"
+        "warnings": "Non importato: {{list}}",
+        "withWarnings": "{{count}} con avvisi",
+        "showing": "{{shown}} di {{total}} righe",
+        "filterHint": "Fai clic su un numero per vedere solo quelle righe.",
+        "setAll": "Azione per tutte le righe mostrate"
       },
       "result": {
         "title": "Importazione Completata",
