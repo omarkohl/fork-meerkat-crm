@@ -444,6 +444,12 @@ func VCardToContact(card vcard.Card, existing *models.Contact) (*models.Contact,
 		contact.Note = strings.Join(notes, "\n\n")
 	}
 
+	// Every contact needs a first name, but phone cards often lack N's given name:
+	// last name only, a company (ORG only) or a bare number.
+	if contact.Firstname == "" {
+		fallbackFirstname(card, contact)
+	}
+
 	// Extract photo data for separate processing
 	var photoData []byte
 	var photoMediaType string
@@ -909,6 +915,35 @@ func component(comps []string, i int) string {
 		return comps[i]
 	}
 	return ""
+}
+
+// fallbackFirstname fills an empty first name from the most name-like value the
+// card has: FN, the last name, ORG, NICKNAME, then the first email or phone.
+func fallbackFirstname(card vcard.Card, contact *models.Contact) {
+	fn := strings.TrimSpace(card.Value(vcard.FieldFormattedName))
+	switch {
+	case fn != "" && contact.Lastname == "":
+		contact.Firstname = fn
+		return
+	case fn != "" && strings.HasSuffix(fn, " "+contact.Lastname):
+		// "Paul Fisher" with N:Fisher;;;; - the rest of FN is the given name.
+		contact.Firstname = strings.TrimSpace(strings.TrimSuffix(fn, " "+contact.Lastname))
+		return
+	case contact.Lastname != "":
+		contact.Firstname, contact.Lastname = contact.Lastname, ""
+		return
+	}
+	for _, v := range []string{contact.Organization, contact.Nickname} {
+		if v != "" {
+			contact.Firstname = v
+			return
+		}
+	}
+	if len(contact.Emails) > 0 {
+		contact.Firstname = contact.Emails[0].Value
+	} else if len(contact.Phones) > 0 {
+		contact.Firstname = contact.Phones[0].Value
+	}
 }
 
 // dedupe drops every item whose key an earlier item already has, so the first

@@ -442,3 +442,33 @@ func TestParseRevisionReadsOurOwnOutput(t *testing.T) {
 		t.Errorf("round-tripped REV = %v, want %v", got, modified)
 	}
 }
+
+// Regression test: a card whose N has no given name used to map to an empty first
+// name (even with a usable FN), so VCF import rejected it as invalid.
+func TestFallbackFirstname(t *testing.T) {
+	tests := []struct {
+		name, card, first, last string
+	}{
+		{"FN with last name", "N:Fisher;;;;\r\nFN:Paul Fisher\r\n", "Paul", "Fisher"},
+		{"FN without last name", "N:;;;;\r\nFN:ACME GmbH\r\n", "ACME GmbH", ""},
+		{"FN is the last name", "N:Fisher;;;;\r\nFN:Fisher\r\n", "Fisher", ""},
+		{"last name only", "N:Fisher;;;;\r\n", "Fisher", ""},
+		{"organization", "ORG:ACME;Sales\r\n", "ACME", ""},
+		{"nickname", "NICKNAME:Bob\r\n", "Bob", ""},
+		{"email before phone", "TEL:+4915781234567\r\nEMAIL:a@example.com\r\n", "a@example.com", ""},
+		{"phone", "TEL:+4915781234567\r\n", "+4915781234567", ""},
+		{"given name wins", "N:Fisher;Paul;;;\r\nFN:Someone Else\r\n", "Paul", "Fisher"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			card, err := vcard.NewDecoder(strings.NewReader("BEGIN:VCARD\r\nVERSION:3.0\r\n" + tt.card + "END:VCARD\r\n")).Decode()
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, _, _, _ := VCardToContact(card, nil)
+			if got.Firstname != tt.first || got.Lastname != tt.last {
+				t.Errorf("name = %q %q, want %q %q", got.Firstname, got.Lastname, tt.first, tt.last)
+			}
+		})
+	}
+}

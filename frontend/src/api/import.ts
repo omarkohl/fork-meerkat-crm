@@ -34,6 +34,8 @@ export interface ImportRowPreview {
   row_index: number;
   parsed_contact: Record<string, string>;
   validation_errors: string[];
+  // Values dropped so the row can import (VCF only)
+  warnings?: string[];
   duplicate_match: DuplicateMatch | null;
   suggested_action: 'add' | 'skip' | 'update';
 }

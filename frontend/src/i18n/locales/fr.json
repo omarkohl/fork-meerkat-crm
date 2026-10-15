@@ -211,7 +211,8 @@
         "toCreate": "{{count}} à créer",
         "toUpdate": "{{count}} à mettre à jour",
         "toSkip": "{{count}} à ignorer",
-        "errors": "{{count}} avec erreurs"
+        "errors": "{{count}} avec erreurs",
+        "warnings": "Non importé : {{list}}"
       },
       "result": {
         "title": "Importation terminée",

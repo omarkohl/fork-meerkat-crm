@@ -211,7 +211,8 @@
         "toCreate": "{{count}} to create",
         "toUpdate": "{{count}} to update",
         "toSkip": "{{count}} to skip",
-        "errors": "{{count}} with errors"
+        "errors": "{{count}} with errors",
+        "warnings": "Not imported: {{list}}"
       },
       "result": {
         "title": "Import Complete",

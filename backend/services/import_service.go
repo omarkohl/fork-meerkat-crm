@@ -110,11 +110,14 @@ func ParseVCF(reader io.Reader, db *gorm.DB, userID uint) (contacts []VCFContact
 			PhotoURL:       photoURL,
 		})
 
+		warnings := DropInvalidValues(contact)
+
 		// Build preview
 		preview := models.ImportRowPreview{
 			RowIndex:         rowIdx,
 			ParsedContact:    ContactToPreviewMap(contact),
 			ValidationErrors: make([]string, 0),
+			Warnings:         warnings,
 			SuggestedAction:  "add",
 		}
 
@@ -383,6 +386,54 @@ func ContactToPreviewMap(contact *models.Contact) map[string]interface{} {
 		preview["circles"] = strings.Join(contact.Circles, ", ")
 	}
 	return preview
+}
+
+// DropInvalidValues removes the emails, phones and dates that contact validation
+// would reject, and returns one warning per removed value. Old phones store
+// service codes ("*100#") and malformed values; rejecting the whole contact for
+// one of them loses more than it protects, and keeping it would make every later
+// edit of the contact fail validation.
+func DropInvalidValues(contact *models.Contact) []string {
+	warnings := make([]string, 0)
+
+	emails := contact.Emails[:0]
+	for _, e := range contact.Emails {
+		if middleware.ValidateEmail(e.Value) {
+			emails = append(emails, e)
+		} else {
+			warnings = append(warnings, fmt.Sprintf("Invalid email %q not imported", e.Value))
+		}
+	}
+	contact.Emails = emails
+	contact.Email = ""
+	if len(emails) > 0 {
+		contact.Email = emails[0].Value
+	}
+
+	phones := contact.Phones[:0]
+	for _, p := range contact.Phones {
+		if IsValidPhone(p.Value) {
+			phones = append(phones, p)
+		} else {
+			warnings = append(warnings, fmt.Sprintf("Invalid phone %q not imported", p.Value))
+		}
+	}
+	contact.Phones = phones
+	contact.Phone = ""
+	if len(phones) > 0 {
+		contact.Phone = phones[0].Value
+	}
+
+	// Dates are already normalized, which garbles invalid input, so the warning omits them.
+	if contact.Birthday != "" && !IsValidBirthdayFormat(contact.Birthday) {
+		warnings = append(warnings, "Invalid birthday not imported")
+		contact.Birthday = ""
+	}
+	if contact.Anniversary != "" && !IsValidBirthdayFormat(contact.Anniversary) {
+		warnings = append(warnings, "Invalid anniversary not imported")
+		contact.Anniversary = ""
+	}
+	return warnings
 }
 
 // ValidateImportedContact validates a contact built from either CSV or VCF and returns

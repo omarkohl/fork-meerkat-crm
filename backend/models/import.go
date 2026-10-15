@@ -53,6 +53,7 @@ type ImportRowPreview struct {
 	RowIndex         int                    `json:"row_index"`
 	ParsedContact    map[string]interface{} `json:"parsed_contact"`    // Parsed field values
 	ValidationErrors []string               `json:"validation_errors"` // Any validation issues
+	Warnings         []string               `json:"warnings"`          // Values dropped so the row can import
 	DuplicateMatch   *DuplicateMatch        `json:"duplicate_match"`   // Potential duplicate, if any
 	SuggestedAction  string                 `json:"suggested_action"`  // "add", "skip", or "update"
 }

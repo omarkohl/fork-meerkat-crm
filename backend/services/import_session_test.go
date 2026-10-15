@@ -201,3 +201,32 @@ func TestVCFImport_V21KeepsFields(t *testing.T) {
 	assert.Equal(t, []models.ContactEmail{{Type: "home", Value: "jane@example.com"}}, stored.Emails)
 	assert.Equal(t, "Met at the conference", stored.Note)
 }
+
+// Regression test: a card with only a last name, or with one bad value, used to be
+// an error row that could not be imported at all.
+func TestVCFImport_FixableRowsImportWithWarnings(t *testing.T) {
+	db := newImportSessionTestDB(t)
+
+	_, previews, stats, err := ParseVCF(strings.NewReader("BEGIN:VCARD\r\n"+
+		"VERSION:2.1\r\n"+
+		"N:Fisher;;;;\r\n"+
+		"TEL;CELL:+4915781234567\r\n"+
+		"TEL;CELL:*100#\r\n"+
+		"EMAIL;HOME:not-an-email\r\n"+
+		"BDAY:sometime\r\n"+
+		"END:VCARD\r\n"), db, 1)
+	require.NoError(t, err)
+	require.Len(t, previews, 1)
+
+	assert.Equal(t, 0, stats.ErrorCount)
+	assert.Empty(t, previews[0].ValidationErrors)
+	assert.Equal(t, "add", previews[0].SuggestedAction)
+	assert.Equal(t, "Fisher", previews[0].ParsedContact["firstname"])
+	assert.Equal(t, "+4915781234567", previews[0].ParsedContact["phone"])
+	assert.Nil(t, previews[0].ParsedContact["email"])
+	assert.Equal(t, []string{
+		`Invalid email "not-an-email" not imported`,
+		`Invalid phone "*100#" not imported`,
+		"Invalid birthday not imported",
+	}, previews[0].Warnings)
+}

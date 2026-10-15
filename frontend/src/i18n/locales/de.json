@@ -211,7 +211,8 @@
         "toCreate": "{{count}} zu erstellen",
         "toUpdate": "{{count}} zu aktualisieren",
         "toSkip": "{{count}} zu überspringen",
-        "errors": "{{count}} mit Fehlern"
+        "errors": "{{count}} mit Fehlern",
+        "warnings": "Nicht importiert: {{list}}"
       },
       "result": {
         "title": "Import abgeschlossen",
