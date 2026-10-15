@@ -1,5 +1,6 @@
 import { test, expect } from './fixtures';
 import { createTestContact, deleteTestContact } from './fixtures';
+import { API_BASE_URL } from './global-setup';
 
 // Notes and activities both render in the contact's Timeline tab. Each test
 // uses a throwaway contact and cleans it up (which cascades the note/activity).
@@ -42,6 +43,23 @@ test.describe('Timeline', () => {
 
       await expect(dialog).toBeHidden();
       await expect(page.getByText(activityTitle)).toBeVisible();
+    } finally {
+      await deleteTestContact(page.request, contact.ID);
+    }
+  });
+
+  test('the add activity dialog preselects the contact, also when it is archived', async ({ page }) => {
+    // Archived contacts are missing from the dialog's contact list, so preselection must not rely on it
+    const contact = await createTestContact(page.request);
+
+    try {
+      const archived = await page.request.post(`${API_BASE_URL}/contacts/${contact.ID}/archive`);
+      expect(archived.ok()).toBeTruthy();
+      await page.goto(`/contacts/${contact.ID}`);
+
+      await page.getByRole('button', { name: /add activity/i }).click();
+      const dialog = page.getByRole('dialog');
+      await expect(dialog.getByRole('button', { name: new RegExp(contact.firstname) })).toBeVisible();
     } finally {
       await deleteTestContact(page.request, contact.ID);
     }

@@ -778,7 +778,7 @@ export default function ContactDetailPage() {
         open={activityDialogOpen}
         onClose={() => setActivityDialogOpen(false)}
         onSave={handleSaveActivity}
-        preselectedContactId={contact?.ID}
+        preselectedContact={contact ?? undefined}
       />
 
       <ReminderDialog

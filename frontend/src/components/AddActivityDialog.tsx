@@ -24,10 +24,10 @@ interface AddActivityDialogProps {
     date: string;
     contact_ids: number[];
   }) => Promise<void>;
-  preselectedContactId?: number;
+  preselectedContact?: Contact;
 }
 
-export default function AddActivityDialog({ open, onClose, onSave, preselectedContactId }: AddActivityDialogProps) {
+export default function AddActivityDialog({ open, onClose, onSave, preselectedContact }: AddActivityDialogProps) {
   const { t } = useTranslation();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -52,26 +52,12 @@ export default function AddActivityDialog({ open, onClose, onSave, preselectedCo
     }
   }, []);
 
-  // Load preselected contact on open
+  // Use the contact as given: it may be archived or beyond the first page of the contact list
   useEffect(() => {
-    if (open && preselectedContactId) {
-      const loadPreselected = async () => {
-        try {
-          const response = await getContacts({ limit: 100 });
-          const preselected = response.contacts.find((c: Contact) => c.ID === preselectedContactId);
-          if (preselected) {
-            setSelectedContacts([preselected]);
-          }
-          setContacts(response.contacts || []);
-        } catch (err) {
-          console.error('Failed to load preselected contact:', err);
-        }
-      };
-      loadPreselected();
-    } else if (open) {
-      loadContacts('');
+    if (open && preselectedContact) {
+      setSelectedContacts([preselectedContact]);
     }
-  }, [open, preselectedContactId, loadContacts]);
+  }, [open, preselectedContact]);
 
   // Debounced search effect
   useEffect(() => {
