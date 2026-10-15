@@ -15,6 +15,7 @@ import {
 import AppDialog from './AppDialog';
 import { Reminder, ReminderFormData } from '../api/reminders';
 import { getErrorMessage } from '../utils/errorHandler';
+import DateField from './DateField';
 
 interface InitialReminderValues {
   message?: string;
@@ -172,14 +173,13 @@ export default function ReminderDialog({
             ))}
           </TextField>
 
-          <TextField
+          <DateField
             label={t('reminders.date')}
-            type="date"
             value={remindAt}
-            onChange={(e) => setRemindAt(e.target.value)}
+            onChange={setRemindAt}
             required
             fullWidth
-            slotProps={{ inputLabel: { shrink: true }, htmlInput: { min: new Date().toISOString().split('T')[0] } }}
+            min={new Date().toISOString().split('T')[0]}
           />
 
           {recurrence !== 'once' && (

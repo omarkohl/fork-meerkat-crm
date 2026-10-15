@@ -14,6 +14,7 @@ import NoteIcon from '@mui/icons-material/Note';
 import EditIcon from '@mui/icons-material/Edit';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { ListSkeleton } from './components/LoadingSkeletons';
+import DateField from './components/DateField';
 import { useNotes } from './hooks/useNotes';
 import { useDebouncedValue } from './hooks/useDebounce';
 import { createUnassignedNote, updateNote, deleteNote, Note } from './api/notes';
@@ -23,8 +24,8 @@ import { handleError } from './utils/errorHandler';
 import { useDateFormat } from './DateFormatProvider';
 
 const NotesPage: React.FC = () => {
-  const { t, i18n } = useTranslation();
-  const { formatDate, getDatePlaceholder } = useDateFormat();
+  const { t } = useTranslation();
+  const { formatDate } = useDateFormat();
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearch = useDebouncedValue(searchInput, 400);
   const [page, setPage] = useState(1);
@@ -177,31 +178,19 @@ const NotesPage: React.FC = () => {
             variant="outlined"
             sx={{ flex: 1, minWidth: 200 }}
           />
-          <TextField
+          <DateField
             size="small"
             label={t('notes.fromDate')}
-            type="date"
             value={fromDate}
-            onChange={(e) => handleFromDateChange(e.target.value)}
-            variant="outlined"
-            slotProps={{
-              inputLabel: { shrink: true },
-              input: { placeholder: getDatePlaceholder(), lang: i18n.language },
-            }}
-            sx={{ width: 160 }}
+            onChange={handleFromDateChange}
+            sx={{ width: 180 }}
           />
-          <TextField
+          <DateField
             size="small"
             label={t('notes.toDate')}
-            type="date"
             value={toDate}
-            onChange={(e) => handleToDateChange(e.target.value)}
-            variant="outlined"
-            slotProps={{
-              inputLabel: { shrink: true },
-              input: { placeholder: getDatePlaceholder(), lang: i18n.language },
-            }}
-            sx={{ width: 160 }}
+            onChange={handleToDateChange}
+            sx={{ width: 180 }}
           />
         </Box>
       </Paper>

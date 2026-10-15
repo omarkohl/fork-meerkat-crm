@@ -11,6 +11,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import AppDialog from './AppDialog';
+import DateField from './DateField';
 import { useTranslation } from 'react-i18next';
 import { Contact, getContacts } from '../api/contacts';
 
@@ -147,17 +148,7 @@ export default function AddActivityDialog({ open, onClose, onSave, preselectedCo
             fullWidth
           />
 
-          <TextField
-            label={t('activityDialog.date')}
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            fullWidth
-            required
-            InputLabelProps={{
-              shrink: true,
-            }}
-          />
+          <DateField label={t('activityDialog.date')} value={date} onChange={setDate} fullWidth required />
 
           <Autocomplete
             multiple

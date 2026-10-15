@@ -75,6 +75,13 @@ describe('DateField', () => {
     expect(screen.getByText('Invalid date')).toBeInTheDocument();
   });
 
+  test('reports an incomplete edit of a valid date as empty, like a native date input', () => {
+    const { input, onChange } = renderIt('eu', '2026-04-30');
+    fireEvent.change(input, { target: { value: '30.04.202' } });
+    expect(onChange).toHaveBeenLastCalledWith('');
+    expect(input).toHaveValue('30.04.202');
+  });
+
   test('clearing the text clears the value', () => {
     const { input, onChange } = renderIt('eu', '2026-04-30');
     fireEvent.change(input, { target: { value: '' } });

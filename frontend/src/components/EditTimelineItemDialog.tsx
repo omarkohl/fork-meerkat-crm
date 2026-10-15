@@ -11,6 +11,7 @@ import {
   IconButton,
 } from '@mui/material';
 import AppDialog from './AppDialog';
+import DateField from './DateField';
 import DeleteIcon from '@mui/icons-material/Delete';
 
 export interface TimelineItemValues {
@@ -73,13 +74,11 @@ export default function EditTimelineItemDialog({
               placeholder={t('noteDialog.contentPlaceholder')}
               autoFocus
             />
-            <TextField
+            <DateField
               fullWidth
-              type="date"
               value={values.noteDate || ''}
-              onChange={(e) => onChange({ ...values, noteDate: e.target.value })}
+              onChange={(noteDate) => onChange({ ...values, noteDate })}
               label={t('noteDialog.date')}
-              InputLabelProps={{ shrink: true }}
             />
           </Box>
         ) : (
@@ -106,13 +105,11 @@ export default function EditTimelineItemDialog({
               onChange={(e) => onChange({ ...values, activityLocation: e.target.value })}
               label={t('activityDialog.location')}
             />
-            <TextField
+            <DateField
               fullWidth
-              type="date"
               value={values.activityDate || ''}
-              onChange={(e) => onChange({ ...values, activityDate: e.target.value })}
+              onChange={(activityDate) => onChange({ ...values, activityDate })}
               label={t('activityDialog.date')}
-              InputLabelProps={{ shrink: true }}
             />
             <Autocomplete
               multiple

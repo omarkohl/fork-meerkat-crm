@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { DialogTitle, DialogContent, DialogActions, TextField, Button, Box } from '@mui/material';
 import AppDialog from './AppDialog';
+import DateField from './DateField';
 import { useTranslation } from 'react-i18next';
 
 interface AddNoteDialogProps {
@@ -61,16 +62,7 @@ export default function AddNoteDialog({ open, onClose, onSave }: AddNoteDialogPr
             required
             autoFocus
           />
-          <TextField
-            label={t('noteDialog.date')}
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            fullWidth
-            InputLabelProps={{
-              shrink: true,
-            }}
-          />
+          <DateField label={t('noteDialog.date')} value={date} onChange={setDate} fullWidth />
         </Box>
       </DialogContent>
       <DialogActions>

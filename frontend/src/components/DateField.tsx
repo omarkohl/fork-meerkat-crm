@@ -28,7 +28,12 @@ interface DateFieldProps {
   label: string;
   /** YYYY-MM-DD or '' */
   value: string;
+  /** Called with '' while the text is empty or not a complete, valid date, like a native date input */
   onChange: (value: string) => void;
+  /** YYYY-MM-DD; limits the calendar picker */
+  min?: string;
+  required?: boolean;
+  fullWidth?: boolean;
   size?: 'small' | 'medium';
   sx?: SxProps<Theme>;
 }
@@ -37,7 +42,7 @@ interface DateFieldProps {
  * Date input in the user's date format. A native date input always shows the
  * browser's locale format, so it is only used behind the calendar button.
  */
-export default function DateField({ label, value, onChange, size, sx }: DateFieldProps) {
+export default function DateField({ label, value, onChange, min, required, fullWidth, size, sx }: DateFieldProps) {
   const { t } = useTranslation();
   const { dateFormat, getDatePlaceholder } = useDateFormat();
   const [text, setText] = useState(() => formatBirthdayForInputWithFormat(value, dateFormat));
@@ -46,7 +51,7 @@ export default function DateField({ label, value, onChange, size, sx }: DateFiel
 
   // Follow outside changes (cleared filters, picked dates, a changed date format)
   useEffect(() => {
-    if (parseDateInputWithFormat(text, dateFormat) !== value) {
+    if ((parseDateInputWithFormat(text, dateFormat) ?? '') !== value) {
       setText(formatBirthdayForInputWithFormat(value, dateFormat));
       setTouched(false);
     }
@@ -56,8 +61,8 @@ export default function DateField({ label, value, onChange, size, sx }: DateFiel
   const handleTextChange = (input: string) => {
     const next = autoFormatBirthdayInputWithFormat(input, text, dateFormat);
     setText(next);
-    const parsed = parseDateInputWithFormat(next, dateFormat);
-    if (parsed !== null && parsed !== value) {
+    const parsed = parseDateInputWithFormat(next, dateFormat) ?? '';
+    if (parsed !== value) {
       onChange(parsed);
     }
   };
@@ -76,6 +81,8 @@ export default function DateField({ label, value, onChange, size, sx }: DateFiel
     <TextField
       size={size}
       label={label}
+      required={required}
+      fullWidth={fullWidth}
       value={text}
       onChange={(e) => handleTextChange(e.target.value)}
       onBlur={() => setTouched(true)}
@@ -98,6 +105,7 @@ export default function DateField({ label, value, onChange, size, sx }: DateFiel
                 tabIndex={-1}
                 aria-hidden
                 value={value}
+                min={min}
                 onChange={(e) => onChange(e.target.value)}
                 style={{
                   position: 'absolute',
