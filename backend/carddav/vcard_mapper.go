@@ -311,6 +311,7 @@ func VCardToContact(card vcard.Card, existing *models.Contact) (*models.Contact,
 				Value: f.Value,
 			})
 		}
+		contact.Emails = dedupe(contact.Emails, func(e models.ContactEmail) string { return strings.ToLower(e.Value) })
 		if len(contact.Emails) > 0 {
 			contact.Email = contact.Emails[0].Value
 		}
@@ -333,6 +334,7 @@ func VCardToContact(card vcard.Card, existing *models.Contact) (*models.Contact,
 				Value: value,
 			})
 		}
+		contact.Phones = dedupe(contact.Phones, func(p models.ContactPhone) string { return phoneKey(p.Value) })
 		if len(contact.Phones) > 0 {
 			contact.Phone = contact.Phones[0].Value
 		}
@@ -375,6 +377,7 @@ func VCardToContact(card vcard.Card, existing *models.Contact) (*models.Contact,
 				Value: f.Value,
 			})
 		}
+		contact.URLs = dedupe(contact.URLs, func(u models.ContactURL) string { return u.Value })
 	}
 
 	// IMPP - import every entry; service comes from X-SERVICE-TYPE or TYPE
@@ -393,6 +396,7 @@ func VCardToContact(card vcard.Card, existing *models.Contact) (*models.Contact,
 				Value: f.Value,
 			})
 		}
+		contact.IMPPs = dedupe(contact.IMPPs, func(i models.ContactIMPP) string { return i.Value })
 	}
 
 	// BDAY
@@ -905,6 +909,38 @@ func component(comps []string, i int) string {
 		return comps[i]
 	}
 	return ""
+}
+
+// dedupe drops every item whose key an earlier item already has, so the first
+// entry (and its type) wins. Phones aggregate several accounts (SIM, Google,
+// messengers) into one contact, and their exports repeat the same value.
+func dedupe[T any](items []T, key func(T) string) []T {
+	seen := make(map[string]bool, len(items))
+	out := items[:0]
+	for _, item := range items {
+		k := key(item)
+		if seen[k] {
+			continue
+		}
+		seen[k] = true
+		out = append(out, item)
+	}
+	return out
+}
+
+// phoneKey reduces a number to its digits and a leading "+", so formatting
+// differences ("+49 170 123" vs "+49170123") do not count as distinct numbers.
+func phoneKey(value string) string {
+	var b strings.Builder
+	for i, r := range value {
+		if (r >= '0' && r <= '9') || (r == '+' && i == 0) {
+			b.WriteRune(r)
+		}
+	}
+	if b.Len() == 0 {
+		return value
+	}
+	return b.String()
 }
 
 // nonEmpty returns the non-empty strings from the provided values, preserving order.

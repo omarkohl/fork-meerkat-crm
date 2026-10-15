@@ -122,3 +122,25 @@ func TestNormalizeLegacyVCF_Note(t *testing.T) {
 		t.Errorf("nothing should land in VCardExtra, got %q", got.VCardExtra)
 	}
 }
+
+// Android exports a contact linked to several accounts with each value repeated.
+func TestNormalizeLegacyVCF_DuplicateValues(t *testing.T) {
+	got := decodeLegacy(t, "BEGIN:VCARD\r\n"+
+		"VERSION:2.1\r\n"+
+		"N:Fisher;Paul;James;;\r\n"+
+		"TEL;CELL:+4915781234567\r\n"+
+		"TEL;CELL:+4915781234567\r\n"+
+		"TEL;HOME:+49 157 812 34567\r\n"+
+		"TEL;WORK:+49 30 123456\r\n"+
+		"EMAIL;HOME:paul@example.com\r\n"+
+		"EMAIL;WORK:Paul@Example.com\r\n"+
+		"END:VCARD\r\n")
+
+	wantPhones := []models.ContactPhone{{Type: "cell", Value: "+4915781234567"}, {Type: "work", Value: "+49 30 123456"}}
+	if len(got.Phones) != 2 || got.Phones[0] != wantPhones[0] || got.Phones[1] != wantPhones[1] {
+		t.Errorf("phones = %+v, want %+v", got.Phones, wantPhones)
+	}
+	if len(got.Emails) != 1 || got.Emails[0] != (models.ContactEmail{Type: "home", Value: "paul@example.com"}) {
+		t.Errorf("emails = %+v", got.Emails)
+	}
+}
