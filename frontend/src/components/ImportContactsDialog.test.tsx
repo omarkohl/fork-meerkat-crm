@@ -114,7 +114,7 @@ describe('ImportContactsDialog preview', () => {
           .map((c) => c.textContent),
       );
     expect(rows).toEqual([
-      ['2', '-', 'Invalid: First name is required'],
+      ['2', '—', 'Invalid: First name is required'],
       ['3', 'Bob', 'Skipped in the review'],
     ]);
   });

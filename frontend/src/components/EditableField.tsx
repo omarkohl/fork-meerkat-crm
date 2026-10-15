@@ -2,6 +2,7 @@ import { Box, Typography, TextField, IconButton } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
+import EmptyValue from './EmptyValue';
 
 interface EditableFieldProps {
   icon: React.ReactNode;
@@ -39,11 +40,15 @@ export default function EditableField({
   onEditValueChange,
 }: EditableFieldProps) {
   const baseDisplayValue = formattedDisplayValue || value;
-  const displayValue = baseDisplayValue
-    ? displaySuffix
-      ? `${baseDisplayValue} ${displaySuffix}`
-      : baseDisplayValue
-    : '-';
+  const displayValue = baseDisplayValue ? (
+    displaySuffix ? (
+      `${baseDisplayValue} ${displaySuffix}`
+    ) : (
+      baseDisplayValue
+    )
+  ) : (
+    <EmptyValue />
+  );
   const showError = isEditing && validationError;
 
   return (

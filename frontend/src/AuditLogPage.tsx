@@ -23,6 +23,7 @@ import {
 import { AuditEntry, getAuditLog } from './api/admin';
 import { isAdmin } from './auth';
 import { describeAuditDetail } from './utils/auditDetail';
+import EmptyValue from './components/EmptyValue';
 
 export default function AuditLogPage() {
   const { t } = useTranslation();
@@ -150,7 +151,7 @@ export default function AuditLogPage() {
                 <TableRow key={entry.id}>
                   <TableCell sx={{ whiteSpace: 'nowrap' }}>{new Date(entry.created_at).toLocaleString()}</TableCell>
                   <TableCell>{eventLabel(entry.event)}</TableCell>
-                  <TableCell>{entry.username || '–'}</TableCell>
+                  <TableCell>{entry.username || <EmptyValue />}</TableCell>
                   <TableCell>{entry.ip}</TableCell>
                   <TableCell>{describeAuditDetail(entry.detail, t)}</TableCell>
                   <TableCell sx={{ maxWidth: 260, wordBreak: 'break-word' }}>{entry.user_agent}</TableCell>

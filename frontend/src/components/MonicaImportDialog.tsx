@@ -51,6 +51,7 @@ import {
   MonicaImportResult,
 } from '../api/monicaImport';
 import { RowImportAction } from '../api/import';
+import EmptyValue from './EmptyValue';
 
 interface MonicaImportDialogProps {
   open: boolean;
@@ -507,12 +508,7 @@ export default function MonicaImportDialog({ open, onClose, onImportComplete }: 
         }),
       );
     }
-    if (parts.length === 0)
-      return (
-        <Typography variant="body2" color="text.secondary">
-          -
-        </Typography>
-      );
+    if (parts.length === 0) return <EmptyValue variant="body2" />;
     return (
       <Typography variant="body2" color="text.secondary">
         {parts.join(', ')}
@@ -579,9 +575,9 @@ export default function MonicaImportDialog({ open, onClose, onImportComplete }: 
             <TableBody>
               {preview.rows.map((row) => (
                 <TableRow key={row.row_index}>
-                  <TableCell>{row.parsed_contact.firstname || '-'}</TableCell>
-                  <TableCell>{row.parsed_contact.lastname || '-'}</TableCell>
-                  <TableCell>{row.parsed_contact.email || '-'}</TableCell>
+                  <TableCell>{row.parsed_contact.firstname || <EmptyValue />}</TableCell>
+                  <TableCell>{row.parsed_contact.lastname || <EmptyValue />}</TableCell>
+                  <TableCell>{row.parsed_contact.email || <EmptyValue />}</TableCell>
                   <TableCell>{renderRelatedChips(row)}</TableCell>
                   <TableCell>
                     {row.validation_errors.length > 0 ? (

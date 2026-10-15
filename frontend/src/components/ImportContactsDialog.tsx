@@ -55,6 +55,7 @@ import {
   REPEATABLE_VALUE_FIELDS,
 } from '../api/import';
 import { PreviewFilter, PreviewSort, PreviewSortKey, filterRowIndices, sortRows } from './importPreviewRows';
+import EmptyValue from './EmptyValue';
 
 interface ImportContactsDialogProps {
   open: boolean;
@@ -436,7 +437,7 @@ export default function ImportContactsDialog({ open, onClose, onImportComplete }
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" color="text.secondary" noWrap sx={{ maxWidth: 150 }}>
-                        {uploadResponse.sample_data[0]?.[index] || '-'}
+                        {uploadResponse.sample_data[0]?.[index] || <EmptyValue />}
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -579,9 +580,9 @@ export default function ImportContactsDialog({ open, onClose, onImportComplete }
               {shownRows.map((row) => (
                 <TableRow key={row.row_index}>
                   <TableCell>{row.row_index + 1}</TableCell>
-                  <TableCell>{row.parsed_contact.firstname || '-'}</TableCell>
-                  <TableCell>{row.parsed_contact.lastname || '-'}</TableCell>
-                  <TableCell>{row.parsed_contact.email || '-'}</TableCell>
+                  <TableCell>{row.parsed_contact.firstname || <EmptyValue />}</TableCell>
+                  <TableCell>{row.parsed_contact.lastname || <EmptyValue />}</TableCell>
+                  <TableCell>{row.parsed_contact.email || <EmptyValue />}</TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       {row.validation_errors.length > 0 ? (
@@ -725,7 +726,7 @@ export default function ImportContactsDialog({ open, onClose, onImportComplete }
                 {skippedRows.map((r) => (
                   <TableRow key={r.row}>
                     <TableCell>{r.row}</TableCell>
-                    <TableCell>{r.name || '-'}</TableCell>
+                    <TableCell>{r.name || <EmptyValue />}</TableCell>
                     <TableCell sx={{ color: r.reason === 'skipped' ? 'text.secondary' : 'error.main' }}>
                       {t(`contacts.import.result.reasons.${r.reason}`, r.reason)}
                       {r.detail ? `: ${r.detail}` : ''}

@@ -26,6 +26,7 @@ import { Relationship, IncomingRelationship } from '../api/relationships';
 import { Contact, ContactValue, ContactAddress } from '../api/contacts';
 import { ContactFieldKey, resolveEnabledFields } from '../contactFields';
 import { useDateFormat } from '../DateFormatProvider';
+import EmptyValue from './EmptyValue';
 
 interface ContactInformationProps {
   contact: Partial<Contact>;
@@ -83,12 +84,7 @@ export default function ContactInformation({
   }, [contact.birthday, t, calculateAge]);
 
   const renderValueList = (rows: ContactValue[] | undefined) => {
-    if (!rows || rows.length === 0)
-      return (
-        <Typography variant="body2" color="text.disabled">
-          —
-        </Typography>
-      );
+    if (!rows || rows.length === 0) return <EmptyValue variant="body2" />;
     return (
       <Stack>
         {rows.map((r, i) => (
@@ -102,12 +98,7 @@ export default function ContactInformation({
   };
 
   const renderAddressList = (rows: ContactAddress[] | undefined) => {
-    if (!rows || rows.length === 0)
-      return (
-        <Typography variant="body2" color="text.disabled">
-          —
-        </Typography>
-      );
+    if (!rows || rows.length === 0) return <EmptyValue variant="body2" />;
     return (
       <Stack spacing={0.5}>
         {rows.map((a, i) => (
