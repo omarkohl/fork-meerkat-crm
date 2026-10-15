@@ -419,7 +419,9 @@
     "close": "Close",
     "back": "Back",
     "continue": "Continue",
-    "add": "Add"
+    "add": "Add",
+    "openCalendar": "Open calendar",
+    "invalidDate": "Invalid date"
   },
   "profilePicture": {
     "title": "Upload Profile Picture",

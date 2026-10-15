@@ -419,7 +419,9 @@
     "close": "Chiudi",
     "back": "Indietro",
     "continue": "Continua",
-    "add": "Aggiungi"
+    "add": "Aggiungi",
+    "openCalendar": "Apri calendario",
+    "invalidDate": "Data non valida"
   },
   "profilePicture": {
     "title": "Carica Foto Profilo",

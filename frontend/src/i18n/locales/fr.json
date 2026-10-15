@@ -419,7 +419,9 @@
     "close": "Fermer",
     "back": "Retour",
     "continue": "Continuer",
-    "add": "Ajouter"
+    "add": "Ajouter",
+    "openCalendar": "Ouvrir le calendrier",
+    "invalidDate": "Date invalide"
   },
   "profilePicture": {
     "title": "Télécharger une photo de profil",
