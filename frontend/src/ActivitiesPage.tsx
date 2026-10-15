@@ -1,17 +1,7 @@
 import { useState, useMemo, ChangeEvent, MouseEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link as RouterLink } from 'react-router-dom';
-import {
-  Box,
-  Typography,
-  Paper,
-  TextField,
-  Button,
-  IconButton,
-  Chip,
-  Pagination,
-  Popover,
-} from '@mui/material';
+import { Box, Typography, Paper, TextField, Button, IconButton, Chip, Pagination, Popover } from '@mui/material';
 import {
   Timeline,
   TimelineItem,
@@ -54,17 +44,10 @@ const ActivitiesPage: React.FC = () => {
       fromDate: fromDate || undefined,
       toDate: toDate || undefined,
     }),
-    [page, debouncedSearch, fromDate, toDate]
+    [page, debouncedSearch, fromDate, toDate],
   );
 
-  const {
-    activities,
-    total,
-    page: serverPage,
-    limit,
-    loading,
-    refetch,
-  } = useActivities(activityParams);
+  const { activities, total, page: serverPage, limit, loading, refetch } = useActivities(activityParams);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [editValues, setEditValues] = useState<{
@@ -116,7 +99,7 @@ const ActivitiesPage: React.FC = () => {
     try {
       await createActivity({
         ...activity,
-        date: new Date(activity.date).toISOString()
+        date: new Date(activity.date).toISOString(),
       });
       setAddDialogOpen(false);
       refetch();
@@ -128,7 +111,7 @@ const ActivitiesPage: React.FC = () => {
 
   const handleEditClick = async (activity: Activity) => {
     setEditingActivity(activity);
-    
+
     // Fetch all contacts if not already loaded
     if (allContacts.length === 0) {
       try {
@@ -138,7 +121,7 @@ const ActivitiesPage: React.FC = () => {
         console.error('Failed to fetch contacts:', err);
       }
     }
-    
+
     setEditValues({
       activityTitle: activity.title || '',
       activityDescription: activity.description || '',
@@ -157,7 +140,7 @@ const ActivitiesPage: React.FC = () => {
         description: editValues.activityDescription || '',
         location: editValues.activityLocation || '',
         date: editValues.activityDate ? new Date(editValues.activityDate).toISOString() : new Date().toISOString(),
-        contact_ids: editValues.activityContacts?.map(c => c.ID) || [],
+        contact_ids: editValues.activityContacts?.map((c) => c.ID) || [],
       });
       setEditingActivity(null);
       setEditValues({});
@@ -193,7 +176,6 @@ const ActivitiesPage: React.FC = () => {
     setInfoAnchorEl(null);
   };
 
-
   const isInitialLoading = loading && activities.length === 0;
   const hasFilters = searchInput.trim().length > 0 || fromDate || toDate;
 
@@ -202,11 +184,7 @@ const ActivitiesPage: React.FC = () => {
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Box display="flex" alignItems="center" gap={1}>
           <Typography variant="h5">{t('activities.title')}</Typography>
-          <IconButton
-            size="small"
-            aria-describedby={infoPopoverId}
-            onClick={handleInfoClick}
-          >
+          <IconButton size="small" aria-describedby={infoPopoverId} onClick={handleInfoClick}>
             <InfoOutlinedIcon fontSize="small" />
           </IconButton>
         </Box>
@@ -244,7 +222,10 @@ const ActivitiesPage: React.FC = () => {
             value={fromDate}
             onChange={(e) => handleFromDateChange(e.target.value)}
             variant="outlined"
-            slotProps={{ inputLabel: { shrink: true }, input: { placeholder: getDatePlaceholder(), lang: i18n.language } }}
+            slotProps={{
+              inputLabel: { shrink: true },
+              input: { placeholder: getDatePlaceholder(), lang: i18n.language },
+            }}
             sx={{ width: 160 }}
           />
           <TextField
@@ -254,7 +235,10 @@ const ActivitiesPage: React.FC = () => {
             value={toDate}
             onChange={(e) => handleToDateChange(e.target.value)}
             variant="outlined"
-            slotProps={{ inputLabel: { shrink: true }, input: { placeholder: getDatePlaceholder(), lang: i18n.language } }}
+            slotProps={{
+              inputLabel: { shrink: true },
+              input: { placeholder: getDatePlaceholder(), lang: i18n.language },
+            }}
             sx={{ width: 160 }}
           />
         </Box>
@@ -273,9 +257,7 @@ const ActivitiesPage: React.FC = () => {
           {activities.map((activity, index) => (
             <TimelineItem key={activity.ID}>
               <TimelineOppositeContent color="text.secondary" sx={{ flex: 0.2 }}>
-                <Typography variant="body2">
-                  {formatDate(activity.date)}
-                </Typography>
+                <Typography variant="body2">{formatDate(activity.date)}</Typography>
               </TimelineOppositeContent>
               <TimelineSeparator>
                 <TimelineDot color="primary">
@@ -359,11 +341,7 @@ const ActivitiesPage: React.FC = () => {
         </Box>
       )}
 
-      <AddActivityDialog
-        open={addDialogOpen}
-        onClose={() => setAddDialogOpen(false)}
-        onSave={handleActivitySave}
-      />
+      <AddActivityDialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} onSave={handleActivitySave} />
 
       {editingActivity && (
         <EditTimelineItemDialog
