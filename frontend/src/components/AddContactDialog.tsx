@@ -12,7 +12,7 @@ import {
   Typography,
   Stack,
   FormControlLabel,
-  Switch
+  Switch,
 } from '@mui/material';
 import AppDialog from './AppDialog';
 import MultiValueField from './MultiValueField';
@@ -50,7 +50,8 @@ const emptyForm = {
   how_we_met: '',
   food_preference: '',
   work_information: '',
-  contact_information: ''
+  contact_information: '',
+  note: '',
 };
 
 export default function AddContactDialog({
@@ -59,7 +60,7 @@ export default function AddContactDialog({
   onContactAdded,
   availableCircles,
   customFieldNames = [],
-  enabledFields
+  enabledFields,
 }: AddContactDialogProps) {
   const { t } = useTranslation();
   const { showError, showSuccess } = useSnackbar();
@@ -103,7 +104,7 @@ export default function AddContactDialog({
   };
 
   const handleRemoveCircle = (circle: string) => {
-    setSelectedCircles(selectedCircles.filter(c => c !== circle));
+    setSelectedCircles(selectedCircles.filter((c) => c !== circle));
   };
 
   const handleSubmit = async () => {
@@ -145,12 +146,12 @@ export default function AddContactDialog({
       }
 
       // Drop empty rows from the multi-value fields
-      const cleanEmails = emails.filter(e => e.value.trim());
-      const cleanPhones = phones.filter(p => p.value.trim());
-      const cleanUrls = urls.filter(u => u.value.trim());
-      const cleanImpps = impps.filter(i => i.value.trim());
+      const cleanEmails = emails.filter((e) => e.value.trim());
+      const cleanPhones = phones.filter((p) => p.value.trim());
+      const cleanUrls = urls.filter((u) => u.value.trim());
+      const cleanImpps = impps.filter((i) => i.value.trim());
       const cleanAddresses = addresses.filter(
-        a => a.street.trim() || a.city.trim() || a.region.trim() || a.postal.trim() || a.country.trim()
+        (a) => a.street.trim() || a.city.trim() || a.region.trim() || a.postal.trim() || a.country.trim(),
       );
 
       const contactData = {
@@ -171,6 +172,7 @@ export default function AddContactDialog({
         food_preference: formData.food_preference,
         work_information: formData.work_information,
         contact_information: formData.contact_information,
+        note: formData.note,
         emails: cleanEmails,
         phones: cleanPhones,
         addresses: cleanAddresses,
@@ -180,7 +182,7 @@ export default function AddContactDialog({
         email: cleanEmails[0]?.value || '',
         phone: cleanPhones[0]?.value || '',
         circles: selectedCircles.length > 0 ? selectedCircles : undefined,
-        custom_fields: Object.keys(filteredCustomFields).length > 0 ? filteredCustomFields : undefined
+        custom_fields: Object.keys(filteredCustomFields).length > 0 ? filteredCustomFields : undefined,
       };
 
       const newContact = await createContact(contactData);
@@ -216,7 +218,7 @@ export default function AddContactDialog({
             remind_at: nextBirthday.toISOString(),
             recurrence: 'yearly',
             reoccur_from_completion: false,
-            contact_id: newContact.ID
+            contact_id: newContact.ID,
           });
         }
       }
@@ -261,10 +263,20 @@ export default function AddContactDialog({
           {(isOn('prefix') || isOn('suffix')) && (
             <Stack direction="row" spacing={2}>
               {isOn('prefix') && (
-                <TextField label={t('contacts.prefix')} fullWidth value={formData.prefix} onChange={handleChange('prefix')} />
+                <TextField
+                  label={t('contacts.prefix')}
+                  fullWidth
+                  value={formData.prefix}
+                  onChange={handleChange('prefix')}
+                />
               )}
               {isOn('suffix') && (
-                <TextField label={t('contacts.suffix')} fullWidth value={formData.suffix} onChange={handleChange('suffix')} />
+                <TextField
+                  label={t('contacts.suffix')}
+                  fullWidth
+                  value={formData.suffix}
+                  onChange={handleChange('suffix')}
+                />
               )}
             </Stack>
           )}
@@ -284,7 +296,12 @@ export default function AddContactDialog({
             />
           </Stack>
           {isOn('middle_name') && (
-            <TextField label={t('contacts.middleName')} fullWidth value={formData.middle_name} onChange={handleChange('middle_name')} />
+            <TextField
+              label={t('contacts.middleName')}
+              fullWidth
+              value={formData.middle_name}
+              onChange={handleChange('middle_name')}
+            />
           )}
           <Stack direction="row" spacing={2}>
             {isOn('nickname') && (
@@ -312,19 +329,43 @@ export default function AddContactDialog({
           </Stack>
 
           {isOn('emails') && (
-            <MultiValueField label={t('contacts.email')} value={emails} onChange={setEmails} valueType="email" defaultType="home" />
+            <MultiValueField
+              label={t('contacts.email')}
+              value={emails}
+              onChange={setEmails}
+              valueType="email"
+              defaultType="home"
+            />
           )}
           {isOn('phones') && (
-            <MultiValueField label={t('contacts.phone')} value={phones} onChange={setPhones} valueType="tel" defaultType="cell" />
+            <MultiValueField
+              label={t('contacts.phone')}
+              value={phones}
+              onChange={setPhones}
+              valueType="tel"
+              defaultType="cell"
+            />
           )}
           {isOn('addresses') && (
             <AddressFields label={t('contacts.address')} value={addresses} onChange={setAddresses} />
           )}
           {isOn('urls') && (
-            <MultiValueField label={t('contacts.urls')} value={urls} onChange={setUrls} valueType="url" defaultType="home" />
+            <MultiValueField
+              label={t('contacts.urls')}
+              value={urls}
+              onChange={setUrls}
+              valueType="url"
+              defaultType="home"
+            />
           )}
           {isOn('impps') && (
-            <MultiValueField label={t('contacts.impps')} value={impps} onChange={setImpps} defaultType="" freeTextType />
+            <MultiValueField
+              label={t('contacts.impps')}
+              value={impps}
+              onChange={setImpps}
+              defaultType=""
+              freeTextType
+            />
           )}
 
           {isOn('birthday') && (
@@ -362,13 +403,28 @@ export default function AddContactDialog({
           )}
 
           {isOn('organization') && (
-            <TextField label={t('contacts.organization')} fullWidth value={formData.organization} onChange={handleChange('organization')} />
+            <TextField
+              label={t('contacts.organization')}
+              fullWidth
+              value={formData.organization}
+              onChange={handleChange('organization')}
+            />
           )}
           {isOn('department') && (
-            <TextField label={t('contacts.department')} fullWidth value={formData.department} onChange={handleChange('department')} />
+            <TextField
+              label={t('contacts.department')}
+              fullWidth
+              value={formData.department}
+              onChange={handleChange('department')}
+            />
           )}
           {isOn('job_title') && (
-            <TextField label={t('contacts.jobTitle')} fullWidth value={formData.job_title} onChange={handleChange('job_title')} />
+            <TextField
+              label={t('contacts.jobTitle')}
+              fullWidth
+              value={formData.job_title}
+              onChange={handleChange('job_title')}
+            />
           )}
           {isOn('role') && (
             <TextField label={t('contacts.role')} fullWidth value={formData.role} onChange={handleChange('role')} />
@@ -412,6 +468,16 @@ export default function AddContactDialog({
               onChange={handleChange('contact_information')}
             />
           )}
+          {isOn('note') && (
+            <TextField
+              label={t('contacts.note')}
+              fullWidth
+              multiline
+              rows={3}
+              value={formData.note}
+              onChange={handleChange('note')}
+            />
+          )}
 
           {/* Custom Fields */}
           {customFieldNames.map((fieldName) => (
@@ -430,7 +496,7 @@ export default function AddContactDialog({
               {t('contacts.circles')}
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, mb: 1, flexWrap: 'wrap' }}>
-              {selectedCircles.map(circle => (
+              {selectedCircles.map((circle) => (
                 <Chip
                   key={circle}
                   label={circle}
@@ -455,8 +521,8 @@ export default function AddContactDialog({
               >
                 <MenuItem value="">{t('contacts.selectCircle')}</MenuItem>
                 {availableCircles
-                  .filter(c => !selectedCircles.includes(c))
-                  .map(circle => (
+                  .filter((c) => !selectedCircles.includes(c))
+                  .map((circle) => (
                     <MenuItem key={circle} value={circle}>
                       {circle}
                     </MenuItem>

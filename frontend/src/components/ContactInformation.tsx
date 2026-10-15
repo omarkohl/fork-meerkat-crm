@@ -11,6 +11,7 @@ import BadgeIcon from '@mui/icons-material/Badge';
 import LanguageIcon from '@mui/icons-material/Language';
 import ChatIcon from '@mui/icons-material/Chat';
 import NotesIcon from '@mui/icons-material/Notes';
+import StickyNote2Icon from '@mui/icons-material/StickyNote2';
 import ClearAllIcon from '@mui/icons-material/ClearAll';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
 import PeopleIcon from '@mui/icons-material/People';
@@ -82,7 +83,12 @@ export default function ContactInformation({
   }, [contact.birthday, t, calculateAge]);
 
   const renderValueList = (rows: ContactValue[] | undefined) => {
-    if (!rows || rows.length === 0) return <Typography variant="body2" color="text.disabled">—</Typography>;
+    if (!rows || rows.length === 0)
+      return (
+        <Typography variant="body2" color="text.disabled">
+          —
+        </Typography>
+      );
     return (
       <Stack>
         {rows.map((r, i) => (
@@ -96,7 +102,12 @@ export default function ContactInformation({
   };
 
   const renderAddressList = (rows: ContactAddress[] | undefined) => {
-    if (!rows || rows.length === 0) return <Typography variant="body2" color="text.disabled">—</Typography>;
+    if (!rows || rows.length === 0)
+      return (
+        <Typography variant="body2" color="text.disabled">
+          —
+        </Typography>
+      );
     return (
       <Stack spacing={0.5}>
         {rows.map((a, i) => (
@@ -112,7 +123,11 @@ export default function ContactInformation({
   return (
     <Card sx={{ flex: 1 }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-        <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)} aria-label="contact information tabs">
+        <Tabs
+          value={activeTab}
+          onChange={(_, newValue) => setActiveTab(newValue)}
+          aria-label="contact information tabs"
+        >
           <Tab label={t('contactDetail.generalInfo')} />
           <Tab label={t('relationships.title')} />
         </Tabs>
@@ -130,7 +145,13 @@ export default function ContactInformation({
                 cloneValue={cloneValues}
                 renderDisplay={renderValueList}
                 renderEditor={(draft, setDraft) => (
-                  <MultiValueField label={t('contacts.email')} value={draft} onChange={setDraft} valueType="email" defaultType="home" />
+                  <MultiValueField
+                    label={t('contacts.email')}
+                    value={draft}
+                    onChange={setDraft}
+                    valueType="email"
+                    defaultType="home"
+                  />
                 )}
                 onSave={(draft) => {
                   const clean = draft.filter((e) => e.value.trim());
@@ -147,7 +168,13 @@ export default function ContactInformation({
                 cloneValue={cloneValues}
                 renderDisplay={renderValueList}
                 renderEditor={(draft, setDraft) => (
-                  <MultiValueField label={t('contacts.phone')} value={draft} onChange={setDraft} valueType="tel" defaultType="cell" />
+                  <MultiValueField
+                    label={t('contacts.phone')}
+                    value={draft}
+                    onChange={setDraft}
+                    valueType="tel"
+                    defaultType="cell"
+                  />
                 )}
                 onSave={(draft) => {
                   const clean = draft.filter((p) => p.value.trim());
@@ -168,7 +195,7 @@ export default function ContactInformation({
                 )}
                 onSave={(draft) => {
                   const clean = draft.filter(
-                    (a) => a.street.trim() || a.city.trim() || a.region.trim() || a.postal.trim() || a.country.trim()
+                    (a) => a.street.trim() || a.city.trim() || a.region.trim() || a.postal.trim() || a.country.trim(),
                   );
                   return onUpdateContact({ addresses: clean, address: clean.length === 0 ? '' : undefined });
                 }}
@@ -183,7 +210,13 @@ export default function ContactInformation({
                 cloneValue={cloneValues}
                 renderDisplay={renderValueList}
                 renderEditor={(draft, setDraft) => (
-                  <MultiValueField label={t('contacts.urls')} value={draft} onChange={setDraft} valueType="url" defaultType="home" />
+                  <MultiValueField
+                    label={t('contacts.urls')}
+                    value={draft}
+                    onChange={setDraft}
+                    valueType="url"
+                    defaultType="home"
+                  />
                 )}
                 onSave={(draft) => onUpdateContact({ urls: draft.filter((u) => u.value.trim()) })}
               />
@@ -197,7 +230,13 @@ export default function ContactInformation({
                 cloneValue={cloneValues}
                 renderDisplay={renderValueList}
                 renderEditor={(draft, setDraft) => (
-                  <MultiValueField label={t('contacts.impps')} value={draft} onChange={setDraft} defaultType="" freeTextType />
+                  <MultiValueField
+                    label={t('contacts.impps')}
+                    value={draft}
+                    onChange={setDraft}
+                    defaultType=""
+                    freeTextType
+                  />
                 )}
                 onSave={(draft) => onUpdateContact({ impps: draft.filter((i) => i.value.trim()) })}
               />
@@ -372,6 +411,23 @@ export default function ContactInformation({
               />
             )}
 
+            {isOn('note') && (
+              <EditableField
+                icon={<StickyNote2Icon sx={{ ...iconSx, mt: 0.5 }} />}
+                label={t('contacts.note')}
+                field="note"
+                value={contact.note || ''}
+                multiline
+                isEditing={editingField === 'note'}
+                editValue={editValue}
+                validationError={validationError}
+                onEditStart={onEditStart}
+                onEditCancel={onEditCancel}
+                onEditSave={onEditSave}
+                onEditValueChange={onEditValueChange}
+              />
+            )}
+
             {/* Custom Fields */}
             {customFieldNames.map((fieldName) => (
               <EditableField
@@ -398,12 +454,7 @@ export default function ContactInformation({
       {activeTab === 1 && (
         <CardContent sx={{ py: 2 }}>
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1.5 }}>
-            <Button
-              startIcon={<AddIcon />}
-              onClick={onAddRelationship}
-              variant="outlined"
-              size="small"
-            >
+            <Button startIcon={<AddIcon />} onClick={onAddRelationship} variant="outlined" size="small">
               {t('relationships.addRelationship')}
             </Button>
           </Box>

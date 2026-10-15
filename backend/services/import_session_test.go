@@ -180,6 +180,7 @@ func TestVCFImport_V21KeepsFields(t *testing.T) {
 		"FN:Jane Doe\r\n"+
 		"TEL;CELL:+49 170 1234567\r\n"+
 		"EMAIL;HOME:jane@example.com\r\n"+
+		"NOTE:Met at the conference\r\n"+
 		"END:VCARD\r\n"), db, userID)
 	require.NoError(t, err)
 	require.Len(t, previews, 1)
@@ -198,4 +199,5 @@ func TestVCFImport_V21KeepsFields(t *testing.T) {
 	assert.Equal(t, []models.ContactPhone{{Type: "cell", Value: "+49 170 1234567"}}, stored.Phones)
 	assert.Equal(t, "jane@example.com", stored.Email)
 	assert.Equal(t, []models.ContactEmail{{Type: "home", Value: "jane@example.com"}}, stored.Emails)
+	assert.Equal(t, "Met at the conference", stored.Note)
 }

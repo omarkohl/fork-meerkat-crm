@@ -242,6 +242,7 @@
     "jobTitle": "Job Title",
     "role": "Role",
     "anniversary": "Anniversary",
+    "note": "Note",
     "fieldType": "Type",
     "types": {
       "home": "Home",

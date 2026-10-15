@@ -106,6 +106,9 @@ type Contact struct {
 	// Anniversary date (vCard X-ANNIVERSARY), same format as Birthday
 	Anniversary string `json:"anniversary" validate:"omitempty,birthday"`
 
+	// Free-text note (vCard NOTE). Unlike Notes, this is one value synced with CardDAV.
+	Note string `gorm:"type:text" json:"note" validate:"max=5000"`
+
 	// CardDAV fields
 	VCardUID   string `gorm:"column:vcard_uid;index" json:"-"` // Permanent RFC 6350 UID
 	VCardExtra string `gorm:"column:vcard_extra" json:"-"`     // JSON for unmapped vCard properties

@@ -105,3 +105,20 @@ func FuzzNormalizeLegacyVCF(f *testing.F) {
 		}
 	})
 }
+
+// Regression test: NOTE used to be kept only in the hidden VCardExtra, so imported
+// notes were not visible.
+func TestNormalizeLegacyVCF_Note(t *testing.T) {
+	got := decodeLegacy(t, "BEGIN:VCARD\r\n"+
+		"VERSION:2.1\r\n"+
+		"N:Doe;Jane;;;\r\n"+
+		"NOTE;ENCODING=QUOTED-PRINTABLE:Met at the conference=0D=0AL=C3=B6ves tea\r\n"+
+		"END:VCARD\r\n")
+
+	if got.Note != "Met at the conference\nLöves tea" {
+		t.Errorf("note = %q", got.Note)
+	}
+	if got.VCardExtra != "" {
+		t.Errorf("nothing should land in VCardExtra, got %q", got.VCardExtra)
+	}
+}

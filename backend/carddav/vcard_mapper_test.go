@@ -1,6 +1,7 @@
 package carddav
 
 import (
+	"bytes"
 	"meerkat/models"
 	"strings"
 	"testing"
@@ -39,9 +40,18 @@ func TestVCardRoundTrip(t *testing.T) {
 		Birthday:     "1815-12-10",
 		Anniversary:  "1835-07-08",
 		Circles:      []string{"friends", "history"},
+		Note:         "Likes tea; not coffee, ever\nSecond line",
 	}
 
-	card := ContactToVCard(original, "")
+	// Through text, so the escaping of the multi-line NOTE is covered too.
+	var buf bytes.Buffer
+	if err := vcard.NewEncoder(&buf).Encode(ContactToVCard(original, "")); err != nil {
+		t.Fatal(err)
+	}
+	card, err := vcard.NewDecoder(&buf).Decode()
+	if err != nil {
+		t.Fatal(err)
+	}
 	got, _, _, _ := VCardToContact(card, nil)
 
 	if got.Firstname != original.Firstname || got.Lastname != original.Lastname {
@@ -86,6 +96,9 @@ func TestVCardRoundTrip(t *testing.T) {
 	}
 	if got.Anniversary != "1835-07-08" {
 		t.Errorf("anniversary lost: %q", got.Anniversary)
+	}
+	if got.Note != original.Note {
+		t.Errorf("note lost: %q", got.Note)
 	}
 }
 

@@ -136,6 +136,8 @@ type ContactInput struct {
 	Role         string `json:"role" validate:"max=200"`
 
 	Anniversary string `json:"anniversary" validate:"omitempty,birthday"`
+
+	Note string `json:"note" validate:"max=5000"`
 }
 
 // CustomFieldNamesInput represents the DTO for updating user's custom field definitions

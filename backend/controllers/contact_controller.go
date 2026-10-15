@@ -63,6 +63,7 @@ func CreateContact(c *gin.Context) {
 		JobTitle:           contactInput.JobTitle,
 		Role:               contactInput.Role,
 		Anniversary:        contactInput.Anniversary,
+		Note:               contactInput.Note,
 	}
 	if err := db.Create(&contact).Error; err != nil {
 		logger.FromContext(c).Error().Err(err).Msg("Error saving contact to database")
@@ -131,7 +132,7 @@ func GetContacts(c *gin.Context) {
 	pagination := GetPaginationParams(c)
 
 	// Define allowed fields and parse requested fields with validation
-	allowedFields := []string{"ID", "firstname", "lastname", "nickname", "gender", "email", "phone", "birthday", "address", "how_we_met", "food_preference", "work_information", "contact_information", "circles", "photo", "photo_thumbnail", "custom_fields", "archived", "emails", "phones", "addresses", "urls", "impps", "prefix", "middle_name", "suffix", "organization", "department", "job_title", "role", "anniversary"}
+	allowedFields := []string{"ID", "firstname", "lastname", "nickname", "gender", "email", "phone", "birthday", "address", "how_we_met", "food_preference", "work_information", "contact_information", "circles", "photo", "photo_thumbnail", "custom_fields", "archived", "emails", "phones", "addresses", "urls", "impps", "prefix", "middle_name", "suffix", "organization", "department", "job_title", "role", "anniversary", "note"}
 	var selectedFields []string
 	fields := c.Query("fields")
 	if fields != "" {
@@ -353,7 +354,7 @@ func GetContact(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
 
 	// Check for fields query parameter to enable partial fetching
-	allowedFields := []string{"ID", "firstname", "lastname", "nickname", "gender", "email", "phone", "birthday", "address", "how_we_met", "food_preference", "work_information", "contact_information", "circles", "photo", "photo_thumbnail", "custom_fields", "archived", "emails", "phones", "addresses", "urls", "impps", "prefix", "middle_name", "suffix", "organization", "department", "job_title", "role", "anniversary"}
+	allowedFields := []string{"ID", "firstname", "lastname", "nickname", "gender", "email", "phone", "birthday", "address", "how_we_met", "food_preference", "work_information", "contact_information", "circles", "photo", "photo_thumbnail", "custom_fields", "archived", "emails", "phones", "addresses", "urls", "impps", "prefix", "middle_name", "suffix", "organization", "department", "job_title", "role", "anniversary", "note"}
 	var selectedFields []string
 	fields := c.Query("fields")
 	if fields != "" {
@@ -444,6 +445,7 @@ func UpdateContact(c *gin.Context) {
 	contact.JobTitle = contactInput.JobTitle
 	contact.Role = contactInput.Role
 	contact.Anniversary = contactInput.Anniversary
+	contact.Note = contactInput.Note
 
 	if err := db.Save(&contact).Error; err != nil {
 		apperrors.AbortWithError(c, apperrors.ErrDatabase("Failed to update contact").WithError(err))

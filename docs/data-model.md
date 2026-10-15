@@ -33,6 +33,7 @@ The global **Activities** page lists every activity across all contacts and offe
 
 Notes let you capture free-text information.
 All notes attached to a specific contact appear in that contact's timeline. Use them to record things you've learned about a person, conversation highlights or anything you want to remember.
+The **Note** field on a contact is different: it is one free-text value that maps to the vCard `NOTE` property. It is filled by VCF/CSV import and synced via CardDAV, so it matches the note your phone or address book shows. Timeline notes are not synced.
 Unassigned notes are not attached to any contact. They are accessible from the Notes page in the main navigation and can be used like a personal journal.
 
 

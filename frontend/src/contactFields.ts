@@ -19,6 +19,7 @@ export type ContactFieldKey =
   | 'department'
   | 'job_title'
   | 'role'
+  | 'note'
   | 'how_we_met'
   | 'food_preference'
   | 'work_information'
@@ -53,6 +54,7 @@ export const CONTACT_FIELDS: ContactFieldDef[] = [
   { key: 'gender', labelKey: 'contacts.gender', group: 'personal' },
   { key: 'birthday', labelKey: 'contacts.birthday', group: 'personal' },
   { key: 'anniversary', labelKey: 'contacts.anniversary', group: 'personal' },
+  { key: 'note', labelKey: 'contacts.note', group: 'personal' },
 
   { key: 'how_we_met', labelKey: 'contacts.howWeMet', group: 'meerkat' },
   { key: 'food_preference', labelKey: 'contacts.foodPreference', group: 'meerkat' },
@@ -67,7 +69,7 @@ export const CONTACT_FIELD_GROUPS: ContactFieldDef['group'][] = [
   'meerkat',
 ];
 
-// Default-enabled set = the fields shown today, so existing users see no change.
+// Default-enabled set = the fields shown before the vCard fields, plus note (vCard NOTE).
 // New vCard fields (prefix/middle/suffix, org/dept/title/role, urls, impps, anniversary)
 // are opt-in via Settings.
 export const DEFAULT_ENABLED_CONTACT_FIELDS: ContactFieldKey[] = [
@@ -81,6 +83,7 @@ export const DEFAULT_ENABLED_CONTACT_FIELDS: ContactFieldKey[] = [
   'food_preference',
   'work_information',
   'contact_information',
+  'note',
 ];
 
 // vCard TYPE options for typed multi-value fields (emails/phones/addresses/urls).

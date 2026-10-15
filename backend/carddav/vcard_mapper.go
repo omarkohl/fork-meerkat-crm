@@ -184,6 +184,11 @@ func ContactToVCard(contact *models.Contact, photoDir string) vcard.Card {
 		card.SetValue(vcard.FieldRole, contact.Role)
 	}
 
+	// NOTE
+	if contact.Note != "" {
+		card.SetValue(vcard.FieldNote, contact.Note)
+	}
+
 	// PHOTO - read from disk, fall back to thumbnail
 	// Include both vCard 3.0 and 4.0 parameters for maximum compatibility:
 	// - ENCODING=b and TYPE=JPEG for vCard 3.0 (required by iOS)
@@ -428,6 +433,11 @@ func VCardToContact(card vcard.Card, existing *models.Contact) (*models.Contact,
 	// ANNIVERSARY
 	if anniv := card.Value(vcard.FieldAnniversary); anniv != "" {
 		contact.Anniversary = normalizeBirthday(anniv)
+	}
+
+	// NOTE - a card may carry several; keep them all in the one field
+	if notes := nonEmpty(card.Values(vcard.FieldNote)...); len(notes) > 0 {
+		contact.Note = strings.Join(notes, "\n\n")
 	}
 
 	// Extract photo data for separate processing
@@ -972,6 +982,7 @@ func mappedVCardFields() map[string]bool {
 		vcard.FieldTitle:         true,
 		vcard.FieldRole:          true,
 		vcard.FieldAnniversary:   true,
+		vcard.FieldNote:          true,
 		fieldABLabel:             true,
 	}
 }

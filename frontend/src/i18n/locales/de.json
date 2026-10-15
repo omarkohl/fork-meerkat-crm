@@ -242,6 +242,7 @@
     "jobTitle": "Position",
     "role": "Rolle",
     "anniversary": "Jahrestag",
+    "note": "Notiz",
     "fieldType": "Typ",
     "types": {
       "home": "Privat",

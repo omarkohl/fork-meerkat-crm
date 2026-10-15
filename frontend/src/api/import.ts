@@ -104,6 +104,7 @@ export const IMPORTABLE_CONTACT_FIELDS = [
   'work_information',
   'contact_information',
   'circles',
+  'note',
 ] as const;
 
 export const REPEATABLE_VALUE_FIELDS = new Set<string>(['email', 'phone', 'url', 'impp']);
@@ -142,12 +143,11 @@ export const CONTACT_FIELD_LABELS: Record<string, string> = {
   work_information: 'Work Information',
   contact_information: 'Contact Information',
   circles: 'Circles',
+  note: 'Note',
 };
 
 // Upload a CSV file for import
-export async function uploadCSVForImport(
-  file: File
-): Promise<ImportUploadResponse> {
+export async function uploadCSVForImport(file: File): Promise<ImportUploadResponse> {
   const formData = new FormData();
   formData.append('file', file);
 
@@ -164,10 +164,7 @@ export async function uploadCSVForImport(
 }
 
 // Get import preview with applied mappings
-export async function getImportPreview(
-  sessionId: string,
-  mappings: ColumnMapping[]
-): Promise<ImportPreviewResponse> {
+export async function getImportPreview(sessionId: string, mappings: ColumnMapping[]): Promise<ImportPreviewResponse> {
   const response = await apiFetch(`${API_BASE_URL}/contacts/import/preview`, {
     method: 'POST',
     headers: getAuthHeaders(),
@@ -185,10 +182,7 @@ export async function getImportPreview(
 }
 
 // Confirm and execute the import (CSV)
-export async function confirmImport(
-  sessionId: string,
-  actions: RowImportAction[]
-): Promise<ImportResult> {
+export async function confirmImport(sessionId: string, actions: RowImportAction[]): Promise<ImportResult> {
   const response = await apiFetch(`${API_BASE_URL}/contacts/import/confirm`, {
     method: 'POST',
     headers: getAuthHeaders(),
@@ -206,9 +200,7 @@ export async function confirmImport(
 }
 
 // Upload a VCF file for import (returns preview directly, no mapping needed)
-export async function uploadVCFForImport(
-  file: File
-): Promise<ImportPreviewResponse> {
+export async function uploadVCFForImport(file: File): Promise<ImportPreviewResponse> {
   const formData = new FormData();
   formData.append('file', file);
 
@@ -225,10 +217,7 @@ export async function uploadVCFForImport(
 }
 
 // Confirm and execute VCF import (with photo processing)
-export async function confirmVCFImport(
-  sessionId: string,
-  actions: RowImportAction[]
-): Promise<ImportResult> {
+export async function confirmVCFImport(sessionId: string, actions: RowImportAction[]): Promise<ImportResult> {
   const response = await apiFetch(`${API_BASE_URL}/contacts/import/vcf/confirm`, {
     method: 'POST',
     headers: getAuthHeaders(),

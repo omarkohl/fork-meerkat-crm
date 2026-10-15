@@ -199,7 +199,8 @@ var headerToField = map[string]string{
 	"department": "department", "organization department": "department",
 	"job title": "job_title", "title": "job_title", "organization title": "job_title", "position": "job_title",
 	"role": "role", "organization role": "role",
-	"how we met": "how_we_met", "how_we_met": "how_we_met", "notes": "how_we_met", "how i met": "how_we_met",
+	"how we met": "how_we_met", "how_we_met": "how_we_met", "how i met": "how_we_met",
+	"note": "note", "notes": "note",
 	"food": "food_preference", "food preference": "food_preference", "food_preference": "food_preference", "dietary": "food_preference", "diet": "food_preference",
 	"work": "work_information", "work_information": "work_information", "job": "work_information", "occupation": "work_information",
 	"contact information": "contact_information", "contact_information": "contact_information", "other contact": "contact_information",
@@ -376,6 +377,7 @@ func ContactToPreviewMap(contact *models.Contact) map[string]interface{} {
 	set("department", contact.Department)
 	set("job_title", contact.JobTitle)
 	set("role", contact.Role)
+	set("note", contact.Note)
 	set("work_information", contact.WorkInformation)
 	if len(contact.Circles) > 0 {
 		preview["circles"] = strings.Join(contact.Circles, ", ")
@@ -797,6 +799,8 @@ func BuildContactFromRow(userID uint, headers []string, row []string, mappings [
 			contact.JobTitle = v
 		case "role":
 			contact.Role = v
+		case "note":
+			contact.Note = v
 		case "how_we_met":
 			contact.HowWeMet = v
 		case "food_preference":
@@ -983,6 +987,9 @@ func MergeImportedContact(existing *models.Contact, incoming *models.Contact) {
 	if incoming.Anniversary != "" {
 		existing.Anniversary = incoming.Anniversary
 	}
+	if incoming.Note != "" {
+		existing.Note = incoming.Note
+	}
 	if incoming.VCardExtra != "" {
 		existing.VCardExtra = incoming.VCardExtra
 	}
@@ -1015,6 +1022,7 @@ func CreateMergeNote(db *gorm.DB, userID uint, contactID uint, original *models.
 		"department":          {"Department", original.Department},
 		"job_title":           {"Job Title", original.JobTitle},
 		"role":                {"Role", original.Role},
+		"note":                {"Note", original.Note},
 		"how_we_met":          {"How We Met", original.HowWeMet},
 		"food_preference":     {"Food Preferences", original.FoodPreference},
 		"work_information":    {"Work Information", original.WorkInformation},

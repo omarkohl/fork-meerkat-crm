@@ -10,33 +10,14 @@ import {
   uploadProfilePicture,
   getCircles,
   archiveContact,
-  unarchiveContact
+  unarchiveContact,
 } from './api/contacts';
 import { getCurrentUser } from './api/admin';
 import { resolveEnabledFields, ContactFieldKey } from './contactFields';
-import { 
-  getContactNotes, 
-  Note 
-} from './api/notes';
-import {
-  getContactActivities,
-  Activity
-} from './api/activities';
-import {
-  ReminderCompletion,
-  getCompletionsForContact,
-  deleteCompletion
-} from './api/reminders';
-import {
-  Box,
-  Card,
-  CardContent,
-  Divider,
-  Button,
-  Tabs,
-  Tab,
-  Typography
-} from '@mui/material';
+import { getContactNotes, Note } from './api/notes';
+import { getContactActivities, Activity } from './api/activities';
+import { ReminderCompletion, getCompletionsForContact, deleteCompletion } from './api/reminders';
+import { Box, Card, CardContent, Divider, Button, Tabs, Tab, Typography } from '@mui/material';
 import { ContactDetailHeaderSkeleton, TimelineSkeleton } from './components/LoadingSkeletons';
 import NoteIcon from '@mui/icons-material/Note';
 import EventIcon from '@mui/icons-material/Event';
@@ -67,13 +48,37 @@ interface ContactWithRelations extends Contact {
 }
 
 const CONTACT_FIELDS = [
-  'ID', 'firstname', 'lastname', 'nickname', 'gender',
-  'email', 'phone', 'birthday', 'address', 'how_we_met',
-  'food_preference', 'work_information', 'contact_information',
-  'circles', 'photo', 'custom_fields', 'archived',
-  'emails', 'phones', 'addresses', 'urls', 'impps',
-  'prefix', 'middle_name', 'suffix', 'organization', 'department',
-  'job_title', 'role', 'anniversary'
+  'ID',
+  'firstname',
+  'lastname',
+  'nickname',
+  'gender',
+  'email',
+  'phone',
+  'birthday',
+  'address',
+  'how_we_met',
+  'food_preference',
+  'work_information',
+  'contact_information',
+  'circles',
+  'photo',
+  'custom_fields',
+  'archived',
+  'emails',
+  'phones',
+  'addresses',
+  'urls',
+  'impps',
+  'prefix',
+  'middle_name',
+  'suffix',
+  'organization',
+  'department',
+  'job_title',
+  'role',
+  'anniversary',
+  'note',
 ];
 
 export default function ContactDetailPage() {
@@ -91,7 +96,7 @@ export default function ContactDetailPage() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [completions, setCompletions] = useState<ReminderCompletion[]>([]);
-  
+
   // Profile editing state
   const [editingProfile, setEditingProfile] = useState(false);
   const [profileValues, setProfileValues] = useState({
@@ -101,7 +106,7 @@ export default function ContactDetailPage() {
     lastname: '',
     suffix: '',
     nickname: '',
-    gender: ''
+    gender: '',
   });
 
   // Circle editing state
@@ -129,7 +134,7 @@ export default function ContactDetailPage() {
       const [notesData, activitiesData, completionsData] = await Promise.all([
         getContactNotes(id),
         getContactActivities(id),
-        getCompletionsForContact(parseInt(id))
+        getCompletionsForContact(parseInt(id)),
       ]);
       setNotes(notesData.notes || []);
       setActivities(activitiesData.activities || []);
@@ -146,7 +151,7 @@ export default function ContactDetailPage() {
     setNoteDialogOpen,
     setActivityDialogOpen,
     handleSaveNote,
-    handleSaveActivity
+    handleSaveActivity,
   } = useContactDialogs(id, refreshNotesAndActivities, { showError });
 
   const {
@@ -159,7 +164,7 @@ export default function ContactDetailPage() {
     handleUpdateActivity,
     handleDeleteNote,
     handleDeleteActivity,
-    setEditTimelineValues
+    setEditTimelineValues,
   } = useTimelineEditing(contact?.ID, refreshNotesAndActivities, { showError });
 
   const {
@@ -173,14 +178,17 @@ export default function ContactDetailPage() {
     handleDeleteReminder,
     handleAddReminder,
     setReminderDialogOpen,
-    setEditingReminder
+    setEditingReminder,
   } = useReminderManagement(id, { showError });
 
   // State for pre-filled reminder values (used by Stay in Touch)
-  const [reminderInitialValues, setReminderInitialValues] = useState<{
-    message?: string;
-    recurrence?: 'once' | 'weekly' | 'monthly' | 'quarterly' | 'six-months' | 'yearly';
-  } | undefined>(undefined);
+  const [reminderInitialValues, setReminderInitialValues] = useState<
+    | {
+        message?: string;
+        recurrence?: 'once' | 'weekly' | 'monthly' | 'quarterly' | 'six-months' | 'yearly';
+      }
+    | undefined
+  >(undefined);
 
   const {
     relationships,
@@ -206,7 +214,6 @@ export default function ContactDetailPage() {
     }
   }, []);
 
-
   // Fetch contact details, notes, and activities
   useEffect(() => {
     if (!id) return;
@@ -221,10 +228,10 @@ export default function ContactDetailPage() {
           getContactNotes(id),
           getContactActivities(id),
           getCompletionsForContact(parseInt(id)),
-          getCurrentUser().catch(err => {
+          getCurrentUser().catch((err) => {
             console.error('Error fetching current user preferences:', err);
             return null;
-          })
+          }),
         ]);
 
         setContact(contactData);
@@ -235,10 +242,7 @@ export default function ContactDetailPage() {
         setEnabledFields(resolveEnabledFields(user?.enabled_contact_fields ?? null));
 
         // Second batch: refresh reminders and relationships in parallel
-        await Promise.all([
-          refreshReminders(),
-          refreshRelationships()
-        ]);
+        await Promise.all([refreshReminders(), refreshRelationships()]);
 
         // Only fetch profile picture if contact has one (avoid unnecessary 404)
         if (contactData.photo) {
@@ -274,22 +278,26 @@ export default function ContactDetailPage() {
   }, [id, refreshReminders, refreshRelationships]);
 
   // Combine and sort notes, activities, and completions for timeline
-  const timelineItems: Array<{ type: 'note' | 'activity' | 'completion'; data: Note | Activity | ReminderCompletion; date: string }> = [
-    ...notes.map(note => ({
+  const timelineItems: Array<{
+    type: 'note' | 'activity' | 'completion';
+    data: Note | Activity | ReminderCompletion;
+    date: string;
+  }> = [
+    ...notes.map((note) => ({
       type: 'note' as const,
       data: note,
-      date: note.date || note.CreatedAt
+      date: note.date || note.CreatedAt,
     })),
-    ...activities.map(activity => ({
+    ...activities.map((activity) => ({
       type: 'activity' as const,
       data: activity,
-      date: activity.date || activity.CreatedAt
+      date: activity.date || activity.CreatedAt,
     })),
-    ...completions.map(completion => ({
+    ...completions.map((completion) => ({
       type: 'completion' as const,
       data: completion,
-      date: completion.completed_at
-    }))
+      date: completion.completed_at,
+    })),
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const handleDeleteCompletion = async (completionId: number) => {
@@ -348,13 +356,13 @@ export default function ContactDetailPage() {
       const customFieldName = field.replace('custom_field_', '');
       const updatedCustomFields = {
         ...(contact.custom_fields || {}),
-        [customFieldName]: valueToSave
+        [customFieldName]: valueToSave,
       };
 
       try {
         const updatedContact = await updateContact(id!, {
           ...contact,
-          custom_fields: updatedCustomFields
+          custom_fields: updatedCustomFields,
         });
         setContact(updatedContact);
         setEditingField(null);
@@ -376,7 +384,7 @@ export default function ContactDetailPage() {
     try {
       const updatedContact = await updateContact(id!, {
         ...contact,
-        [field]: valueToSave
+        [field]: valueToSave,
       });
       setContact(updatedContact);
       setEditingField(null);
@@ -419,7 +427,7 @@ export default function ContactDetailPage() {
     const existingCircles = contact.circles || [];
 
     // Check if the circle already exists (case-insensitive)
-    if (existingCircles.some(circle => circle.toLowerCase() === trimmedCircleName.toLowerCase())) {
+    if (existingCircles.some((circle) => circle.toLowerCase() === trimmedCircleName.toLowerCase())) {
       return; // Don't add duplicate circles
     }
 
@@ -428,7 +436,7 @@ export default function ContactDetailPage() {
     try {
       const updatedContact = await updateContact(id!, {
         ...contact,
-        circles: updatedCircles
+        circles: updatedCircles,
       });
       setContact(updatedContact);
       setNewCircleName('');
@@ -447,12 +455,12 @@ export default function ContactDetailPage() {
   const handleDeleteCircle = async (circleToDelete: string) => {
     if (!contact) return;
 
-    const updatedCircles = (contact.circles || []).filter(circle => circle !== circleToDelete);
+    const updatedCircles = (contact.circles || []).filter((circle) => circle !== circleToDelete);
 
     try {
       const updatedContact = await updateContact(id!, {
         ...contact,
-        circles: updatedCircles
+        circles: updatedCircles,
       });
       setContact(updatedContact);
     } catch (err) {
@@ -474,14 +482,22 @@ export default function ContactDetailPage() {
       lastname: contact.lastname || '',
       suffix: contact.suffix || '',
       nickname: contact.nickname || '',
-      gender: contact.gender ? contact.gender.toLowerCase() : ''
+      gender: contact.gender ? contact.gender.toLowerCase() : '',
     });
     setEditingProfile(true);
   };
 
   const handleCancelEditProfile = () => {
     setEditingProfile(false);
-    setProfileValues({ prefix: '', firstname: '', middle_name: '', lastname: '', suffix: '', nickname: '', gender: '' });
+    setProfileValues({
+      prefix: '',
+      firstname: '',
+      middle_name: '',
+      lastname: '',
+      suffix: '',
+      nickname: '',
+      gender: '',
+    });
   };
 
   const handleSaveProfile = async () => {
@@ -499,7 +515,7 @@ export default function ContactDetailPage() {
         lastname: profileValues.lastname.trim(),
         suffix: profileValues.suffix.trim(),
         nickname: profileValues.nickname.trim(),
-        gender: profileValues.gender
+        gender: profileValues.gender,
       });
       setContact(updatedContact);
       setEditingProfile(false);
@@ -517,7 +533,7 @@ export default function ContactDetailPage() {
     if (!contact || !id) return;
 
     const confirmMessage = t('contactDetail.confirmDeleteContact', {
-      name: `${contact.firstname} ${contact.lastname}`
+      name: `${contact.firstname} ${contact.lastname}`,
     });
 
     if (!window.confirm(confirmMessage)) {
@@ -575,7 +591,7 @@ export default function ContactDetailPage() {
     const contactName = `${contact.firstname}${contact.lastname ? ' ' + contact.lastname : ''}`;
     setReminderInitialValues({
       message: t('contactDetail.catchUpWith', { name: contactName }),
-      recurrence: 'quarterly'
+      recurrence: 'quarterly',
     });
     setEditingReminder(null);
     setReminderDialogOpen(true);
@@ -626,7 +642,6 @@ export default function ContactDetailPage() {
 
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', mt: 1, px: 2, pb: 2 }}>
-
       {/* Contact Header Card */}
       <ContactHeader
         contact={contact}
@@ -653,11 +668,13 @@ export default function ContactDetailPage() {
       />
 
       {/* General Information and Timeline - Two Column Layout */}
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: { xs: 'column', md: 'row' }, 
-        gap: 2 
-      }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          gap: 2,
+        }}
+      >
         {/* General Information */}
         <ContactInformation
           contact={contact}
@@ -671,7 +688,7 @@ export default function ContactDetailPage() {
             setEditValue(
               editingField === 'birthday' || editingField === 'anniversary'
                 ? autoFormatBirthdayInput(value, editValue)
-                : value
+                : value,
             );
             setValidationError('');
           }}
@@ -688,7 +705,11 @@ export default function ContactDetailPage() {
         {/* Timeline and Reminders Tabs */}
         <Card sx={{ flex: 1 }}>
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)} aria-label="timeline and reminders tabs">
+            <Tabs
+              value={activeTab}
+              onChange={(_, newValue) => setActiveTab(newValue)}
+              aria-label="timeline and reminders tabs"
+            >
               <Tab label={t('contactDetail.timeline')} />
               <Tab label={t('reminders.title')} />
             </Tabs>
@@ -698,16 +719,16 @@ export default function ContactDetailPage() {
           {activeTab === 0 && (
             <CardContent sx={{ py: 2 }}>
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 1.5, gap: 0.5 }}>
-                <Button 
-                  startIcon={<NoteIcon />} 
+                <Button
+                  startIcon={<NoteIcon />}
                   onClick={() => setNoteDialogOpen(true)}
                   variant="outlined"
                   size="small"
                 >
                   {t('contactDetail.addNote')}
                 </Button>
-                <Button 
-                  startIcon={<EventIcon />} 
+                <Button
+                  startIcon={<EventIcon />}
                   onClick={() => setActivityDialogOpen(true)}
                   variant="outlined"
                   size="small"
@@ -716,7 +737,7 @@ export default function ContactDetailPage() {
                 </Button>
               </Box>
               <Divider sx={{ mb: 2 }} />
-              
+
               <ContactTimeline
                 timelineItems={timelineItems}
                 onEditItem={handleStartEditTimelineItem}
@@ -729,8 +750,8 @@ export default function ContactDetailPage() {
           {activeTab === 1 && (
             <CardContent sx={{ py: 2 }}>
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 1.5 }}>
-                <Button 
-                  startIcon={<NotificationsActiveIcon />} 
+                <Button
+                  startIcon={<NotificationsActiveIcon />}
                   onClick={handleAddReminder}
                   variant="outlined"
                   size="small"
@@ -751,12 +772,8 @@ export default function ContactDetailPage() {
       </Box>
 
       {/* Dialogs */}
-      <AddNoteDialog
-        open={noteDialogOpen}
-        onClose={() => setNoteDialogOpen(false)}
-        onSave={handleSaveNote}
-      />
-      
+      <AddNoteDialog open={noteDialogOpen} onClose={() => setNoteDialogOpen(false)} onSave={handleSaveNote} />
+
       <AddActivityDialog
         open={activityDialogOpen}
         onClose={() => setActivityDialogOpen(false)}

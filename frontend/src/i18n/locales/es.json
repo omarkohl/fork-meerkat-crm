@@ -242,6 +242,7 @@
     "jobTitle": "Cargo",
     "role": "Rol",
     "anniversary": "Aniversario",
+    "note": "Nota",
     "fieldType": "Tipo",
     "types": {
       "home": "Casa",

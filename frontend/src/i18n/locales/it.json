@@ -242,6 +242,7 @@
     "jobTitle": "Posizione",
     "role": "Ruolo",
     "anniversary": "Anniversario",
+    "note": "Nota",
     "fieldType": "Tipo",
     "types": {
       "home": "Casa",
