@@ -81,11 +81,7 @@ const MAX_POLL_FAILURES = 3;
 // keep it alive while the user works through the rows.
 const KEEPALIVE_INTERVAL_MS = 60000;
 
-export default function MonicaImportDialog({
-  open,
-  onClose,
-  onImportComplete,
-}: MonicaImportDialogProps) {
+export default function MonicaImportDialog({ open, onClose, onImportComplete }: MonicaImportDialogProps) {
   const { t } = useTranslation();
   const { showSuccess } = useSnackbar();
 
@@ -291,7 +287,7 @@ export default function MonicaImportDialog({
           t('contacts.import.result.success', 'Import completed: {{created}} created, {{updated}} updated', {
             created: importResult.created,
             updated: importResult.updated,
-          })
+          }),
         );
         onImportComplete();
       }
@@ -336,7 +332,7 @@ export default function MonicaImportDialog({
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
         {t(
           'settings.monicaImport.connect.description',
-          'Import your contacts, activities, notes, reminders and relationships from a running Monica instance. Create an API token in Monica under Settings → API.'
+          'Import your contacts, activities, notes, reminders and relationships from a running Monica instance. Create an API token in Monica under Settings → API.',
         )}{' '}
         <Link href="https://www.monicahq.com/api" target="_blank" rel="noopener noreferrer">
           {t('settings.monicaImport.connect.tokenHelp', 'How to get an API token')}
@@ -371,11 +367,31 @@ export default function MonicaImportDialog({
             {t('settings.monicaImport.connect.connected', 'Connected! This Monica account contains:')}
           </Alert>
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
-            <Chip label={t('settings.monicaImport.connect.contactsCount', '{{count}} contacts', { count: connectResponse.totals.contacts })} />
-            <Chip label={t('settings.monicaImport.connect.activitiesCount', '{{count}} activities', { count: connectResponse.totals.activities })} />
-            <Chip label={t('settings.monicaImport.connect.notesCount', '{{count}} notes', { count: connectResponse.totals.notes })} />
-            <Chip label={t('settings.monicaImport.connect.remindersCount', '{{count}} reminders', { count: connectResponse.totals.reminders })} />
-            {connectResponse.totals.calls + connectResponse.totals.tasks + connectResponse.totals.gifts + connectResponse.totals.debts > 0 && (
+            <Chip
+              label={t('settings.monicaImport.connect.contactsCount', '{{count}} contacts', {
+                count: connectResponse.totals.contacts,
+              })}
+            />
+            <Chip
+              label={t('settings.monicaImport.connect.activitiesCount', '{{count}} activities', {
+                count: connectResponse.totals.activities,
+              })}
+            />
+            <Chip
+              label={t('settings.monicaImport.connect.notesCount', '{{count}} notes', {
+                count: connectResponse.totals.notes,
+              })}
+            />
+            <Chip
+              label={t('settings.monicaImport.connect.remindersCount', '{{count}} reminders', {
+                count: connectResponse.totals.reminders,
+              })}
+            />
+            {connectResponse.totals.calls +
+              connectResponse.totals.tasks +
+              connectResponse.totals.gifts +
+              connectResponse.totals.debts >
+              0 && (
               <Chip
                 label={t('settings.monicaImport.connect.extrasCount', '{{count}} calls, tasks, gifts & debts', {
                   count:
@@ -390,49 +406,45 @@ export default function MonicaImportDialog({
 
           <FormControlLabel
             control={
-              <Checkbox
-                checked={includeRelationships}
-                onChange={(e) => setIncludeRelationships(e.target.checked)}
-              />
+              <Checkbox checked={includeRelationships} onChange={(e) => setIncludeRelationships(e.target.checked)} />
             }
-            label={t('settings.monicaImport.connect.includeRelationships', 'Import relationships (slower: needs one request per contact)')}
+            label={t(
+              'settings.monicaImport.connect.includeRelationships',
+              'Import relationships (slower: needs one request per contact)',
+            )}
           />
           <Box sx={{ pl: 4 }}>
             <FormControlLabel
               disabled={!includeRelationships}
               control={
-                <Checkbox
-                  checked={collapseReciprocal}
-                  onChange={(e) => setCollapseReciprocal(e.target.checked)}
-                />
+                <Checkbox checked={collapseReciprocal} onChange={(e) => setCollapseReciprocal(e.target.checked)} />
               }
               label={t('settings.monicaImport.connect.collapseReciprocal', 'Import each relationship only once')}
             />
             <Typography variant="body2" color="text.secondary" sx={{ mt: -0.5, mb: 1 }}>
               {t(
                 'settings.monicaImport.connect.collapseReciprocalHelp',
-                'Monica saves every relationship on both contacts. Meerkat needs only one entry — the other contact shows it under "Incoming Relationships". Turn this off to create a separate entry on each contact, as Monica does.'
+                'Monica saves every relationship on both contacts. Meerkat needs only one entry — the other contact shows it under "Incoming Relationships". Turn this off to create a separate entry on each contact, as Monica does.',
               )}
             </Typography>
           </Box>
           <FormControlLabel
-            control={
-              <Checkbox
-                checked={includeExtras}
-                onChange={(e) => setIncludeExtras(e.target.checked)}
-              />
-            }
+            control={<Checkbox checked={includeExtras} onChange={(e) => setIncludeExtras(e.target.checked)} />}
             label={t('settings.monicaImport.connect.includeExtras', 'Import calls, tasks, gifts and debts as notes')}
           />
 
           <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            {t('settings.monicaImport.connect.estimate', 'Estimated fetch time: about {{duration}} (Monica limits API requests)', {
-              duration: formatDuration(
-                includeRelationships
-                  ? connectResponse.estimated_fetch_seconds
-                  : Math.max(1, connectResponse.estimated_fetch_seconds - connectResponse.totals.contacts)
-              ),
-            })}
+            {t(
+              'settings.monicaImport.connect.estimate',
+              'Estimated fetch time: about {{duration}} (Monica limits API requests)',
+              {
+                duration: formatDuration(
+                  includeRelationships
+                    ? connectResponse.estimated_fetch_seconds
+                    : Math.max(1, connectResponse.estimated_fetch_seconds - connectResponse.totals.contacts),
+                ),
+              },
+            )}
           </Typography>
         </Box>
       )}
@@ -465,7 +477,10 @@ export default function MonicaImportDialog({
         <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
           {mode === 'fetching'
             ? t('settings.monicaImport.keepOpenFetching', 'Keep this dialog open — closing it cancels the fetch.')
-            : t('settings.monicaImport.keepOpenImporting', 'You can close this dialog — photos keep downloading on the server.')}
+            : t(
+                'settings.monicaImport.keepOpenImporting',
+                'You can close this dialog — photos keep downloading on the server.',
+              )}
         </Typography>
       </Box>
     );
@@ -474,7 +489,9 @@ export default function MonicaImportDialog({
   const renderRelatedChips = (row: MonicaPreviewResponse['rows'][number]) => {
     const parts: string[] = [];
     if (row.related.activities > 0) {
-      parts.push(t('settings.monicaImport.review.activities', '{{count}} activities', { count: row.related.activities }));
+      parts.push(
+        t('settings.monicaImport.review.activities', '{{count}} activities', { count: row.related.activities }),
+      );
     }
     const noteCount = row.related.notes + row.related.extra_notes;
     if (noteCount > 0) {
@@ -484,9 +501,18 @@ export default function MonicaImportDialog({
       parts.push(t('settings.monicaImport.review.reminders', '{{count}} reminders', { count: row.related.reminders }));
     }
     if (row.related.relationships > 0) {
-      parts.push(t('settings.monicaImport.review.relationships', '{{count}} relationships', { count: row.related.relationships }));
+      parts.push(
+        t('settings.monicaImport.review.relationships', '{{count}} relationships', {
+          count: row.related.relationships,
+        }),
+      );
     }
-    if (parts.length === 0) return <Typography variant="body2" color="text.secondary">-</Typography>;
+    if (parts.length === 0)
+      return (
+        <Typography variant="body2" color="text.secondary">
+          -
+        </Typography>
+      );
     return (
       <Typography variant="body2" color="text.secondary">
         {parts.join(', ')}
@@ -527,11 +553,7 @@ export default function MonicaImportDialog({
           )}
           <Box sx={{ flexGrow: 1 }} />
           <FormControl size="small" sx={{ minWidth: 150 }}>
-            <Select
-              value=""
-              displayEmpty
-              onChange={(e) => e.target.value && handleSetAllActions(e.target.value)}
-            >
+            <Select value="" displayEmpty onChange={(e) => e.target.value && handleSetAllActions(e.target.value)}>
               <MenuItem value="" disabled>
                 <em>{t('settings.monicaImport.review.setAll', 'Set all to…')}</em>
               </MenuItem>
@@ -564,7 +586,12 @@ export default function MonicaImportDialog({
                   <TableCell>
                     {row.validation_errors.length > 0 ? (
                       <Tooltip title={row.validation_errors.join(', ')}>
-                        <Chip icon={<ErrorIcon />} label={t('contacts.import.preview.error')} size="small" color="error" />
+                        <Chip
+                          icon={<ErrorIcon />}
+                          label={t('contacts.import.preview.error')}
+                          size="small"
+                          color="error"
+                        />
                       </Tooltip>
                     ) : row.duplicate_match ? (
                       <Tooltip
@@ -573,10 +600,20 @@ export default function MonicaImportDialog({
                           reason: row.duplicate_match.match_reason,
                         })}
                       >
-                        <Chip icon={<WarningIcon />} label={t('contacts.import.preview.duplicateStatus')} size="small" color="warning" />
+                        <Chip
+                          icon={<WarningIcon />}
+                          label={t('contacts.import.preview.duplicateStatus')}
+                          size="small"
+                          color="warning"
+                        />
                       </Tooltip>
                     ) : (
-                      <Chip icon={<CheckCircleIcon />} label={t('contacts.import.preview.valid')} size="small" color="success" />
+                      <Chip
+                        icon={<CheckCircleIcon />}
+                        label={t('contacts.import.preview.valid')}
+                        size="small"
+                        color="success"
+                      />
                     )}
                   </TableCell>
                   <TableCell>
@@ -589,7 +626,9 @@ export default function MonicaImportDialog({
                         <MenuItem value="skip">{t('contacts.import.preview.actionSkip', 'Skip')}</MenuItem>
                         <MenuItem value="add">{t('contacts.import.preview.actionAdd', 'Add as New')}</MenuItem>
                         {row.duplicate_match && (
-                          <MenuItem value="update">{t('contacts.import.preview.actionUpdate', 'Update Existing')}</MenuItem>
+                          <MenuItem value="update">
+                            {t('contacts.import.preview.actionUpdate', 'Update Existing')}
+                          </MenuItem>
                         )}
                       </Select>
                     </FormControl>
@@ -607,14 +646,42 @@ export default function MonicaImportDialog({
     if (!result) return null;
 
     const relatedLines: Array<[string, number]> = [
-      [t('settings.monicaImport.result.activities', '{{count}} activities imported', { count: result.activities_created }), result.activities_created],
-      [t('settings.monicaImport.result.notes', '{{count}} notes imported', { count: result.notes_created }), result.notes_created],
-      [t('settings.monicaImport.result.reminders', '{{count}} reminders imported', { count: result.reminders_created }), result.reminders_created],
-      [t('settings.monicaImport.result.relationships', '{{count}} relationships imported', { count: result.relationships_created }), result.relationships_created],
+      [
+        t('settings.monicaImport.result.activities', '{{count}} activities imported', {
+          count: result.activities_created,
+        }),
+        result.activities_created,
+      ],
+      [
+        t('settings.monicaImport.result.notes', '{{count}} notes imported', { count: result.notes_created }),
+        result.notes_created,
+      ],
+      [
+        t('settings.monicaImport.result.reminders', '{{count}} reminders imported', {
+          count: result.reminders_created,
+        }),
+        result.reminders_created,
+      ],
+      [
+        t('settings.monicaImport.result.relationships', '{{count}} relationships imported', {
+          count: result.relationships_created,
+        }),
+        result.relationships_created,
+      ],
       // Only shown when collapsing actually dropped something, so it doubles
       // as confirmation that the option took effect.
-      [t('settings.monicaImport.result.relationshipsCollapsed', '{{count}} reciprocal duplicates skipped (shown as incoming relationships)', { count: result.relationships_collapsed }), result.relationships_collapsed],
-      [t('settings.monicaImport.result.photos', '{{count}} photos imported', { count: result.photos_saved }), result.photos_saved],
+      [
+        t(
+          'settings.monicaImport.result.relationshipsCollapsed',
+          '{{count}} reciprocal duplicates skipped (shown as incoming relationships)',
+          { count: result.relationships_collapsed },
+        ),
+        result.relationships_collapsed,
+      ],
+      [
+        t('settings.monicaImport.result.photos', '{{count}} photos imported', { count: result.photos_saved }),
+        result.photos_saved,
+      ],
     ];
 
     return (
@@ -644,7 +711,9 @@ export default function MonicaImportDialog({
             ))}
           {result.photos_failed > 0 && (
             <Typography color="text.secondary">
-              {t('settings.monicaImport.result.photosFailed', '{{count}} photos could not be downloaded', { count: result.photos_failed })}
+              {t('settings.monicaImport.result.photosFailed', '{{count}} photos could not be downloaded', {
+                count: result.photos_failed,
+              })}
             </Typography>
           )}
         </Box>
