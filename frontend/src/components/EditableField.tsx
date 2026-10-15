@@ -36,10 +36,14 @@ export default function EditableField({
   onEditStart,
   onEditCancel,
   onEditSave,
-  onEditValueChange
+  onEditValueChange,
 }: EditableFieldProps) {
   const baseDisplayValue = formattedDisplayValue || value;
-  const displayValue = baseDisplayValue ? (displaySuffix ? `${baseDisplayValue} ${displaySuffix}` : baseDisplayValue) : '-';
+  const displayValue = baseDisplayValue
+    ? displaySuffix
+      ? `${baseDisplayValue} ${displaySuffix}`
+      : baseDisplayValue
+    : '-';
   const showError = isEditing && validationError;
 
   return (
@@ -47,8 +51,8 @@ export default function EditableField({
       sx={{
         position: 'relative',
         '&:hover .edit-icon': {
-          opacity: 1
-        }
+          opacity: 1,
+        },
       }}
     >
       <Box sx={{ display: 'flex', alignItems: multiline ? 'flex-start' : 'center' }}>
@@ -85,7 +89,10 @@ export default function EditableField({
               )}
             </Box>
           ) : (
-            <Typography variant="body1" sx={{ wordBreak: 'break-word', whiteSpace: multiline ? 'pre-wrap' : undefined }}>
+            <Typography
+              variant="body1"
+              sx={{ wordBreak: 'break-word', whiteSpace: multiline ? 'pre-wrap' : undefined }}
+            >
               {displayValue}
             </Typography>
           )}
@@ -98,7 +105,7 @@ export default function EditableField({
             sx={{
               opacity: 0,
               transition: 'opacity 0.2s',
-              ml: 1
+              ml: 1,
             }}
           >
             <EditIcon fontSize="small" />
