@@ -27,12 +27,7 @@ interface AddActivityDialogProps {
   preselectedContactId?: number;
 }
 
-export default function AddActivityDialog({
-  open,
-  onClose,
-  onSave,
-  preselectedContactId,
-}: AddActivityDialogProps) {
+export default function AddActivityDialog({ open, onClose, onSave, preselectedContactId }: AddActivityDialogProps) {
   const { t } = useTranslation();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -81,7 +76,7 @@ export default function AddActivityDialog({
   // Debounced search effect
   useEffect(() => {
     if (!open) return;
-    
+
     const timeoutId = setTimeout(() => {
       loadContacts(searchInput);
     }, 300);
@@ -147,7 +142,7 @@ export default function AddActivityDialog({
             required
             autoFocus
           />
-          
+
           <TextField
             label={t('activityDialog.description')}
             placeholder={t('activityDialog.descriptionPlaceholder')}
@@ -157,7 +152,7 @@ export default function AddActivityDialog({
             onChange={(e) => setDescription(e.target.value)}
             fullWidth
           />
-          
+
           <TextField
             label={t('activityDialog.location')}
             placeholder={t('activityDialog.locationPlaceholder')}
@@ -165,7 +160,7 @@ export default function AddActivityDialog({
             onChange={(e) => setLocation(e.target.value)}
             fullWidth
           />
-          
+
           <TextField
             label={t('activityDialog.date')}
             type="date"
@@ -177,7 +172,7 @@ export default function AddActivityDialog({
               shrink: true,
             }}
           />
-          
+
           <Autocomplete
             multiple
             options={contacts}
@@ -207,11 +202,7 @@ export default function AddActivityDialog({
             )}
             renderTags={(value, getTagProps) =>
               value.map((contact, index) => (
-                <Chip
-                  label={getContactLabel(contact)}
-                  {...getTagProps({ index })}
-                  key={contact.ID}
-                />
+                <Chip label={getContactLabel(contact)} {...getTagProps({ index })} key={contact.ID} />
               ))
             }
           />
