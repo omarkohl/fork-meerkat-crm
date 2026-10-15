@@ -11,7 +11,7 @@
 
 services:
   meerkat:
-    image: ghcr.io/fbuchner/meerkat-crm:${IMAGE_TAG:-latest}
+    image: ghcr.io/omarkohl/meerkat-crm:${IMAGE_TAG:?set IMAGE_TAG, e.g. 1.7.0-omk.1}
     # build: .
     container_name: meerkat
     restart: unless-stopped
