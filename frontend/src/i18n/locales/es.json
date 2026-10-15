@@ -225,6 +225,14 @@
         "updated": "{{count}} contactos actualizados",
         "skipped": "{{count}} filas omitidas",
         "errors": "Errores",
+        "skippedRows": "Filas omitidas",
+        "name": "Nombre",
+        "reason": "Motivo",
+        "reasons": {
+          "skipped": "Omitida en la revisión",
+          "invalid": "No válida",
+          "failed": "Error"
+        },
         "done": "Listo"
       },
       "errors": {

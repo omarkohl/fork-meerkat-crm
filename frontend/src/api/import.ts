@@ -63,6 +63,15 @@ export interface ImportResult {
   updated: number;
   skipped: number;
   errors: string[];
+  // One entry per skipped row (absent from older servers)
+  skipped_rows?: SkippedRow[];
+}
+
+export interface SkippedRow {
+  row: number; // 1-based, as the preview shows it
+  name: string;
+  reason: 'skipped' | 'invalid' | 'failed';
+  detail?: string;
 }
 
 // Contact fields that can be imported (mirrors backend models.ImportableContactFields)

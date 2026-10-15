@@ -225,6 +225,14 @@
         "updated": "{{count}} contacts mis à jour",
         "skipped": "{{count}} lignes ignorées",
         "errors": "Erreurs",
+        "skippedRows": "Lignes ignorées",
+        "name": "Nom",
+        "reason": "Raison",
+        "reasons": {
+          "skipped": "Ignorée lors de la vérification",
+          "invalid": "Invalide",
+          "failed": "Échec"
+        },
         "done": "Terminé"
       },
       "errors": {

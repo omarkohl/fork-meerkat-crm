@@ -207,7 +207,7 @@ func (m *ImportSessionManager) Confirm(db *gorm.DB, userID uint, req models.Impo
 	}
 
 	actionMap := buildActionMap(req.Actions)
-	result := models.ImportResult{Errors: []string{}}
+	result := models.ImportResult{Errors: []string{}, SkippedRows: []models.SkippedRow{}}
 	isVCFImport := sessionData.importType == "vcf"
 
 	txErr := db.Transaction(func(tx *gorm.DB) error {
@@ -221,7 +221,7 @@ func (m *ImportSessionManager) Confirm(db *gorm.DB, userID uint, req models.Impo
 
 			switch action {
 			case "skip":
-				result.Skipped++
+				result.SkipChosenRow(&preview)
 
 			case "add":
 				var contact models.Contact
@@ -234,8 +234,7 @@ func (m *ImportSessionManager) Confirm(db *gorm.DB, userID uint, req models.Impo
 				avoidVCardUIDCollision(tx, userID, &contact, log)
 
 				if err := tx.Create(&contact).Error; err != nil {
-					result.Errors = append(result.Errors, fmt.Sprintf("Row %d: Failed to create contact: %v", preview.RowIndex+1, err))
-					result.Skipped++
+					result.FailRow(&preview, fmt.Sprintf("Failed to create contact: %v", err))
 				} else {
 					result.Created++
 					if isVCFImport {
@@ -245,15 +244,13 @@ func (m *ImportSessionManager) Confirm(db *gorm.DB, userID uint, req models.Impo
 
 			case "update":
 				if preview.DuplicateMatch == nil {
-					result.Errors = append(result.Errors, fmt.Sprintf("Row %d: Cannot update - no existing contact found", preview.RowIndex+1))
-					result.Skipped++
+					result.FailRow(&preview, "Cannot update - no existing contact found")
 					continue
 				}
 
 				var existing models.Contact
 				if err := tx.Unscoped().First(&existing, preview.DuplicateMatch.ExistingContactID).Error; err != nil {
-					result.Errors = append(result.Errors, fmt.Sprintf("Row %d: Failed to fetch existing contact: %v", preview.RowIndex+1, err))
-					result.Skipped++
+					result.FailRow(&preview, fmt.Sprintf("Failed to fetch existing contact: %v", err))
 					continue
 				}
 
@@ -287,8 +284,7 @@ func (m *ImportSessionManager) Confirm(db *gorm.DB, userID uint, req models.Impo
 					saveTx = tx.Unscoped()
 				}
 				if err := saveTx.Save(&existing).Error; err != nil {
-					result.Errors = append(result.Errors, fmt.Sprintf("Row %d: Failed to update contact: %v", preview.RowIndex+1, err))
-					result.Skipped++
+					result.FailRow(&preview, fmt.Sprintf("Failed to update contact: %v", err))
 				} else {
 					result.Updated++
 					if isVCFImport {
@@ -344,7 +340,7 @@ func (m *ImportSessionManager) ConfirmVCF(db *gorm.DB, userID uint, req models.I
 	}
 
 	actionMap := buildActionMap(req.Actions)
-	result := models.ImportResult{Errors: []string{}}
+	result := models.ImportResult{Errors: []string{}, SkippedRows: []models.SkippedRow{}}
 	var photoTasks []photoTask
 
 	txErr := db.Transaction(func(tx *gorm.DB) error {
@@ -359,7 +355,7 @@ func (m *ImportSessionManager) ConfirmVCF(db *gorm.DB, userID uint, req models.I
 
 			switch action {
 			case "skip":
-				result.Skipped++
+				result.SkipChosenRow(&preview)
 
 			case "add":
 				contact := *vcfData.Contact
@@ -367,8 +363,7 @@ func (m *ImportSessionManager) ConfirmVCF(db *gorm.DB, userID uint, req models.I
 				avoidVCardUIDCollision(tx, userID, &contact, log)
 
 				if err := tx.Create(&contact).Error; err != nil {
-					result.Errors = append(result.Errors, fmt.Sprintf("Row %d: Failed to create contact: %v", preview.RowIndex+1, err))
-					result.Skipped++
+					result.FailRow(&preview, fmt.Sprintf("Failed to create contact: %v", err))
 				} else {
 					result.Created++
 					// Queue photo processing (either embedded data or URL)
@@ -384,15 +379,13 @@ func (m *ImportSessionManager) ConfirmVCF(db *gorm.DB, userID uint, req models.I
 
 			case "update":
 				if preview.DuplicateMatch == nil {
-					result.Errors = append(result.Errors, fmt.Sprintf("Row %d: Cannot update - no existing contact found", preview.RowIndex+1))
-					result.Skipped++
+					result.FailRow(&preview, "Cannot update - no existing contact found")
 					continue
 				}
 
 				var existing models.Contact
 				if err := tx.Unscoped().First(&existing, preview.DuplicateMatch.ExistingContactID).Error; err != nil {
-					result.Errors = append(result.Errors, fmt.Sprintf("Row %d: Failed to fetch existing contact: %v", preview.RowIndex+1, err))
-					result.Skipped++
+					result.FailRow(&preview, fmt.Sprintf("Failed to fetch existing contact: %v", err))
 					continue
 				}
 
@@ -417,8 +410,7 @@ func (m *ImportSessionManager) ConfirmVCF(db *gorm.DB, userID uint, req models.I
 					saveTx = tx.Unscoped()
 				}
 				if err := saveTx.Save(&existing).Error; err != nil {
-					result.Errors = append(result.Errors, fmt.Sprintf("Row %d: Failed to update contact: %v", preview.RowIndex+1, err))
-					result.Skipped++
+					result.FailRow(&preview, fmt.Sprintf("Failed to update contact: %v", err))
 				} else {
 					result.Updated++
 					// Queue photo processing only if contact doesn't already have a photo

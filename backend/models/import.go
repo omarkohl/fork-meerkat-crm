@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"fmt"
+	"strings"
+	"time"
+)
 
 // ImportableContactFields defines the valid target fields for import
 var ImportableContactFields = []string{
@@ -87,6 +91,47 @@ type ImportResult struct {
 	Updated        int      `json:"updated"`
 	Skipped        int      `json:"skipped"`
 	Errors         []string `json:"errors"`
+	// SkippedRows lists every row counted in Skipped, so the result can say which.
+	SkippedRows []SkippedRow `json:"skipped_rows"`
+}
+
+// SkippedRow names a row that was not imported and why.
+type SkippedRow struct {
+	Row    int    `json:"row"` // 1-based, as the preview shows it
+	Name   string `json:"name"`
+	Reason string `json:"reason"` // "skipped" (chosen in the preview), "invalid" or "failed"
+	Detail string `json:"detail,omitempty"`
+}
+
+// SkipRow records a row the import did not apply.
+func (r *ImportResult) SkipRow(preview *ImportRowPreview, reason, detail string) {
+	r.Skipped++
+	name := func(key string) string {
+		v, _ := preview.ParsedContact[key].(string)
+		return v
+	}
+	r.SkippedRows = append(r.SkippedRows, SkippedRow{
+		Row:    preview.RowIndex + 1,
+		Name:   strings.TrimSpace(name("firstname") + " " + name("lastname")),
+		Reason: reason,
+		Detail: detail,
+	})
+}
+
+// SkipChosenRow records a row whose action was "skip": chosen by the user, or
+// forced because the row failed validation.
+func (r *ImportResult) SkipChosenRow(preview *ImportRowPreview) {
+	if len(preview.ValidationErrors) > 0 {
+		r.SkipRow(preview, "invalid", strings.Join(preview.ValidationErrors, ", "))
+		return
+	}
+	r.SkipRow(preview, "skipped", "")
+}
+
+// FailRow records a row that could not be applied, as an error and a skipped row.
+func (r *ImportResult) FailRow(preview *ImportRowPreview, detail string) {
+	r.Errors = append(r.Errors, fmt.Sprintf("Row %d: %s", preview.RowIndex+1, detail))
+	r.SkipRow(preview, "failed", detail)
 }
 
 // ImportSession stores temporary import data server-side (not persisted to DB)

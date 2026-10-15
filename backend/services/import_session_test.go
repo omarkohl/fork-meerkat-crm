@@ -230,3 +230,42 @@ func TestVCFImport_FixableRowsImportWithWarnings(t *testing.T) {
 		"Invalid birthday not imported",
 	}, previews[0].Warnings)
 }
+
+// The result names every skipped row and why, not only how many.
+func TestVCFImport_ResultListsSkippedRows(t *testing.T) {
+	db := newImportSessionTestDB(t)
+	log := zerolog.Nop()
+	const userID = uint(1)
+
+	contacts, previews, _, err := ParseVCF(strings.NewReader(
+		"BEGIN:VCARD\r\nVERSION:3.0\r\nN:Doe;Jane;;;\r\nEND:VCARD\r\n"+
+			"BEGIN:VCARD\r\nVERSION:3.0\r\nN:Roe;Rick;;;\r\nEND:VCARD\r\n"+
+			// No name, email, phone or organization: nothing to call the contact.
+			"BEGIN:VCARD\r\nVERSION:3.0\r\nNOTE:only a note\r\nEND:VCARD\r\n"+
+			"BEGIN:VCARD\r\nVERSION:3.0\r\nN:Poe;Pia;;;\r\nEND:VCARD\r\n"), db, userID)
+	require.NoError(t, err)
+	require.Len(t, previews, 4)
+	require.Equal(t, []string{"First name is required"}, previews[2].ValidationErrors)
+
+	mgr := NewImportSessionManager()
+	sessionID := mgr.CreateVCFSession(userID, contacts, previews)
+	result, appErr := mgr.ConfirmVCF(db, userID, models.ImportConfirmRequest{
+		SessionID: sessionID,
+		Actions: []models.RowImportAction{
+			{RowIndex: 0, Action: "add"},
+			{RowIndex: 1, Action: "skip"},
+			{RowIndex: 2, Action: "skip"},
+			{RowIndex: 3, Action: "update"}, // no duplicate to update
+		},
+	}, &config.Config{}, &log)
+	require.Nil(t, appErr)
+
+	assert.Equal(t, 1, result.Created)
+	assert.Equal(t, 3, result.Skipped)
+	assert.Equal(t, []models.SkippedRow{
+		{Row: 2, Name: "Rick Roe", Reason: "skipped"},
+		{Row: 3, Name: "", Reason: "invalid", Detail: "First name is required"},
+		{Row: 4, Name: "Pia Poe", Reason: "failed", Detail: "Cannot update - no existing contact found"},
+	}, result.SkippedRows)
+	assert.Equal(t, []string{"Row 4: Cannot update - no existing contact found"}, result.Errors)
+}

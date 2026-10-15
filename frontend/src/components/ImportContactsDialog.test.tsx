@@ -8,6 +8,7 @@ import * as importApi from '../api/import';
 vi.mock('../api/import', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../api/import')>()),
   uploadVCFForImport: vi.fn(),
+  confirmVCFImport: vi.fn(),
 }));
 
 const row = (row_index: number, firstname: string, extra: Partial<importApi.ImportRowPreview> = {}) => ({
@@ -86,5 +87,35 @@ describe('ImportContactsDialog preview', () => {
     expect(shownNames()).toEqual(['Bob', 'Carol', 'Nameless']);
     fireEvent.click(screen.getByRole('button', { name: 'First Name' }));
     expect(shownNames()).toEqual(['Nameless', 'Carol', 'Bob']);
+  });
+
+  test('the result names the skipped rows and why', async () => {
+    await uploadVCF();
+    vi.mocked(importApi.confirmVCFImport).mockResolvedValue({
+      total_processed: 3,
+      created: 1,
+      updated: 0,
+      skipped: 2,
+      errors: [],
+      skipped_rows: [
+        { row: 2, name: '', reason: 'invalid', detail: 'First name is required' },
+        { row: 3, name: 'Bob', reason: 'skipped' },
+      ],
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Import' }));
+
+    const table = await screen.findByRole('table', { name: 'Skipped rows' });
+    const rows = within(table)
+      .getAllByRole('row')
+      .slice(1)
+      .map((r) =>
+        within(r)
+          .getAllByRole('cell')
+          .map((c) => c.textContent),
+      );
+    expect(rows).toEqual([
+      ['2', '-', 'Invalid: First name is required'],
+      ['3', 'Bob', 'Skipped in the review'],
+    ]);
   });
 });

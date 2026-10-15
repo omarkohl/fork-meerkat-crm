@@ -584,7 +584,7 @@ func (m *MonicaImportManager) Confirm(db *gorm.DB, userID uint, req models.Monic
 	}
 
 	actionMap := buildActionMap(req.Actions)
-	result := models.MonicaImportResult{ImportResult: models.ImportResult{Errors: []string{}}}
+	result := models.MonicaImportResult{ImportResult: models.ImportResult{Errors: []string{}, SkippedRows: []models.SkippedRow{}}}
 	idMap := make(map[int]uint) // Monica contact ID → Meerkat contact ID
 	var avatarTasks []avatarTask
 
@@ -601,14 +601,13 @@ func (m *MonicaImportManager) Confirm(db *gorm.DB, userID uint, req models.Monic
 
 			switch action {
 			case "skip":
-				result.Skipped++
+				result.SkipChosenRow(&preview.ImportRowPreview)
 
 			case "add":
 				contact := contactData.Contact
 				contact.UserID = userID
 				if err := tx.Create(&contact).Error; err != nil {
-					result.Errors = append(result.Errors, fmt.Sprintf("Row %d: Failed to create contact: %v", preview.RowIndex+1, err))
-					result.Skipped++
+					result.FailRow(&preview.ImportRowPreview, fmt.Sprintf("Failed to create contact: %v", err))
 					continue
 				}
 				result.Created++
@@ -620,14 +619,12 @@ func (m *MonicaImportManager) Confirm(db *gorm.DB, userID uint, req models.Monic
 
 			case "update":
 				if preview.DuplicateMatch == nil {
-					result.Errors = append(result.Errors, fmt.Sprintf("Row %d: Cannot update - no existing contact found", preview.RowIndex+1))
-					result.Skipped++
+					result.FailRow(&preview.ImportRowPreview, "Cannot update - no existing contact found")
 					continue
 				}
 				var existing models.Contact
 				if err := tx.Where("user_id = ?", userID).First(&existing, preview.DuplicateMatch.ExistingContactID).Error; err != nil {
-					result.Errors = append(result.Errors, fmt.Sprintf("Row %d: Failed to fetch existing contact: %v", preview.RowIndex+1, err))
-					result.Skipped++
+					result.FailRow(&preview.ImportRowPreview, fmt.Sprintf("Failed to fetch existing contact: %v", err))
 					continue
 				}
 				if err := CreateMergeNote(tx, userID, existing.ID, &existing, preview.ParsedContact, "Monica"); err != nil {
@@ -646,8 +643,7 @@ func (m *MonicaImportManager) Confirm(db *gorm.DB, userID uint, req models.Monic
 					}
 				}
 				if err := tx.Save(&existing).Error; err != nil {
-					result.Errors = append(result.Errors, fmt.Sprintf("Row %d: Failed to update contact: %v", preview.RowIndex+1, err))
-					result.Skipped++
+					result.FailRow(&preview.ImportRowPreview, fmt.Sprintf("Failed to update contact: %v", err))
 					continue
 				}
 				result.Updated++

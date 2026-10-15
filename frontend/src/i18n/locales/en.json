@@ -225,6 +225,14 @@
         "updated": "{{count}} contacts updated",
         "skipped": "{{count}} rows skipped",
         "errors": "Errors",
+        "skippedRows": "Skipped rows",
+        "name": "Name",
+        "reason": "Reason",
+        "reasons": {
+          "skipped": "Skipped in the review",
+          "invalid": "Invalid",
+          "failed": "Failed"
+        },
         "done": "Done"
       },
       "errors": {

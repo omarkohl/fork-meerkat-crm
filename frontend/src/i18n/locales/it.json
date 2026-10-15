@@ -225,6 +225,14 @@
         "updated": "{{count}} contatti aggiornati",
         "skipped": "{{count}} righe saltate",
         "errors": "Errori",
+        "skippedRows": "Righe saltate",
+        "name": "Nome",
+        "reason": "Motivo",
+        "reasons": {
+          "skipped": "Saltata nella revisione",
+          "invalid": "Non valida",
+          "failed": "Non riuscita"
+        },
         "done": "Fatto"
       },
       "errors": {

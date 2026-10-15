@@ -225,6 +225,14 @@
         "updated": "{{count}} Kontakte aktualisiert",
         "skipped": "{{count}} Zeilen übersprungen",
         "errors": "Fehler",
+        "skippedRows": "Übersprungene Zeilen",
+        "name": "Name",
+        "reason": "Grund",
+        "reasons": {
+          "skipped": "In der Prüfung übersprungen",
+          "invalid": "Ungültig",
+          "failed": "Fehlgeschlagen"
+        },
         "done": "Fertig"
       },
       "errors": {

@@ -683,6 +683,7 @@ export default function ImportContactsDialog({ open, onClose, onImportComplete }
   // Render result step
   const renderResultStep = () => {
     if (!importResult) return null;
+    const skippedRows = importResult.skipped_rows ?? [];
 
     return (
       <Box sx={{ py: 2 }}>
@@ -710,7 +711,34 @@ export default function ImportContactsDialog({ open, onClose, onImportComplete }
           </Typography>
         </Box>
 
-        {importResult.errors.length > 0 && (
+        {skippedRows.length > 0 && (
+          <TableContainer component={Paper} sx={{ mt: 2, maxHeight: 250 }}>
+            <Table stickyHeader size="small" aria-label={t('contacts.import.result.skippedRows', 'Skipped rows')}>
+              <TableHead>
+                <TableRow>
+                  <TableCell width={50}>{t('contacts.import.preview.row', 'Row')}</TableCell>
+                  <TableCell>{t('contacts.import.result.name', 'Name')}</TableCell>
+                  <TableCell>{t('contacts.import.result.reason', 'Reason')}</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {skippedRows.map((r) => (
+                  <TableRow key={r.row}>
+                    <TableCell>{r.row}</TableCell>
+                    <TableCell>{r.name || '-'}</TableCell>
+                    <TableCell sx={{ color: r.reason === 'skipped' ? 'text.secondary' : 'error.main' }}>
+                      {t(`contacts.import.result.reasons.${r.reason}`, r.reason)}
+                      {r.detail ? `: ${r.detail}` : ''}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+
+        {/* Older servers send only the error messages; the skipped rows include them. */}
+        {!importResult.skipped_rows && importResult.errors.length > 0 && (
           <Box sx={{ mt: 2 }}>
             <Typography variant="subtitle2" color="error" gutterBottom>
               {t('contacts.import.result.errors', 'Errors')}:

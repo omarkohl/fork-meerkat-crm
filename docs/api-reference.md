@@ -177,7 +177,7 @@ Deleting a contact moves it to the trash: the contact and its notes, reminders a
 | `POST` | `/contacts/import/preview` | Apply column mapping, returns contacts with duplicate detection |
 | `POST` | `/contacts/import/confirm` | Execute the import with per-row decisions |
 | `POST` | `/contacts/import/vcf/upload` | Upload a VCF file, returns contacts with duplicate detection. Invalid emails, phones and dates are dropped and listed in each row's `warnings` |
-| `POST` | `/contacts/import/vcf/confirm` | Execute the VCF import |
+| `POST` | `/contacts/import/vcf/confirm` | Execute the VCF import. Like `/contacts/import/confirm`, the result lists each skipped row with its reason in `skipped_rows` |
 
 #### Monica CRM import
 
