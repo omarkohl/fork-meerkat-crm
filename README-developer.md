@@ -17,7 +17,7 @@
 - Styling blends global CSS (App.css/index.css) with MUI theming; photo uploads land in backend static storage under `static/photos`.
 
 **Workflows**
-- Root `Makefile` runs both apps: `make install`, `make precommit` (checks gofmt/Prettier formatting of changed files, `make format` fixes it; go vet, golangci-lint (binary must be installed), ESLint, tsc, unit tests; CI runs the same, see [.github/workflows/lint.yml](.github/workflows/lint.yml), config in [backend/.golangci.yml](backend/.golangci.yml)), `make test-e2e`. `make help` lists all targets.
+- Root `Makefile` runs both apps: `make install`, `make precommit` (checks gofmt/Prettier formatting of all files (Go, TS, JSON, YAML, Markdown, docs), `make format` fixes it; go vet, golangci-lint (binary must be installed), ESLint, tsc, unit tests; CI runs the same, see [.github/workflows/lint.yml](.github/workflows/lint.yml), config in [backend/.golangci.yml](backend/.golangci.yml)), `make test-e2e`. `make help` lists all targets.
 - Source backend/my_environment.env to `.env` before running the server
 - `make dev` (root) runs backend and frontend together with no setup; Ctrl+C stops both. Data goes to `.dev/` of the checkout, so checkouts do not share a database. Optional overrides (e.g. `BACKEND_PORT`, `FRONTEND_PORT`, `DEV_DATA_DIR`, any backend variable) go in `dev.env` (git-ignored, shell `KEY=value`); see [scripts/dev.sh](scripts/dev.sh).
 - Start the backend alone with `go run main.go` (or `make dev` in backend/) from backend/ after `go mod tidy`; migrations are embedded in the binary and auto-run on boot. Use `make migrate-up` (from backend/) or cmd/migrate for manual control during development.

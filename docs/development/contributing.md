@@ -15,7 +15,7 @@ nav_order: 5
 ## Development Workflow
 
 1. Make your changes with tests.
-2. Run `make precommit` from the repository root: checks gofmt and Prettier formatting of the files you changed (`make format` fixes it), `go vet`, `golangci-lint` (the binary must be installed), ESLint, `tsc`, the locale check (`make i18n-check`: a key missing in any of en/de/it/es/fr, or not in `en`, fails; unused and duplicate keys only warn) and the Go and Vitest unit tests. Run `make test-e2e` (Playwright, no Docker needed) when you change the UI or API behaviour. `make help` lists all targets.
+2. Run `make precommit` from the repository root: checks gofmt and Prettier formatting of all files, Markdown and docs included (`make format` fixes it), `go vet`, `golangci-lint` (the binary must be installed), ESLint, `tsc`, the locale check (`make i18n-check`: a key missing in any of en/de/it/es/fr, or not in `en`, fails; unused and duplicate keys only warn) and the Go and Vitest unit tests. Run `make test-e2e` (Playwright, no Docker needed) when you change the UI or API behaviour. `make help` lists all targets.
 3. Open a pull request against `main`.
 
 Optional: [lefthook](https://lefthook.dev) can run gofmt, Prettier, ESLint and the locale check on the staged files before each commit. Install lefthook and run `lefthook install` once; the configuration is `lefthook.yml`. Nothing installs the hooks automatically, and CI runs the same checks.
@@ -24,13 +24,13 @@ Optional: [lefthook](https://lefthook.dev) can run gofmt, Prettier, ESLint and t
 
 **Backend:** Standard Go formatting (`gofmt`), checked together with `golangci-lint` (config in `backend/.golangci.yml`: errcheck, staticcheck, gosec, revive, bodyclose, sqlclosecheck). `make precommit` runs it; the `golangci-lint` binary must be installed (or run `cd backend && golangci-lint run`). Follow existing controller and service patterns with thin controllers, logic in services, always scope queries by `user_id`.
 
-**Frontend:** Prettier formatting (`make format` fixes the files you changed), ESLint without warnings and `tsc --noEmit`. TypeScript strict mode and MUI for all UI components. All user-facing strings through `i18next`. Custom hooks for data fetching, not inline `useEffect` + `fetch`.
+**Frontend:** Prettier formatting (`make format` fixes all files), ESLint without warnings and `tsc --noEmit`. TypeScript strict mode and MUI for all UI components. All user-facing strings through `i18next`. Custom hooks for data fetching, not inline `useEffect` + `fetch`.
 
 ## Continuous integration
 
 Pull requests run these GitHub Actions workflows, and all must pass:
 
-- **Lint** (`lint.yml`): golangci-lint, ESLint, `tsc`, and a gofmt/Prettier check of the files the change touches.
+- **Lint** (`lint.yml`): golangci-lint, ESLint, `tsc`, and a gofmt/Prettier check of all files.
 - **Unit tests** and **E2E tests** (`unit-tests.yml`, `e2e-tests.yml`).
 - **Security** (`security.yml`): `govulncheck` and `yarn audit` for production dependencies; also runs weekly.
 - **Docker build and scan** (`docker-build.yml`): builds the three images (all-in-one, backend, frontend) without pushing them when a PR touches a Dockerfile, `backend/`, `frontend/` or `docker/`, and scans each with Trivy. It fails on fixable HIGH and CRITICAL vulnerabilities; unfixed ones are ignored. If a finding cannot be fixed by updating the base image or the dependency, add it to `.trivyignore` with a reason and an expiry date. Also runs on `main` and weekly.

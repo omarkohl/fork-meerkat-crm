@@ -82,16 +82,13 @@ jobs:
   format:
     permissions:
       contents: read
-    name: Format (gofmt, Prettier; changed files)
+    name: Format (gofmt, Prettier)
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-        with:
-          # Full history so the base commit of the change is available.
-          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
@@ -111,15 +108,5 @@ jobs:
         working-directory: frontend
         run: yarn install --frozen-lockfile
 
-      # Only files changed by the pull request (or push) are checked, so legacy
-      # unformatted files do not block unrelated work. For stacked PRs the base
-      # is the previous branch, not main.
-      - name: Check formatting of changed files
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
-        run: |
-          base="$(git merge-base "$BASE_SHA" HEAD 2>/dev/null || true)"
-          if [ -z "$base" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
-            base="$(git rev-parse HEAD~1)"
-          fi
-          make format-check BASE="$base"
+      - name: Check formatting
+        run: make format-check

@@ -8,9 +8,8 @@ pre-commit:
       glob: '{backend/*.go,backend/**/*.go}'
       run: gofmt -l {staged_files} | (! grep .)
     prettier:
-      root: frontend/
-      glob: '*.{ts,tsx}'
-      run: npx prettier --check {staged_files}
+      glob: '*.{ts,tsx,js,mjs,json,yml,yaml,md,css,html}'
+      run: frontend/node_modules/.bin/prettier --check {staged_files}
     eslint:
       root: frontend/
       glob: '*.{ts,tsx}'

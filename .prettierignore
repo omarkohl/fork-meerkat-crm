@@ -1,0 +1,9 @@
+# Lockfiles and generated output
+yarn.lock
+frontend/build
+frontend/public
+docs/Gemfile.lock
+# Jekyll pages: Liquid tags and front matter must stay as written
+docs/_config.yml
+# Go html/template files
+backend/services/templates
