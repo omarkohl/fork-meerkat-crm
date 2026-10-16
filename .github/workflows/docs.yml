@@ -19,6 +19,8 @@ concurrency:
 
 jobs:
   build:
+    # The site is upstream's (fbuchner.github.io); forks do not build or deploy it.
+    if: github.repository == 'fbuchner/meerkat-crm'
     runs-on: ubuntu-latest
     permissions:
       contents: read
