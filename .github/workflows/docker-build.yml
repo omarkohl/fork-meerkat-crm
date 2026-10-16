@@ -6,7 +6,7 @@ name: Docker build and scan
 # advisories that appear without code changes.
 on:
   push:
-    branches: [main]
+    branches: [main, omk]
   pull_request:
     paths:
       - 'Dockerfile'

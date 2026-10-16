@@ -2,14 +2,33 @@ name: Build and Push Docker Images
 
 on:
   push:
-    tags: ['v*']
+    # Fork tags only: upstream tags mirrored to the fork must not publish.
+    tags: ['v*-omk.*']
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  # Fork releases come from the omk branch; main only tracks upstream.
+  check-branch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+
+      - name: Require tagged commit on omk
+        run: |
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/omk ||
+            { echo "::error::$GITHUB_REF_NAME is not on the omk branch"; exit 1; }
+
   create-release:
+    needs: check-branch
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -47,6 +66,7 @@ jobs:
             ```
 
   build-and-push:
+    needs: check-branch
     runs-on: ubuntu-latest
     permissions:
       contents: read
