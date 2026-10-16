@@ -259,39 +259,45 @@
   migrations, because migrations may recreate tables and enforcement would cascade or
   fail. The migration connection is now closed after migrating (it was leaked before).
 
+## Summary
+
+Run `first-sprint`, steps 1-11, one commit each (stacked, local only, nothing pushed): SQLite WAL/busy
+timeout/foreign keys; golangci-lint; frontend CI gates (ESLint, tsc, Prettier); Dependabot and govulncheck/yarn
+audit; nfnt/resize replaced by x/image; golang-jwt v5; gocron v2 (scheduler extracted and tested); ICS calendar
+feed; contact Trash with auto purge; built-in backups; docs. `make precommit`, golangci-lint and `make test-e2e`
+(54 tests) are green.
+
 ## For review
 
-- Step 10: backups are ON by default (daily, keep 7) and contain every user's data including password hashes;
-  check you agree with the default and with the warning text on the Backups page. The Settings > Backups
-  menu entry is shown to admins only. Restore is manual (docs/deployment.md), there is no restore button.
-- Step 9 review: `App.tsx` stays Prettier-reformatted in full: `make format-check` checks every file changed since the base, so a route and nav entry in it cannot be a minimal diff.
-- Step 9: UI is a top-level "Trash" page (sidebar, under Network) with one card listing deleted contacts
-  (avatar, name, "Deleted <date> - Will be deleted permanently on <date>"), icon buttons Restore and Delete permanently
-  per row, and a red "Empty trash" button in the card header; both destructive actions confirm in a dialog,
-  restore does not. Dates use the user's date format. The contact delete confirmation now says the contact moves
-  to the Trash (it used to say it cannot be undone). The delete itself changed behaviour: photos of a deleted
-  contact stay on disk until purge.
-- Step 8: UI is a "Calendar feed (ICS)" card on the Integrations page (`/api-tokens`),
-  below Webhooks, not on the Settings page, because API tokens and webhooks live there.
-  Generate shows the URL once in a dialog with a copy button (same pattern as API
-  tokens); Regenerate and Revoke ask for confirmation. Existing users lose nothing; the
-  feature is off until someone generates a URL. The URL is a bearer secret in a query-free
-  path: it can land in reverse proxy access logs and calendar-provider caches (Google
-  Calendar fetches it server side, so an instance behind a VPN will not work with it).
-- Step 8: reminders are exported with the date part of `remind_at` (as stored, reminders
-  are midnight in the creator's timezone), not as timed events, so they show as all-day.
+Decide or check:
 
-- Step 3: 87 of 113 frontend TS files do not pass the Prettier config (single quotes,
-  width 120), so touching one forces a whole-file reformat in that change. The config
-  is kept as is; the alternative is a one-off repo-wide reformat commit, which the plan
-  rules out.
+1. Backups are ON by default (daily 02:30, keep 7) and contain every user's data, password hashes included.
+   Agree with the default and the warning text on Settings > Backups (admins only)? Restore is manual
+   (docs/deployment.md); there is no restore button. Is a bind-mounted `./data` writable by the container user?
+2. ICS feed: lives as a card on the Integrations page. The URL is a bearer secret that can land in proxy logs and
+   calendar-provider caches; a VPN-only instance will not work with Google Calendar. Reminders export as all-day
+   events on the UTC date of `remind_at`. No "last fetched" UI indicator (the API returns the field).
+3. Trash: top-level sidebar entry under Network; contacts only. Deleting now keeps photos until purge and the
+   delete dialog no longer says "cannot be undone". Pre-trash deleted contacts may restore without some dependants.
+4. SQLite now runs in WAL mode (`-wal`/`-shm` files; no network filesystems; file-copy backups must include them).
+   Foreign keys are enforced from now on; start-up logs a warning per orphan-row table.
+5. Prettier: 87 of 113 frontend files do not pass the config, so touching one reformats it whole (e.g. `App.tsx`,
+   `ApiTokensPage.tsx`). Alternative: one repo-wide reformat commit.
+6. CI: `govulncheck` could not run locally (proxy), so CI is its first run. Both security jobs block.
+   `react-scripts` moved to devDependencies. Stacked PRs now run all checks (branch filters removed).
+7. Photo resize now uses CatmullRom (no Lanczos in x/image): same sizes, slightly different pixels.
+8. JWT parser is stricter (HS256 only, `exp` required); existing sessions are unaffected.
 
-- Step 1: SQLite now runs in WAL mode, so the database directory holds `-wal` and
-  `-shm` files next to the `.db` file. The data directory must not be on a network
-  filesystem, and file-copy backups must include them (or use `VACUUM INTO`, which step
-  10 uses). To mention in the step 10/11 docs.
-- Step 1: foreign keys are enforced from now on. On start, `InitDB` logs a warning per
-  `table -> parent` with the number of orphan rows an existing database holds.
+Open questions:
+
+- Webhooks: add `contact.restored` / purge events? (None added.)
+- CardDAV pull-only: after a purge, a later remote edit re-creates the contact. Should purge drop the link and
+  remember the remote UID?
+- Deleted users: `DeleteUser` leaves `api_tokens` (a token may still authenticate) and contacts to the auto purge.
+- Pre-existing, not touched: `docs/api-reference.md` lists `/admin/api-tokens` but routes are `/api-tokens`;
+  `README-developer.md` names a missing `make migrate-status`; startup goroutines in `main.go` are not tracked on
+  shutdown; `int`/`uint` JWT claim handling in `middleware/auth.go`; floating Docker base tags; photo dirs 0777
+  (gosec G301) and unchecked `Close` on written files; `int` to `uint` claim conversion (G115).
 
 ## Questions
 
