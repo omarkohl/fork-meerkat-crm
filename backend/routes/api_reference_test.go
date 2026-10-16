@@ -26,7 +26,7 @@ var undocumentedOnPurpose = map[string]string{
 	"/.well-known/carddav": "CardDAV discovery redirect",
 }
 
-var docRowPattern = regexp.MustCompile("^\\| `([A-Z]+)` \\| `([^`]+)` \\|")
+var docRowPattern = regexp.MustCompile("^\\| `([A-Z]+)`\\s*\\| `([^`]+)`\\s*\\|")
 
 // routeLikeRow matches any table row whose second cell starts with a path, so a
 // malformed route row fails the test instead of being skipped.
