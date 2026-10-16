@@ -47,13 +47,13 @@ After adjusting the environment variables as needed you can run:
 | `REMINDER_TIMEZONE` | Timezone used for scheduling reminder emails. Must be a valid [IANA timezone name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) (e.g. `Europe/Berlin`). Default is `UTC` |
 | `BACKUP_ENABLED` | Whether the daily automatic [backup](deployment.md#backups) runs. Default is `true`. Admins can create backups by hand either way |
 | `BACKUP_TIME` | Time of day of the automatic backup, `HH:MM` (24-hour) in `REMINDER_TIMEZONE`. Default is `02:30` |
-| `BACKUP_RETENTION_COUNT` | Number of most recent backups to keep (older ones are deleted after each backup). Default is `7` |
+| `BACKUP_RETENTION_COUNT` | Number of most recent backups to keep (older ones are deleted after each backup). Values below 1 fall back to the default, `7` |
 | `BACKUP_DIR` | Directory the backups are written to. Default is a `backups` directory next to the database file (`SQLITE_DB_PATH`) |
 | `AUDIT_LOG_RETENTION_DAYS` | Number of days [audit log](deployment.md#sessions-and-audit-log) entries are kept (purged daily). `0` keeps them forever. Default is `365` |
 | `METRICS_ENABLED` | Serve Prometheus metrics at `/metrics`. Default is `false`. See [Monitoring](deployment.md#monitoring-with-prometheus) |
 | `METRICS_TOKEN` | Optional bearer token that scrapers must send to read the metrics |
 | `METRICS_ADDR` | Optional separate listen address for the metrics (for example `127.0.0.1:9090`); then `/metrics` is not served on the main port |
-| `TRASH_RETENTION_DAYS` | Number of days a deleted contact stays in the Trash before it is deleted permanently (checked daily). Default is `30` |
+| `TRASH_RETENTION_DAYS` | Number of days a deleted contact stays in the Trash before it is deleted permanently (checked daily). Values below 1 fall back to the default, `30` |
 
 SSO is disabled unless all three of `OIDC_PROVIDER_URL`, `OIDC_CLIENT_ID`, and `OIDC_CLIENT_SECRET` are set.
 

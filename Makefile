@@ -34,7 +34,7 @@ format-check: ## Fail if files changed since BASE are not gofmt/Prettier-clean
 	@files=$$( $(FRONTEND_CHANGED) ); \
 	[ -z "$$files" ] || (cd frontend && npx prettier --check $$files)
 
-lint: ## go vet + eslint
+lint: ## go vet + golangci-lint + eslint
 	cd backend && go vet ./...
 	cd backend && golangci-lint run
 	cd frontend && npx eslint --max-warnings=0 src

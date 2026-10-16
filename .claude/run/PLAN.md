@@ -52,7 +52,7 @@ Read first: `.claude/AUTONOMOUS-RUNS.md`, `README-developer.md`, `IMPROVEMENTS.m
       auto-purge after 30 days via the scheduler; API, UI, i18n, isolation test.
 - [x] 10. **Built-in backups (5.3)**: scheduled `VACUUM INTO` plus photos tarball,
       retention, admin download endpoint and UI, i18n, tests, docs.
-- [ ] 11. **Docs**: README, `docs/`, `docs/api-reference.md`, deployment notes for
+- [x] 11. **Docs**: README, `docs/`, `docs/api-reference.md`, deployment notes for
       backups. Full `make precommit` and `make test-e2e`.
 - [ ] 12. **Finish**: summary and the "For review" list in PROGRESS.md (copied into
       that PR's body), then delete `.claude/run/` in its own commit.

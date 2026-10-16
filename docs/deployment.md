@@ -200,6 +200,8 @@ Accounts created through SSO have no password and can only log in via SSO. Exist
 
 ## Upgrades
 
+Create a backup first (Settings > Backups, or `POST /admin/backups`).
+
 ```sh
 docker compose pull
 docker compose up -d

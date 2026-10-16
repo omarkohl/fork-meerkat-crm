@@ -2,7 +2,7 @@
 
 ## Next step
 
-11. Docs.
+12. Finish.
 
 ## Stack
 
@@ -130,6 +130,10 @@
   validated only when `BACKUP_ENABLED`. Docs: `JWT_SECRET_KEY`/`.env` must be kept with backups (CardDAV/CalDAV
   credentials are encrypted with it), restore steps name the host mount directories, browser download buffers
   the archive in memory (documented, not changed).
+- Step 11 (docs): audited README, README-developer, `docs/` (getting-started env table, settings, deployment, data-model,
+  api-reference, contributing) against steps 1-10: WAL files, ICS feed, Trash, backups, `BACKUP_*`/`TRASH_RETENTION_DAYS`,
+  lint/CI/security gates were already documented by their steps, so no doc text changed. `make precommit` green;
+  `make test-e2e` ran without the Playwright workaround on this machine (browsers installed): 54 passed.
 
 ## Decisions
 
@@ -290,6 +294,8 @@
   `table -> parent` with the number of orphan rows an existing database holds.
 
 ## Questions
+
+- `README-developer.md` names `make migrate-status`, which does not exist (pre-existing, not touched).
 
 - Step 10: `docker-compose.yml` does not list the new `BACKUP_*` variables (it passes the env file through like
   the other settings); worth confirming that a bind-mounted `./data` volume is writable by the container user,
