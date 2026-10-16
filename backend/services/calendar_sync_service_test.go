@@ -289,14 +289,16 @@ func TestCalendarSyncMatchesByContentWhenUIDsChange(t *testing.T) {
 	// Some feeds (e.g. generated waste-collection calendars) mint fresh UIDs
 	// on every request; unchanged events must still be recognized.
 	requests := 0
-	eventStart := icalDate(3)
+	// Fixed per test, not per request: icalDate has second precision, so a
+	// request crossing a second boundary would change the event content.
+	eventStart, otherStart := icalDate(3), icalDate(5)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requests++
 		w.Header().Set("Content-Type", "text/calendar")
 		fmt.Fprintf(w, "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Test//EN\n"+
 			"BEGIN:VEVENT\nUID:generated-%d-a\nSUMMARY:Bioabfall\nDTSTART:%s\nEND:VEVENT\n"+
 			"BEGIN:VEVENT\nUID:generated-%d-b\nSUMMARY:Restabfall\nDTSTART:%s\nEND:VEVENT\n"+
-			"END:VCALENDAR\n", requests, eventStart, requests, icalDate(5))
+			"END:VCALENDAR\n", requests, eventStart, requests, otherStart)
 	}))
 	defer server.Close()
 
