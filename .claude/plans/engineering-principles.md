@@ -12,17 +12,17 @@ Read first: `.claude/plans/engineering-principles-reference.md`, `.claude/AUTONO
 
 ## Evaluation (2026-10-16)
 
-| #   | Principle                   | Status  | Evidence                                                                                                                                                                                                                       |
-| --- | --------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 1   | One command, everywhere     | Partial | Root `Makefile` with all base targets and `precommit`; `make dev` per checkout. Missing: `arch`, `test-coverage`, E2E not in a gate, CI calls raw commands, no seed data, no doc for "run one test", no target prerequisites. |
-| 2   | Wrong code fails to build   | Partial | `tsc strict`, golangci-lint with line-level `//nolint` + reason, Prettier/gofmt. Missing: `noUncheckedIndexedAccess`, ESLint is CRA `react-app` (not type-aware strict), format check on changed files only, no custom rules.  |
-| 3   | Hexagonal architecture      | Missing | Controllers query GORM directly (`c.MustGet("db")`, 26 files). No domain layer, no ports, no module entry files, no module-graph checker.                                                                                       |
-| 4   | Test behaviour              | Partial | Go tests on real SQLite, isolation E2E, migration round-trip and older-version seed tests, E2E on the Docker image in CI, Radicale in CI. Missing: coverage thresholds, use-case catalogue, E2E builds URLs with IDs (8x).     |
-| 5   | Determinism                 | Missing | 84 `time.Now()` calls in non-test Go code, no injected clock, no fake clock, no lint ban. Few moving parts: yes (SQLite, one image).                                                                                          |
-| 6   | Dependency updates          | Partial | Dependabot for all ecosystems, grouped. Missing: daily schedule, cooldown, one group per ecosystem (major updates are not grouped), issue comments on pins.                                                                    |
-| 7   | Small coherent commits      | Partial | Conventional commits, push rules in `AUTONOMOUS-RUNS.md`. Missing: issue footers, subject-length check, jj gotchas.                                                                                                           |
-| 8   | Docs with the code          | Partial | `docs/` and `design/` in repo. Missing: ADRs, committed `AGENTS.md` (`CLAUDE.md` is gitignored), user changelog.                                                                                                              |
-| 9   | Instructions agents follow  | Partial | `AUTONOMOUS-RUNS.md` has concrete rules. Missing: hard limits, bad/good examples, named failure modes, "rules beat surrounding code".                                                                                          |
+| #   | Principle                  | Status  | Evidence                                                                                                                                                                                                                      |
+| --- | -------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | One command, everywhere    | Partial | Root `Makefile` with all base targets and `precommit`; `make dev` per checkout. Missing: `arch`, `test-coverage`, E2E not in a gate, CI calls raw commands, no seed data, no doc for "run one test", no target prerequisites. |
+| 2   | Wrong code fails to build  | Partial | `tsc strict`, golangci-lint with line-level `//nolint` + reason, Prettier/gofmt. Missing: `noUncheckedIndexedAccess`, ESLint is CRA `react-app` (not type-aware strict), format check on changed files only, no custom rules. |
+| 3   | Hexagonal architecture     | Missing | Controllers query GORM directly (`c.MustGet("db")`, 26 files). No domain layer, no ports, no module entry files, no module-graph checker.                                                                                     |
+| 4   | Test behaviour             | Partial | Go tests on real SQLite, isolation E2E, migration round-trip and older-version seed tests, E2E on the Docker image in CI, Radicale in CI. Missing: coverage thresholds, use-case catalogue, E2E builds URLs with IDs (8x).    |
+| 5   | Determinism                | Missing | 84 `time.Now()` calls in non-test Go code, no injected clock, no fake clock, no lint ban. Few moving parts: yes (SQLite, one image).                                                                                          |
+| 6   | Dependency updates         | Partial | Dependabot for all ecosystems, grouped. Missing: daily schedule, cooldown, one group per ecosystem (major updates are not grouped), issue comments on pins.                                                                   |
+| 7   | Small coherent commits     | Partial | Conventional commits, push rules in `AUTONOMOUS-RUNS.md`. Missing: issue footers, subject-length check, jj gotchas.                                                                                                           |
+| 8   | Docs with the code         | Partial | `docs/` and `design/` in repo. Missing: ADRs, committed `AGENTS.md` (`CLAUDE.md` is gitignored), user changelog.                                                                                                              |
+| 9   | Instructions agents follow | Partial | `AUTONOMOUS-RUNS.md` has concrete rules. Missing: hard limits, bad/good examples, named failure modes, "rules beat surrounding code".                                                                                         |
 
 ## Settled before the run (the user, 2026-10-16)
 
@@ -50,18 +50,18 @@ Read first: `.claude/plans/engineering-principles-reference.md`, `.claude/AUTONO
 - ADRs in `docs/adr/NNNN-slug.md` (status, date, context, decision, consequences).
 - Where the reference content goes (the step that writes it in brackets):
 
-  | Reference section             | Destination                                                                  |
-  | ----------------------------- | ---------------------------------------------------------------------------- |
-  | Overview, §2                  | ADR "rules are machine checks with fix messages" (1); `AGENTS.md` (2)        |
-  | §1                            | `docs/development/contributing.md` (3), `AGENTS.md` (2)                      |
-  | §3                            | ADRs for layering (10) and module layout (12); `architecture.md` (10, 12)    |
-  | §3 contracts                  | ADR huma (11)                                                                |
-  | §4                            | ADR "testing strategy" (1); `docs/development/testing.md` (1, 8, 15–18)       |
-  | §4 TDD, §9                    | `AGENTS.md` (2)                                                              |
-  | §5                            | ADR clock (9); ADR SQLite and few moving parts (1)                           |
-  | §6                            | ADR dependency updates (20)                                                  |
-  | §7                            | `AGENTS.md` (2), `contributing.md` (21)                                      |
-  | §8                            | ADR 0001 (1), `AGENTS.md` (2), ADR changelog (21)                            |
+  | Reference section | Destination                                                               |
+  | ----------------- | ------------------------------------------------------------------------- |
+  | Overview, §2      | ADR "rules are machine checks with fix messages" (1); `AGENTS.md` (2)     |
+  | §1                | `docs/development/contributing.md` (3), `AGENTS.md` (2)                   |
+  | §3                | ADRs for layering (10) and module layout (12); `architecture.md` (10, 12) |
+  | §3 contracts      | ADR huma (11)                                                             |
+  | §4                | ADR "testing strategy" (1); `docs/development/testing.md` (1, 8, 15–18)   |
+  | §4 TDD, §9        | `AGENTS.md` (2)                                                           |
+  | §5                | ADR clock (9); ADR SQLite and few moving parts (1)                        |
+  | §6                | ADR dependency updates (20)                                               |
+  | §7                | `AGENTS.md` (2), `contributing.md` (21)                                   |
+  | §8                | ADR 0001 (1), `AGENTS.md` (2), ADR changelog (21)                         |
 
 ## Steps
 
@@ -160,9 +160,9 @@ Read first: `.claude/plans/engineering-principles-reference.md`, `.claude/AUTONO
       Gin engine and fails if a mutating route has no auth middleware or no entry in
       the isolation test table. A test enumerates every model with `user_id` and
       fails if `isolation.spec.ts` or a Go isolation test does not cover it.
-- [ ] 16. **E2E quality (§4)**: replace `page.goto(\`/contacts/${id}\`)` (8x) and
-      CSS/test-id locators (7x) with user navigation and role/label locators.
-      `eslint-plugin-playwright` plus a rule that bans template-literal `goto`. Move
+- [ ] 16. **E2E quality (§4)**: replace `page.goto(\`/contacts/${id}\`)`(8x) and
+CSS/test-id locators (7x) with user navigation and role/label locators.
+ `eslint-plugin-playwright`plus a rule that bans template-literal`goto`. Move
       specs that change global settings into a serial project after the parallel one.
 - [ ] 17. **Use-case catalogue (§4)**: `docs/use-cases.yml` (ID `NNN-USn`, actor,
       priority, status). Tag E2E titles (`@001-US1`) and Go test names. A script in

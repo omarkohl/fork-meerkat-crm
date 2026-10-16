@@ -51,7 +51,7 @@ export default function NetworkPage() {
   const [allContacts, setAllContacts] = useState<Contact[]>([]);
 
   const updateFilters = useCallback((patch: Partial<NetworkFilters>) => {
-    setFilters(prev => ({ ...prev, ...patch }));
+    setFilters((prev) => ({ ...prev, ...patch }));
   }, []);
 
   useEffect(() => {
@@ -68,7 +68,7 @@ export default function NetworkPage() {
 
   useEffect(() => {
     if (!data || !centeredNodeId) return;
-    const nodeExists = data.nodes.some(n => n.id === centeredNodeId);
+    const nodeExists = data.nodes.some((n) => n.id === centeredNodeId);
     if (!nodeExists) {
       setCenteredNodeId(null);
     }
@@ -78,9 +78,9 @@ export default function NetworkPage() {
   const circles = useMemo(() => {
     if (!data) return [];
     const allCircles = new Set<string>();
-    data.nodes.forEach(n => {
+    data.nodes.forEach((n) => {
       if (n.type === 'contact' && n.circles) {
-        n.circles.forEach(c => allCircles.add(c));
+        n.circles.forEach((c) => allCircles.add(c));
       }
     });
     return Array.from(allCircles).sort();
@@ -98,7 +98,7 @@ export default function NetworkPage() {
   // Contact nodes for the center-on-contact autocomplete
   const contactNodes = useMemo(() => {
     if (!data) return [];
-    return data.nodes.filter(n => n.type === 'contact').sort((a, b) => a.label.localeCompare(b.label));
+    return data.nodes.filter((n) => n.type === 'contact').sort((a, b) => a.label.localeCompare(b.label));
   }, [data]);
 
   // Handle node click - navigate to contact detail
@@ -143,7 +143,7 @@ export default function NetworkPage() {
         description: editValues.activityDescription || '',
         location: editValues.activityLocation || '',
         date: editValues.activityDate ? new Date(editValues.activityDate).toISOString() : new Date().toISOString(),
-        contact_ids: editValues.activityContacts?.map(c => c.ID) || [],
+        contact_ids: editValues.activityContacts?.map((c) => c.ID) || [],
       });
       handleActivityEditClose();
     } catch (err) {
@@ -213,24 +213,20 @@ export default function NetworkPage() {
           sx={{ minWidth: 200 }}
           options={contactNodes}
           getOptionLabel={(n) => n.label}
-          value={contactNodes.find(n => n.id === centeredNodeId) ?? null}
+          value={contactNodes.find((n) => n.id === centeredNodeId) ?? null}
           onChange={(_e, node) => setCenteredNodeId(node ? node.id : null)}
-          renderInput={(params) => (
-            <TextField {...params} label={t('network.filterByContact')} />
-          )}
+          renderInput={(params) => <TextField {...params} label={t('network.filterByContact')} />}
           clearOnEscape
         />
 
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel>{t('network.filterByCircle')}</InputLabel>
-          <Select
-            value={selectedCircle}
-            onChange={handleCircleChange}
-            label={t('network.filterByCircle')}
-          >
+          <Select value={selectedCircle} onChange={handleCircleChange} label={t('network.filterByCircle')}>
             <MenuItem value="">{t('network.allCircles')}</MenuItem>
-            {circles.map(c => (
-              <MenuItem key={c} value={c}>{c}</MenuItem>
+            {circles.map((c) => (
+              <MenuItem key={c} value={c}>
+                {c}
+              </MenuItem>
             ))}
           </Select>
         </FormControl>
@@ -270,14 +266,22 @@ export default function NetworkPage() {
 
         {!isMobile && (
           <Box sx={{ flexBasis: '100%' }}>
-            <NetworkLegend showCircles={showCircles} showActivities={showActivities} showRelationships={showRelationships} />
+            <NetworkLegend
+              showCircles={showCircles}
+              showActivities={showActivities}
+              showRelationships={showRelationships}
+            />
           </Box>
         )}
       </Card>
 
       {isMobile && (
         <Card sx={{ p: 1.5, mb: 2 }}>
-          <NetworkLegend showCircles={showCircles} showActivities={showActivities} showRelationships={showRelationships} />
+          <NetworkLegend
+            showCircles={showCircles}
+            showActivities={showActivities}
+            showRelationships={showRelationships}
+          />
         </Card>
       )}
 

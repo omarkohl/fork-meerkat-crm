@@ -36,9 +36,7 @@ export interface GetActivitiesParams {
 }
 
 // Get all activities
-export async function getActivities(
-  params: GetActivitiesParams
-): Promise<ActivitiesResponse> {
+export async function getActivities(params: GetActivitiesParams): Promise<ActivitiesResponse> {
   const { page = 1, limit = 25, includeContacts = false } = params;
   const search = params.search?.trim();
 
@@ -63,10 +61,9 @@ export async function getActivities(
     queryParams.append('toDate', params.toDate);
   }
 
-  const response = await apiFetch(
-    `${API_BASE_URL}/activities?${queryParams.toString()}`,
-    { headers: getAuthHeaders() }
-  );
+  const response = await apiFetch(`${API_BASE_URL}/activities?${queryParams.toString()}`, {
+    headers: getAuthHeaders(),
+  });
 
   if (!response.ok) {
     throw await parseErrorResponse(response);
@@ -76,13 +73,8 @@ export async function getActivities(
 }
 
 // Get activities for a contact
-export async function getContactActivities(
-  contactId: string | number
-): Promise<{ activities: Activity[] }> {
-  const response = await apiFetch(
-    `${API_BASE_URL}/contacts/${contactId}/activities`,
-    { headers: getAuthHeaders() }
-  );
+export async function getContactActivities(contactId: string | number): Promise<{ activities: Activity[] }> {
+  const response = await apiFetch(`${API_BASE_URL}/contacts/${contactId}/activities`, { headers: getAuthHeaders() });
 
   if (!response.ok) {
     throw await parseErrorResponse(response);
@@ -92,13 +84,8 @@ export async function getContactActivities(
 }
 
 // Get single activity
-export async function getActivity(
-  id: string | number
-): Promise<Activity> {
-  const response = await apiFetch(
-    `${API_BASE_URL}/activities/${id}`,
-    { headers: getAuthHeaders() }
-  );
+export async function getActivity(id: string | number): Promise<Activity> {
+  const response = await apiFetch(`${API_BASE_URL}/activities/${id}`, { headers: getAuthHeaders() });
 
   if (!response.ok) {
     throw await parseErrorResponse(response);
@@ -108,23 +95,18 @@ export async function getActivity(
 }
 
 // Create activity
-export async function createActivity(
-  data: {
-    title: string;
-    description: string;
-    location: string;
-    date: string;
-    contact_ids: number[];
-  }
-): Promise<Activity> {
-  const response = await apiFetch(
-    `${API_BASE_URL}/activities`,
-    {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    }
-  );
+export async function createActivity(data: {
+  title: string;
+  description: string;
+  location: string;
+  date: string;
+  contact_ids: number[];
+}): Promise<Activity> {
+  const response = await apiFetch(`${API_BASE_URL}/activities`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
 
   if (!response.ok) {
     throw await parseErrorResponse(response);
@@ -142,16 +124,13 @@ export async function updateActivity(
     location?: string;
     date?: string;
     contact_ids?: number[];
-  }
+  },
 ): Promise<Activity> {
-  const response = await apiFetch(
-    `${API_BASE_URL}/activities/${id}`,
-    {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    }
-  );
+  const response = await apiFetch(`${API_BASE_URL}/activities/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
 
   if (!response.ok) {
     throw await parseErrorResponse(response);
@@ -161,16 +140,11 @@ export async function updateActivity(
 }
 
 // Delete activity
-export async function deleteActivity(
-  id: string | number
-): Promise<void> {
-  const response = await apiFetch(
-    `${API_BASE_URL}/activities/${id}`,
-    {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-    }
-  );
+export async function deleteActivity(id: string | number): Promise<void> {
+  const response = await apiFetch(`${API_BASE_URL}/activities/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
 
   if (!response.ok) {
     throw await parseErrorResponse(response);

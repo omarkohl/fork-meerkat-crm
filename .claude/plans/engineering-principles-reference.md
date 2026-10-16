@@ -15,17 +15,17 @@ machine checks. So:
 
 The more the build enforces, the less review attention each change needs.
 
-| #   | Principle                          | In one sentence                                                                        |
-| --- | ---------------------------------- | -------------------------------------------------------------------------------------- |
-| 1   | One command, everywhere            | Humans, agents and CI run the same `make` targets; one `precommit` gate.               |
-| 2   | Make wrong code fail to build      | Strict types, strict linting, auto-formatting, conventions as custom lint rules.       |
-| 3   | Hexagonal architecture, tested     | Pure domain at the centre, adapters outside; the build fails on a wrong-way import.    |
-| 4   | Test behaviour, not implementation | Integration tests on real SQLite carry the load; few user-like E2E tests; TDD.         |
-| 5   | Design for determinism             | Inject time and other ambient state; few moving parts.                                 |
-| 6   | Update dependencies continuously   | Daily, grouped, with a cooldown; the test suite makes it safe.                         |
-| 7   | Small coherent commits             | One commit = one shippable change, message says why, issue linked.                     |
-| 8   | Documentation lives with the code  | Docs and decision records in the repo, changed in the same commit.                     |
-| 9   | Write instructions agents follow   | Hard limits, real bad/good examples, named failure modes.                              |
+| #   | Principle                          | In one sentence                                                                     |
+| --- | ---------------------------------- | ----------------------------------------------------------------------------------- |
+| 1   | One command, everywhere            | Humans, agents and CI run the same `make` targets; one `precommit` gate.            |
+| 2   | Make wrong code fail to build      | Strict types, strict linting, auto-formatting, conventions as custom lint rules.    |
+| 3   | Hexagonal architecture, tested     | Pure domain at the centre, adapters outside; the build fails on a wrong-way import. |
+| 4   | Test behaviour, not implementation | Integration tests on real SQLite carry the load; few user-like E2E tests; TDD.      |
+| 5   | Design for determinism             | Inject time and other ambient state; few moving parts.                              |
+| 6   | Update dependencies continuously   | Daily, grouped, with a cooldown; the test suite makes it safe.                      |
+| 7   | Small coherent commits             | One commit = one shippable change, message says why, issue linked.                  |
+| 8   | Documentation lives with the code  | Docs and decision records in the repo, changed in the same commit.                  |
+| 9   | Write instructions agents follow   | Hard limits, real bad/good examples, named failure modes.                           |
 
 ## 1. One command, everywhere
 
@@ -47,7 +47,7 @@ nothing, and agents guess at invocations.
 - A fresh clone reaches a running app with seed data in one or two commands
   (`make dev`, `make seed`).
 - Document how to run **one** test by file, line and name (`go test -run`, `vitest
-  <file> -t`, `playwright test <file>:<line>` / `--grep`). Agents iterate far faster
+<file> -t`, `playwright test <file>:<line>` / `--grep`). Agents iterate far faster
   on a single test than on the suite.
 - Several checkouts work side by side (ports, data dir via `dev.env`): agents often
   work in parallel worktrees.
@@ -80,7 +80,7 @@ instead, and which ADR explains why:
 forbidigo:
   forbid:
     - pattern: ^time\.Now$
-      msg: "time.Now reads an ambient clock. Take `now` from the request context and pass it down (ADR 00NN)."
+      msg: 'time.Now reads an ambient clock. Take `now` from the request context and pass it down (ADR 00NN).'
 ```
 
 ```js
@@ -159,11 +159,11 @@ Each rule names what is forbidden and why, in its own message:
 depguard:
   rules:
     domain-stays-pure:
-      files: ["**/domain/**"]
+      files: ['**/domain/**']
       allow: [$gostd, meerkat/domain]
       deny:
         - pkg: gorm.io/gorm
-          desc: "The domain is pure: move persistence to an adapter and pass the result in (ADR 00NN)."
+          desc: 'The domain is pure: move persistence to an adapter and pass the result in (ADR 00NN).'
 ```
 
 How to add a rule:
@@ -192,11 +192,11 @@ Tests that mirror implementation break on every refactor and catch few real bugs
 
 ### Tiers
 
-| Tier            | Share    | Scope                                                                                                                                       |
-| --------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tier            | Share    | Scope                                                                                                                                                                    |
+| --------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Integration** | the bulk | Business logic through its real entry points (HTTP handlers, use cases) against a **real SQLite database**. Mock only what you cannot run locally (Resend, remote OIDC). |
-| **E2E**         | few      | Important user workflows in Playwright. Quality over quantity.                                                                              |
-| **Unit**        | rare     | Complex isolated functions only (vCard/CSV parsers, ICS folding). Never duplicate integration coverage.                                     |
+| **E2E**         | few      | Important user workflows in Playwright. Quality over quantity.                                                                                                           |
+| **Unit**        | rare     | Complex isolated functions only (vCard/CSV parsers, ICS folding). Never duplicate integration coverage.                                                                  |
 
 Integration tests:
 
@@ -283,15 +283,15 @@ Agents also work best with current, documented library versions.
 
 ```yaml
 updates:
-  - package-ecosystem: "gomod"
-    directory: "/backend"
-    schedule: { interval: "daily" }
+  - package-ecosystem: 'gomod'
+    directory: '/backend'
+    schedule: { interval: 'daily' }
     cooldown: { default-days: 7 }
-    groups: { all-dependencies: { patterns: ["*"] } }
+    groups: { all-dependencies: { patterns: ['*'] } }
     ignore:
       # <module> X not yet compatible with Y v3 (issue #NN)
-      - dependency-name: "Y"
-        versions: [">= 3"]
+      - dependency-name: 'Y'
+        versions: ['>= 3']
 ```
 
 ## 7. Small coherent commits

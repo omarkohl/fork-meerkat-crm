@@ -33,15 +33,15 @@ The contact sync tests (and the other tests of `./services/` that use the same h
 
 Go native fuzz targets cover the parsers that read untrusted input:
 
-| Target | Package | What it feeds |
-| --- | --- | --- |
-| `FuzzVCardToContact` | `carddav` | vCard bytes through the decoder, `VCardToContact`, and back through `ContactToVCard` (CardDAV, VCF import) |
-| `FuzzDecodePhoto` | `carddav` | untrusted image bytes (upload, vCard PHOTO, remote photo) through the decoder behind `SaveContactPhoto`, crop and resize; nothing is written |
-| `FuzzCSVImport` | `services` | CSV through `ParseCSV`, `SuggestColumnMappings`, `BuildContactFromRow`, validation |
-| `FuzzImportValueParsers` | `services` | birthday, phone, gender and circle parsers |
-| `FuzzMonicaMapping` | `services` | arbitrary JSON decoded into the Monica types and run through every mapper |
-| `FuzzICSText` | `services` | ICS text escaping and line folding |
-| `FuzzBuildICSFeed` | `services` | stored names, birthdays and reminder texts through `BuildICSFeed`; the feed must stay well formed |
+| Target                   | Package    | What it feeds                                                                                                                                |
+| ------------------------ | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `FuzzVCardToContact`     | `carddav`  | vCard bytes through the decoder, `VCardToContact`, and back through `ContactToVCard` (CardDAV, VCF import)                                   |
+| `FuzzDecodePhoto`        | `carddav`  | untrusted image bytes (upload, vCard PHOTO, remote photo) through the decoder behind `SaveContactPhoto`, crop and resize; nothing is written |
+| `FuzzCSVImport`          | `services` | CSV through `ParseCSV`, `SuggestColumnMappings`, `BuildContactFromRow`, validation                                                           |
+| `FuzzImportValueParsers` | `services` | birthday, phone, gender and circle parsers                                                                                                   |
+| `FuzzMonicaMapping`      | `services` | arbitrary JSON decoded into the Monica types and run through every mapper                                                                    |
+| `FuzzICSText`            | `services` | ICS text escaping and line folding                                                                                                           |
+| `FuzzBuildICSFeed`       | `services` | stored names, birthdays and reminder texts through `BuildICSFeed`; the feed must stay well formed                                            |
 
 `go test ./...` runs every target once over its seeds (the `f.Add` values and the files in `testdata/fuzz/<Target>/`), so they double as ordinary regression tests. To fuzz one for real:
 

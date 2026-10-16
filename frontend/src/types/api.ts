@@ -1,18 +1,11 @@
 /**
  * API Request and Response TypeScript types
- * 
+ *
  * This file defines the shape of all API requests and responses,
  * ensuring type safety when communicating with the backend.
  */
 
-import type {
-  Contact,
-  Activity,
-  Note,
-  Reminder,
-  User,
-  Relationship,
-} from './index';
+import type { Contact, Activity, Note, Reminder, User, Relationship } from './index';
 
 /**
  * Generic API error response
@@ -275,4 +268,3 @@ export interface ApiRequestConfig {
 export interface TypedFetchOptions extends Omit<RequestInit, 'body'> {
   body?: unknown;
 }
-

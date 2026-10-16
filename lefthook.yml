@@ -5,15 +5,15 @@ pre-commit:
   parallel: true
   commands:
     gofmt:
-      glob: '{backend/*.go,backend/**/*.go}'
+      glob: "{backend/*.go,backend/**/*.go}"
       run: gofmt -l {staged_files} | (! grep .)
     prettier:
-      glob: '*.{ts,tsx,js,mjs,json,yml,yaml,md,css,html}'
+      glob: "*.{ts,tsx,js,mjs,json,yml,yaml,md,css,html}"
       run: frontend/node_modules/.bin/prettier --check {staged_files}
     eslint:
       root: frontend/
-      glob: '*.{ts,tsx}'
+      glob: "*.{ts,tsx}"
       run: npx eslint --max-warnings=0 {staged_files}
     i18n:
-      glob: '{backend,frontend}/**/i18n/locales/*.json'
+      glob: "{backend,frontend}/**/i18n/locales/*.json"
       run: make i18n-check

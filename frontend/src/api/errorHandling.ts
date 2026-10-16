@@ -16,14 +16,14 @@ export function extractDetailMessage(details: ErrorDetails): string | null {
 
   const messages: string[] = [];
 
-  Object.values(normalized).forEach(value => {
+  Object.values(normalized).forEach((value) => {
     if (typeof value === 'string' && value.trim().length > 0) {
       messages.push(value.trim());
       return;
     }
 
     if (Array.isArray(value)) {
-      value.forEach(item => {
+      value.forEach((item) => {
         if (typeof item === 'string' && item.trim().length > 0) {
           messages.push(item.trim());
         }

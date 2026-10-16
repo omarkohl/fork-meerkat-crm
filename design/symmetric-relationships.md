@@ -5,7 +5,7 @@ Status: draft, for discussion.
 ## Current state
 
 - A `Relationship` is one directed row: owner `ContactID` → optional `RelatedContactID`.
-- `Type` labels the *related* person from the owner's view: on Jon, "Sister: Eva" means Eva is Jon's sister.
+- `Type` labels the _related_ person from the owner's view: on Jon, "Sister: Eva" means Eva is Jon's sister.
 - The target contact shows the row as incoming: "Sister of Jon" (`GetIncomingRelationships`, `RelationshipList.tsx`).
 - `Type` is free text. Presets (`RELATIONSHIP_TYPES` in `frontend/src/api/relationships.ts`) are stored in English and translated only at display time. Custom types are stored as typed ("Ehefrau").
 - `Name`, `Gender`, `Birthday` are copied onto the row, also when it links a contact.
@@ -16,7 +16,7 @@ Status: draft, for discussion.
 
 1. **Symmetric types read as one-sided.** Eva's page shows "Spouse of Jon" in a separate incoming list, not "Spouse: Jon". Users then add the reverse row by hand.
 2. **Manual reverse rows duplicate.** With both rows, each page shows the spouse twice (outgoing + incoming) and the graph draws two edges.
-3. **Inverse types are not inverted.** Jon → "Child: Eva" shows on Eva as "Child of Jon". Correct, but "Father: Jon" is what users expect. Gendered inverses (Son/Daughter, Mother/Father, Brother/Sister) depend on the gender of the *other* person.
+3. **Inverse types are not inverted.** Jon → "Child: Eva" shows on Eva as "Child of Jon". Correct, but "Father: Jon" is what users expect. Gendered inverses (Son/Daughter, Mother/Father, Brother/Sister) depend on the gender of the _other_ person.
 4. Unlinked rows (name only, no contact) have no other side. Symmetry does not apply to them.
 
 The data is not wrong today. Problems 1 to 3 are about presentation and duplicate entry. Keep this in mind when you compare the alternatives: a schema change fixes a display problem at a high cost.
@@ -25,15 +25,15 @@ The data is not wrong today. Problems 1 to 3 are about presentation and duplicat
 
 All alternatives except A0 need to know, per type, its inverse. Proposed catalog (keys = current preset keys):
 
-| Type | Inverse (from the other side) |
-|---|---|
-| Spouse, Partner, Sibling, Friend, Best Friend, Colleague, Neighbor | same (symmetric) |
-| Child | Parent; gendered: Father / Mother by owner's gender |
-| Parent, Mother, Father | Child; gendered: Son / Daughter by owner's gender |
-| Brother, Sister | Sibling; gendered: Brother / Sister by owner's gender |
-| Manager | Employee |
-| Employee | Manager |
-| Other, custom text | unknown → fall back to "X of Jon" |
+| Type                                                               | Inverse (from the other side)                         |
+| ------------------------------------------------------------------ | ----------------------------------------------------- |
+| Spouse, Partner, Sibling, Friend, Best Friend, Colleague, Neighbor | same (symmetric)                                      |
+| Child                                                              | Parent; gendered: Father / Mother by owner's gender   |
+| Parent, Mother, Father                                             | Child; gendered: Son / Daughter by owner's gender     |
+| Brother, Sister                                                    | Sibling; gendered: Brother / Sister by owner's gender |
+| Manager                                                            | Employee                                              |
+| Employee                                                           | Manager                                               |
+| Other, custom text                                                 | unknown → fall back to "X of Jon"                     |
 
 Rule: inverse label uses the gender of the **owner contact** (Jon), because Eva sees Jon. Unknown gender → neutral term (Parent, Child, Sibling).
 
@@ -79,7 +79,7 @@ On create of a linked catalog type, also create the reverse row. Link both with 
 - \+ Each contact owns its own row; the incoming list could disappear.
 - \+ A future vCard `RELATED` export is per card and maps 1:1.
 - − Two rows must stay in sync on edit, delete, trash, restore, permanent delete, Monica import, CSV import, user delete. Many code paths, high bug risk.
-- − The copied `Name`/`Gender`/`Birthday` on the mirror describe the *owner* contact, so they drift when that contact changes.
+- − The copied `Name`/`Gender`/`Birthday` on the mirror describe the _owner_ contact, so they drift when that contact changes.
 - − Migration must detect existing pairs and link them; unclear pairs need user input.
 - − Contradicts the Monica importer's deliberate collapse.
 

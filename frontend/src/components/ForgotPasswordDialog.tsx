@@ -1,15 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Button,
-  Stack,
-  Alert,
-  Typography
-} from '@mui/material';
+import { DialogTitle, DialogContent, DialogActions, TextField, Button, Stack, Alert, Typography } from '@mui/material';
 import AppDialog from './AppDialog';
 import { requestPasswordReset, confirmPasswordReset } from '../api/auth';
 
@@ -131,7 +122,7 @@ export default function ForgotPasswordDialog({ open, onClose }: ForgotPasswordDi
             <TextField
               label={t('passwordReset.token')}
               value={token}
-              onChange={event => setToken(event.target.value)}
+              onChange={(event) => setToken(event.target.value)}
               fullWidth
               required
             />
@@ -139,7 +130,7 @@ export default function ForgotPasswordDialog({ open, onClose }: ForgotPasswordDi
               label={t('passwordReset.newPassword')}
               type="password"
               value={newPassword}
-              onChange={event => setNewPassword(event.target.value)}
+              onChange={(event) => setNewPassword(event.target.value)}
               fullWidth
               required
             />
@@ -147,7 +138,7 @@ export default function ForgotPasswordDialog({ open, onClose }: ForgotPasswordDi
               label={t('passwordReset.confirmPassword')}
               type="password"
               value={confirmPassword}
-              onChange={event => setConfirmPassword(event.target.value)}
+              onChange={(event) => setConfirmPassword(event.target.value)}
               fullWidth
               required
             />
@@ -170,7 +161,7 @@ export default function ForgotPasswordDialog({ open, onClose }: ForgotPasswordDi
             label={t('passwordReset.email')}
             type="email"
             value={email}
-            onChange={event => setEmail(event.target.value)}
+            onChange={(event) => setEmail(event.target.value)}
             fullWidth
             required
           />

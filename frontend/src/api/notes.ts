@@ -26,13 +26,8 @@ export interface GetNotesParams {
 }
 
 // Get notes for a contact
-export async function getContactNotes(
-  contactId: string | number
-): Promise<NotesResponse> {
-  const response = await apiFetch(
-    `${API_BASE_URL}/contacts/${contactId}/notes`,
-    { headers: getAuthHeaders() }
-  );
+export async function getContactNotes(contactId: string | number): Promise<NotesResponse> {
+  const response = await apiFetch(`${API_BASE_URL}/contacts/${contactId}/notes`, { headers: getAuthHeaders() });
 
   if (!response.ok) {
     throw await parseErrorResponse(response);
@@ -42,9 +37,7 @@ export async function getContactNotes(
 }
 
 // Get all unassigned notes
-export async function getUnassignedNotes(
-  params: GetNotesParams = {}
-): Promise<NotesResponse> {
+export async function getUnassignedNotes(params: GetNotesParams = {}): Promise<NotesResponse> {
   const { page = 1, limit = 25 } = params;
   const search = params.search?.trim();
 
@@ -65,10 +58,7 @@ export async function getUnassignedNotes(
     queryParams.append('toDate', params.toDate);
   }
 
-  const response = await apiFetch(
-    `${API_BASE_URL}/notes?${queryParams.toString()}`,
-    { headers: getAuthHeaders() }
-  );
+  const response = await apiFetch(`${API_BASE_URL}/notes?${queryParams.toString()}`, { headers: getAuthHeaders() });
 
   if (!response.ok) {
     throw await parseErrorResponse(response);
@@ -78,13 +68,8 @@ export async function getUnassignedNotes(
 }
 
 // Get single note
-export async function getNote(
-  id: string | number
-): Promise<Note> {
-  const response = await apiFetch(
-    `${API_BASE_URL}/notes/${id}`,
-    { headers: getAuthHeaders() }
-  );
+export async function getNote(id: string | number): Promise<Note> {
+  const response = await apiFetch(`${API_BASE_URL}/notes/${id}`, { headers: getAuthHeaders() });
 
   if (!response.ok) {
     throw await parseErrorResponse(response);
@@ -96,16 +81,13 @@ export async function getNote(
 // Create note for contact
 export async function createNote(
   contactId: string | number,
-  data: { content: string; date: string; contact_id?: number }
+  data: { content: string; date: string; contact_id?: number },
 ): Promise<Note> {
-  const response = await apiFetch(
-    `${API_BASE_URL}/contacts/${contactId}/notes`,
-    {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    }
-  );
+  const response = await apiFetch(`${API_BASE_URL}/contacts/${contactId}/notes`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
 
   if (!response.ok) {
     throw await parseErrorResponse(response);
@@ -115,17 +97,12 @@ export async function createNote(
 }
 
 // Create unassigned note
-export async function createUnassignedNote(
-  data: { content: string; date: string }
-): Promise<Note> {
-  const response = await apiFetch(
-    `${API_BASE_URL}/notes`,
-    {
-      method: 'POST',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    }
-  );
+export async function createUnassignedNote(data: { content: string; date: string }): Promise<Note> {
+  const response = await apiFetch(`${API_BASE_URL}/notes`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
 
   if (!response.ok) {
     throw await parseErrorResponse(response);
@@ -137,16 +114,13 @@ export async function createUnassignedNote(
 // Update note
 export async function updateNote(
   id: string | number,
-  data: { content: string; date: string; contact_id?: number }
+  data: { content: string; date: string; contact_id?: number },
 ): Promise<Note> {
-  const response = await apiFetch(
-    `${API_BASE_URL}/notes/${id}`,
-    {
-      method: 'PUT',
-      headers: getAuthHeaders(),
-      body: JSON.stringify(data),
-    }
-  );
+  const response = await apiFetch(`${API_BASE_URL}/notes/${id}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
 
   if (!response.ok) {
     throw await parseErrorResponse(response);
@@ -156,16 +130,11 @@ export async function updateNote(
 }
 
 // Delete note
-export async function deleteNote(
-  id: string | number
-): Promise<void> {
-  const response = await apiFetch(
-    `${API_BASE_URL}/notes/${id}`,
-    {
-      method: 'DELETE',
-      headers: getAuthHeaders(),
-    }
-  );
+export async function deleteNote(id: string | number): Promise<void> {
+  const response = await apiFetch(`${API_BASE_URL}/notes/${id}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
 
   if (!response.ok) {
     throw await parseErrorResponse(response);

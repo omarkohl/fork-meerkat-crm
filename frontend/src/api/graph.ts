@@ -3,10 +3,7 @@ import { apiFetch, API_BASE_URL, getAuthHeaders, parseErrorResponse } from './cl
 import { GraphResponse } from '../types/graph';
 
 export async function getGraph(): Promise<GraphResponse> {
-  const response = await apiFetch(
-    `${API_BASE_URL}/graph`,
-    { headers: getAuthHeaders() }
-  );
+  const response = await apiFetch(`${API_BASE_URL}/graph`, { headers: getAuthHeaders() });
 
   if (!response.ok) {
     throw await parseErrorResponse(response);

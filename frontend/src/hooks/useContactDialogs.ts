@@ -6,7 +6,7 @@ import { handleError, ErrorNotifier, getErrorMessage } from '../utils/errorHandl
 export function useContactDialogs(
   contactId: string | undefined,
   onRefresh: () => Promise<void>,
-  notifier?: ErrorNotifier
+  notifier?: ErrorNotifier,
 ) {
   const [noteDialogOpen, setNoteDialogOpen] = useState(false);
   const [activityDialogOpen, setActivityDialogOpen] = useState(false);
@@ -18,7 +18,7 @@ export function useContactDialogs(
       await createNote(contactId, {
         content,
         date: new Date(date).toISOString(),
-        contact_id: parseInt(contactId)
+        contact_id: parseInt(contactId),
       });
       await onRefresh();
     } catch (err) {
@@ -40,7 +40,7 @@ export function useContactDialogs(
         description: activity.description,
         location: activity.location,
         date: new Date(activity.date).toISOString(),
-        contact_ids: activity.contact_ids
+        contact_ids: activity.contact_ids,
       });
       await onRefresh();
     } catch (err) {
@@ -55,6 +55,6 @@ export function useContactDialogs(
     setNoteDialogOpen,
     setActivityDialogOpen,
     handleSaveNote,
-    handleSaveActivity
+    handleSaveActivity,
   };
 }

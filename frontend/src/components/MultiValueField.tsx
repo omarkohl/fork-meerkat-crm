@@ -77,9 +77,7 @@ export default function MultiValueField({
                   if (reason === 'input') updateRow(index, { type: newInput });
                 }}
                 sx={{ minWidth: 140 }}
-                renderInput={(params) => (
-                  <TextField {...params} label={t('contacts.fieldType')} size="small" />
-                )}
+                renderInput={(params) => <TextField {...params} label={t('contacts.fieldType')} size="small" />}
               />
             )}
             <TextField
@@ -90,12 +88,7 @@ export default function MultiValueField({
               value={row.value}
               onChange={(e) => updateRow(index, { value: e.target.value })}
             />
-            <IconButton
-              size="small"
-              color="error"
-              onClick={() => removeRow(index)}
-              aria-label={t('common.delete')}
-            >
+            <IconButton size="small" color="error" onClick={() => removeRow(index)} aria-label={t('common.delete')}>
               <DeleteIcon fontSize="small" />
             </IconButton>
           </Stack>

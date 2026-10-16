@@ -70,7 +70,7 @@ export default function CustomFieldsSettings() {
     if (!trimmedName) return;
 
     // Check for duplicates (case-insensitive)
-    if (fieldNames.some(name => name.toLowerCase() === trimmedName.toLowerCase())) {
+    if (fieldNames.some((name) => name.toLowerCase() === trimmedName.toLowerCase())) {
       setError(t('settings.customFields.duplicateError'));
       return;
     }
@@ -140,7 +140,11 @@ export default function CustomFieldsSettings() {
               {t('settings.customFields.description')}
             </Typography>
 
-            {error && <Alert severity="error" sx={{ py: 0 }}>{error}</Alert>}
+            {error && (
+              <Alert severity="error" sx={{ py: 0 }}>
+                {error}
+              </Alert>
+            )}
 
             {loading ? (
               <Typography variant="body2" color="text.secondary">
@@ -225,15 +229,13 @@ export default function CustomFieldsSettings() {
         <DialogTitle>{t('settings.customFields.deleteDialog.title')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            {t('settings.customFields.deleteDialog.message', { 
-              fieldName: fieldToDelete !== null ? fieldNames[fieldToDelete] : '' 
+            {t('settings.customFields.deleteDialog.message', {
+              fieldName: fieldToDelete !== null ? fieldNames[fieldToDelete] : '',
             })}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>
-            {t('settings.customFields.deleteDialog.cancel')}
-          </Button>
+          <Button onClick={() => setDeleteDialogOpen(false)}>{t('settings.customFields.deleteDialog.cancel')}</Button>
           <Button onClick={handleDeleteConfirm} color="error" autoFocus>
             {t('settings.customFields.deleteDialog.confirm')}
           </Button>

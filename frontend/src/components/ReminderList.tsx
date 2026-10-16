@@ -14,7 +14,7 @@ import {
   DialogContent,
   DialogActions,
   DialogContentText,
-  Tooltip
+  Tooltip,
 } from '@mui/material';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -32,12 +32,7 @@ interface ReminderListProps {
   onDelete: (reminderId: number) => Promise<void>;
 }
 
-export default function ReminderList({
-  reminders,
-  onComplete,
-  onEdit,
-  onDelete
-}: ReminderListProps) {
+export default function ReminderList({ reminders, onComplete, onEdit, onDelete }: ReminderListProps) {
   const { t } = useTranslation();
   const { formatDate } = useDateFormat();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -113,14 +108,14 @@ export default function ReminderList({
                   <Typography variant="body1" gutterBottom>
                     {reminder.message}
                   </Typography>
-                  
+
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
                     <Chip
                       label={formatDate(reminder.remind_at)}
                       size="small"
                       color={isOverdue(reminder.remind_at) ? 'warning' : 'default'}
                     />
-                    
+
                     {reminder.recurrence !== 'once' && (
                       <Chip
                         icon={<RepeatIcon />}
@@ -129,24 +124,14 @@ export default function ReminderList({
                         variant="outlined"
                       />
                     )}
-                    
+
                     {reminder.by_mail && (
-                      <Chip
-                        icon={<EmailIcon />}
-                        label={t('reminders.email')}
-                        size="small"
-                        variant="outlined"
-                      />
+                      <Chip icon={<EmailIcon />} label={t('reminders.email')} size="small" variant="outlined" />
                     )}
-                    
+
                     {reminder.reoccur_from_completion && reminder.recurrence !== 'once' && (
                       <Tooltip title={t('reminders.reoccurFromCompletionTooltip')}>
-                        <Chip
-                          label={t('reminders.flexible')}
-                          size="small"
-                          variant="outlined"
-                          color="info"
-                        />
+                        <Chip label={t('reminders.flexible')} size="small" variant="outlined" color="info" />
                       </Tooltip>
                     )}
                   </Box>
@@ -170,7 +155,7 @@ export default function ReminderList({
                       <CheckCircleIcon />
                     </IconButton>
                   </Tooltip>
-                  
+
                   <Box
                     className="action-buttons"
                     sx={{
@@ -181,15 +166,11 @@ export default function ReminderList({
                     }}
                   >
                     <Tooltip title={t('common.edit')}>
-                      <IconButton
-                        size="small"
-                        onClick={() => onEdit(reminder)}
-                        disabled={loading === reminder.ID}
-                      >
+                      <IconButton size="small" onClick={() => onEdit(reminder)} disabled={loading === reminder.ID}>
                         <EditIcon />
                       </IconButton>
                     </Tooltip>
-                    
+
                     <Tooltip title={t('common.delete')}>
                       <IconButton
                         size="small"
@@ -212,20 +193,13 @@ export default function ReminderList({
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
         <DialogTitle>{t('reminders.deleteConfirm')}</DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            {t('reminders.deleteMessage')}
-          </DialogContentText>
+          <DialogContentText>{t('reminders.deleteMessage')}</DialogContentText>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)} disabled={loading !== null}>
             {t('common.cancel')}
           </Button>
-          <Button
-            onClick={handleDeleteConfirm}
-            color="error"
-            variant="contained"
-            disabled={loading !== null}
-          >
+          <Button onClick={handleDeleteConfirm} color="error" variant="contained" disabled={loading !== null}>
             {t('common.delete')}
           </Button>
         </DialogActions>

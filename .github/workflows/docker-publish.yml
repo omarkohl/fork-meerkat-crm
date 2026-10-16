@@ -3,7 +3,7 @@ name: Build and Push Docker Images
 on:
   push:
     # Fork tags only: upstream tags mirrored to the fork must not publish.
-    tags: ['v*-omk.*']
+    tags: ["v*-omk.*"]
 
 env:
   REGISTRY: ghcr.io

@@ -1,12 +1,7 @@
 // Custom hook for fetching and managing contacts
 import { useState, useEffect, useCallback } from 'react';
 import { isAuthenticated } from '../auth';
-import {
-  getContacts,
-  GetContactsParams,
-  ContactsResponse,
-  Contact
-} from '../api/contacts';
+import { getContacts, GetContactsParams, ContactsResponse, Contact } from '../api/contacts';
 import { handleFetchError } from '../utils/errorHandler';
 
 interface UseContactsResult {

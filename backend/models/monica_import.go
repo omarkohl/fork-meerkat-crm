@@ -116,7 +116,7 @@ type MonicaImportResult struct {
 	// RelationshipsCollapsed counts reciprocal halves skipped because the
 	// other direction was imported instead.
 	RelationshipsCollapsed int `json:"relationships_collapsed"`
-	PhotosQueued         int `json:"photos_queued"`
-	PhotosSaved          int `json:"photos_saved"`
-	PhotosFailed         int `json:"photos_failed"`
+	PhotosQueued           int `json:"photos_queued"`
+	PhotosSaved            int `json:"photos_saved"`
+	PhotosFailed           int `json:"photos_failed"`
 }

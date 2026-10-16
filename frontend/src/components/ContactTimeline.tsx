@@ -1,13 +1,7 @@
 import { Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import {
-  Box,
-  Typography,
-  Paper,
-  IconButton,
-  Link
-} from '@mui/material';
+import { Box, Typography, Paper, IconButton, Link } from '@mui/material';
 import {
   Timeline,
   TimelineItem,
@@ -15,7 +9,7 @@ import {
   TimelineConnector,
   TimelineContent,
   TimelineDot,
-  TimelineOppositeContent
+  TimelineOppositeContent,
 } from '@mui/lab';
 import NoteIcon from '@mui/icons-material/Note';
 import EventIcon from '@mui/icons-material/Event';
@@ -28,7 +22,11 @@ import { ReminderCompletion } from '../api/reminders';
 import { useDateFormat } from '../DateFormatProvider';
 
 interface ContactTimelineProps {
-  timelineItems: Array<{ type: 'note' | 'activity' | 'completion'; data: Note | Activity | ReminderCompletion; date: string }>;
+  timelineItems: Array<{
+    type: 'note' | 'activity' | 'completion';
+    data: Note | Activity | ReminderCompletion;
+    date: string;
+  }>;
   onEditItem: (type: 'note' | 'activity', item: Note | Activity) => void;
   onDeleteCompletion?: (completionId: number) => void;
 }
@@ -55,15 +53,19 @@ export default function ContactTimeline({ timelineItems, onEditItem, onDeleteCom
         return (
           <TimelineItem key={`${item.type}-${item.data.ID}`}>
             <TimelineOppositeContent color="text.secondary" sx={{ flex: 0.3 }}>
-              <Typography variant="caption">
-                {isValidDate ? formatDate(item.date) : (item.date || 'N/A')}
-              </Typography>
+              <Typography variant="caption">{isValidDate ? formatDate(item.date) : item.date || 'N/A'}</Typography>
             </TimelineOppositeContent>
             <TimelineSeparator>
-              <TimelineDot color={item.type === 'note' ? 'primary' : item.type === 'activity' ? 'secondary' : 'success'}>
-                {item.type === 'note' ? <NoteIcon fontSize="small" /> :
-                 item.type === 'activity' ? <EventIcon fontSize="small" /> :
-                 <NotificationsIcon fontSize="small" />}
+              <TimelineDot
+                color={item.type === 'note' ? 'primary' : item.type === 'activity' ? 'secondary' : 'success'}
+              >
+                {item.type === 'note' ? (
+                  <NoteIcon fontSize="small" />
+                ) : item.type === 'activity' ? (
+                  <EventIcon fontSize="small" />
+                ) : (
+                  <NotificationsIcon fontSize="small" />
+                )}
               </TimelineDot>
               {index < timelineItems.length - 1 && <TimelineConnector />}
             </TimelineSeparator>
@@ -74,58 +76,64 @@ export default function ContactTimeline({ timelineItems, onEditItem, onDeleteCom
                   p: 1.5,
                   position: 'relative',
                   '&:hover .action-icon': {
-                    opacity: 1
-                  }
+                    opacity: 1,
+                  },
                 }}
               >
                 <Typography variant="subtitle2" sx={{ fontWeight: 500 }}>
-                  {item.type === 'note' ? t('contactDetail.note') :
-                   item.type === 'activity' ? (item.data as Activity).title :
-                   t('timeline.reminderCompleted')}
+                  {item.type === 'note'
+                    ? t('contactDetail.note')
+                    : item.type === 'activity'
+                      ? (item.data as Activity).title
+                      : t('timeline.reminderCompleted')}
                 </Typography>
                 <Typography variant="body2" sx={{ mt: 1 }}>
                   {item.type === 'note'
                     ? (item.data as Note).content
                     : item.type === 'activity'
-                    ? (item.data as Activity).description || t('contactDetail.noDescription')
-                    : (item.data as ReminderCompletion).message}
+                      ? (item.data as Activity).description || t('contactDetail.noDescription')
+                      : (item.data as ReminderCompletion).message}
                 </Typography>
                 {item.type === 'activity' && (item.data as Activity).location && (
                   <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
                     📍 {(item.data as Activity).location}
                   </Typography>
                 )}
-                {item.type === 'activity' && (item.data as Activity).contacts && (item.data as Activity).contacts!.length > 0 && (
-                  <Box sx={{ mt: 1.5, display: 'flex', flexWrap: 'wrap', alignItems: 'center' }}>
-                    <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>
-                      👥
-                    </Typography>
-                    {(item.data as Activity).contacts!.map((activityContact, idx) => (
-                      <Fragment key={activityContact.ID}>
-                        <Link
-                          component="button"
-                          variant="caption"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            navigate(`/contacts/${activityContact.ID}`);
-                          }}
-                          sx={{
-                            cursor: 'pointer',
-                            textDecoration: 'none',
-                            '&:hover': { textDecoration: 'underline' }
-                          }}
-                        >
-                          {activityContact.firstname}{' '}
-                          {activityContact.nickname ? `"${activityContact.nickname}" ` : ''}
-                          {activityContact.lastname}
-                        </Link>
-                        {idx < (item.data as Activity).contacts!.length - 1 && (
-                          <Typography variant="caption" color="text.secondary">,&nbsp;</Typography>
-                        )}
-                      </Fragment>
-                    ))}
-                  </Box>
-                )}
+                {item.type === 'activity' &&
+                  (item.data as Activity).contacts &&
+                  (item.data as Activity).contacts!.length > 0 && (
+                    <Box sx={{ mt: 1.5, display: 'flex', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ mr: 0.5 }}>
+                        👥
+                      </Typography>
+                      {(item.data as Activity).contacts!.map((activityContact, idx) => (
+                        <Fragment key={activityContact.ID}>
+                          <Link
+                            component="button"
+                            variant="caption"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              navigate(`/contacts/${activityContact.ID}`);
+                            }}
+                            sx={{
+                              cursor: 'pointer',
+                              textDecoration: 'none',
+                              '&:hover': { textDecoration: 'underline' },
+                            }}
+                          >
+                            {activityContact.firstname}{' '}
+                            {activityContact.nickname ? `"${activityContact.nickname}" ` : ''}
+                            {activityContact.lastname}
+                          </Link>
+                          {idx < (item.data as Activity).contacts!.length - 1 && (
+                            <Typography variant="caption" color="text.secondary">
+                              ,&nbsp;
+                            </Typography>
+                          )}
+                        </Fragment>
+                      ))}
+                    </Box>
+                  )}
 
                 {item.type === 'completion' ? (
                   <IconButton
@@ -138,7 +146,7 @@ export default function ContactTimeline({ timelineItems, onEditItem, onDeleteCom
                       top: 8,
                       right: 8,
                       opacity: 0,
-                      transition: 'opacity 0.2s'
+                      transition: 'opacity 0.2s',
                     }}
                   >
                     <DeleteIcon fontSize="small" />
@@ -153,7 +161,7 @@ export default function ContactTimeline({ timelineItems, onEditItem, onDeleteCom
                       top: 8,
                       right: 8,
                       opacity: 0,
-                      transition: 'opacity 0.2s'
+                      transition: 'opacity 0.2s',
                     }}
                   >
                     <EditIcon fontSize="small" />

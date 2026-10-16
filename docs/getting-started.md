@@ -17,43 +17,43 @@ You can use either the `:latest` tag or a specific version (e.g. `:0.9` or `:0.9
 Copy the [sample docker compose file](https://github.com/fbuchner/meerkat-crm/blob/main/docker-compose.yml) as well as [sample env file](https://github.com/fbuchner/meerkat-crm/blob/main/.env.example) and rename the env file to `.env`.
 
 After adjusting the environment variables as needed you can run:
-```docker compose up -d```
+`docker compose up -d`
 
 ### Environment variables
 
-| Variable | Description |
-|---|---|
-| `JWT_SECRET_KEY` | Random string used for JWT signing (minimum 32 characters) |
-| `FRONTEND_URL` | Used for CORS headers. Wildcard (`*`) is allowed but not recommended for production use |
-| `RESEND_API_KEY` | API key for [Resend](https://resend.com), used to send e-mail notifications. The generous free tier is more than enough for any personal setup |
-| `RESEND_FROM_EMAIL` | Sender e-mail address for Resend, needs to be configured in Resend |
-| `SMTP_HOST` | SMTP server hostname, used to send e-mail notifications via your own mail server (alternative or in addition to Resend) |
-| `SMTP_PORT` | SMTP server port (default `587`; use `465` with `SMTP_USE_TLS=true`) |
-| `SMTP_USERNAME` | SMTP auth username (leave empty for unauthenticated relays) |
-| `SMTP_PASSWORD` | SMTP auth password |
-| `SMTP_FROM_EMAIL` | Sender e-mail address for SMTP |
-| `SMTP_USE_TLS` | Set to `true` for implicit TLS (port 465); otherwise STARTTLS is used |
-| `CARDDAV_ENABLED` | When set to `true` the application acts as a CardDAV server which allows contacts to be synced with your phone |
-| `DISABLE_REGISTRATION` | When set to `true`, new user registration is disabled (existing users can still log in). Default is `false` |
-| `DATA_PATH` | Host directory where the database file should be stored |
-| `PHOTOS_PATH` | Host directory where the contact photos should be stored |
-| `JWT_EXPIRY_HOURS` | Token expiry, i.e. after how many hours you will need to sign into the application again. Default is 96 hours (4 days) |
-| `OIDC_PROVIDER_URL` | Issuer URL of your OIDC provider (i.e. endpoint URI for your provider). Required to enable SSO |
-| `OIDC_CLIENT_ID` | OAuth2 client ID registered with your OIDC provider |
-| `OIDC_CLIENT_SECRET` | OAuth2 client secret registered with your OIDC provider |
-| `OIDC_AUTO_PROVISION` | When `true`, a new account is automatically created on first SSO login. Default is `false` |
-| `OIDC_TRUST_EMAIL` | When `true`, skips the `email_verified`  requirement when linking an OIDC identity to an existing account by email. Safe to enable for self-hosted providers (e.g. Authentik) where you control all user accounts. Default is `false` |
-| `REMINDER_TIME` | Time of day at which reminder emails are sent, in `HH:MM` format (24-hour). Default is `12:00` |
-| `REMINDER_TIMEZONE` | Timezone used for scheduling reminder emails. Must be a valid [IANA timezone name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) (e.g. `Europe/Berlin`). Default is `UTC` |
-| `BACKUP_ENABLED` | Whether the daily automatic [backup](deployment.md#backups) runs. Default is `true`. Admins can create backups by hand either way |
-| `BACKUP_TIME` | Time of day of the automatic backup, `HH:MM` (24-hour) in `REMINDER_TIMEZONE`. Default is `02:30` |
-| `BACKUP_RETENTION_COUNT` | Number of most recent backups to keep (older ones are deleted after each backup). Values below 1 fall back to the default, `7` |
-| `BACKUP_DIR` | Directory the backups are written to. Default is a `backups` directory next to the database file (`SQLITE_DB_PATH`) |
-| `AUDIT_LOG_RETENTION_DAYS` | Number of days [audit log](deployment.md#sessions-and-audit-log) entries are kept (purged daily). `0` keeps them forever. Default is `365` |
-| `METRICS_ENABLED` | Serve Prometheus metrics at `/metrics`. Default is `false`. See [Monitoring](deployment.md#monitoring-with-prometheus) |
-| `METRICS_TOKEN` | Optional bearer token that scrapers must send to read the metrics |
-| `METRICS_ADDR` | Optional separate listen address for the metrics (for example `127.0.0.1:9090`); then `/metrics` is not served on the main port |
-| `TRASH_RETENTION_DAYS` | Number of days a deleted contact stays in the Trash before it is deleted permanently (checked daily). Values below 1 fall back to the default, `30` |
+| Variable                   | Description                                                                                                                                                                                                                          |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `JWT_SECRET_KEY`           | Random string used for JWT signing (minimum 32 characters)                                                                                                                                                                           |
+| `FRONTEND_URL`             | Used for CORS headers. Wildcard (`*`) is allowed but not recommended for production use                                                                                                                                              |
+| `RESEND_API_KEY`           | API key for [Resend](https://resend.com), used to send e-mail notifications. The generous free tier is more than enough for any personal setup                                                                                       |
+| `RESEND_FROM_EMAIL`        | Sender e-mail address for Resend, needs to be configured in Resend                                                                                                                                                                   |
+| `SMTP_HOST`                | SMTP server hostname, used to send e-mail notifications via your own mail server (alternative or in addition to Resend)                                                                                                              |
+| `SMTP_PORT`                | SMTP server port (default `587`; use `465` with `SMTP_USE_TLS=true`)                                                                                                                                                                 |
+| `SMTP_USERNAME`            | SMTP auth username (leave empty for unauthenticated relays)                                                                                                                                                                          |
+| `SMTP_PASSWORD`            | SMTP auth password                                                                                                                                                                                                                   |
+| `SMTP_FROM_EMAIL`          | Sender e-mail address for SMTP                                                                                                                                                                                                       |
+| `SMTP_USE_TLS`             | Set to `true` for implicit TLS (port 465); otherwise STARTTLS is used                                                                                                                                                                |
+| `CARDDAV_ENABLED`          | When set to `true` the application acts as a CardDAV server which allows contacts to be synced with your phone                                                                                                                       |
+| `DISABLE_REGISTRATION`     | When set to `true`, new user registration is disabled (existing users can still log in). Default is `false`                                                                                                                          |
+| `DATA_PATH`                | Host directory where the database file should be stored                                                                                                                                                                              |
+| `PHOTOS_PATH`              | Host directory where the contact photos should be stored                                                                                                                                                                             |
+| `JWT_EXPIRY_HOURS`         | Token expiry, i.e. after how many hours you will need to sign into the application again. Default is 96 hours (4 days)                                                                                                               |
+| `OIDC_PROVIDER_URL`        | Issuer URL of your OIDC provider (i.e. endpoint URI for your provider). Required to enable SSO                                                                                                                                       |
+| `OIDC_CLIENT_ID`           | OAuth2 client ID registered with your OIDC provider                                                                                                                                                                                  |
+| `OIDC_CLIENT_SECRET`       | OAuth2 client secret registered with your OIDC provider                                                                                                                                                                              |
+| `OIDC_AUTO_PROVISION`      | When `true`, a new account is automatically created on first SSO login. Default is `false`                                                                                                                                           |
+| `OIDC_TRUST_EMAIL`         | When `true`, skips the `email_verified` requirement when linking an OIDC identity to an existing account by email. Safe to enable for self-hosted providers (e.g. Authentik) where you control all user accounts. Default is `false` |
+| `REMINDER_TIME`            | Time of day at which reminder emails are sent, in `HH:MM` format (24-hour). Default is `12:00`                                                                                                                                       |
+| `REMINDER_TIMEZONE`        | Timezone used for scheduling reminder emails. Must be a valid [IANA timezone name](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones) (e.g. `Europe/Berlin`). Default is `UTC`                                            |
+| `BACKUP_ENABLED`           | Whether the daily automatic [backup](deployment.md#backups) runs. Default is `true`. Admins can create backups by hand either way                                                                                                    |
+| `BACKUP_TIME`              | Time of day of the automatic backup, `HH:MM` (24-hour) in `REMINDER_TIMEZONE`. Default is `02:30`                                                                                                                                    |
+| `BACKUP_RETENTION_COUNT`   | Number of most recent backups to keep (older ones are deleted after each backup). Values below 1 fall back to the default, `7`                                                                                                       |
+| `BACKUP_DIR`               | Directory the backups are written to. Default is a `backups` directory next to the database file (`SQLITE_DB_PATH`)                                                                                                                  |
+| `AUDIT_LOG_RETENTION_DAYS` | Number of days [audit log](deployment.md#sessions-and-audit-log) entries are kept (purged daily). `0` keeps them forever. Default is `365`                                                                                           |
+| `METRICS_ENABLED`          | Serve Prometheus metrics at `/metrics`. Default is `false`. See [Monitoring](deployment.md#monitoring-with-prometheus)                                                                                                               |
+| `METRICS_TOKEN`            | Optional bearer token that scrapers must send to read the metrics                                                                                                                                                                    |
+| `METRICS_ADDR`             | Optional separate listen address for the metrics (for example `127.0.0.1:9090`); then `/metrics` is not served on the main port                                                                                                      |
+| `TRASH_RETENTION_DAYS`     | Number of days a deleted contact stays in the Trash before it is deleted permanently (checked daily). Values below 1 fall back to the default, `30`                                                                                  |
 
 SSO is disabled unless all three of `OIDC_PROVIDER_URL`, `OIDC_CLIENT_ID`, and `OIDC_CLIENT_SECRET` are set.
 
@@ -65,7 +65,7 @@ New photo directories are created with mode `0750` and photo files with `0640`, 
 
 ## Post-Installation Setup
 
-When running Meerkat-CRM you can access the application under the specified port (default is `7300`). 
+When running Meerkat-CRM you can access the application under the specified port (default is `7300`).
 To get started you need to register a user. The first user will automatically receive administrator rights and therefore be able to access the admin panel in the settings menu.
 
 ## Backup

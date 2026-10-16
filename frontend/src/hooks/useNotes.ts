@@ -1,12 +1,7 @@
 // Custom hook for fetching and managing notes
 import { useState, useEffect, useCallback } from 'react';
 import { isAuthenticated } from '../auth';
-import {
-  getUnassignedNotes,
-  getContactNotes,
-  Note,
-  GetNotesParams,
-} from '../api/notes';
+import { getUnassignedNotes, getContactNotes, Note, GetNotesParams } from '../api/notes';
 import { handleFetchError } from '../utils/errorHandler';
 
 interface UseNotesResult {
@@ -19,10 +14,7 @@ interface UseNotesResult {
   refetch: () => Promise<void>;
 }
 
-export function useNotes(
-	contactId?: string | number,
-	params: GetNotesParams = {}
-): UseNotesResult {
+export function useNotes(contactId?: string | number, params: GetNotesParams = {}): UseNotesResult {
   // Destructure params to use primitive values as dependencies
   // This prevents re-fetches when callers pass new object references with identical values
   const { page: paramPage, limit: paramLimit, search, fromDate, toDate } = params;

@@ -1,9 +1,11 @@
 **Project Overview**
+
 - Meerkat CRM is a split Go backend and React frontend; the API sits under /api/v1 and serves a single-page app that manages contacts, activities, notes, reminders, and photos.
 - The backend boots in [backend/main.go](backend/main.go) where config, database migrations, cron-style reminders, and the Gin router are wired together.
 - The frontend lives in [frontend/src](frontend/src) with React 19, TypeScript, and MUI components backed by a typed API layer and custom hooks.
 
 **Backend**
+
 - Route definitions in [backend/routes/routes.go](backend/routes/routes.go) apply layered middleware: request IDs, structured logging, rate limiting, JWT auth, and JSON validation.
 - Controllers (see [backend/controllers/contact_controller.go](backend/controllers/contact_controller.go)) expect `validated` payloads injected by [backend/middleware/validation.go](backend/middleware/validation.go); pull inputs from the context instead of decoding again.
 - Custom errors from [backend/errors/errors.go](backend/errors/errors.go) plus [backend/middleware/middleware.go](backend/middleware/middleware.go) map failures to consistent JSON envelopes; prefer returning `*apperrors.AppError`.
@@ -11,12 +13,14 @@
 - Scheduled reminders run from [backend/services/reminder_service.go](backend/services/reminder_service.go) using gocron v2 (jobs registered in [backend/services/scheduler.go](backend/services/scheduler.go)); honor `REMINDER_TIME` and Resend email toggles from [backend/config/config.go](backend/config/config.go).
 
 **Frontend**
+
 - All network calls go through [frontend/src/api/client.ts](frontend/src/api/client.ts) which enforces auth headers, request timeouts, and auto-logout on 401; reuse it for new endpoints.
 - Resource-specific modules in [frontend/src/api](frontend/src/api) pair with hooks in [frontend/src/hooks](frontend/src/hooks); pages like [frontend/src/ContactsPage.tsx](frontend/src/ContactsPage.tsx) consume `{ data, loading, error, refetch }` contracts.
 - Auth helpers in [frontend/src/auth.ts](frontend/src/auth.ts) persist JWTs in localStorage; frontend assumes `REACT_APP_API_URL` when constructing base URLs.
 - Styling blends global CSS (App.css/index.css) with MUI theming; photo uploads land in backend static storage under `static/photos`.
 
 **Workflows**
+
 - Root `Makefile` runs both apps: `make install`, `make precommit` (checks gofmt/Prettier formatting of all files (Go, TS, JSON, YAML, Markdown, docs), `make format` fixes it; go vet, golangci-lint (binary must be installed), ESLint, tsc, unit tests; CI runs the same, see [.github/workflows/lint.yml](.github/workflows/lint.yml), config in [backend/.golangci.yml](backend/.golangci.yml)), `make test-e2e`. `make help` lists all targets.
 - Source backend/my_environment.env to `.env` before running the server
 - `make dev` (root) runs backend and frontend together with no setup; Ctrl+C stops both. Data goes to `.dev/` of the checkout, so checkouts do not share a database. Optional overrides (e.g. `BACKEND_PORT`, `FRONTEND_PORT`, `DEV_DATA_DIR`, any backend variable) go in `dev.env` (git-ignored, shell `KEY=value`); see [scripts/dev.sh](scripts/dev.sh).
@@ -26,6 +30,7 @@
 - Rate limiting is IP-based via [backend/middleware/rate_limiter.go](backend/middleware/rate_limiter.go); respect separate auth/general buckets when adding endpoints.
 
 **Docker (All-in-one Image)**
+
 - The whole app ships as a single container built from the root [Dockerfile](Dockerfile): the React bundle and the Go backend served together by nginx (which proxies `/api` same-origin), managed by supervisord.
 - Copy `.env.example` to `.env` and configure `JWT_SECRET_KEY`, `FRONTEND_URL`, and optionally `DATA_PATH`/`PHOTOS_PATH` for volume locations.
 - Deploy using the pre-built image from GHCR: `docker compose up -d`. Set `IMAGE_TAG` in `.env` to pin a specific version (default: `latest`).
@@ -34,12 +39,14 @@
 - The frontend bundle is built with an empty `REACT_APP_API_URL` so it calls the API on relative paths; nginx (see [docker/nginx.conf](docker/nginx.conf)) proxies `/api`, `/health`, and `/carddav` to the backend on `127.0.0.1:8081`.
 
 **Testing**
+
 - Backend Go tests (`go test ./...` or `make test`) spin up in-memory SQLite in helpers like [backend/controllers/activity_controller_test.go](backend/controllers/activity_controller_test.go); mirror that pattern for new suites.
 - Validation and middleware behavior has dedicated coverage in [backend/middleware/validation_test.go](backend/middleware/validation_test.go) and related files—extend these before touching shared validators.
 - Reminder scheduling is covered in [backend/services/reminder_service_test.go](backend/services/reminder_service_test.go) with clock control helpers; keep cron changes tested there.
 - Frontend unit tests run with `yarn test` and rely on React Testing Library setup in [frontend/src/setupTests.ts](frontend/src/setupTests.ts), which already registers jest-dom.
 
 **E2E Testing (Playwright)**
+
 - Without Docker: `make test-e2e` builds both apps and runs Playwright against a local stack ([scripts/e2e-stack.mjs](scripts/e2e-stack.mjs)). `E2E_SKIP_BUILD=1` reuses builds; `ARGS=e2e/contacts.spec.ts` narrows the run. `node scripts/e2e-stack.mjs` alone keeps the stack up on :7300.
 - End-to-end tests use Playwright against a real backend running in Docker; test files live in [frontend/e2e](frontend/e2e).
 - Start the test stack: `docker compose -f docker-compose.test.yml up -d --build`
@@ -48,16 +55,18 @@
 - Tests run automatically in CI on push/PR to main via [.github/workflows/e2e-tests.yml](.github/workflows/e2e-tests.yml).
 
 **CardDAV client sync tests**
+
 - The contact sync scenarios in [backend/services/contact_sync_service_test.go](backend/services/contact_sync_service_test.go) run against every backend listed in `contactSyncBackends()`; the harness lives in [backend/services/contact_sync_remote_test.go](backend/services/contact_sync_remote_test.go).
 - By default they run against Meerkat's own CardDAV server in-process. It has no sync-collection REPORT, so that pass only covers the full-listing fallback.
 - Add a real Radicale server to also cover token-based incremental sync, deletion tombstones and the address-data multi-get path:
-	1. `docker compose -f docker-compose.carddav-test.yml up -d --wait`
-	2. `cd backend && MEERKAT_CARDDAV_IT=1 go test ./services/ -run TestContactSync -v`
-	3. `docker compose -f docker-compose.carddav-test.yml down -v`
+  1.  `docker compose -f docker-compose.carddav-test.yml up -d --wait`
+  2.  `cd backend && MEERKAT_CARDDAV_IT=1 go test ./services/ -run TestContactSync -v`
+  3.  `docker compose -f docker-compose.carddav-test.yml down -v`
 - `TestContactSyncTokenModeIsUsed` asserts which strategy each server gets, so a regression that silently drops every server onto the fallback fails loudly instead of passing.
 - Fixtures and assertions speak CardDAV over HTTP rather than touching a backing store, so covering another server means adding a `davRemote` constructor, not new scenarios.
 
 **Data & Integrations**
+
 - SQLite lives at `SQLITE_DB_PATH` (default meerkat.db) in WAL mode (`-wal`/`-shm` files next to it; local disk only, never copy it live: use the built-in backups, `BACKUP_*` variables, see [docs/deployment.md](docs/deployment.md#backups)); migrations in [backend/database/migrations](backend/database/migrations) are embedded into the binary and auto-run on startup.
 - JWT expiry, HTTP timeouts, trusted proxies, and Resend email settings are declared in [backend/config/config.go](backend/config/config.go) and loaded based on environment variables; use Config.Validate to catch misconfigurations.
 - File uploads stream through [backend/controllers/photo_controller.go](backend/controllers/photo_controller.go) and land in `static/photos`; served through protected routes to enforce auth.
@@ -65,20 +74,22 @@
 - Deletions often clean up dependent entities manually (contacts remove reminders, notes, relationships, and activity links); mirror transaction patterns from [backend/controllers/contact_controller.go](backend/controllers/contact_controller.go).
 
 **Dependencies & Updates**
+
 - [.github/dependabot.yml](.github/dependabot.yml) opens weekly grouped update PRs (Go, npm, Actions, Docker, docs gems).
 - [.github/workflows/security.yml](.github/workflows/security.yml) runs `govulncheck` (reachable Go vulnerabilities) and `yarn audit --groups dependencies --level high` (production frontend deps) on push to main, on PRs, weekly and on demand. Both block. Build tooling such as `react-scripts` belongs in `devDependencies` so it is not audited as production code.
 
 - **Backend (Go modules)**
-	1. `cd backend && go mod tidy && go mod verify` to pull new indirect deps, drop unused modules, and confirm checksums.
-	2. Use `go get -u ./...` (or target a module) when you intentionally bump versions; commit both go.mod and go.sum together.
-	3. Re-run `go test ./...` (or `make test`) plus `make migrate-status` if schema changes shipped with the upgrade.
+  1.  `cd backend && go mod tidy && go mod verify` to pull new indirect deps, drop unused modules, and confirm checksums.
+  2.  Use `go get -u ./...` (or target a module) when you intentionally bump versions; commit both go.mod and go.sum together.
+  3.  Re-run `go test ./...` (or `make test`) plus `make migrate-status` if schema changes shipped with the upgrade.
 
 - **Frontend (Yarn)**
-	1. `cd frontend && yarn install --check-files` to sync lockfiles and ensure native binaries rebuild.
-	2. For minor bumps run `yarn upgrade` (or `yarn up <pkg>@latest` for a specific lib); keep `yarn.lock` in the PR.
-	3. After upgrades, run `yarn build` for production bundles
+  1.  `cd frontend && yarn install --check-files` to sync lockfiles and ensure native binaries rebuild.
+  2.  For minor bumps run `yarn upgrade` (or `yarn up <pkg>@latest` for a specific lib); keep `yarn.lock` in the PR.
+  3.  After upgrades, run `yarn build` for production bundles
 
 **Releases (only relevant for maintainers)**
+
 - Ensure all changes are committed and pushed to `main`
 - Create a tag using semantic versioning: `git tag v1.5.3`
 - Push the tag to GitHub: `git push origin v1.5.3`

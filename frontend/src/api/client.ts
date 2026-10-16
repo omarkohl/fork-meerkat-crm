@@ -30,7 +30,7 @@ export class ApiError extends Error {
     code: string = 'UNKNOWN_ERROR',
     status: number = 500,
     details?: Record<string, string>,
-    requestId?: string
+    requestId?: string,
   ) {
     super(message);
     this.name = 'ApiError';
@@ -57,30 +57,20 @@ export async function parseErrorResponse(response: Response): Promise<ApiError> 
   try {
     const data: BackendErrorResponse = await response.json();
     if (data.error) {
-      return new ApiError(
-        data.error.message,
-        data.error.code,
-        response.status,
-        data.error.details,
-        data.request_id
-      );
+      return new ApiError(data.error.message, data.error.code, response.status, data.error.details, data.request_id);
     }
   } catch {
     // JSON parsing failed, fall back to status text
   }
-  
-  return new ApiError(
-    response.statusText || 'An error occurred',
-    'UNKNOWN_ERROR',
-    response.status
-  );
+
+  return new ApiError(response.statusText || 'An error occurred', 'UNKNOWN_ERROR', response.status);
 }
 
 // Centralized fetch wrapper that handles session expiration and timeouts
 export async function apiFetch(
   url: string,
   options: RequestInit = {},
-  timeout: number = DEFAULT_TIMEOUT
+  timeout: number = DEFAULT_TIMEOUT,
 ): Promise<Response> {
   // Create AbortController for timeout
   const controller = new AbortController();
@@ -106,12 +96,12 @@ export async function apiFetch(
     return response;
   } catch (error) {
     clearTimeout(timeoutId);
-    
+
     // Handle timeout error
     if (error instanceof Error && error.name === 'AbortError') {
       throw new Error(`Request timeout after ${timeout / 1000} seconds. Please check your connection.`);
     }
-    
+
     throw error;
   }
 }

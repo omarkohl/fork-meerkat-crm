@@ -1,12 +1,4 @@
-import {
-  Box,
-  Typography,
-  IconButton,
-  Stack,
-  Paper,
-  Link,
-  Divider,
-} from '@mui/material';
+import { Box, Typography, IconButton, Stack, Paper, Link, Divider } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { useTranslation } from 'react-i18next';
@@ -50,7 +42,6 @@ export default function RelationshipList({
     return translated === translationKey ? gender : translated;
   };
 
-
   const formatRelationshipType = (type: string) => {
     const typeKey = type.toLowerCase().replace(/\s+/g, '_');
     const translationKey = `relationships.types.${typeKey}`;
@@ -74,9 +65,7 @@ export default function RelationshipList({
       {relationships.map((relationship) => {
         // For linked contacts, use their data; otherwise use the stored relationship data
         const linkedContact = relationship.related_contact;
-        const displayName = linkedContact
-          ? `${linkedContact.firstname} ${linkedContact.lastname}`
-          : relationship.name;
+        const displayName = linkedContact ? `${linkedContact.firstname} ${linkedContact.lastname}` : relationship.name;
         const displayGender = linkedContact?.gender || relationship.gender;
         const displayBirthday = linkedContact?.birthday || relationship.birthday;
 
@@ -111,7 +100,9 @@ export default function RelationshipList({
                   {formatRelationshipType(relationship.type)}
                   {displayGender && ` · ${formatGender(displayGender)}`}
                   {displayBirthday && ` · ${t('relationships.birthday')}: ${formatBirthday(displayBirthday)}`}
-                  {displayBirthday && calculateAge(displayBirthday) !== null && ` ${t('dashboard.yearsOld', { age: calculateAge(displayBirthday) })}`}
+                  {displayBirthday &&
+                    calculateAge(displayBirthday) !== null &&
+                    ` ${t('dashboard.yearsOld', { age: calculateAge(displayBirthday) })}`}
                 </Typography>
               </Box>
               <Box
@@ -123,11 +114,7 @@ export default function RelationshipList({
                   transition: 'opacity 0.2s ease-in-out',
                 }}
               >
-                <IconButton
-                  size="small"
-                  onClick={() => onEdit(relationship)}
-                  aria-label={t('common.edit')}
-                >
+                <IconButton size="small" onClick={() => onEdit(relationship)} aria-label={t('common.edit')}>
                   <EditIcon fontSize="small" />
                 </IconButton>
                 <IconButton
@@ -156,11 +143,7 @@ export default function RelationshipList({
             const sourceName = `${sourceContact.firstname} ${sourceContact.lastname}`;
 
             return (
-              <Paper
-                key={`incoming-${incoming.ID}`}
-                variant="outlined"
-                sx={{ p: 2, bgcolor: 'action.hover' }}
-              >
+              <Paper key={`incoming-${incoming.ID}`} variant="outlined" sx={{ p: 2, bgcolor: 'action.hover' }}>
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="body2" color="text.secondary">
                     {formatRelationshipType(incoming.type)} {t('relationships.ofContact')}

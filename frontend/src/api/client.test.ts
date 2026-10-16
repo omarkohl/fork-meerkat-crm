@@ -28,7 +28,7 @@ describe('parseErrorResponse', () => {
         error: { code: 'NOT_FOUND', message: 'Contact not found', details: { id: '42' } },
         request_id: 'req-123',
       }),
-      { status: 404 }
+      { status: 404 },
     );
 
     const err = await parseErrorResponse(response);

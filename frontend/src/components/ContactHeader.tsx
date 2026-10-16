@@ -1,4 +1,16 @@
-import { Box, Card, CardContent, Avatar, Typography, Chip, IconButton, Stack, TextField, Autocomplete, Button } from '@mui/material';
+import {
+  Box,
+  Card,
+  CardContent,
+  Avatar,
+  Typography,
+  Chip,
+  IconButton,
+  Stack,
+  TextField,
+  Autocomplete,
+  Button,
+} from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import CloseIcon from '@mui/icons-material/Close';
@@ -77,7 +89,7 @@ export default function ContactHeader({
   onUploadProfilePicture,
   onStayInTouch,
   onArchiveContact,
-  onUnarchiveContact
+  onUnarchiveContact,
 }: ContactHeaderProps) {
   const { t } = useTranslation();
   const enabled = enabledFields ?? resolveEnabledFields(null);
@@ -103,8 +115,8 @@ export default function ContactHeader({
             sx={{
               position: 'relative',
               '&:hover .camera-badge': {
-                opacity: 1
-              }
+                opacity: 1,
+              },
             }}
           >
             <Avatar
@@ -115,7 +127,7 @@ export default function ContactHeader({
                 cursor: 'pointer',
                 bgcolor: 'primary.main',
                 fontSize: '2rem',
-                '&:hover': { opacity: 0.8 }
+                '&:hover': { opacity: 0.8 },
               }}
               onClick={onUploadProfilePicture}
             >
@@ -135,7 +147,7 @@ export default function ContactHeader({
                 height: 22,
                 opacity: 0,
                 transition: 'opacity 0.2s',
-                '&:hover': { bgcolor: 'primary.dark' }
+                '&:hover': { bgcolor: 'primary.dark' },
               }}
             >
               <CameraAltIcon sx={{ fontSize: 14 }} />
@@ -225,12 +237,7 @@ export default function ContactHeader({
               // View Mode
               <>
                 {contact.archived && (
-                  <Chip
-                    label={t('contactDetail.archivedBadge')}
-                    color="warning"
-                    size="small"
-                    sx={{ mb: 1 }}
-                  />
+                  <Chip label={t('contactDetail.archivedBadge')} color="warning" size="small" sx={{ mb: 1 }} />
                 )}
                 <Box
                   sx={{
@@ -240,8 +247,8 @@ export default function ContactHeader({
                     flexWrap: 'wrap',
                     gap: 0.5,
                     '&:hover .edit-icon': {
-                      opacity: 1
-                    }
+                      opacity: 1,
+                    },
                   }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -255,7 +262,7 @@ export default function ContactHeader({
                       sx={{
                         ml: 1,
                         opacity: 0,
-                        transition: 'opacity 0.2s'
+                        transition: 'opacity 0.2s',
                       }}
                     >
                       <EditIcon fontSize="small" />
@@ -277,12 +284,7 @@ export default function ContactHeader({
                     ) : (
                       <>
                         {onStayInTouch && (
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            startIcon={<AutoModeIcon />}
-                            onClick={onStayInTouch}
-                          >
+                          <Button variant="outlined" size="small" startIcon={<AutoModeIcon />} onClick={onStayInTouch}>
                             {t('contactDetail.stayInTouch')}
                           </Button>
                         )}
@@ -314,8 +316,8 @@ export default function ContactHeader({
               sx={{
                 mt: 1,
                 '&:hover .edit-icon': {
-                  opacity: 1
-                }
+                  opacity: 1,
+                },
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
@@ -329,7 +331,7 @@ export default function ContactHeader({
                   sx={{
                     ml: 'auto',
                     opacity: 0,
-                    transition: 'opacity 0.2s'
+                    transition: 'opacity 0.2s',
                   }}
                 >
                   <EditIcon fontSize="small" />
@@ -360,7 +362,7 @@ export default function ContactHeader({
                     <Autocomplete
                       key={contact.circles?.length ?? 0}
                       size="small"
-                      options={availableCircles.filter(c => !contact.circles?.includes(c))}
+                      options={availableCircles.filter((c) => !contact.circles?.includes(c))}
                       value={null}
                       onChange={(_, value) => {
                         if (value) {
@@ -370,11 +372,7 @@ export default function ContactHeader({
                       blurOnSelect
                       sx={{ minWidth: 200 }}
                       renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label={t('contacts.selectCircle')}
-                          size="small"
-                        />
+                        <TextField {...params} label={t('contacts.selectCircle')} size="small" />
                       )}
                     />
                     <TextField

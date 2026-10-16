@@ -12,7 +12,7 @@ import {
   CircularProgress,
   Alert,
   TextField,
-  Divider
+  Divider,
 } from '@mui/material';
 import AppDialog from './AppDialog';
 import ZoomInIcon from '@mui/icons-material/ZoomIn';
@@ -28,11 +28,7 @@ interface ProfilePictureUploadDialogProps {
 }
 
 // Helper function to create a cropped image blob
-async function getCroppedImg(
-  imageSrc: string,
-  pixelCrop: Area,
-  outputSize: number = 400
-): Promise<Blob> {
+async function getCroppedImg(imageSrc: string, pixelCrop: Area, outputSize: number = 400): Promise<Blob> {
   const image = await createImage(imageSrc);
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
@@ -46,17 +42,7 @@ async function getCroppedImg(
   canvas.height = outputSize;
 
   // Draw the cropped image
-  ctx.drawImage(
-    image,
-    pixelCrop.x,
-    pixelCrop.y,
-    pixelCrop.width,
-    pixelCrop.height,
-    0,
-    0,
-    outputSize,
-    outputSize
-  );
+  ctx.drawImage(image, pixelCrop.x, pixelCrop.y, pixelCrop.width, pixelCrop.height, 0, 0, outputSize, outputSize);
 
   // Return as blob
   return new Promise((resolve, reject) => {
@@ -69,7 +55,7 @@ async function getCroppedImg(
         }
       },
       'image/jpeg',
-      0.9
+      0.9,
     );
   });
 }
@@ -84,11 +70,7 @@ function createImage(url: string): Promise<HTMLImageElement> {
   });
 }
 
-export default function ProfilePictureUploadDialog({
-  open,
-  onClose,
-  onUpload
-}: ProfilePictureUploadDialogProps) {
+export default function ProfilePictureUploadDialog({ open, onClose, onUpload }: ProfilePictureUploadDialogProps) {
   const { t } = useTranslation();
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -231,17 +213,12 @@ export default function ProfilePictureUploadDialog({
                 cursor: 'pointer',
                 '&:hover': {
                   borderColor: 'primary.main',
-                  bgcolor: 'action.hover'
-                }
+                  bgcolor: 'action.hover',
+                },
               }}
               component="label"
             >
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileSelect}
-                style={{ display: 'none' }}
-              />
+              <input type="file" accept="image/*" onChange={handleFileSelect} style={{ display: 'none' }} />
               <CloudUploadIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
               <Typography variant="h6" color="text.secondary">
                 {t('profilePicture.selectImage')}
@@ -272,7 +249,7 @@ export default function ProfilePictureUploadDialog({
                   }
                 }}
                 InputProps={{
-                  startAdornment: <LinkIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                  startAdornment: <LinkIcon sx={{ mr: 1, color: 'text.secondary' }} />,
                 }}
               />
               <Button
@@ -295,7 +272,7 @@ export default function ProfilePictureUploadDialog({
                 height: 350,
                 bgcolor: 'black',
                 borderRadius: 1,
-                overflow: 'hidden'
+                overflow: 'hidden',
               }}
             >
               <Cropper
@@ -326,18 +303,9 @@ export default function ProfilePictureUploadDialog({
 
             {/* Change image button */}
             <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
-              <Button
-                component="label"
-                size="small"
-                variant="text"
-              >
+              <Button component="label" size="small" variant="text">
                 {t('profilePicture.changeImage')}
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                  style={{ display: 'none' }}
-                />
+                <input type="file" accept="image/*" onChange={handleFileSelect} style={{ display: 'none' }} />
               </Button>
             </Box>
           </Box>

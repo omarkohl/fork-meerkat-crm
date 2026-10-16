@@ -21,4 +21,3 @@ The name derives from the Meerkat as a social animal. Use this software as your 
 
 - [GitHub Repository](https://github.com/fbuchner/meerkat-crm)
 - [Live Demo](https://meerkat-crm-demo.fly.dev/login?username=demo&password=test_12345) (username demo, password test_12345)
-

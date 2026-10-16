@@ -8,15 +8,14 @@
 [![Backend: Go](https://img.shields.io/badge/Backend-Go-00ADD8?logo=go)](https://golang.org)
 [![Frontend: React](https://img.shields.io/badge/Frontend-React-61DAFB?logo=react)](https://reactjs.org)
 
-
 ## About the project
+
 Meerkat CRM (Contact Relationship Management) is a self-hosted solution to keep track of your important contacts. As your digital rolodex it reminds you of birthdays, helps you to keep in mind dietary habits as well as names of spouses of contacts - and much more.
 
 You can find the detailed documentation here: [fbuchner.github.io/meerkat-crm/](https://fbuchner.github.io/meerkat-crm/)
 
-
 > [!TIP]
->**[Click here to try the Demo!](https://meerkat-crm-demo.fly.dev/login?username=demo&password=test_12345)** (user: demo, password: test_12345)
+> **[Click here to try the Demo!](https://meerkat-crm-demo.fly.dev/login?username=demo&password=test_12345)** (user: demo, password: test_12345)
 >
 > Demo instance will be started on demand, expect some seconds delay. Demo data is reset periodically. Photo upload is disabled.
 
@@ -25,33 +24,33 @@ You can find the detailed documentation here: [fbuchner.github.io/meerkat-crm/](
 </p>
 
 ## Features
-- Contact management
-    - add and search contacts
-    - deleted contacts go to a trash and can be restored
-    - group contacts by circles (e.g. friends, family, work)
-    - store relationships of contacts (e.g. spouses, children)
-    - CardDAV server for two-way synchronization with your phone's contact list and CardDAV client to use with your own external server
-    - Network graph to visualize your contacts and relationships
-- Notes and activities
-    - social network style timeline for contacts
-    - notes assigned to individual contacts
-    - activities with one or multiple contacts
-    - general notes (for e.g. journaling)
-- Reminders
-    - Keep in touch through reminders and get e-mail notifications (via SMTP or resend)
-    - See upcoming birthdays
-- Integrations
-    - Import data (from CSV, VCF and Monica), export data to CSV and VCF
-    - Connect external calendars
-    - Subscribe to birthdays and reminders from your calendar app (ICS feed)
-    - Webhooks to integrate with your own systems
-    - SSO
-- Operations
-    - Built-in daily backups of the database and photos, downloadable by admins
-- Usability
-    - Multiple languages (currently EN, DE, IT, ES, FR)
-    - Light and dark mode
 
+- Contact management
+  - add and search contacts
+  - deleted contacts go to a trash and can be restored
+  - group contacts by circles (e.g. friends, family, work)
+  - store relationships of contacts (e.g. spouses, children)
+  - CardDAV server for two-way synchronization with your phone's contact list and CardDAV client to use with your own external server
+  - Network graph to visualize your contacts and relationships
+- Notes and activities
+  - social network style timeline for contacts
+  - notes assigned to individual contacts
+  - activities with one or multiple contacts
+  - general notes (for e.g. journaling)
+- Reminders
+  - Keep in touch through reminders and get e-mail notifications (via SMTP or resend)
+  - See upcoming birthdays
+- Integrations
+  - Import data (from CSV, VCF and Monica), export data to CSV and VCF
+  - Connect external calendars
+  - Subscribe to birthdays and reminders from your calendar app (ICS feed)
+  - Webhooks to integrate with your own systems
+  - SSO
+- Operations
+  - Built-in daily backups of the database and photos, downloadable by admins
+- Usability
+  - Multiple languages (currently EN, DE, IT, ES, FR)
+  - Light and dark mode
 
 ## Installation
 
@@ -62,29 +61,32 @@ that bundles the frontend and backend into one container. The easiest way to run
 it is with Docker Compose:
 
 1. **Download the Docker Compose file:**
-    ```sh
-    curl -O https://raw.githubusercontent.com/fbuchner/meerkat-crm/main/docker-compose.yml
-    curl -O https://raw.githubusercontent.com/fbuchner/meerkat-crm/main/.env.example
-    ```
+
+   ```sh
+   curl -O https://raw.githubusercontent.com/fbuchner/meerkat-crm/main/docker-compose.yml
+   curl -O https://raw.githubusercontent.com/fbuchner/meerkat-crm/main/.env.example
+   ```
 
 2. **Configure environment:**
-    ```sh
-    # Copy the environment template
-    cp .env.example .env
 
-    # Edit with your settings
-    nano .env
-    ```
+   ```sh
+   # Copy the environment template
+   cp .env.example .env
+
+   # Edit with your settings
+   nano .env
+   ```
 
 3. **Start the container:**
-    ```sh
-    docker compose up -d
-    ```
+
+   ```sh
+   docker compose up -d
+   ```
 
 4. **Access the application:**
-    Open http://localhost:7300 in your browser.
+   Open http://localhost:7300 in your browser.
 
-Prefer to skip Compose? You can run the image directly. 
+Prefer to skip Compose? You can run the image directly.
 
 ```sh
 docker run -d --name meerkat --restart unless-stopped \
@@ -97,39 +99,42 @@ docker run -d --name meerkat --restart unless-stopped \
 
 All other settings are optional, see [`.env.example`](.env.example) for e-mail notifications, CardDAV, and SSO. Pass them with additional `-e` flags, or use `--env-file .env`.
 
-
 ## Contributing
 
 ### Bugs and feature requests
+
 This application is under development. You can [open an issue](https://github.com/fbuchner/meerkat-crm/issues/new/choose) to report a bug or request a new feature.
 
-You can also participate and open up a pull request. 
+You can also participate and open up a pull request.
 
 While AI-assistants can be used to support coding, please note that you are ultimately responsible for code quality. Do not open pull requests for hands-off "vibe-coding" developments, rather stick to feature requests in these cases.
 
 ### Development
+
 To set up this repository for development, follow these steps:
 
 1. **Clone the repository:**
-    ```sh
-    git clone https://github.com/fbuchner/meerkat-crm.git
-    cd meerkat-crm
-    ```
+
+   ```sh
+   git clone https://github.com/fbuchner/meerkat-crm.git
+   cd meerkat-crm
+   ```
 
 1. **Run the backend:**
-Ensure you have [Go](https://golang.org/doc/install) installed. Then, set up your environment configuration:
+   Ensure you have [Go](https://golang.org/doc/install) installed. Then, set up your environment configuration:
+
    ```sh
     cd backend
     # Copy the example environment file and configure it with your settings
     cp .env.example .env
-    
+
     # Install dependencies and run
     go mod tidy
     source .env
     go run main.go
    ```
-   The project uses an SQLite database for storage. Database migrations run automatically on startup.
 
+   The project uses an SQLite database for storage. Database migrations run automatically on startup.
 
 1. **Run the frontend (in a second terminal):**
    ```sh
@@ -142,10 +147,13 @@ Ensure you have [Go](https://golang.org/doc/install) installed. Then, set up you
 You can find a more comprehensive overview for developers in the [developer README](README-developer.md).
 
 ## Alternative software
+
 Notable other personal CRM systems are
-* [MonicaHQ](https://www.monicahq.com/) (Open Source, development seems to have stalled; the new version chandler is available at beta.monicahq.com)
-* [Dex](https://getdex.com/) (paid offering with social media integration)
-* [Clay](https://clay.earth/) (paid offering with focus on automation)
+
+- [MonicaHQ](https://www.monicahq.com/) (Open Source, development seems to have stalled; the new version chandler is available at beta.monicahq.com)
+- [Dex](https://getdex.com/) (paid offering with social media integration)
+- [Clay](https://clay.earth/) (paid offering with focus on automation)
 
 Other software that can be used to build or configure something similar includes
-* [Twenty](https://twenty.com/) (Open Source "classic" CRM system)
+
+- [Twenty](https://twenty.com/) (Open Source "classic" CRM system)

@@ -43,9 +43,7 @@ export async function getCalendarSubscriptions(): Promise<CalendarSubscription[]
   return data?.calendars || [];
 }
 
-export async function createCalendarSubscription(
-  input: CalendarSubscriptionInput
-): Promise<CalendarSubscription> {
+export async function createCalendarSubscription(input: CalendarSubscriptionInput): Promise<CalendarSubscription> {
   const response = await apiFetch(`${API_BASE_URL}/calendars`, {
     method: 'POST',
     headers: getAuthHeaders(),
@@ -56,7 +54,7 @@ export async function createCalendarSubscription(
 
 export async function updateCalendarSubscription(
   id: number,
-  input: CalendarSubscriptionInput
+  input: CalendarSubscriptionInput,
 ): Promise<CalendarSubscription> {
   const response = await apiFetch(`${API_BASE_URL}/calendars/${id}`, {
     method: 'PUT',
@@ -81,7 +79,7 @@ export async function syncCalendarSubscription(id: number): Promise<CalendarSync
       method: 'POST',
       headers: getAuthHeaders(),
     },
-    120000
+    120000,
   );
   return handleResponse(response, 'Unable to sync calendar.') as Promise<CalendarSyncResult>;
 }

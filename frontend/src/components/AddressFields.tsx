@@ -1,14 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import {
-  Box,
-  Typography,
-  Stack,
-  TextField,
-  Autocomplete,
-  IconButton,
-  Button,
-  Paper,
-} from '@mui/material';
+import { Box, Typography, Stack, TextField, Autocomplete, IconButton, Button, Paper } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import { ContactAddress } from '../api/contacts';
@@ -70,9 +61,7 @@ export default function AddressFields({ label, value, onChange }: AddressFieldsP
                     if (reason === 'input') updateAddr(index, { type: newInput });
                   }}
                   sx={{ minWidth: 140 }}
-                  renderInput={(params) => (
-                    <TextField {...params} label={t('contacts.fieldType')} size="small" />
-                  )}
+                  renderInput={(params) => <TextField {...params} label={t('contacts.fieldType')} size="small" />}
                 />
                 <Box sx={{ flexGrow: 1 }} />
                 <IconButton

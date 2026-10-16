@@ -66,10 +66,10 @@ Good as a later addition to B, not a replacement.
 
 Rules run when a card is created by CardDAV sync, the built-in CardDAV server, or vCard import. They never change existing contacts.
 
-| Rule | Action |
-|---|---|
-| `KIND:org`, or `ORG` with no given name and no family name | add circle "Phonebook" (B) |
-| New card from sync (optional, off by default) | add circle "Phonebook"; you then move the people you want into the CRM |
+| Rule                                                       | Action                                                                 |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `KIND:org`, or `ORG` with no given name and no family name | add circle "Phonebook" (B)                                             |
+| New card from sync (optional, off by default)              | add circle "Phonebook"; you then move the people you want into the CRM |
 
 The second rule fits users who keep many contacts on the phone and want only a few in the CRM. It inverts the default: hidden until promoted.
 

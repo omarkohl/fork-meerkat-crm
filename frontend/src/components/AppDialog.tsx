@@ -29,7 +29,7 @@ export default function AppDialog({ onClose, slotProps, ...props }: AppDialogPro
       }
       onClose?.();
     },
-    [onClose, shaking]
+    [onClose, shaking],
   );
 
   return (
@@ -41,7 +41,7 @@ export default function AppDialog({ onClose, slotProps, ...props }: AppDialogPro
         paper: {
           ...(slotProps?.paper as object | undefined),
           sx: {
-            ...((slotProps?.paper as { sx?: object } | undefined)?.sx),
+            ...(slotProps?.paper as { sx?: object } | undefined)?.sx,
             animation: shaking ? `${shake} 0.4s ease-in-out` : 'none',
           },
         },

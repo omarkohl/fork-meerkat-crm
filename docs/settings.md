@@ -10,21 +10,17 @@ has_children: false
 
 Currently you can choose between **English** and **Deutsch** (German) for the application interface. The language change takes effect immediately. Your language preference is also used in the backend for email notifications (e.g., reminder emails). Backend messages (especially errors) always stay in English.
 
-
 ## Date Format
 
 You can choose between the European (DD.MM.YYYY), US (MM/DD/YYYY), and ISO (YYYY-MM-DD) date format. This affects all date displays and also determines the expected input format when entering dates like birthdays.
-
 
 ## Appearance
 
 Choose your preference between light mode and dark mode. This setting is stored locally in your browser and is not synced across devices.
 
-
 ## Custom Field Names
 
 Define custom fields that appear on all your contacts for tracking information that doesn't fit into the standard contact fields. You can change the order of the custom fields, though they will always be displayed after the standard fields.
-
 
 ## Calendar Feed (ICS)
 
@@ -39,11 +35,9 @@ Anyone who has the URL can read the feed, without logging in. Keep it private. M
 
 Reminders are exported with their next date. A reminder set to recur from completion moves forward when you complete it, but the calendar repeats it at the fixed interval from that date, so the two can drift apart after a late completion. Monthly, quarterly and six-monthly reminders that start on the 29th to 31st fall on the last day of shorter months. A birthday on 29 February falls on 28 February in non-leap years. Dates are taken in UTC.
 
-
 ## Trash
 
 Deleted contacts move to the **Trash** (sidebar, under Network), where you can restore them or delete them permanently. They are removed for good after `TRASH_RETENTION_DAYS` days (default 30). See [Contacts](data-model.html).
-
 
 ## Backups (administrators)
 

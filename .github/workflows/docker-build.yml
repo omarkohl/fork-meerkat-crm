@@ -9,16 +9,16 @@ on:
     branches: [main, omk]
   pull_request:
     paths:
-      - 'Dockerfile'
-      - 'backend/**'
-      - 'frontend/**'
-      - 'docker/**'
-      - '.dockerignore'
-      - '.trivyignore'
-      - '.github/workflows/docker-build.yml'
+      - "Dockerfile"
+      - "backend/**"
+      - "frontend/**"
+      - "docker/**"
+      - ".dockerignore"
+      - ".trivyignore"
+      - ".github/workflows/docker-build.yml"
   workflow_dispatch:
   schedule:
-    - cron: '43 5 * * 1'
+    - cron: "43 5 * * 1"
 
 jobs:
   build-and-scan:
@@ -69,5 +69,5 @@ jobs:
           image-ref: meerkat-scan:latest
           severity: HIGH,CRITICAL
           ignore-unfixed: true
-          exit-code: '1'
+          exit-code: "1"
           trivyignores: .trivyignore

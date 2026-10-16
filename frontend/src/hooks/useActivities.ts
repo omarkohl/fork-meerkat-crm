@@ -6,7 +6,7 @@ import {
   getContactActivities,
   GetActivitiesParams,
   ActivitiesResponse,
-  Activity
+  Activity,
 } from '../api/activities';
 import { handleFetchError } from '../utils/errorHandler';
 
@@ -20,10 +20,7 @@ interface UseActivitiesResult {
   refetch: () => Promise<void>;
 }
 
-export function useActivities(
-  params: GetActivitiesParams = {},
-  contactId?: string | number
-): UseActivitiesResult {
+export function useActivities(params: GetActivitiesParams = {}, contactId?: string | number): UseActivitiesResult {
   // Destructure params to use primitive values as dependencies
   // This prevents re-fetches when callers pass new object references with identical values
   const { page: paramPage, limit: paramLimit, includeContacts, search, fromDate, toDate } = params;
@@ -57,7 +54,14 @@ export function useActivities(
         setPage(1);
         setLimit(paramLimit || data.activities?.length || 25);
       } else {
-        const fetchParams: GetActivitiesParams = { page: paramPage, limit: paramLimit, includeContacts, search, fromDate, toDate };
+        const fetchParams: GetActivitiesParams = {
+          page: paramPage,
+          limit: paramLimit,
+          includeContacts,
+          search,
+          fromDate,
+          toDate,
+        };
         const data: ActivitiesResponse = await getActivities(fetchParams);
         if (requestRef.current !== requestId) {
           return;

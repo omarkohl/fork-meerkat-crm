@@ -31,10 +31,10 @@ server {
 
 Meerkat sets its security headers itself; a reverse proxy in front should pass them through and **not add its own** (a second `Content-Security-Policy` is combined with the first and can only make the policy stricter, a second `Strict-Transport-Security` or `X-Frame-Options` is sent twice). In nginx do not `add_header` them, in Caddy do not use `header` for them, in Traefik leave the security-headers middleware out.
 
-| Response | Headers |
-|---|---|
-| The web app (HTML, JS, CSS, images) | `Content-Security-Policy` (below), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` (no camera, microphone, geolocation, payment, USB), `Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Resource-Policy: same-origin` |
-| The API (`/api/`, `/carddav/`, calendar feeds, downloads), sent by the backend | the same, but `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'` and `Cross-Origin-Resource-Policy: same-site` |
+| Response                                                                       | Headers                                                                                                                                                                                                                                                                                                            |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| The web app (HTML, JS, CSS, images)                                            | `Content-Security-Policy` (below), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` (no camera, microphone, geolocation, payment, USB), `Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Resource-Policy: same-origin` |
+| The API (`/api/`, `/carddav/`, calendar feeds, downloads), sent by the backend | the same, but `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'` and `Cross-Origin-Resource-Policy: same-site`                                                                                                                                                                                  |
 
 The web app policy is enforced (not report-only):
 
@@ -58,12 +58,12 @@ Only the bundle may run (no inline scripts, no `eval`). `style-src 'unsafe-inlin
 
 Set these variables in `.env` when running over HTTPS:
 
-| Variable | Value |
-|---|---|
-| `FRONTEND_URL` | Exact origin, e.g. `https://meerkat.example.com` (never `*`) |
-| `COOKIE_SECURE` | `true` |
-| `COOKIE_DOMAIN` | Leave empty. Only set it (e.g. `.example.com`) if frontend and API live on different subdomains |
-| `JWT_SECRET_KEY` | Generate with `openssl rand -base64 32` |
+| Variable             | Value                                                                                                       |
+| -------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `FRONTEND_URL`       | Exact origin, e.g. `https://meerkat.example.com` (never `*`)                                                |
+| `COOKIE_SECURE`      | `true`                                                                                                      |
+| `COOKIE_DOMAIN`      | Leave empty. Only set it (e.g. `.example.com`) if frontend and API live on different subdomains             |
+| `JWT_SECRET_KEY`     | Generate with `openssl rand -base64 32`                                                                     |
 | `BLOCK_PRIVATE_URLS` | `true` on any instance with more than one user (see [Private network access](#private-network-access-ssrf)) |
 
 ## Private network access (SSRF)
@@ -79,7 +79,6 @@ Several features make the server fetch an address a user typed in: webhooks, Cal
 - If blocking is off for any feature and more than one user exists, the server logs a warning at startup and admins see a dismissible banner on the Users page.
 - Photo URLs in vCards and photo uploads by URL are always checked, whatever the setting.
 - Not covered, on purpose: the OIDC provider (`OIDC_PROVIDER_URL`) and the SMTP host. Only the administrator sets them, and they are often internal services.
-
 
 ## Sessions and audit log
 
@@ -102,33 +101,33 @@ Webhook deliveries and emails (reminders, password resets) go through a database
 
 Meerkat can expose metrics in the Prometheus text format. It is **off by default**. Set `METRICS_ENABLED=true` and choose how to protect it:
 
-| Variable | Meaning |
-|---|---|
-| `METRICS_ENABLED` | `true` to serve `/metrics`. Default `false` (no route exists) |
-| `METRICS_TOKEN` | If set, scrapers must send `Authorization: Bearer <token>` (compared in constant time) |
-| `METRICS_ADDR` | If set (for example `127.0.0.1:9090` or `:9090` on a private Docker network), `/metrics` is served only on this extra listener and not on the main port |
+| Variable          | Meaning                                                                                                                                                 |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `METRICS_ENABLED` | `true` to serve `/metrics`. Default `false` (no route exists)                                                                                           |
+| `METRICS_TOKEN`   | If set, scrapers must send `Authorization: Bearer <token>` (compared in constant time)                                                                  |
+| `METRICS_ADDR`    | If set (for example `127.0.0.1:9090` or `:9090` on a private Docker network), `/metrics` is served only on this extra listener and not on the main port |
 
 **Where the endpoint is.** The nginx in the images proxies only `/api/`, `/health` and `/carddav/`; every other path, `/metrics` included, is answered with the web app (`index.html`), so the browser port never serves metrics. How to reach them depends on the layout:
 
-- *Single container* (`docker-compose.yml`, service `meerkat`): nginx listens on 8080 and the backend on `PORT=8081` inside the container. Scrape `meerkat:8081/metrics` from a container on the same Docker network (port 8081 is not published to the host, which is what you want), or set `METRICS_ADDR=:9090` and scrape `meerkat:9090/metrics`.
-- *Legacy split* (`docker-compose.legacy.yml`: `backend` and `frontend` containers): the backend listens on 8080, scrape `backend:8080/metrics`.
-- *Without Docker*: `/metrics` is on the backend `PORT`.
+- _Single container_ (`docker-compose.yml`, service `meerkat`): nginx listens on 8080 and the backend on `PORT=8081` inside the container. Scrape `meerkat:8081/metrics` from a container on the same Docker network (port 8081 is not published to the host, which is what you want), or set `METRICS_ADDR=:9090` and scrape `meerkat:9090/metrics`.
+- _Legacy split_ (`docker-compose.legacy.yml`: `backend` and `frontend` containers): the backend listens on 8080, scrape `backend:8080/metrics`.
+- _Without Docker_: `/metrics` is on the backend `PORT`.
 
 If your own reverse proxy forwards everything to the backend, set a token or use `METRICS_ADDR`, or block `/metrics` there. Without a token or `METRICS_ADDR`, Meerkat logs a warning at startup. If `METRICS_ADDR` cannot be bound, Meerkat does not start. The metrics contain no user data (routes are patterns such as `/api/v1/contacts/:id`, never URLs), but they reveal traffic and failure patterns.
 
-| Metric | Type | Meaning |
-|---|---|---|
-| `meerkat_http_requests_total{method,route,status}` | counter | Requests by route pattern (`unmatched` for 404s without a route) |
-| `meerkat_http_request_duration_seconds{method,route}` | histogram | Latency |
-| `meerkat_job_last_success_timestamp_seconds{job}` | gauge | When the job last completed a run. Jobs: `reminders`, `calendar-sync`, `contact-sync` (the ones kept in `job_executions`). Missing until the first run after upgrading to this version has completed; a run that failed or was cut short never sets it |
-| `meerkat_job_running{job}` | gauge | 1 while the job holds its lock. A process that died mid-run leaves the lock until the next run takes it over (after 5 minutes), so it can stay 1 for a while |
-| `meerkat_job_runs_total{job,result}` | counter | Runs since the process started, same job names plus `trash-purge` and `backup`. `result` is `success`, `failure`, or `skipped` (turned away by the rate limit or another instance's lock; the sync jobs count `success` when they ran, per-connection errors are in their own status and logs) |
-| `meerkat_webhook_deliveries_total{result}` | counter | Webhook delivery attempts (every retry counts) |
-| `meerkat_emails_total{result}` | counter | Emails where at least one channel succeeded (`success`) or all failed (`failure`) |
-| `meerkat_outbox_pending{kind}` | gauge | Webhook deliveries and emails waiting for a try or retry (`kind` is `webhook` or `email`) |
-| `meerkat_outbox_dead{kind}` | gauge | Entries that gave up and are still stored |
-| `meerkat_outbox_dead_total{kind}` | counter | Entries that gave up since the process started |
-| `go_goroutines`, `go_memstats_alloc_bytes`, `process_start_time_seconds` | gauge | Process basics |
+| Metric                                                                   | Type      | Meaning                                                                                                                                                                                                                                                                                        |
+| ------------------------------------------------------------------------ | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `meerkat_http_requests_total{method,route,status}`                       | counter   | Requests by route pattern (`unmatched` for 404s without a route)                                                                                                                                                                                                                               |
+| `meerkat_http_request_duration_seconds{method,route}`                    | histogram | Latency                                                                                                                                                                                                                                                                                        |
+| `meerkat_job_last_success_timestamp_seconds{job}`                        | gauge     | When the job last completed a run. Jobs: `reminders`, `calendar-sync`, `contact-sync` (the ones kept in `job_executions`). Missing until the first run after upgrading to this version has completed; a run that failed or was cut short never sets it                                         |
+| `meerkat_job_running{job}`                                               | gauge     | 1 while the job holds its lock. A process that died mid-run leaves the lock until the next run takes it over (after 5 minutes), so it can stay 1 for a while                                                                                                                                   |
+| `meerkat_job_runs_total{job,result}`                                     | counter   | Runs since the process started, same job names plus `trash-purge` and `backup`. `result` is `success`, `failure`, or `skipped` (turned away by the rate limit or another instance's lock; the sync jobs count `success` when they ran, per-connection errors are in their own status and logs) |
+| `meerkat_webhook_deliveries_total{result}`                               | counter   | Webhook delivery attempts (every retry counts)                                                                                                                                                                                                                                                 |
+| `meerkat_emails_total{result}`                                           | counter   | Emails where at least one channel succeeded (`success`) or all failed (`failure`)                                                                                                                                                                                                              |
+| `meerkat_outbox_pending{kind}`                                           | gauge     | Webhook deliveries and emails waiting for a try or retry (`kind` is `webhook` or `email`)                                                                                                                                                                                                      |
+| `meerkat_outbox_dead{kind}`                                              | gauge     | Entries that gave up and are still stored                                                                                                                                                                                                                                                      |
+| `meerkat_outbox_dead_total{kind}`                                        | counter   | Entries that gave up since the process started                                                                                                                                                                                                                                                 |
+| `go_goroutines`, `go_memstats_alloc_bytes`, `process_start_time_seconds` | gauge     | Process basics                                                                                                                                                                                                                                                                                 |
 
 Example scrape config:
 
@@ -141,7 +140,7 @@ scrape_configs:
       credentials_file: /etc/prometheus/meerkat-token
     static_configs:
       # single container: meerkat:8081 (or the METRICS_ADDR host and port); legacy split: backend:8080
-      - targets: ["meerkat:8081"]
+      - targets: ['meerkat:8081']
 ```
 
 Alert ideas (adapt the thresholds):
@@ -177,19 +176,21 @@ Meerkat CRM supports SSO via any OpenID Connect provider (Keycloak, Google, Auth
 ### Setup
 
 1. Register a new OAuth2 client with your provider. Set the redirect URI to:
+
    ```
    https://meerkat.example.com/api/v1/auth/oidc/callback
    ```
+
    This is derived automatically from `FRONTEND_URL`, no separate variable needed.
 
-2.  Set the OIDC environment variables in the docker compose. See [Getting-Started → Environment variables](getting-started.html#environment-variables) for details. SSO is disabled if any of the first three variables are missing.
+2. Set the OIDC environment variables in the docker compose. See [Getting-Started → Environment variables](getting-started.html#environment-variables) for details. SSO is disabled if any of the first three variables are missing.
 
 ### Account linking
 
 On first SSO login, the backend attempts to match the OIDC identity to an existing account in this order:
 
 1. **Subject match** — if the user has logged in via this provider before, their account is found directly.
-2. **Email match** — if the provider returns a *verified* email that matches an existing account, the OIDC identity is linked to that account automatically. Unverified emails are ignored to prevent account takeover (except if `OIDC_TRUST_EMAIL=true` is set).
+2. **Email match** — if the provider returns a _verified_ email that matches an existing account, the OIDC identity is linked to that account automatically. Unverified emails are ignored to prevent account takeover (except if `OIDC_TRUST_EMAIL=true` is set).
 3. **Auto-provision** — if `OIDC_AUTO_PROVISION=true` and no account matched, a new account is created using the email/name from the provider.
 
 If auto-provisioning is disabled and no match is found, the user sees an error and must be registered manually first.

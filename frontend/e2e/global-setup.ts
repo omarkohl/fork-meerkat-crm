@@ -84,7 +84,7 @@ async function waitForBackend(maxRetries = 30): Promise<void> {
     } catch {
       // Backend not ready yet
     }
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 
   throw new Error('Backend did not become ready in time');
@@ -121,9 +121,9 @@ async function registerTestUser(): Promise<void> {
     if (data.error?.code === 'registration_disabled') {
       console.warn(
         '\n⚠️  Registration is DISABLED on this backend (DISABLE_REGISTRATION=true).\n' +
-        '   The E2E suite needs it enabled to seed users and to exercise the\n' +
-        '   registration/isolation specs. Set DISABLE_REGISTRATION=false, or run\n' +
-        '   against the docker-compose.test.yml stack which already does.\n'
+          '   The E2E suite needs it enabled to seed users and to exercise the\n' +
+          '   registration/isolation specs. Set DISABLE_REGISTRATION=false, or run\n' +
+          '   against the docker-compose.test.yml stack which already does.\n',
       );
       return;
     }
@@ -149,9 +149,9 @@ async function loginAndCreateContacts(context: BrowserContext): Promise<void> {
     const body = await loginResponse.text();
     throw new Error(
       `Login as the seeded test user failed: ${loginResponse.status()} - ${body}\n` +
-      'On a fresh backend this usually means registration is disabled, so the test ' +
-      'user was never created. Set DISABLE_REGISTRATION=false (the ' +
-      'docker-compose.test.yml stack already does) and retry.'
+        'On a fresh backend this usually means registration is disabled, so the test ' +
+        'user was never created. Set DISABLE_REGISTRATION=false (the ' +
+        'docker-compose.test.yml stack already does) and retry.',
     );
   }
 
@@ -166,14 +166,12 @@ async function loginAndCreateContacts(context: BrowserContext): Promise<void> {
   for (const contact of SAMPLE_CONTACTS) {
     try {
       const search = `${contact.firstname} ${contact.lastname}`;
-      const lookup = await context.request.get(
-        `${API_BASE_URL}/contacts?search=${encodeURIComponent(search)}&limit=1`
-      );
+      const lookup = await context.request.get(`${API_BASE_URL}/contacts?search=${encodeURIComponent(search)}&limit=1`);
       if (lookup.ok()) {
         const found = await lookup.json();
-        if ((found.contacts || []).some(
-          (c: any) => c.firstname === contact.firstname && c.lastname === contact.lastname
-        )) {
+        if (
+          (found.contacts || []).some((c: any) => c.firstname === contact.firstname && c.lastname === contact.lastname)
+        ) {
           console.log(`  Exists: ${search}`);
           continue;
         }
@@ -197,20 +195,18 @@ async function loginAndCreateContacts(context: BrowserContext): Promise<void> {
   console.log('Sample contacts ready');
 }
 
-// Deletes contacts created by previous E2E runs. 
+// Deletes contacts created by previous E2E runs.
 export const E2E_CONTACT_PREFIX = 'E2EFixture';
 
 async function cleanupLeftoverTestData(context: BrowserContext): Promise<void> {
   try {
     const response = await context.request.get(
-      `${API_BASE_URL}/contacts?search=${encodeURIComponent(E2E_CONTACT_PREFIX)}&limit=200`
+      `${API_BASE_URL}/contacts?search=${encodeURIComponent(E2E_CONTACT_PREFIX)}&limit=200`,
     );
     if (!response.ok()) return;
 
     const data = await response.json();
-    const stale = (data.contacts || []).filter((c: any) =>
-      (c.firstname || '').startsWith(E2E_CONTACT_PREFIX)
-    );
+    const stale = (data.contacts || []).filter((c: any) => (c.firstname || '').startsWith(E2E_CONTACT_PREFIX));
 
     for (const contact of stale) {
       await context.request.delete(`${API_BASE_URL}/contacts/${contact.ID}`).catch(() => {});

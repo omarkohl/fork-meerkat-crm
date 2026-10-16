@@ -1,6 +1,6 @@
 /**
  * Centralized error handling utility for consistent error management across the application.
- * 
+ *
  * This module provides:
  * - Consistent error message extraction from various error types
  * - Structured logging with context information
@@ -33,15 +33,15 @@ export function getErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     return error.getDisplayMessage();
   }
-  
+
   if (error instanceof Error) {
     return error.message;
   }
-  
+
   if (typeof error === 'string') {
     return error;
   }
-  
+
   return 'An unexpected error occurred';
 }
 
@@ -78,12 +78,12 @@ export function logError(error: unknown, context: ErrorContext): void {
 /**
  * Handle an error by logging it and optionally notifying the user.
  * Use this for operations where the error should be visible to users.
- * 
+ *
  * @param error - The error to handle
  * @param context - Context about the operation
  * @param notifier - Optional notifier to show user-facing messages
  * @returns The user-friendly error message
- * 
+ *
  * @example
  * ```ts
  * try {
@@ -94,31 +94,27 @@ export function logError(error: unknown, context: ErrorContext): void {
  * }
  * ```
  */
-export function handleError(
-  error: unknown,
-  context: ErrorContext,
-  notifier?: ErrorNotifier
-): string {
+export function handleError(error: unknown, context: ErrorContext, notifier?: ErrorNotifier): string {
   const message = getErrorMessage(error);
-  
+
   logError(error, context);
-  
+
   if (notifier) {
     notifier.showError(message);
   }
-  
+
   return message;
 }
 
 /**
  * Create an error handler bound to a specific notifier.
  * Useful in React components/hooks where the snackbar is available.
- * 
+ *
  * @example
  * ```ts
  * const { showError } = useSnackbar();
  * const errorHandler = createErrorHandler({ showError });
- * 
+ *
  * try {
  *   await saveNote(data);
  * } catch (err) {
@@ -135,14 +131,14 @@ export function createErrorHandler(notifier: ErrorNotifier) {
     handle(error: unknown, operation: string, options?: { silent?: boolean }): string {
       return handleError(error, { operation, ...options }, notifier);
     },
-    
+
     /**
      * Log an error without user notification
      */
     log(error: unknown, operation: string, options?: { silent?: boolean }): void {
       logError(error, { operation, ...options });
     },
-    
+
     /**
      * Get a user-friendly message from an error
      */
@@ -153,7 +149,7 @@ export function createErrorHandler(notifier: ErrorNotifier) {
 /**
  * Hook-friendly error handler that returns a consistent error message.
  * Use this in hooks that need to set error state.
- * 
+ *
  * @example
  * ```ts
  * const fetchData = async () => {

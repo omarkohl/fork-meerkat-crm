@@ -7,9 +7,11 @@ import { handleError, handleFetchError, ErrorNotifier } from '../utils/errorHand
 export function useTimelineEditing(
   contactId: number | undefined,
   onRefresh: () => Promise<void>,
-  notifier?: ErrorNotifier
+  notifier?: ErrorNotifier,
 ) {
-  const [editingTimelineItem, setEditingTimelineItem] = useState<{ type: 'note' | 'activity'; id: number } | null>(null);
+  const [editingTimelineItem, setEditingTimelineItem] = useState<{ type: 'note' | 'activity'; id: number } | null>(
+    null,
+  );
   const [editTimelineValues, setEditTimelineValues] = useState<{
     noteContent?: string;
     noteDate?: string;
@@ -19,7 +21,9 @@ export function useTimelineEditing(
     activityDate?: string;
     activityContacts?: { ID: number; firstname: string; lastname: string; nickname?: string }[];
   }>({});
-  const [allContacts, setAllContacts] = useState<{ ID: number; firstname: string; lastname: string; nickname?: string }[]>([]);
+  const [allContacts, setAllContacts] = useState<
+    { ID: number; firstname: string; lastname: string; nickname?: string }[]
+  >([]);
 
   const handleStartEditTimelineItem = async (type: 'note' | 'activity', item: Note | Activity) => {
     setEditingTimelineItem({ type, id: item.ID });
@@ -28,7 +32,7 @@ export function useTimelineEditing(
       const note = item as Note;
       setEditTimelineValues({
         noteContent: note.content || '',
-        noteDate: note.date ? new Date(note.date).toISOString().split('T')[0] : ''
+        noteDate: note.date ? new Date(note.date).toISOString().split('T')[0] : '',
       });
     } else {
       const activity = item as Activity;
@@ -48,7 +52,7 @@ export function useTimelineEditing(
         activityDescription: activity.description || '',
         activityLocation: activity.location || '',
         activityDate: activity.date ? new Date(activity.date).toISOString().split('T')[0] : '',
-        activityContacts: activity.contacts || []
+        activityContacts: activity.contacts || [],
       });
     }
   };
@@ -64,8 +68,10 @@ export function useTimelineEditing(
     try {
       await updateNote(noteId, {
         content: editTimelineValues.noteContent,
-        date: editTimelineValues.noteDate ? new Date(editTimelineValues.noteDate).toISOString() : new Date().toISOString(),
-        contact_id: contactId
+        date: editTimelineValues.noteDate
+          ? new Date(editTimelineValues.noteDate).toISOString()
+          : new Date().toISOString(),
+        contact_id: contactId,
       });
       await onRefresh();
       handleCancelEditTimelineItem();
@@ -82,8 +88,10 @@ export function useTimelineEditing(
         title: editTimelineValues.activityTitle,
         description: editTimelineValues.activityDescription || '',
         location: editTimelineValues.activityLocation || '',
-        date: editTimelineValues.activityDate ? new Date(editTimelineValues.activityDate).toISOString() : new Date().toISOString(),
-        contact_ids: editTimelineValues.activityContacts?.map(c => c.ID) || []
+        date: editTimelineValues.activityDate
+          ? new Date(editTimelineValues.activityDate).toISOString()
+          : new Date().toISOString(),
+        contact_ids: editTimelineValues.activityContacts?.map((c) => c.ID) || [],
       });
       await onRefresh();
       handleCancelEditTimelineItem();
@@ -122,6 +130,6 @@ export function useTimelineEditing(
     handleUpdateActivity,
     handleDeleteNote,
     handleDeleteActivity,
-    setEditTimelineValues
+    setEditTimelineValues,
   };
 }

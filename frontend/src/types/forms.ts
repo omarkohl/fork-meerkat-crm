@@ -1,6 +1,6 @@
 /**
  * Form-specific TypeScript types for Meerkat CRM
- * 
+ *
  * This file contains types specifically for form handling,
  * validation, and form-related operations.
  */

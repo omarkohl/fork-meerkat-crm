@@ -7,14 +7,11 @@ import {
   deleteRelationship,
   Relationship,
   IncomingRelationship,
-  RelationshipFormData
+  RelationshipFormData,
 } from '../api/relationships';
 import { handleFetchError, handleError, ErrorNotifier } from '../utils/errorHandler';
 
-export function useRelationships(
-  contactId: string | undefined,
-  notifier?: ErrorNotifier
-) {
+export function useRelationships(contactId: string | undefined, notifier?: ErrorNotifier) {
   const [relationships, setRelationships] = useState<Relationship[]>([]);
   const [incomingRelationships, setIncomingRelationships] = useState<IncomingRelationship[]>([]);
   const [relationshipDialogOpen, setRelationshipDialogOpen] = useState(false);
@@ -29,7 +26,7 @@ export function useRelationships(
     try {
       const [relationshipsResponse, incomingResponse] = await Promise.all([
         getRelationships(contactId),
-        getIncomingRelationships(contactId)
+        getIncomingRelationships(contactId),
       ]);
       setRelationships(relationshipsResponse.relationships || []);
       setIncomingRelationships(incomingResponse.incoming_relationships || []);

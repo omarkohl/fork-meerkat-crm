@@ -20,7 +20,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
         with:
-          go-version: '1.27'
+          go-version: "1.27"
           check-latest: true
           cache-dependency-path: backend/go.sum
 
@@ -66,7 +66,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
         with:
-          go-version: '1.26'
+          go-version: "1.26"
           check-latest: true
           cache-dependency-path: backend/go.sum
 
@@ -83,7 +83,7 @@ jobs:
         working-directory: backend
         run: go test ./services/ -v
         env:
-          MEERKAT_CARDDAV_IT: '1'
+          MEERKAT_CARDDAV_IT: "1"
 
       - name: Radicale log
         if: ${{ failure() }}
@@ -105,7 +105,7 @@ jobs:
         with:
           # Vitest config passes --no-experimental-webstorage, which requires Node >= 22.4
           node-version: 22
-          cache: 'yarn'
+          cache: "yarn"
           cache-dependency-path: frontend/yarn.lock
 
       - name: Install dependencies

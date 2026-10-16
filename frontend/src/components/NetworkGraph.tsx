@@ -87,22 +87,19 @@ export default function NetworkGraph({
     // Filter by circle if selected
     if (selectedCircle) {
       const contactsInCircle = new Set(
-        data.nodes
-          .filter(n => n.type === 'contact' && n.circles?.includes(selectedCircle))
-          .map(n => n.id)
+        data.nodes.filter((n) => n.type === 'contact' && n.circles?.includes(selectedCircle)).map((n) => n.id),
       );
 
       // Include contacts in circle and activities that have at least 2 contacts in the circle
-      filteredNodes = data.nodes.filter(n => {
+      filteredNodes = data.nodes.filter((n) => {
         if (n.type === 'contact') {
           return contactsInCircle.has(n.id);
         }
         // For activities, check if they connect contacts in this circle
         const activityEdges = data.edges.filter(
-          e => e.type === 'activity' &&
-          (typeof e.source === 'string' ? e.source : e.source.id) === n.id
+          (e) => e.type === 'activity' && (typeof e.source === 'string' ? e.source : e.source.id) === n.id,
         );
-        const connectedContacts = activityEdges.filter(e => {
+        const connectedContacts = activityEdges.filter((e) => {
           const targetId = typeof e.target === 'string' ? e.target : e.target.id;
           return contactsInCircle.has(targetId);
         });
@@ -112,13 +109,13 @@ export default function NetworkGraph({
 
     // Hide activity nodes when the activities toggle is off
     if (!showActivities) {
-      filteredNodes = filteredNodes.filter(n => n.type !== 'activity');
+      filteredNodes = filteredNodes.filter((n) => n.type !== 'activity');
     }
 
-    const nodeIds = new Set(filteredNodes.map(n => n.id));
+    const nodeIds = new Set(filteredNodes.map((n) => n.id));
 
     // Filter edges based on visibility toggles and filtered nodes
-    let filteredEdges = data.edges.filter(e => {
+    let filteredEdges = data.edges.filter((e) => {
       const sourceId = typeof e.source === 'string' ? e.source : e.source.id;
       const targetId = typeof e.target === 'string' ? e.target : e.target.id;
 
@@ -129,12 +126,12 @@ export default function NetworkGraph({
 
     // Synthesize circle nodes and edges from contact circles data
     if (showCircles) {
-      const visibleContacts = filteredNodes.filter(n => n.type === 'contact');
+      const visibleContacts = filteredNodes.filter((n) => n.type === 'contact');
 
       // Count contacts per circle
       const circleContactMap = new Map<string, string[]>();
-      visibleContacts.forEach(contact => {
-        contact.circles?.forEach(circleName => {
+      visibleContacts.forEach((contact) => {
+        contact.circles?.forEach((circleName) => {
           const existing = circleContactMap.get(circleName) ?? [];
           existing.push(contact.id);
           circleContactMap.set(circleName, existing);
@@ -154,7 +151,7 @@ export default function NetworkGraph({
           label: circleName,
         });
 
-        contactIds.forEach(contactId => {
+        contactIds.forEach((contactId) => {
           circleEdges.push({
             id: `ce-${contactId}-${circleName}`,
             type: 'circle',
@@ -172,15 +169,15 @@ export default function NetworkGraph({
     if (centeredNodeId) {
       const directNeighbors = new Set<string>([centeredNodeId]);
 
-      filteredEdges.forEach(e => {
+      filteredEdges.forEach((e) => {
         const srcId = typeof e.source === 'string' ? e.source : e.source.id;
         const tgtId = typeof e.target === 'string' ? e.target : e.target.id;
         if (srcId === centeredNodeId) directNeighbors.add(tgtId);
         if (tgtId === centeredNodeId) directNeighbors.add(srcId);
       });
 
-      filteredNodes = filteredNodes.filter(n => directNeighbors.has(n.id));
-      filteredEdges = filteredEdges.filter(e => {
+      filteredNodes = filteredNodes.filter((n) => directNeighbors.has(n.id));
+      filteredEdges = filteredEdges.filter((e) => {
         const srcId = typeof e.source === 'string' ? e.source : e.source.id;
         const tgtId = typeof e.target === 'string' ? e.target : e.target.id;
         return directNeighbors.has(srcId) && directNeighbors.has(tgtId);
@@ -197,7 +194,7 @@ export default function NetworkGraph({
   useEffect(() => {
     if (!centeredNodeId || !graphRef.current) return;
 
-    const node = graphData.nodes.find(n => n.id === centeredNodeId);
+    const node = graphData.nodes.find((n) => n.id === centeredNodeId);
     if (!node || node.x == null || node.y == null) return;
 
     graphRef.current.centerAt(node.x, node.y, 800);
@@ -214,66 +211,72 @@ export default function NetworkGraph({
   };
 
   // Custom node rendering
-  const nodeCanvasObject = useCallback((node: GraphNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
-    const isContact = node.type === 'contact';
-    const isActivity = node.type === 'activity';
-    const isCircleNode = node.type === 'circle';
-    const size = getNodeSize(node.type);
-    const fontSize = Math.max(10 / globalScale, 3);
-    const isCentered = node.id === centeredNodeId;
+  const nodeCanvasObject = useCallback(
+    (node: GraphNode, ctx: CanvasRenderingContext2D, globalScale: number) => {
+      const isContact = node.type === 'contact';
+      const isActivity = node.type === 'activity';
+      const isCircleNode = node.type === 'circle';
+      const size = getNodeSize(node.type);
+      const fontSize = Math.max(10 / globalScale, 3);
+      const isCentered = node.id === centeredNodeId;
 
-    // Draw highlight ring for centered contact
-    if (isCentered) {
+      // Draw highlight ring for centered contact
+      if (isCentered) {
+        ctx.beginPath();
+        ctx.arc(node.x || 0, node.y || 0, size + 5, 0, 2 * Math.PI);
+        ctx.strokeStyle = theme.palette.primary.light;
+        ctx.lineWidth = 3 / globalScale;
+        ctx.stroke();
+      }
+
+      // Draw node circle
       ctx.beginPath();
-      ctx.arc(node.x || 0, node.y || 0, size + 5, 0, 2 * Math.PI);
-      ctx.strokeStyle = theme.palette.primary.light;
-      ctx.lineWidth = 3 / globalScale;
+      ctx.arc(node.x || 0, node.y || 0, size, 0, 2 * Math.PI);
+      if (isContact) {
+        ctx.fillStyle = nodeColor;
+      } else if (isActivity) {
+        ctx.fillStyle = activityNodeColor;
+      } else {
+        ctx.fillStyle = circleNodeColor;
+      }
+      ctx.fill();
+
+      // Draw border
+      ctx.strokeStyle = bgColor;
+      ctx.lineWidth = 2 / globalScale;
       ctx.stroke();
-    }
 
-    // Draw node circle
-    ctx.beginPath();
-    ctx.arc(node.x || 0, node.y || 0, size, 0, 2 * Math.PI);
-    if (isContact) {
-      ctx.fillStyle = nodeColor;
-    } else if (isActivity) {
-      ctx.fillStyle = activityNodeColor;
-    } else {
-      ctx.fillStyle = circleNodeColor;
-    }
-    ctx.fill();
+      // Draw initials for contacts
+      if (isContact && globalScale > 0.5) {
+        ctx.font = `bold ${fontSize * 1.2}px Helvetica, Helvetica Neue, Roboto, Arial, sans-serif`;
 
-    // Draw border
-    ctx.strokeStyle = bgColor;
-    ctx.lineWidth = 2 / globalScale;
-    ctx.stroke();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText(getInitials(node.label), node.x || 0, node.y || 0);
+      }
 
-    // Draw initials for contacts
-    if (isContact && globalScale > 0.5) {
-      ctx.font = `bold ${fontSize * 1.2}px Helvetica, Helvetica Neue, Roboto, Arial, sans-serif`;
-
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillText(getInitials(node.label), node.x || 0, node.y || 0);
-    }
-
-    // Draw label below node when zoomed in enough
-    if (globalScale > 0.6 && (isContact || isActivity || isCircleNode)) {
-      ctx.font = `${fontSize}px Helvetica, Helvetica Neue, Roboto, Arial, sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'top';
-      ctx.fillStyle = textColor;
-      ctx.fillText(node.label, node.x || 0, (node.y || 0) + size + 4);
-    }
-  }, [nodeColor, activityNodeColor, circleNodeColor, bgColor, textColor, centeredNodeId, theme.palette.primary.light]);
+      // Draw label below node when zoomed in enough
+      if (globalScale > 0.6 && (isContact || isActivity || isCircleNode)) {
+        ctx.font = `${fontSize}px Helvetica, Helvetica Neue, Roboto, Arial, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillStyle = textColor;
+        ctx.fillText(node.label, node.x || 0, (node.y || 0) + size + 4);
+      }
+    },
+    [nodeColor, activityNodeColor, circleNodeColor, bgColor, textColor, centeredNodeId, theme.palette.primary.light],
+  );
 
   // Custom link rendering
-  const linkColor = useCallback((link: GraphEdge) => {
-    if (link.type === 'relationship') return relationshipColor;
-    if (link.type === 'activity') return activityColor;
-    return circleEdgeColor;
-  }, [relationshipColor, activityColor, circleEdgeColor]);
+  const linkColor = useCallback(
+    (link: GraphEdge) => {
+      if (link.type === 'relationship') return relationshipColor;
+      if (link.type === 'activity') return activityColor;
+      return circleEdgeColor;
+    },
+    [relationshipColor, activityColor, circleEdgeColor],
+  );
 
   // Handle node hover
   const handleNodeHover = useCallback((node: GraphNode | null) => {
@@ -287,13 +290,16 @@ export default function NetworkGraph({
   }, []);
 
   // Handle node click
-  const handleNodeClick = useCallback((node: GraphNode) => {
-    if (node.type === 'contact') {
-      onNodeClick(node);
-    } else if (node.type === 'activity') {
-      onActivityClick?.(node);
-    }
-  }, [onNodeClick, onActivityClick]);
+  const handleNodeClick = useCallback(
+    (node: GraphNode) => {
+      if (node.type === 'contact') {
+        onNodeClick(node);
+      } else if (node.type === 'activity') {
+        onActivityClick?.(node);
+      }
+    },
+    [onNodeClick, onActivityClick],
+  );
 
   // Configure forces to prevent isolated nodes from drifting too far
   useEffect(() => {
@@ -375,7 +381,11 @@ export default function NetworkGraph({
                 {hoveredNode.label}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                {hoveredNode.type === 'contact' ? t('network.legend.contact') : hoveredNode.type === 'activity' ? t('network.legend.activity') : t('network.legend.circle')}
+                {hoveredNode.type === 'contact'
+                  ? t('network.legend.contact')
+                  : hoveredNode.type === 'activity'
+                    ? t('network.legend.activity')
+                    : t('network.legend.circle')}
               </Typography>
             </>
           ) : hoveredEdge ? (

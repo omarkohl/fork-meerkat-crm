@@ -1,16 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Divider,
-  Button,
-  Stack,
-  Alert,
-  CircularProgress,
-} from '@mui/material';
+import { Box, Card, CardContent, Typography, Divider, Button, Stack, Alert, CircularProgress } from '@mui/material';
 import DownloadIcon from '@mui/icons-material/Download';
 import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
 import { exportDataAsCsv, exportContactsAsVcf } from './api/export';
@@ -122,8 +112,16 @@ export default function DataSettingsPage() {
             <Typography variant="body2" color="text.secondary">
               {t('settings.export.description')}
             </Typography>
-            {exportError && <Alert severity="error" sx={{ py: 0 }}>{exportError}</Alert>}
-            {exportSuccess && <Alert severity="success" sx={{ py: 0 }}>{exportSuccess}</Alert>}
+            {exportError && (
+              <Alert severity="error" sx={{ py: 0 }}>
+                {exportError}
+              </Alert>
+            )}
+            {exportSuccess && (
+              <Alert severity="success" sx={{ py: 0 }}>
+                {exportSuccess}
+              </Alert>
+            )}
             <Button
               variant="contained"
               size="small"
@@ -151,8 +149,16 @@ export default function DataSettingsPage() {
             <Typography variant="body2" color="text.secondary">
               {t('settings.exportVcf.description')}
             </Typography>
-            {exportVcfError && <Alert severity="error" sx={{ py: 0 }}>{exportVcfError}</Alert>}
-            {exportVcfSuccess && <Alert severity="success" sx={{ py: 0 }}>{exportVcfSuccess}</Alert>}
+            {exportVcfError && (
+              <Alert severity="error" sx={{ py: 0 }}>
+                {exportVcfError}
+              </Alert>
+            )}
+            {exportVcfSuccess && (
+              <Alert severity="success" sx={{ py: 0 }}>
+                {exportVcfSuccess}
+              </Alert>
+            )}
             <Button
               variant="contained"
               size="small"

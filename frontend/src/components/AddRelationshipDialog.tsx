@@ -52,7 +52,8 @@ export default function AddRelationshipDialog({
 }: AddRelationshipDialogProps) {
   const { t } = useTranslation();
   const { showError, showSuccess } = useSnackbar();
-  const { parseBirthdayInput, getBirthdayPlaceholder, formatBirthdayForInput, autoFormatBirthdayInput } = useDateFormat();
+  const { parseBirthdayInput, getBirthdayPlaceholder, formatBirthdayForInput, autoFormatBirthdayInput } =
+    useDateFormat();
   const [entryMode, setEntryMode] = useState<EntryMode>('manual');
   const [name, setName] = useState('');
   const [firstname, setFirstname] = useState('');
@@ -71,19 +72,22 @@ export default function AddRelationshipDialog({
   // be retried without creating the contact twice.
   const [createdContact, setCreatedContact] = useState<Contact | null>(null);
 
-  const loadContacts = useCallback(async (search: string = '') => {
-    setContactsLoading(true);
-    try {
-      const response = await getContacts({ limit: 100, search });
-      // Filter out the current contact
-      const filteredContacts = response.contacts.filter(c => c.ID !== currentContactId);
-      setContacts(filteredContacts);
-    } catch (err) {
-      handleFetchError(err, 'loading contacts');
-    } finally {
-      setContactsLoading(false);
-    }
-  }, [currentContactId]);
+  const loadContacts = useCallback(
+    async (search: string = '') => {
+      setContactsLoading(true);
+      try {
+        const response = await getContacts({ limit: 100, search });
+        // Filter out the current contact
+        const filteredContacts = response.contacts.filter((c) => c.ID !== currentContactId);
+        setContacts(filteredContacts);
+      } catch (err) {
+        handleFetchError(err, 'loading contacts');
+      } finally {
+        setContactsLoading(false);
+      }
+    },
+    [currentContactId],
+  );
 
   // Load contacts for linking
   useEffect(() => {
@@ -101,7 +105,7 @@ export default function AddRelationshipDialog({
       setLastname(last);
       setCreatedContact(null);
       // Check if type is in presets
-      if (RELATIONSHIP_TYPES.includes(relationship.type as typeof RELATIONSHIP_TYPES[number])) {
+      if (RELATIONSHIP_TYPES.includes(relationship.type as (typeof RELATIONSHIP_TYPES)[number])) {
         setType(relationship.type);
         setCustomType('');
       } else {
@@ -133,7 +137,7 @@ export default function AddRelationshipDialog({
   // Debounced search effect
   useEffect(() => {
     if (entryMode !== 'linked') return;
-    
+
     const timeoutId = setTimeout(() => {
       loadContacts(searchInput);
     }, 300);
@@ -236,21 +240,21 @@ export default function AddRelationshipDialog({
           birthday: birthdayISO || undefined,
         });
         setCreatedContact(newContact);
-        showSuccess(t('relationships.contactCreated', {
-          name: `${newContact.firstname} ${newContact.lastname}`.trim(),
-        }));
+        showSuccess(
+          t('relationships.contactCreated', {
+            name: `${newContact.firstname} ${newContact.lastname}`.trim(),
+          }),
+        );
       }
 
       // The linked contact (existing or freshly created) owns name/gender/birthday,
       // so those stay on the contact rather than being duplicated on the relationship
-      const linkedContact = entryMode === 'new' ? newContact : (entryMode === 'linked' ? selectedContact : null);
+      const linkedContact = entryMode === 'new' ? newContact : entryMode === 'linked' ? selectedContact : null;
       const data: RelationshipFormData = {
-        name: linkedContact
-          ? `${linkedContact.firstname} ${linkedContact.lastname}`.trim()
-          : name.trim(),
+        name: linkedContact ? `${linkedContact.firstname} ${linkedContact.lastname}`.trim() : name.trim(),
         type: effectiveType,
         // Only include gender/birthday for manual mode
-        gender: entryMode === 'manual' ? (gender || undefined) : undefined,
+        gender: entryMode === 'manual' ? gender || undefined : undefined,
         birthday: entryMode === 'manual' ? birthdayISO : undefined,
         related_contact_id: linkedContact ? linkedContact.ID : null,
       };
@@ -262,9 +266,11 @@ export default function AddRelationshipDialog({
       const errorMessage = getErrorMessage(err);
       // The contact exists but the relationship didn't save - say so, otherwise
       // the user has no idea a contact was left behind
-      setError(newContact && entryMode === 'new'
-        ? `${t('relationships.contactCreatedLinkFailed')} ${errorMessage}`
-        : errorMessage);
+      setError(
+        newContact && entryMode === 'new'
+          ? `${t('relationships.contactCreatedLinkFailed')} ${errorMessage}`
+          : errorMessage,
+      );
     } finally {
       setSaving(false);
     }
@@ -274,34 +280,16 @@ export default function AddRelationshipDialog({
 
   return (
     <AppDialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
-        {isEditing ? t('relationships.editRelationship') : t('relationships.addRelationship')}
-      </DialogTitle>
+      <DialogTitle>{isEditing ? t('relationships.editRelationship') : t('relationships.addRelationship')}</DialogTitle>
       <DialogContent>
         <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
           {/* Entry mode selection */}
           <FormControl component="fieldset">
             <FormLabel component="legend">{t('relationships.entryMode')}</FormLabel>
-            <RadioGroup
-              row
-              value={entryMode}
-              onChange={(e) => handleModeChange(e.target.value as EntryMode)}
-            >
-              <FormControlLabel
-                value="manual"
-                control={<Radio />}
-                label={t('relationships.enterManually')}
-              />
-              <FormControlLabel
-                value="new"
-                control={<Radio />}
-                label={t('relationships.createNewContact')}
-              />
-              <FormControlLabel
-                value="linked"
-                control={<Radio />}
-                label={t('relationships.linkToContact')}
-              />
+            <RadioGroup row value={entryMode} onChange={(e) => handleModeChange(e.target.value as EntryMode)}>
+              <FormControlLabel value="manual" control={<Radio />} label={t('relationships.enterManually')} />
+              <FormControlLabel value="new" control={<Radio />} label={t('relationships.createNewContact')} />
+              <FormControlLabel value="linked" control={<Radio />} label={t('relationships.linkToContact')} />
             </RadioGroup>
           </FormControl>
 
@@ -429,11 +417,7 @@ export default function AddRelationshipDialog({
           {entryMode !== 'linked' && (
             <FormControl fullWidth disabled={!!createdContact}>
               <InputLabel>{t('contacts.gender')}</InputLabel>
-              <Select
-                value={gender}
-                label={t('contacts.gender')}
-                onChange={(e) => setGender(e.target.value)}
-              >
+              <Select value={gender} label={t('contacts.gender')} onChange={(e) => setGender(e.target.value)}>
                 <MenuItem value="">{t('contacts.selectGender')}</MenuItem>
                 <MenuItem value="male">{t('contacts.male')}</MenuItem>
                 <MenuItem value="female">{t('contacts.female')}</MenuItem>
@@ -455,11 +439,7 @@ export default function AddRelationshipDialog({
             />
           )}
 
-          {error && (
-            <Box sx={{ color: 'error.main', fontSize: '0.875rem' }}>
-              {error}
-            </Box>
-          )}
+          {error && <Box sx={{ color: 'error.main', fontSize: '0.875rem' }}>{error}</Box>}
         </Box>
       </DialogContent>
       <DialogActions>

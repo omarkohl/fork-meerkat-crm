@@ -13,15 +13,15 @@ Status: draft, for discussion.
 
 Before the model, decide which of these matter. They pull in different directions.
 
-| # | Use case | Needs |
-|---|---|---|
-| U1 | Label kin and roles: "Eva is my sister", "Jon is my manager" | a typed label per contact |
-| U2 | Network graph centered on me, showing how others connect through me | a "me" node and edges to it |
-| U3 | Activities record that *I* was there (vs. events I only heard about) | per-activity participation |
-| U4 | Store my own data (birthday, addresses, photo) and share my card (vCard / QR) | a full contact record for me |
-| U5 | Second-degree context: "Eva is the wife of my colleague Jon" | relationships between contacts (exists) + U1 |
+| #   | Use case                                                                      | Needs                                        |
+| --- | ----------------------------------------------------------------------------- | -------------------------------------------- |
+| U1  | Label kin and roles: "Eva is my sister", "Jon is my manager"                  | a typed label per contact                    |
+| U2  | Network graph centered on me, showing how others connect through me           | a "me" node and edges to it                  |
+| U3  | Activities record that _I_ was there (vs. events I only heard about)          | per-activity participation                   |
+| U4  | Store my own data (birthday, addresses, photo) and share my card (vCard / QR) | a full contact record for me                 |
+| U5  | Second-degree context: "Eva is the wife of my colleague Jon"                  | relationships between contacts (exists) + U1 |
 
-Critical point: in a personal CRM *every* contact relates to me. A generic "Friend of me" adds little over Circles or `HowWeMet`. The value is in **specific** labels (U1) and in **visual centering** (U2). U4 is useful but is a separate feature (profile / "my card").
+Critical point: in a personal CRM _every_ contact relates to me. A generic "Friend of me" adds little over Circles or `HowWeMet`. The value is in **specific** labels (U1) and in **visual centering** (U2). U4 is useful but is a separate feature (profile / "my card").
 
 ## Part 1: How to model "myself"
 
@@ -39,16 +39,16 @@ Add `users.self_contact_id` (nullable FK). Alternative storage: `contacts.is_sel
 
 Special treatment (each item is a decision, see open questions):
 
-| Area | Proposed behavior |
-|---|---|
-| Contact list, search | Hide by default, or pin on top with a "Me" badge |
-| Dashboard, reminders, "upcoming birthdays" | Exclude from birthdays; reminders allowed (self-reminders are useful) |
-| Graph | Optional "center on me" mode; me node bigger. Off by default to avoid a star of edges |
-| Relationships | Normal. "Sister: Eva" on me = "Eva is my sister". With the symmetric design, Eva shows "Sibling: Me" |
-| Delete / trash | Block, or clear `self_contact_id` first |
-| Archive | Block (archived = not in graph) |
-| CardDAV sync | Sync as normal; phones also have a "My Card". Risk: duplicate with an existing card for you; the "mark as me" action should let the user pick that existing card |
-| Import (vCard/CSV/Monica) | Never sets "me" automatically. Monica may have its own "this is me" contact; check before mapping it |
+| Area                                       | Proposed behavior                                                                                                                                                |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Contact list, search                       | Hide by default, or pin on top with a "Me" badge                                                                                                                 |
+| Dashboard, reminders, "upcoming birthdays" | Exclude from birthdays; reminders allowed (self-reminders are useful)                                                                                            |
+| Graph                                      | Optional "center on me" mode; me node bigger. Off by default to avoid a star of edges                                                                            |
+| Relationships                              | Normal. "Sister: Eva" on me = "Eva is my sister". With the symmetric design, Eva shows "Sibling: Me"                                                             |
+| Delete / trash                             | Block, or clear `self_contact_id` first                                                                                                                          |
+| Archive                                    | Block (archived = not in graph)                                                                                                                                  |
+| CardDAV sync                               | Sync as normal; phones also have a "My Card". Risk: duplicate with an existing card for you; the "mark as me" action should let the user pick that existing card |
+| Import (vCard/CSV/Monica)                  | Never sets "me" automatically. Monica may have its own "this is me" contact; check before mapping it                                                             |
 
 - \+ Reuses everything: fields, photo, relationships, notes (a journal about yourself), vCard export (U4).
 - \+ Small schema change; opt-in (no self contact → app works as today).
@@ -75,12 +75,12 @@ Add `Contact.relation_to_me` (catalog value or free text, maybe multi-value). Li
 
 ### Comparison
 
-| | U1 labels | U2 graph | U3 activities | U4 my data | Cost | Special cases |
-|---|---|---|---|---|---|---|
-| M0 | yes | partly | no | yes | none | none, but polluted lists |
-| M1 | yes | yes | possible | yes | M | many |
-| M2 | yes | yes | possible | no | M–L | few, but deep |
-| M3 | yes | yes (synthetic) | no | no | S | few |
+|     | U1 labels | U2 graph        | U3 activities | U4 my data | Cost | Special cases            |
+| --- | --------- | --------------- | ------------- | ---------- | ---- | ------------------------ |
+| M0  | yes       | partly          | no            | yes        | none | none, but polluted lists |
+| M1  | yes       | yes             | possible      | yes        | M    | many                     |
+| M2  | yes       | yes             | possible      | no         | M–L  | few, but deep            |
+| M3  | yes       | yes (synthetic) | no            | no         | S    | few                      |
 
 Recommendation: **M3** if you mostly want U1/U2. **M1** if you also want U4 (your own card, journal). Avoid M2: it costs about as much as M1 and gives less.
 
@@ -94,7 +94,7 @@ Valid reasons to record an activity without me:
 - **Network knowledge**: "Jon and Eva met at FOSDEM". This is why the graph links contacts through activities.
 - **Things I arranged but did not attend**: "Introduced Jon to Eva" (arguably I took part).
 
-Most activities are still *my* interactions (dinner, call, meeting). So "me" is the normal case and "not me" the exception.
+Most activities are still _my_ interactions (dinner, call, meeting). So "me" is the normal case and "not me" the exception.
 
 ### A1. Me is always implicit (status quo, documented) — recommended now
 

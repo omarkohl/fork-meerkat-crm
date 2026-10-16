@@ -6,14 +6,11 @@ import {
   deleteReminder,
   completeReminder,
   Reminder,
-  ReminderFormData
+  ReminderFormData,
 } from '../api/reminders';
 import { handleFetchError, handleError, ErrorNotifier } from '../utils/errorHandler';
 
-export function useReminderManagement(
-  contactId: string | undefined,
-  notifier?: ErrorNotifier
-) {
+export function useReminderManagement(contactId: string | undefined, notifier?: ErrorNotifier) {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [reminderDialogOpen, setReminderDialogOpen] = useState(false);
   const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
@@ -92,6 +89,6 @@ export function useReminderManagement(
     handleAddReminder,
     setReminderDialogOpen,
     setEditingReminder,
-    setReminders
+    setReminders,
   };
 }

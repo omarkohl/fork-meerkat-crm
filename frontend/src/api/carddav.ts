@@ -51,7 +51,6 @@ export interface ContactSyncStats {
   errors: number;
 }
 
-
 // Returns null when no connection is configured yet (404).
 export async function getCardDAVConnection(): Promise<CardDAVConnection | null> {
   const response = await apiFetch(`${API_BASE_URL}/carddav/connection`, {
@@ -64,9 +63,7 @@ export async function getCardDAVConnection(): Promise<CardDAVConnection | null> 
   return handleResponse(response, 'Unable to load the CardDAV connection.') as Promise<CardDAVConnection>;
 }
 
-export async function saveCardDAVConnection(
-  input: CardDAVConnectionInput
-): Promise<CardDAVConnection> {
+export async function saveCardDAVConnection(input: CardDAVConnectionInput): Promise<CardDAVConnection> {
   const response = await apiFetch(`${API_BASE_URL}/carddav/connection`, {
     method: 'PUT',
     headers: getAuthHeaders(),
@@ -95,7 +92,7 @@ export async function discoverCardDAVAddressBooks(input: {
       headers: getAuthHeaders(),
       body: JSON.stringify(input),
     },
-    60000
+    60000,
   );
   const data = await handleResponse(response, 'Unable to discover address books.');
   return data?.address_books || [];

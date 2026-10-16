@@ -198,7 +198,11 @@ export function run(root) {
       label: 'frontend',
       plurals: true,
       dir: join(root, 'frontend/src/i18n/locales'),
-      sources: walk(join(root, 'frontend/src'), ['.ts', '.tsx'], (p) => p.includes('/i18n/locales') || /\.test\.tsx?$/.test(p)),
+      sources: walk(
+        join(root, 'frontend/src'),
+        ['.ts', '.tsx'],
+        (p) => p.includes('/i18n/locales') || /\.test\.tsx?$/.test(p),
+      ),
     },
     {
       label: 'backend',
@@ -225,6 +229,8 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const { errors, warnings } = run(root);
   for (const w of warnings) console.warn(`warning: ${w}`);
   for (const e of errors) console.error(`error: ${e}`);
-  console.log(`i18n check: ${errors.length} error(s), ${warnings.length} warning(s) (${relative(process.cwd(), root) || '.'})`);
+  console.log(
+    `i18n check: ${errors.length} error(s), ${warnings.length} warning(s) (${relative(process.cwd(), root) || '.'})`,
+  );
   process.exit(errors.length ? 1 : 0);
 }

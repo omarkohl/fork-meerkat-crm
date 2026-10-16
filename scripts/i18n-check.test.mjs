@@ -51,11 +51,18 @@ test('findUnused tolerates dynamic keys', () => {
 
 test('run fails on a real gap in a fixture tree', () => {
   const root = mkdtempSync(join(tmpdir(), 'i18n-'));
-  for (const [dir, src] of [['frontend/src/i18n/locales', 'frontend/src/a.ts'], ['backend/i18n/locales', 'backend/a.go']]) {
+  for (const [dir, src] of [
+    ['frontend/src/i18n/locales', 'frontend/src/a.ts'],
+    ['backend/i18n/locales', 'backend/a.go'],
+  ]) {
     mkdirSync(join(root, dir), { recursive: true });
     mkdirSync(join(root, src, '..'), { recursive: true });
     writeFileSync(join(root, src), "t('k')");
-    for (const l of LOCALES) writeFileSync(join(root, dir, `${l}.json`), JSON.stringify(l === 'de' && dir.startsWith('backend') ? {} : { k: 'v' }));
+    for (const l of LOCALES)
+      writeFileSync(
+        join(root, dir, `${l}.json`),
+        JSON.stringify(l === 'de' && dir.startsWith('backend') ? {} : { k: 'v' }),
+      );
   }
   const { errors } = run(root);
   assert.deepEqual(errors, ['backend: de: missing key "k"']);
@@ -80,13 +87,18 @@ test('plurals: every locale needs _other where en has plurals', () => {
   const plain = loc({ d: '{{count}} Tage' });
   assert.deepEqual(compareLocales({ en, de: ok }).errors, []);
   assert.deepEqual(compareLocales({ en, de: noOther }).errors, ['de: missing key "d_other"']);
-  assert.deepEqual(compareLocales({ en, de: plain }).errors.sort(), ['de: key "d" is not in en', 'de: missing key "d_other"']);
+  assert.deepEqual(compareLocales({ en, de: plain }).errors.sort(), [
+    'de: key "d" is not in en',
+    'de: missing key "d_other"',
+  ]);
 });
 
 test('backend locales have no plurals: suffixes are ordinary keys', () => {
   const en = loc({ a_one: 'x', a_other: 'y' });
   const de = loc({ a_other: 'y' });
-  assert.deepEqual(compareLocales({ en, de }, 'backend', { plurals: false }).errors, ['backend: de: missing key "a_one"']);
+  assert.deepEqual(compareLocales({ en, de }, 'backend', { plurals: false }).errors, [
+    'backend: de: missing key "a_one"',
+  ]);
 });
 
 test('empty values and different placeholders are errors', () => {

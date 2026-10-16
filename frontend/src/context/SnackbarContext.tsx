@@ -34,21 +34,33 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
     setOpen(true);
   }, []);
 
-  const showError = useCallback((message: string) => {
-    showSnackbar(message, 'error', 8000);
-  }, [showSnackbar]);
+  const showError = useCallback(
+    (message: string) => {
+      showSnackbar(message, 'error', 8000);
+    },
+    [showSnackbar],
+  );
 
-  const showSuccess = useCallback((message: string) => {
-    showSnackbar(message, 'success', 4000);
-  }, [showSnackbar]);
+  const showSuccess = useCallback(
+    (message: string) => {
+      showSnackbar(message, 'success', 4000);
+    },
+    [showSnackbar],
+  );
 
-  const showWarning = useCallback((message: string) => {
-    showSnackbar(message, 'warning', 6000);
-  }, [showSnackbar]);
+  const showWarning = useCallback(
+    (message: string) => {
+      showSnackbar(message, 'warning', 6000);
+    },
+    [showSnackbar],
+  );
 
-  const showInfo = useCallback((message: string) => {
-    showSnackbar(message, 'info', 5000);
-  }, [showSnackbar]);
+  const showInfo = useCallback(
+    (message: string) => {
+      showSnackbar(message, 'info', 5000);
+    },
+    [showSnackbar],
+  );
 
   const handleClose = (_event?: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === 'clickaway') {
@@ -66,12 +78,7 @@ export function SnackbarProvider({ children }: SnackbarProviderProps) {
         onClose={handleClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert
-          onClose={handleClose}
-          severity={snackbarMessage.severity}
-          variant="filled"
-          sx={{ width: '100%' }}
-        >
+        <Alert onClose={handleClose} severity={snackbarMessage.severity} variant="filled" sx={{ width: '100%' }}>
           {snackbarMessage.message}
         </Alert>
       </Snackbar>

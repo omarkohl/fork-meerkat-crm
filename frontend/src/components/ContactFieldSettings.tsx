@@ -1,16 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Divider,
-  Stack,
-  Alert,
-  FormControlLabel,
-  Switch,
-} from '@mui/material';
+import { Box, Card, CardContent, Typography, Divider, Stack, Alert, FormControlLabel, Switch } from '@mui/material';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import { getEnabledContactFields, updateEnabledContactFields } from '../api/users';
 import {
@@ -78,7 +68,11 @@ export default function ContactFieldSettings() {
             {t('settings.contactFields.description')}
           </Typography>
 
-          {error && <Alert severity="error" sx={{ py: 0 }}>{error}</Alert>}
+          {error && (
+            <Alert severity="error" sx={{ py: 0 }}>
+              {error}
+            </Alert>
+          )}
 
           {loading ? (
             <Typography variant="body2" color="text.secondary">

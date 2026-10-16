@@ -17,32 +17,33 @@ i18n
   .init({
     resources: {
       en: {
-        translation: enTranslations
+        translation: enTranslations,
       },
       de: {
-        translation: deTranslations
+        translation: deTranslations,
       },
       it: {
-        translation: itTranslations
+        translation: itTranslations,
       },
       es: {
-        translation: esTranslations
+        translation: esTranslations,
       },
       fr: {
-        translation: frTranslations
-      }
+        translation: frTranslations,
+      },
     },
     fallbackLng: 'en',
     load: 'languageOnly',
     debug: false,
     interpolation: {
-      escapeValue: false
+      escapeValue: false,
     },
     detection: {
       order: ['localStorage', 'navigator'],
-      caches: ['localStorage']
-    }
-  }).then(() => {
+      caches: ['localStorage'],
+    },
+  })
+  .then(() => {
     console.log = origLog;
   });
 

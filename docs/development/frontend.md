@@ -34,6 +34,7 @@ Hot reload is enabled. The dev server proxies nothing so requests go directly to
 ## API Client
 
 All requests go through `src/api/client.ts`. It handles:
+
 - httpOnly cookie auth (`credentials: 'include'`, no Authorization header)
 - Configurable timeout via `REACT_APP_REQUEST_TIMEOUT` (default 30s)
 - Automatic redirect to `/login` on 401

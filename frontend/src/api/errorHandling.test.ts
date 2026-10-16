@@ -8,21 +8,17 @@ describe('extractDetailMessage', () => {
   });
 
   test('prefers the reason field over other values', () => {
-    expect(extractDetailMessage({ reason: 'Rate limit exceeded', email: 'Invalid email' })).toBe(
-      'Rate limit exceeded'
-    );
+    expect(extractDetailMessage({ reason: 'Rate limit exceeded', email: 'Invalid email' })).toBe('Rate limit exceeded');
   });
 
   test('joins string values from the details object', () => {
     expect(extractDetailMessage({ email: 'Email already taken', username: 'Username too short' })).toBe(
-      'Email already taken Username too short'
+      'Email already taken Username too short',
     );
   });
 
   test('collects strings from array values', () => {
-    expect(extractDetailMessage({ fields: ['First error', 'Second error'] })).toBe(
-      'First error Second error'
-    );
+    expect(extractDetailMessage({ fields: ['First error', 'Second error'] })).toBe('First error Second error');
   });
 
   test('ignores empty strings and non-string values', () => {
@@ -31,8 +27,7 @@ describe('extractDetailMessage', () => {
 });
 
 describe('handleResponse', () => {
-  const jsonResponse = (body: unknown, status = 200) =>
-    new Response(JSON.stringify(body), { status });
+  const jsonResponse = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 
   test('returns the parsed body for a successful JSON response', async () => {
     await expect(handleResponse(jsonResponse({ id: 1, name: 'Ada' }), 'fallback')).resolves.toEqual({
@@ -54,7 +49,7 @@ describe('handleResponse', () => {
   test('throws the field detail message from a structured backend error', async () => {
     const response = jsonResponse(
       { error: { code: 'VALIDATION', message: 'Validation failed', details: { email: 'Email already registered' } } },
-      400
+      400,
     );
     await expect(handleResponse(response, 'fallback')).rejects.toThrow('Email already registered');
   });
@@ -66,25 +61,23 @@ describe('handleResponse', () => {
 
   test('handles the simple string error format', async () => {
     await expect(handleResponse(jsonResponse({ error: 'Something broke' }, 500), 'fallback')).rejects.toThrow(
-      'Something broke'
+      'Something broke',
     );
   });
 
   test('uses a top-level message field when present', async () => {
     await expect(handleResponse(jsonResponse({ message: 'Too many requests' }, 429), 'fallback')).rejects.toThrow(
-      'Too many requests'
+      'Too many requests',
     );
   });
 
   test('uses a plain-text error body as the message', async () => {
     await expect(handleResponse(new Response('Bad Gateway', { status: 502 }), 'fallback')).rejects.toThrow(
-      'Bad Gateway'
+      'Bad Gateway',
     );
   });
 
   test('falls back to the provided message for an empty error body', async () => {
-    await expect(handleResponse(new Response('', { status: 500 }), 'Request failed')).rejects.toThrow(
-      'Request failed'
-    );
+    await expect(handleResponse(new Response('', { status: 500 }), 'Request failed')).rejects.toThrow('Request failed');
   });
 });

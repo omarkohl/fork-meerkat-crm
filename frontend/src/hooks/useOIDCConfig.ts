@@ -11,8 +11,8 @@ export function useOIDCConfig(): OIDCConfig {
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/auth/oidc/config`)
-      .then(res => res.ok ? res.json() : null)
-      .then(data => {
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
         if (data) {
           setConfig({
             enabled: data.enabled === true,

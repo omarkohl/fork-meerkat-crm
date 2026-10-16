@@ -4,7 +4,7 @@ import { ErrorFallback, SectionErrorFallback } from '../components/ErrorFallback
 
 /**
  * Higher-order component to wrap a component with an error boundary
- * 
+ *
  * @example
  * ```tsx
  * const SafeContactsList = withErrorBoundary(ContactsList, {
@@ -20,10 +20,10 @@ export function withErrorBoundary<P extends object>(
     fallbackSize?: 'small' | 'medium' | 'large';
     showDetails?: boolean;
     onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
-  } = {}
+  } = {},
 ) {
   const { name, fallbackSize = 'medium', showDetails, onError } = options;
-  
+
   return class WithErrorBoundary extends Component<P> {
     render() {
       return (
@@ -48,7 +48,7 @@ export function withErrorBoundary<P extends object>(
 
 /**
  * Higher-order component for minimal section-level error boundaries
- * 
+ *
  * @example
  * ```tsx
  * const SafeSection = withSectionErrorBoundary(MySection);
@@ -59,21 +59,17 @@ export function withSectionErrorBoundary<P extends object>(
   options: {
     name?: string;
     onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
-  } = {}
+  } = {},
 ) {
   const { name, onError } = options;
-  
+
   return class WithSectionErrorBoundary extends Component<P> {
     render() {
       return (
         <ErrorBoundary
           name={name || WrappedComponent.displayName || WrappedComponent.name}
           onError={onError}
-          fallback={
-            <SectionErrorFallback
-              title={`Error loading ${name || 'section'}`}
-            />
-          }
+          fallback={<SectionErrorFallback title={`Error loading ${name || 'section'}`} />}
         >
           <WrappedComponent {...this.props} />
         </ErrorBoundary>
@@ -94,7 +90,7 @@ interface SafeComponentProps {
 
 /**
  * Simple wrapper component for adding error boundaries inline
- * 
+ *
  * @example
  * ```tsx
  * <SafeComponent name="ContactCard">
@@ -127,7 +123,7 @@ export const SafeComponent: React.FC<SafeComponentProps> = ({
 
 /**
  * Simple wrapper for section-level errors
- * 
+ *
  * @example
  * ```tsx
  * <SafeSection name="Statistics Panel">
@@ -135,15 +131,9 @@ export const SafeComponent: React.FC<SafeComponentProps> = ({
  * </SafeSection>
  * ```
  */
-export const SafeSection: React.FC<SafeComponentProps> = ({
-  children,
-  name = 'Section',
-}) => {
+export const SafeSection: React.FC<SafeComponentProps> = ({ children, name = 'Section' }) => {
   return (
-    <ErrorBoundary
-      name={name}
-      fallback={<SectionErrorFallback title={`Error loading ${name}`} />}
-    >
+    <ErrorBoundary name={name} fallback={<SectionErrorFallback title={`Error loading ${name}`} />}>
       {children}
     </ErrorBoundary>
   );

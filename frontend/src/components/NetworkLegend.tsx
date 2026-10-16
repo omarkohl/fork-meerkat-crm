@@ -12,39 +12,59 @@ export default function NetworkLegend({ showCircles, showActivities, showRelatio
   const { t } = useTranslation();
 
   const legendItems = [
-    ...(showRelationships ? [{
-      color: theme.palette.primary.main,
-      label: t('network.legend.relationships'),
-      type: 'line',
-    }] : []),
-    ...(showActivities ? [{
-      color: theme.palette.secondary.main,
-      label: t('network.legend.activities'),
-      type: 'line',
-    }] : []),
-    ...(showCircles ? [{
-      color: theme.palette.warning.main,
-      label: t('network.legend.circleEdge'),
-      type: 'line',
-    }] : []),
+    ...(showRelationships
+      ? [
+          {
+            color: theme.palette.primary.main,
+            label: t('network.legend.relationships'),
+            type: 'line',
+          },
+        ]
+      : []),
+    ...(showActivities
+      ? [
+          {
+            color: theme.palette.secondary.main,
+            label: t('network.legend.activities'),
+            type: 'line',
+          },
+        ]
+      : []),
+    ...(showCircles
+      ? [
+          {
+            color: theme.palette.warning.main,
+            label: t('network.legend.circleEdge'),
+            type: 'line',
+          },
+        ]
+      : []),
     {
       color: theme.palette.primary.main,
       label: t('network.legend.contact'),
       type: 'circle',
       size: 12,
     },
-    ...(showActivities ? [{
-      color: theme.palette.secondary.main,
-      label: t('network.legend.activity'),
-      type: 'circle',
-      size: 8,
-    }] : []),
-    ...(showCircles ? [{
-      color: theme.palette.warning.main,
-      label: t('network.legend.circle'),
-      type: 'circle',
-      size: 10,
-    }] : []),
+    ...(showActivities
+      ? [
+          {
+            color: theme.palette.secondary.main,
+            label: t('network.legend.activity'),
+            type: 'circle',
+            size: 8,
+          },
+        ]
+      : []),
+    ...(showCircles
+      ? [
+          {
+            color: theme.palette.warning.main,
+            label: t('network.legend.circle'),
+            type: 'circle',
+            size: 10,
+          },
+        ]
+      : []),
   ];
 
   return (
