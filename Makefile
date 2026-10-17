@@ -1,4 +1,4 @@
-.PHONY: help install install-go install-frontend dev seed format format-check lint lint-go lint-frontend typecheck i18n-check test test-scripts test-go test-frontend test-coverage test-coverage-go test-coverage-frontend test-carddav test-e2e test-e2e-docker arch openapi openapi-check vuln-go audit-frontend fuzz precommit build
+.PHONY: help install install-go install-frontend dev seed format format-check lint lint-go lint-frontend typecheck i18n-check test test-scripts test-go test-frontend test-coverage test-coverage-go test-coverage-frontend test-carddav test-e2e test-e2e-docker arch openapi openapi-check vuln-go audit-frontend fuzz precommit build clean clean-all
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-24s %s\n", $$1, $$2}'
@@ -113,3 +113,16 @@ precommit: format-check lint typecheck i18n-check arch openapi-check test-script
 build: install ## Build backend binary and frontend bundle
 	cd backend && go build -o meerkat .
 	cd frontend && VITE_API_URL= npm run build
+
+clean: ## Remove build outputs, coverage, test reports and the make dev data
+	rm -rf .dev
+	rm -rf backend/coverage.out
+	rm -rf backend/meerkat
+	rm -rf frontend/build
+	rm -rf frontend/coverage
+	rm -rf frontend/dist
+	rm -rf frontend/playwright-report
+	rm -rf frontend/test-results
+
+clean-all: clean ## clean plus frontend/node_modules
+	rm -rf frontend/node_modules
