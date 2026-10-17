@@ -9,7 +9,7 @@ Versions `X.Y.Z` are upstream releases of
 [fbuchner/meerkat-crm](https://github.com/fbuchner/meerkat-crm). Versions `X.Y.Z-omk.N` are releases
 of this fork (see [FORK.md](FORK.md)).
 
-## [Unreleased]
+## [1.7.0-omk.2] - 2026-10-17
 
 ### Fixed
 
@@ -26,6 +26,7 @@ of this fork (see [FORK.md](FORK.md)).
 - **`FAKE_NOW`** sets the app's clock, to test and preview time-dependent behaviour.
 - **Vite** replaces Create React App to build and serve the frontend.
 - **npm replaces Yarn**: development and builds need only Node.js.
+- **Restructuring**: extensive internal restructuring (hexagonal architecture)
 
 ## [1.7.0-omk.1] - 2026-10-16
 
@@ -257,6 +258,7 @@ First fork release. Based on upstream 1.7.0 plus later upstream changes.
 - **`/health` endpoint** is reachable through the frontend.
 
 [Unreleased]: https://github.com/omarkohl/meerkat-crm/compare/v1.7.0-omk.1...HEAD
+[1.7.0-omk.2]: https://github.com/omarkohl/meerkat-crm/compare/v1.7.0-omk.1...v1.7.0-omk.2
 [1.7.0-omk.1]: https://github.com/omarkohl/meerkat-crm/compare/v1.7.0...v1.7.0-omk.1
 [1.7.0]: https://github.com/fbuchner/meerkat-crm/compare/v1.6.2...v1.7.0
 [1.6.2]: https://github.com/fbuchner/meerkat-crm/compare/v1.6.1...v1.6.2
