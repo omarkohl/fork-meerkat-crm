@@ -1,4 +1,4 @@
-.PHONY: help install install-go install-frontend dev seed format format-check lint lint-go lint-frontend typecheck i18n-check test test-scripts test-go test-frontend test-coverage test-coverage-go test-coverage-frontend test-carddav test-e2e test-e2e-docker arch vuln-go audit-frontend fuzz precommit build
+.PHONY: help install install-go install-frontend dev seed format format-check lint lint-go lint-frontend typecheck i18n-check test test-scripts test-go test-frontend test-coverage test-coverage-go test-coverage-frontend test-carddav test-e2e test-e2e-docker arch openapi openapi-check vuln-go audit-frontend fuzz precommit build
 
 YARN ?= corepack yarn
 
@@ -79,6 +79,17 @@ test-e2e: install ## Playwright E2E against a local stack (no Docker; see script
 test-e2e-docker: install-frontend ## Playwright against an already running stack on :7300 (CI: all-in-one image)
 	cd frontend && npx playwright test $(ARGS)
 
+openapi: install ## Write the OpenAPI 3.1 document (docs/openapi.json) and the TypeScript types generated from it
+	cd backend && go run ./cmd/openapi ../docs/openapi.json
+	cd frontend && npx openapi-typescript ../docs/openapi.json -o src/types/generated/api.ts
+
+openapi-check: install ## Fail when docs/openapi.json or the generated TypeScript types are out of date (run make openapi)
+	@d=$$(mktemp -d) && trap 'rm -rf "$$d"' EXIT && \
+	(cd backend && go run ./cmd/openapi "$$d/openapi.json") && \
+	(cd frontend && npx openapi-typescript "$$d/openapi.json" -o "$$d/api.ts" >/dev/null) && \
+	diff -u docs/openapi.json "$$d/openapi.json" && diff -u frontend/src/types/generated/api.ts "$$d/api.ts" \
+	|| { echo "openapi: generated files are out of date. Run: make openapi"; exit 1; }
+
 vuln-go: install-go ## govulncheck: fail on reachable Go vulnerabilities
 	cd backend && go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./...
 
@@ -96,7 +107,7 @@ arch: install ## Architecture rules: Go depguard layering, frontend dependency-c
 	cd backend && golangci-lint run --enable-only depguard
 	node scripts/arch-frontend.mjs
 
-precommit: format-check lint typecheck i18n-check arch test-scripts test-coverage test-e2e ## All checks, including E2E
+precommit: format-check lint typecheck i18n-check arch openapi-check test-scripts test-coverage test-e2e ## All checks, including E2E
 
 build: install ## Build backend binary and frontend bundle
 	cd backend && go build -o meerkat .

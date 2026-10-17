@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"meerkat/api"
 	"meerkat/carddav"
 	"meerkat/config"
 	"meerkat/controllers"
@@ -9,9 +10,19 @@ import (
 	"meerkat/models"
 	"meerkat/services"
 
+	"github.com/danielgtaylor/huma/v2"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
+
+// RegisterAPI registers every huma operation on a. It is also what cmd/openapi calls to
+// write the OpenAPI document, so it must not need a database or any running service.
+// Operations are registered unconditionally (cmd/openapi passes an empty config): a feature
+// that can be switched off registers its operation anyway and the handler answers as the
+// disabled feature would. Do not register an operation inside an `if cfg.X`.
+func RegisterAPI(a huma.API, cfg *config.Config) {
+	controllers.RegisterOIDCConfig(a, cfg)
+}
 
 func RegisterRoutes(router *gin.Engine, cfg *config.Config, db *gorm.DB, oidcProvider *services.OIDCProvider) {
 
@@ -28,7 +39,9 @@ func RegisterRoutes(router *gin.Engine, cfg *config.Config, db *gorm.DB, oidcPro
 	v1 := router.Group("/api/v1")
 	{
 		// OIDC routes (config always public; login/callback only when OIDC is enabled)
-		v1.GET("/auth/oidc/config", controllers.OIDCConfigHandler(cfg))
+		// Operations served by huma (the API contract); the rest are plain Gin handlers
+		// until they are converted (docs/adr/0011-api-contract-with-huma.md).
+		RegisterAPI(api.New(v1, router), cfg)
 		if cfg.OIDC.Enabled && oidcProvider != nil {
 			v1.GET("/auth/oidc/login", middleware.AuthRateLimitMiddleware(), controllers.OIDCLoginHandler(oidcProvider, cfg))
 			v1.GET("/auth/oidc/callback", middleware.AuthRateLimitMiddleware(), controllers.OIDCCallbackHandler(oidcProvider, cfg))

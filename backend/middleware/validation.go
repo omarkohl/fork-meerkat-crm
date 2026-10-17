@@ -13,11 +13,30 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-// Global validator instance
-var validate *validator.Validate
+// Global validator instances: validate names fields as Go does (the original error keys);
+// validateJSON names them by their JSON name, for the huma operations.
+var validate, validateJSON *validator.Validate
 
 func init() {
-	validate = validator.New()
+	validate = newValidator()
+	validateJSON = newValidator()
+	validateJSON.RegisterTagNameFunc(jsonFieldName)
+}
+
+// jsonFieldName names a struct field by its JSON tag (falling back to the Go name).
+func jsonFieldName(f reflect.StructField) string {
+	name := strings.Split(f.Tag.Get("json"), ",")[0]
+	if name == "-" {
+		return ""
+	}
+	if name == "" {
+		return f.Name
+	}
+	return name
+}
+
+func newValidator() *validator.Validate {
+	validate := validator.New()
 
 	// Register custom validators
 	validators := []struct {
@@ -36,6 +55,7 @@ func init() {
 			panic(fmt.Sprintf("register validator %q: %v", v.tag, err))
 		}
 	}
+	return validate
 }
 
 // ValidationError represents a validation error response
@@ -61,9 +81,29 @@ func ValidateStruct(obj interface{}) []ValidationError {
 	return errors
 }
 
+// ValidateStructJSON is ValidateStruct with JSON field names: "email" and
+// "emails[0].value" instead of "Email" and "Value". Messages are the same.
+func ValidateStructJSON(obj interface{}) []ValidationError {
+	var errors []ValidationError
+	if err := validateJSON.Struct(obj); err != nil {
+		for _, fe := range err.(validator.ValidationErrors) {
+			// Namespace is "RootType.emails[0].value": drop the root type name.
+			path := fe.Namespace()
+			if i := strings.Index(path, "."); i >= 0 {
+				path = path[i+1:]
+			}
+			errors = append(errors, ValidationError{Field: path, Message: formatMessage(fe, path)})
+		}
+	}
+	return errors
+}
+
 // formatValidationError creates user-friendly error messages
 func formatValidationError(err validator.FieldError) string {
-	field := err.Field()
+	return formatMessage(err, err.Field())
+}
+
+func formatMessage(err validator.FieldError, field string) string {
 
 	switch err.Tag() {
 	case "required":

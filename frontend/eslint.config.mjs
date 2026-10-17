@@ -9,7 +9,16 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['build/**', 'coverage/**', 'public/**', 'playwright-report/**', 'test-results/**'] },
+  {
+    ignores: [
+      'src/types/generated/**',
+      'build/**',
+      'coverage/**',
+      'public/**',
+      'playwright-report/**',
+      'test-results/**',
+    ],
+  },
   {
     files: ['src/**/*.{ts,tsx}'],
     extends: [

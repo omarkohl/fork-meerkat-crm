@@ -118,7 +118,7 @@ Read first: `.claude/plans/engineering-principles-reference.md`, `.claude/AUTONO
       no-unresolvable, pages call `src/api` only through hooks, nothing imports
       `src/api/client.ts` except `src/api/*`. Show each rule fails on a test
       violation. `make arch` runs them; add to `precommit` and CI.
-- [ ] 11. **API contract setup with huma (§2, §3)**: ADR. Start with a spike; if
+- [x] 11. **API contract setup with huma (§2, §3)**: ADR. Start with a spike; if
       a check below fails, record it under `## Blocked` and stop. Mount huma on the
       existing Gin groups with `humagin`, so Gin middleware (auth, rate limit,
       request ID) still runs. Keep the `AppError` JSON format for huma errors. Port

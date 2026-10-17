@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
 import { API_BASE_URL } from '../auth';
+import type { components } from '../types/generated/api';
+
+// The response of GET /auth/oidc/config, generated from the backend's OpenAPI document
+type OIDCConfigResponse = components['schemas']['OIDCConfigOutputBody'];
 
 interface OIDCConfig {
   enabled: boolean;
@@ -11,11 +15,11 @@ export function useOIDCConfig(): OIDCConfig {
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/auth/oidc/config`)
-      .then((res) => (res.ok ? res.json() : null))
+      .then((res) => (res.ok ? (res.json() as Promise<OIDCConfigResponse>) : null))
       .then((data) => {
         if (data) {
           setConfig({
-            enabled: data.enabled === true,
+            enabled: data.enabled,
             provider_name: data.provider_name || 'SSO',
           });
         }

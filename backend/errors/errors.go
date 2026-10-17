@@ -22,6 +22,10 @@ func (e *AppError) Error() string {
 	return e.Message
 }
 
+// GetStatus returns the HTTP status code, which makes AppError a huma.StatusError so a
+// huma operation can return it as is.
+func (e *AppError) GetStatus() int { return e.HTTPStatus }
+
 // Unwrap implements the errors.Unwrap interface
 func (e *AppError) Unwrap() error {
 	return e.Err

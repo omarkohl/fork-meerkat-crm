@@ -1,10 +1,14 @@
 package controllers
 
 import (
+	"context"
 	"crypto/subtle"
 	"errors"
+	"meerkat/api"
 	"meerkat/middleware"
 	"net/http"
+
+	"github.com/danielgtaylor/huma/v2"
 
 	"meerkat/config"
 	"meerkat/logger"
@@ -16,14 +20,31 @@ import (
 )
 
 // returns whether OIDC is enabled and a provider name hint.
-func OIDCConfigHandler(cfg *config.Config) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		resp := gin.H{"enabled": cfg.OIDC.Enabled}
-		if cfg.OIDC.Enabled {
-			resp["provider_name"] = services.ProviderName(cfg.OIDC.ProviderURL)
-		}
-		c.JSON(http.StatusOK, resp)
+// OIDCConfigOutput is the response of GET /auth/oidc/config.
+type OIDCConfigOutput struct {
+	Body struct {
+		Enabled      bool   `json:"enabled" doc:"Whether single sign-on is configured"`
+		ProviderName string `json:"provider_name,omitempty" doc:"A display name for the provider, present when enabled"`
 	}
+}
+
+// RegisterOIDCConfig registers GET /auth/oidc/config, the first operation served by huma
+// (docs/adr/0011-api-contract-with-huma.md).
+func RegisterOIDCConfig(a huma.API, cfg *config.Config) {
+	api.Register(a, huma.Operation{
+		OperationID: "get-oidc-config",
+		Method:      http.MethodGet,
+		Path:        "/auth/oidc/config",
+		Summary:     "Single sign-on status",
+		Tags:        []string{"auth"},
+	}, func(context.Context, *struct{}) (*OIDCConfigOutput, error) {
+		out := &OIDCConfigOutput{}
+		out.Body.Enabled = cfg.OIDC.Enabled
+		if cfg.OIDC.Enabled {
+			out.Body.ProviderName = services.ProviderName(cfg.OIDC.ProviderURL)
+		}
+		return out, nil
+	})
 }
 
 // generates a random state and nonce, stores in cookies, then redirects the browser

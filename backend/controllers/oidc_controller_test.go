@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"math/big"
+	"meerkat/api"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -89,7 +90,7 @@ func oidcRouter(t *testing.T, idp *fakeIdP, db *gorm.DB, mutate func(*config.Con
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.Use(func(c *gin.Context) { c.Set("db", db); c.Next() })
-	r.GET("/config", OIDCConfigHandler(cfg))
+	RegisterOIDCConfig(api.New(r.Group("/api/v1"), r), cfg)
 	r.GET("/login", OIDCLoginHandler(provider, cfg))
 	r.GET("/api/v1/auth/oidc/callback", OIDCCallbackHandler(provider, cfg))
 	return r, cfg
@@ -146,7 +147,7 @@ func TestOIDCConfigHandler(t *testing.T) {
 	db, _ := setupRouter()
 	idp := newFakeIdP(t)
 	r, _ := oidcRouter(t, idp, db, nil)
-	w := get(r, "/config")
+	w := get(r, "/api/v1/auth/oidc/config")
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.Contains(t, w.Body.String(), `"enabled":true`)
 }

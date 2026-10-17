@@ -2,7 +2,7 @@
 
 ## Next step
 
-11.
+12.
 
 ## Stack
 
@@ -21,8 +21,12 @@
 - Step 8: Vitest `coverage.thresholds` (statements 28, branches 80, functions 33, lines 28; current 28.09/80.51/33.76/28.09) and `scripts/check-go-coverage.mjs` (test first, red then green) with `GO_COVERAGE_MIN=62` (current 62.9) called by `make test-coverage-go`. `precommit` runs `test-coverage` instead of `test`; CI already calls the coverage targets, so thresholds apply there. Shown to fail with a too-high threshold for both. Script tests moved from `i18n-check` to `make test-scripts` (in `test`, `precommit` and the lint workflow's locales job); the script checks its main-module test with `pathToFileURL` and rejects a blank threshold (exit 2). `make precommit` green.
 - Step 9: ADR 0009; `backend/clock` (Clock, Real, Fake, `FAKE_NOW` clock; tests first); `middleware.ClockMiddleware` + `RequestNow`; scheduler tasks take `clk.Now()` once per job; all 84 `time.Now()` outside main/middleware/clock/metrics replaced (services take `now time.Time`, import session managers hold a clock set by `controllers.SetImportClock`, GORM `NowFunc`, JWT time func); `forbidigo` bans `time.Now` with the ADR link (shown to fail on a violation file; two reasoned `nolint`: SMTP deadline, health duration); `FAKE_NOW` config + validation + warning; frontend `src/utils/now.ts` and an ESLint ban on `new Date()`/`Date.now()` elsewhere in `src` (shown to fail). Docs: backend.md, getting-started.md. One commit. Review fixes: job-like work (outbox, webhooks, reminders, calendar and contact sync) takes the `clock.Clock` and reads it where it stamps something (after slow I/O, lock release at the end); TOTP always uses the real time; purge jobs are skipped while `FAKE_NOW` is set; `forbidigo` runs with `analyze-types` (an aliased `time` import is caught; without it the alias passed); Monica import reads the clock once per import; `Date()` without `new` is banned too; tests for the manager clocks and for retry scheduling after a slow send; `FAKE_NOW` in deployment.md and `.env.example` (test only). `make precommit` green.
 - Step 10: ADR 0010; Go `depguard` rules (models, services, controllers) in `.golangci.yml` with no exemptions (one unused gin router in a services test removed); frontend `dependency-cruiser` rules (no-circular, no-unresolvable, pages-use-api-through-hooks, api-client-is-private-to-api) with the 30 existing pairs in `.dependency-cruiser-known-violations.json` and `scripts/arch-frontend.mjs` (new violations fail, fixed-but-still-listed ones fail too; test first). Two cycles fixed (`types/entities.ts`). Every rule shown to fail on a violation; the `src/api/index.ts` barrel no longer re-exports `client.ts` and a rule keeps it so. `make arch` runs both (already in `precommit`), new `arch` job in lint.yml. `make precommit` green.
+- Step 11: spike passed all checks, no blocker. ADR 0011; `backend/api` (huma v2.39.1 mounted on Gin groups via an own adapter with per-operation Gin middleware; AppError error format incl. 422 -> 400; `ValidateBody` for the six validators, tested on all six; request clock timestamp); `cmd/openapi`; `make openapi` / `openapi-check` (in precommit and a CI job); `openapi-typescript` types in `frontend/src/types/generated/api.ts`; `GET /auth/oidc/config` converted and `useOIDCConfig` uses the generated type. `make precommit` green.
 
 ## Decisions
+
+- First converted endpoint is `GET /auth/oidc/config` (public, no database, used by the frontend), not `check-password-strength` (not used by the frontend). Error behaviour, per-route Gin middleware and the validators are covered by tests in `backend/api` instead.
+- huma's `DefaultConfig` is not used: it adds `$schema` fields to responses and serves docs routes.
 
 - Deviation in step 10: `backend/main.go` (the composition root) may import `controllers` in addition to `routes`; the depguard exemption names that exact path, not every `main.go`.
 
