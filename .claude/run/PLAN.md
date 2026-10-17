@@ -116,7 +116,7 @@ Read first: `.claude/plans/engineering-principles-reference.md`, `.claude/AUTONO
       generates `frontend/src/types/generated/api.ts`. CI regenerates both and fails on a diff.
 - [ ] 12. **Hexagonal pilot: contacts (§3)** (split in three parts, see PROGRESS.md, ADR 0012):
   - [x] 12a. Layout, ADR, depguard rules, composition root; archive, unarchive, delete, circles
-  - [ ] 12b. Get, create and update one contact
+  - [x] 12b. Get, create and update one contact
   - [ ] 12c. Lists (search, random, birthdays); delete hand-written frontend contact types and the
         Gin handlers Full scope: ADR with folder layout (`domain/`, `app/` use cases with ports,
         `adapters/http`, `adapters/persistence`) and a composition root in `main.go`. Move contact

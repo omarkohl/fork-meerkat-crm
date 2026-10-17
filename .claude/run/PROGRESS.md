@@ -2,7 +2,7 @@
 
 ## Next step
 
-12b (rest of the contacts pilot, see Decisions).
+12c (lists: search, random, birthdays; delete hand-written frontend contact types, see Decisions).
 
 ## Stack
 
@@ -102,6 +102,14 @@
   keys, reminders deleted, trash, photos kept, isolation 404 for every operation, 401 without a
   user); frontend uses the generated `ContactResponse` for archive/unarchive. `make precommit`
   green.
+- Step 12b: huma operations `GET /contacts/{id}` (`fields`), `POST /contacts` (201),
+  `PUT /contacts/{id}`; domain `SyncPrimary` (primary email/phone/address) and `Replace`; use cases
+  `ShowContact`, `CreateContact`, `UpdateContact`; ports `Contacts.Show`, `Tx.Create/Update`, events
+  `ContactCreated/Updated`; `ContactBody` validated by `api.ValidateBody` (replaces
+  `models.ContactInput`); old Gin handlers, routes and tests removed; module tests on real SQLite
+  (sync, validation, webhooks, isolation, fields). `make openapi` regenerated. Go coverage now uses
+  `-coverpkg=./...` (module tests in `contacts/` did not count for `internal/`, total fell to 61.6%
+  < 62); 71.2% now, `GO_COVERAGE_MIN` 62 -> 71. `make precommit` green.
 
 ## Decisions
 
@@ -113,6 +121,22 @@
   `contact.created/updated`; **12c** `GET /contacts` (search, FTS, circles, sort, paging, `fields`),
   `/contacts/random`, `/contacts/birthdays`, then delete the hand-written frontend `Contact` types
   and the remaining Gin handlers.
+- 12b: `GET /contacts/{id}` without `fields` no longer embeds notes, activities and reminders (the
+  typed `ContactResponse` has relationships only; the frontend always passes `fields` and those have
+  own endpoints). The `photo_thumbnail` field name is no longer accepted by `fields` (it was never
+  in the JSON, `json:"-"`). `models.Contact.BeforeSave` still syncs the primary values too, because
+  CardDAV and imports save the model directly. The webhooks adapter reuses the HTTP adapter's
+  `NewContactResponse` so payloads keep the old shape.
+- 12b review: the full `GET /contacts/{id}` embeds notes, activities and reminders again (typed
+  responses; the old zero-valued nested `contact`/`contacts` of those items is not reproduced) and
+  answers `relationships: []` when there are none (`null` with `fields`). Validation error detail
+  keys/messages now use JSON names (`emails[0].value`) instead of Go field names, as every huma
+  operation does (ADR 0011). A failed read during update is worded "Failed to update contact".
+- Step 13j/13k: remove the duplicate primary-value rule (`models.FormatAddress`,
+  `Contact.BeforeSave`) once CardDAV and imports go through the contacts module.
+- The webhooks adapter imports the HTTP adapter's `NewContactResponse` on purpose: one JSON shape
+  for responses and payloads, and a shared presenter package would be a new layer for one function.
+  Revisit when a second module publishes events.
 - 12a keeps behaviour: `GET /contacts/circles` still answers `null` when there are no circles;
   non-numeric `{id}` now answers `400` (a Gin string param used to reach the database); a missing
   user answers `401`.

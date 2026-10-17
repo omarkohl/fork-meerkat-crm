@@ -94,7 +94,7 @@ make migrate-status
 
 ## Models and DTOs
 
-GORM models (`Contact`, `Activity`, etc.) live alongside input DTOs (`ContactInput`, etc.) in
+GORM models (`Contact`, `Activity`, etc.) live alongside input DTOs (`NoteInput`, etc.) in
 `models/`. DTOs are what controllers receive after validation while models are what GORM persists.
 
 All models include `UserID uint` for tenant isolation.
@@ -119,14 +119,14 @@ generated types in the frontend instead of hand-written ones.
 
 ## Modules (hexagonal)
 
-Converted modules live in `backend/<module>/` (today `backend/contacts/`, partly): a public entry
-package, and under `internal/` the `domain` (entities and rules, standard library only), `app` (use
-cases and the ports they need), and `adapters` (`persistence` is the only code that imports GORM;
-`http` registers the huma operations; `webhooks` implements the event port). `main.go` builds the
-module (`contacts.New(contacts.Deps{...})`) and `routes` registers it. To add behaviour to a
-converted module write the use case in `app` (it takes the actor and `now`, and does its writes in
-one `Store.InTx`), a port if it needs new persistence, and a thin HTTP handler. See
-[ADR 0012](../adr/0012-module-layout.md); the rules are enforced by `make arch`.
+Converted modules live in `backend/<module>/` (today `backend/contacts/`, partly: lifecycle, get,
+create, update): a public entry package, and under `internal/` the `domain` (entities and rules,
+standard library only), `app` (use cases and the ports they need), and `adapters` (`persistence` is
+the only code that imports GORM; `http` registers the huma operations; `webhooks` implements the
+event port). `main.go` builds the module (`contacts.New(contacts.Deps{...})`) and `routes` registers
+it. To add behaviour to a converted module write the use case in `app` (it takes the actor and
+`now`, and does its writes in one `Store.InTx`), a port if it needs new persistence, and a thin HTTP
+handler. See [ADR 0012](../adr/0012-module-layout.md); the rules are enforced by `make arch`.
 
 ## Layering
 

@@ -1,6 +1,78 @@
 {
   "components": {
     "schemas": {
+      "ActivityResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "CreatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "DeletedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ID": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "UpdatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "date": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ID",
+          "CreatedAt",
+          "UpdatedAt",
+          "DeletedAt",
+          "title",
+          "description",
+          "location",
+          "date"
+        ],
+        "type": "object"
+      },
+      "AddressInput": {
+        "properties": {
+          "city": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "postal": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "street": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ContactAddress": {
         "additionalProperties": false,
         "properties": {
@@ -33,6 +105,134 @@
         ],
         "type": "object"
       },
+      "ContactBody": {
+        "properties": {
+          "address": {
+            "type": "string"
+          },
+          "addresses": {
+            "items": {
+              "$ref": "#/components/schemas/AddressInput"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "anniversary": {
+            "type": "string"
+          },
+          "birthday": {
+            "type": "string"
+          },
+          "circles": {
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "contact_information": {
+            "type": "string"
+          },
+          "custom_fields": {
+            "type": "object"
+          },
+          "department": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "emails": {
+            "items": {
+              "$ref": "#/components/schemas/EmailInput"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "firstname": {
+            "type": "string"
+          },
+          "food_preference": {
+            "type": "string"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "how_we_met": {
+            "type": "string"
+          },
+          "impps": {
+            "items": {
+              "$ref": "#/components/schemas/IMPPInput"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "job_title": {
+            "type": "string"
+          },
+          "lastname": {
+            "type": "string"
+          },
+          "middle_name": {
+            "type": "string"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "organization": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "phones": {
+            "items": {
+              "$ref": "#/components/schemas/PhoneInput"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "prefix": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "suffix": {
+            "type": "string"
+          },
+          "urls": {
+            "items": {
+              "$ref": "#/components/schemas/URLInput"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "work_information": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "firstname"
+        ],
+        "type": "object"
+      },
       "ContactResponse": {
         "additionalProperties": false,
         "properties": {
@@ -55,6 +255,15 @@
           "UpdatedAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "activities": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityResponse"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
           },
           "address": {
             "type": "string"
@@ -149,6 +358,15 @@
           "note": {
             "type": "string"
           },
+          "notes": {
+            "items": {
+              "$ref": "#/components/schemas/NoteResponse"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
           "organization": {
             "type": "string"
           },
@@ -173,6 +391,15 @@
           "relationships": {
             "items": {
               "$ref": "#/components/schemas/RelationshipResponse"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "reminders": {
+            "items": {
+              "$ref": "#/components/schemas/ReminderResponse"
             },
             "type": [
               "array",
@@ -253,6 +480,36 @@
         ],
         "type": "object"
       },
+      "CreatedOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "contact": {
+            "$ref": "#/components/schemas/ContactResponse"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message",
+          "contact"
+        ],
+        "type": "object"
+      },
+      "EmailInput": {
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "type": "object"
+      },
       "Error": {
         "additionalProperties": false,
         "properties": {
@@ -292,6 +549,20 @@
         ],
         "type": "object"
       },
+      "IMPPInput": {
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "type": "object"
+      },
       "MessageOutputBody": {
         "additionalProperties": false,
         "properties": {
@@ -301,6 +572,56 @@
         },
         "required": [
           "message"
+        ],
+        "type": "object"
+      },
+      "NoteResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "CreatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "DeletedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ID": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "UpdatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "contact_id": {
+            "format": "int64",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "content": {
+            "type": "string"
+          },
+          "date": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ID",
+          "CreatedAt",
+          "UpdatedAt",
+          "DeletedAt",
+          "content",
+          "date",
+          "contact_id"
         ],
         "type": "object"
       },
@@ -318,6 +639,20 @@
         },
         "required": [
           "enabled"
+        ],
+        "type": "object"
+      },
+      "PhoneInput": {
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "value"
         ],
         "type": "object"
       },
@@ -383,6 +718,104 @@
           "gender"
         ],
         "type": "object"
+      },
+      "ReminderResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "CreatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "DeletedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ID": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "UpdatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "by_mail": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "completed": {
+            "type": "boolean"
+          },
+          "contact_id": {
+            "format": "int64",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "email_sent": {
+            "type": "boolean"
+          },
+          "last_sent": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "recurrence": {
+            "type": "string"
+          },
+          "remind_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reoccur_from_completion": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ID",
+          "CreatedAt",
+          "UpdatedAt",
+          "DeletedAt",
+          "message",
+          "by_mail",
+          "remind_at",
+          "recurrence",
+          "reoccur_from_completion",
+          "completed",
+          "email_sent",
+          "last_sent",
+          "contact_id"
+        ],
+        "type": "object"
+      },
+      "URLInput": {
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "type": "object"
       }
     }
   },
@@ -421,6 +854,47 @@
         "summary": "Single sign-on status",
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/contacts": {
+      "post": {
+        "operationId": "create-contact",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedOutputBody"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Create a contact",
+        "tags": [
+          "contacts"
         ]
       }
     },
@@ -501,6 +975,112 @@
           }
         },
         "summary": "Move a contact and its notes, reminders and relationships to the trash",
+        "tags": [
+          "contacts"
+        ]
+      },
+      "get": {
+        "operationId": "get-contact",
+        "parameters": [
+          {
+            "description": "The contact's ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The contact's ID",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Comma-separated field names; only these are filled. Unknown names are ignored.",
+            "explode": false,
+            "in": "query",
+            "name": "fields",
+            "schema": {
+              "description": "Comma-separated field names; only these are filled. Unknown names are ignored.",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Get a contact, optionally only some fields",
+        "tags": [
+          "contacts"
+        ]
+      },
+      "put": {
+        "operationId": "update-contact",
+        "parameters": [
+          {
+            "description": "The contact's ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The contact's ID",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Replace the editable fields of a contact",
         "tags": [
           "contacts"
         ]

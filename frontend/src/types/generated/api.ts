@@ -21,6 +21,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a contact */
+        post: operations["create-contact"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/contacts/circles": {
         parameters: {
             query?: never;
@@ -45,8 +62,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
-        put?: never;
+        /** Get a contact, optionally only some fields */
+        get: operations["get-contact"];
+        /** Replace the editable fields of a contact */
+        put: operations["update-contact"];
         post?: never;
         /** Move a contact and its notes, reminders and relationships to the trash */
         delete: operations["delete-contact"];
@@ -93,6 +112,29 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ActivityResponse: {
+            /** Format: date-time */
+            CreatedAt: string;
+            /** Format: date-time */
+            DeletedAt: string | null;
+            /** Format: int64 */
+            ID: number;
+            /** Format: date-time */
+            UpdatedAt: string;
+            /** Format: date-time */
+            date: string;
+            description: string;
+            location: string;
+            title: string;
+        };
+        AddressInput: {
+            city?: string;
+            country?: string;
+            postal?: string;
+            region?: string;
+            street?: string;
+            type?: string;
+        };
         ContactAddress: {
             city: string;
             country: string;
@@ -100,6 +142,36 @@ export interface components {
             region: string;
             street: string;
             type: string;
+        };
+        ContactBody: {
+            address?: string;
+            addresses?: components["schemas"]["AddressInput"][] | null;
+            anniversary?: string;
+            birthday?: string;
+            circles?: string[] | null;
+            contact_information?: string;
+            custom_fields?: Record<string, never>;
+            department?: string;
+            email?: string;
+            emails?: components["schemas"]["EmailInput"][] | null;
+            firstname: string;
+            food_preference?: string;
+            gender?: string;
+            how_we_met?: string;
+            impps?: components["schemas"]["IMPPInput"][] | null;
+            job_title?: string;
+            lastname?: string;
+            middle_name?: string;
+            nickname?: string;
+            note?: string;
+            organization?: string;
+            phone?: string;
+            phones?: components["schemas"]["PhoneInput"][] | null;
+            prefix?: string;
+            role?: string;
+            suffix?: string;
+            urls?: components["schemas"]["URLInput"][] | null;
+            work_information?: string;
         };
         ContactResponse: {
             /** Format: date-time */
@@ -110,6 +182,7 @@ export interface components {
             ID: number;
             /** Format: date-time */
             UpdatedAt: string;
+            activities?: components["schemas"]["ActivityResponse"][] | null;
             address: string;
             addresses: components["schemas"]["ContactAddress"][] | null;
             anniversary: string;
@@ -133,12 +206,14 @@ export interface components {
             middle_name: string;
             nickname: string;
             note: string;
+            notes?: components["schemas"]["NoteResponse"][] | null;
             organization: string;
             phone: string;
             phones: components["schemas"]["ContactValue"][] | null;
             photo: string;
             prefix: string;
             relationships: components["schemas"]["RelationshipResponse"][] | null;
+            reminders?: components["schemas"]["ReminderResponse"][] | null;
             role: string;
             suffix: string;
             urls: components["schemas"]["ContactValue"][] | null;
@@ -146,6 +221,14 @@ export interface components {
         };
         ContactValue: {
             type: string;
+            value: string;
+        };
+        CreatedOutputBody: {
+            contact: components["schemas"]["ContactResponse"];
+            message: string;
+        };
+        EmailInput: {
+            type?: string;
             value: string;
         };
         Error: {
@@ -160,14 +243,37 @@ export interface components {
             };
             message: string;
         };
+        IMPPInput: {
+            type?: string;
+            value: string;
+        };
         MessageOutputBody: {
             message: string;
+        };
+        NoteResponse: {
+            /** Format: date-time */
+            CreatedAt: string;
+            /** Format: date-time */
+            DeletedAt: string | null;
+            /** Format: int64 */
+            ID: number;
+            /** Format: date-time */
+            UpdatedAt: string;
+            /** Format: int64 */
+            contact_id: number | null;
+            content: string;
+            /** Format: date-time */
+            date: string;
         };
         OIDCConfigOutputBody: {
             /** @description Whether single sign-on is configured */
             enabled: boolean;
             /** @description A display name for the provider, present when enabled */
             provider_name?: string;
+        };
+        PhoneInput: {
+            type?: string;
+            value: string;
         };
         RelationshipResponse: {
             /** Format: date-time */
@@ -186,6 +292,32 @@ export interface components {
             /** Format: int64 */
             related_contact_id: number | null;
             type: string;
+        };
+        ReminderResponse: {
+            /** Format: date-time */
+            CreatedAt: string;
+            /** Format: date-time */
+            DeletedAt: string | null;
+            /** Format: int64 */
+            ID: number;
+            /** Format: date-time */
+            UpdatedAt: string;
+            by_mail: boolean | null;
+            completed: boolean;
+            /** Format: int64 */
+            contact_id: number | null;
+            email_sent: boolean;
+            /** Format: date-time */
+            last_sent: string | null;
+            message: string;
+            recurrence: string;
+            /** Format: date-time */
+            remind_at: string;
+            reoccur_from_completion: boolean | null;
+        };
+        URLInput: {
+            type?: string;
+            value: string;
         };
     };
     responses: never;
@@ -225,6 +357,39 @@ export interface operations {
             };
         };
     };
+    "create-contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContactBody"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreatedOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     "list-circles": {
         parameters: {
             query?: never;
@@ -241,6 +406,77 @@ export interface operations {
                 };
                 content: {
                     "application/json": string[] | null;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "get-contact": {
+        parameters: {
+            query?: {
+                /** @description Comma-separated field names; only these are filled. Unknown names are ignored. */
+                fields?: string;
+            };
+            header?: never;
+            path: {
+                /** @description The contact's ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContactResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "update-contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The contact's ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContactBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContactResponse"];
                 };
             };
             /** @description Error */

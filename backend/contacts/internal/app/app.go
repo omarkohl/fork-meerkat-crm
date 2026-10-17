@@ -15,6 +15,9 @@ import (
 // user is reported as domain.ErrNotFound.
 type Contacts interface {
 	Get(ctx context.Context, actor domain.UserID, id domain.ContactID) (domain.Contact, error)
+	// Show loads a contact for display. Without fields it is complete, with its
+	// relationships; with fields only those are filled and unknown names are ignored.
+	Show(ctx context.Context, actor domain.UserID, id domain.ContactID, fields []string) (domain.Contact, error)
 	// Circles returns the distinct circle names of the actor's live contacts.
 	Circles(ctx context.Context, actor domain.UserID) ([]string, error)
 }
@@ -22,6 +25,12 @@ type Contacts interface {
 // Tx is the set of writes a use case can do inside one transaction. Like Contacts it is
 // scoped to the actor.
 type Tx interface {
+	// Get reads a contact inside the transaction, so a read-modify-write is atomic.
+	Get(ctx context.Context, actor domain.UserID, id domain.ContactID) (domain.Contact, error)
+	// Create stores a new contact for the actor and returns it as stored.
+	Create(ctx context.Context, actor domain.UserID, c domain.Contact) (domain.Contact, error)
+	// Update stores the edited fields of an existing contact and returns it as stored.
+	Update(ctx context.Context, actor domain.UserID, c domain.Contact) (domain.Contact, error)
 	DeleteReminders(ctx context.Context, actor domain.UserID, id domain.ContactID) error
 	SetArchived(ctx context.Context, actor domain.UserID, id domain.ContactID, archived bool) error
 	// MoveToTrash soft-deletes the contact together with its notes, reminders and
@@ -36,6 +45,8 @@ type Store interface {
 
 // Events tells the rest of the system what happened. It must not fail the use case.
 type Events interface {
+	ContactCreated(ctx context.Context, actor domain.UserID, c domain.Contact, now time.Time)
+	ContactUpdated(ctx context.Context, actor domain.UserID, c domain.Contact, now time.Time)
 	ContactDeleted(ctx context.Context, actor domain.UserID, id domain.ContactID, now time.Time)
 }
 
@@ -44,6 +55,8 @@ type Stage string
 
 const (
 	StageRetrieve  Stage = "retrieve"
+	StageCreate    Stage = "create"
+	StageUpdate    Stage = "update"
 	StageArchive   Stage = "archive"
 	StageUnarchive Stage = "unarchive"
 	StageDelete    Stage = "delete"
@@ -78,6 +91,53 @@ func (u *UseCases) load(ctx context.Context, actor domain.UserID, id domain.Cont
 		return domain.Contact{}, &Failure{Stage: StageRetrieve, Err: err}
 	}
 	return c, err
+}
+
+// ShowContact returns a contact, complete or limited to fields.
+func (u *UseCases) ShowContact(ctx context.Context, actor domain.UserID, id domain.ContactID, fields []string) (domain.Contact, error) {
+	c, err := u.contacts.Show(ctx, actor, id, fields)
+	if err != nil && !errors.Is(err, domain.ErrNotFound) {
+		return domain.Contact{}, &Failure{Stage: StageRetrieve, Err: err}
+	}
+	return c, err
+}
+
+// CreateContact stores a new contact for the actor, then announces it.
+func (u *UseCases) CreateContact(ctx context.Context, actor domain.UserID, draft domain.Contact, now time.Time) (domain.Contact, error) {
+	draft.SyncPrimary()
+	var created domain.Contact
+	err := u.store.InTx(ctx, func(tx Tx) error {
+		var err error
+		created, err = tx.Create(ctx, actor, draft)
+		return err
+	})
+	if err != nil {
+		return domain.Contact{}, &Failure{Stage: StageCreate, Err: err}
+	}
+	u.events.ContactCreated(ctx, actor, created, now)
+	return created, nil
+}
+
+// UpdateContact replaces the editable fields of a contact, then announces it.
+func (u *UseCases) UpdateContact(ctx context.Context, actor domain.UserID, id domain.ContactID, edit domain.Contact, now time.Time) (domain.Contact, error) {
+	var updated domain.Contact
+	err := u.store.InTx(ctx, func(tx Tx) error {
+		c, err := tx.Get(ctx, actor, id)
+		if err != nil {
+			return err
+		}
+		c.Replace(edit)
+		updated, err = tx.Update(ctx, actor, c)
+		return err
+	})
+	if errors.Is(err, domain.ErrNotFound) {
+		return domain.Contact{}, err
+	}
+	if err != nil {
+		return domain.Contact{}, &Failure{Stage: StageUpdate, Err: err}
+	}
+	u.events.ContactUpdated(ctx, actor, updated, now)
+	return updated, nil
 }
 
 // ArchiveContact archives a contact and deletes its reminders in one transaction.

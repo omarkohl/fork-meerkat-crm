@@ -82,7 +82,8 @@ go test ./...
 
 CI runs `make test-coverage-go GO_TEST_FLAGS=-race` (the race detector needs cgo and a C compiler;
 the SQLite driver itself is pure Go). Run the same locally to reproduce a race, and
-`go tool cover -func=coverage.out | tail -1` for the total.
+`go tool cover -func=coverage.out | tail -1` for the total. Coverage is measured across all packages
+(`-coverpkg=./...`), so a module's tests count for its `internal/` code.
 
 ### Coverage
 

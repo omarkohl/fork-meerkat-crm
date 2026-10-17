@@ -41,6 +41,9 @@ type ContactResponse struct {
 
 	// Relationships is null unless the endpoint loads them.
 	Relationships []RelationshipResponse `json:"relationships" nullable:"true"`
+	Notes         []NoteResponse         `json:"notes,omitempty"`
+	Activities    []ActivityResponse     `json:"activities,omitempty"`
+	Reminders     []ReminderResponse     `json:"reminders,omitempty"`
 
 	Address            string   `json:"address"`
 	HowWeMet           string   `json:"how_we_met"`
@@ -87,7 +90,48 @@ type RelationshipResponse struct {
 	Gender           string     `json:"gender"`
 }
 
-func contactResponse(c domain.Contact) ContactResponse {
+// NewContactResponse maps a contact to the JSON shape of the API, also used for webhooks.
+// NoteResponse is a note of a contact, embedded when the contact is loaded in full.
+type NoteResponse struct {
+	ID        uint       `json:"ID"`
+	CreatedAt time.Time  `json:"CreatedAt"`
+	UpdatedAt time.Time  `json:"UpdatedAt"`
+	DeletedAt *time.Time `json:"DeletedAt" nullable:"true"`
+	Content   string     `json:"content"`
+	Date      time.Time  `json:"date"`
+	ContactID *uint      `json:"contact_id" nullable:"true"`
+}
+
+// ActivityResponse is an activity of a contact, embedded when the contact is loaded in full.
+type ActivityResponse struct {
+	ID          uint       `json:"ID"`
+	CreatedAt   time.Time  `json:"CreatedAt"`
+	UpdatedAt   time.Time  `json:"UpdatedAt"`
+	DeletedAt   *time.Time `json:"DeletedAt" nullable:"true"`
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
+	Location    string     `json:"location"`
+	Date        time.Time  `json:"date"`
+}
+
+// ReminderResponse is a reminder of a contact, embedded when the contact is loaded in full.
+type ReminderResponse struct {
+	ID                    uint       `json:"ID"`
+	CreatedAt             time.Time  `json:"CreatedAt"`
+	UpdatedAt             time.Time  `json:"UpdatedAt"`
+	DeletedAt             *time.Time `json:"DeletedAt" nullable:"true"`
+	Message               string     `json:"message"`
+	ByMail                *bool      `json:"by_mail" nullable:"true"`
+	RemindAt              time.Time  `json:"remind_at"`
+	Recurrence            string     `json:"recurrence"`
+	ReoccurFromCompletion *bool      `json:"reoccur_from_completion" nullable:"true"`
+	Completed             bool       `json:"completed"`
+	EmailSent             bool       `json:"email_sent"`
+	LastSent              *time.Time `json:"last_sent" nullable:"true"`
+	ContactID             *uint      `json:"contact_id" nullable:"true"`
+}
+
+func NewContactResponse(c domain.Contact) ContactResponse {
 	r := ContactResponse{
 		ID: uint(c.ID), CreatedAt: c.CreatedAt, UpdatedAt: c.UpdatedAt, DeletedAt: c.DeletedAt,
 		Firstname: c.Firstname, Lastname: c.Lastname, Nickname: c.Nickname, Gender: c.Gender,
@@ -99,6 +143,35 @@ func contactResponse(c domain.Contact) ContactResponse {
 		Organization: c.Organization, Department: c.Department, JobTitle: c.JobTitle, Role: c.Role,
 		Anniversary: c.Anniversary, Note: c.Note,
 		CustomFields: c.CustomFields, Archived: c.Archived,
+	}
+	if c.Relationships != nil {
+		r.Relationships = []RelationshipResponse{}
+	}
+	for _, n := range c.Notes {
+		r.Notes = append(r.Notes, NoteResponse{ID: n.ID, CreatedAt: n.CreatedAt, UpdatedAt: n.UpdatedAt, DeletedAt: n.DeletedAt,
+			Content: n.Content, Date: n.Date, ContactID: contactIDPtr(n.ContactID)})
+	}
+	for _, a := range c.Activities {
+		r.Activities = append(r.Activities, ActivityResponse{ID: a.ID, CreatedAt: a.CreatedAt, UpdatedAt: a.UpdatedAt, DeletedAt: a.DeletedAt,
+			Title: a.Title, Description: a.Description, Location: a.Location, Date: a.Date})
+	}
+	for _, m := range c.Reminders {
+		r.Reminders = append(r.Reminders, ReminderResponse{ID: m.ID, CreatedAt: m.CreatedAt, UpdatedAt: m.UpdatedAt, DeletedAt: m.DeletedAt,
+			Message: m.Message, ByMail: m.ByMail, RemindAt: m.RemindAt, Recurrence: m.Recurrence,
+			ReoccurFromCompletion: m.ReoccurFromCompletion, Completed: m.Completed, EmailSent: m.EmailSent,
+			LastSent: m.LastSent, ContactID: contactIDPtr(m.ContactID)})
+	}
+	for _, rel := range c.Relationships {
+		var related *uint
+		if rel.RelatedContactID != nil {
+			v := uint(*rel.RelatedContactID)
+			related = &v
+		}
+		r.Relationships = append(r.Relationships, RelationshipResponse{
+			ID: rel.ID, CreatedAt: rel.CreatedAt, UpdatedAt: rel.UpdatedAt, DeletedAt: rel.DeletedAt,
+			ContactID: uint(rel.ContactID), RelatedContactID: related,
+			Name: rel.Name, Type: rel.Type, Birthday: rel.Birthday, Gender: rel.Gender,
+		})
 	}
 	r.Emails = values(c.Emails)
 	r.Phones = values(c.Phones)
@@ -116,4 +189,12 @@ func values(in []domain.Value) []ContactValue {
 		out = append(out, ContactValue{Type: v.Type, Value: v.Value})
 	}
 	return out
+}
+
+func contactIDPtr(id *domain.ContactID) *uint {
+	if id == nil {
+		return nil
+	}
+	v := uint(*id)
+	return &v
 }

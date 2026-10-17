@@ -4,6 +4,7 @@ package domain
 
 import (
 	"errors"
+	"strings"
 	"time"
 )
 
@@ -31,6 +32,71 @@ type Address struct {
 	Region  string
 	Postal  string
 	Country string
+}
+
+// Line renders the address as one line, skipping empty parts.
+func (a Address) Line() string {
+	var parts []string
+	for _, p := range []string{a.Street, a.City, a.Region, a.Postal, a.Country} {
+		if strings.TrimSpace(p) != "" {
+			parts = append(parts, p)
+		}
+	}
+	return strings.Join(parts, ", ")
+}
+
+// Relationship links a contact to a person, who may be a contact too.
+type Relationship struct {
+	ID               uint
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+	DeletedAt        *time.Time
+	ContactID        ContactID
+	RelatedContactID *ContactID
+	Name             string
+	Type             string
+	Birthday         string
+	Gender           string
+}
+
+// Note is a dated remark about a contact.
+type Note struct {
+	ID        uint
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt *time.Time
+	Content   string
+	Date      time.Time
+	ContactID *ContactID
+}
+
+// Activity is something done with one or more contacts.
+type Activity struct {
+	ID          uint
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	DeletedAt   *time.Time
+	Title       string
+	Description string
+	Location    string
+	Date        time.Time
+}
+
+// Reminder asks the user to get in touch with a contact.
+type Reminder struct {
+	ID                    uint
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
+	DeletedAt             *time.Time
+	Message               string
+	ByMail                *bool
+	RemindAt              time.Time
+	Recurrence            string
+	ReoccurFromCompletion *bool
+	Completed             bool
+	EmailSent             bool
+	LastSent              *time.Time
+	ContactID             *ContactID
 }
 
 // Contact is a person in a user's address book.
@@ -78,6 +144,12 @@ type Contact struct {
 	CustomFields map[string]string
 
 	Archived bool
+
+	// Loaded in full only: Relationships is then non-nil even when empty.
+	Relationships []Relationship
+	Notes         []Note
+	Activities    []Activity
+	Reminders     []Reminder
 }
 
 // Archive hides the contact from the active lists. Archiving also ends the contact's
@@ -86,3 +158,27 @@ func (c *Contact) Archive() { c.Archived = true }
 
 // Unarchive brings an archived contact back.
 func (c *Contact) Unarchive() { c.Archived = false }
+
+// SyncPrimary makes Email, Phone and Address the first entry of Emails, Phones and Addresses,
+// the value search and list views show. An empty list leaves the scalar as it is.
+func (c *Contact) SyncPrimary() {
+	if len(c.Emails) > 0 {
+		c.Email = c.Emails[0].Value
+	}
+	if len(c.Phones) > 0 {
+		c.Phone = c.Phones[0].Value
+	}
+	if len(c.Addresses) > 0 {
+		c.Address = c.Addresses[0].Line()
+	}
+}
+
+// Replace overwrites everything the user edits with in. Identity, timestamps, photo, archive
+// state and relationships stay.
+func (c *Contact) Replace(in Contact) {
+	in.ID, in.UserID, in.CreatedAt, in.UpdatedAt, in.DeletedAt = c.ID, c.UserID, c.CreatedAt, c.UpdatedAt, c.DeletedAt
+	in.Photo, in.Archived, in.Relationships = c.Photo, c.Archived, c.Relationships
+	in.Notes, in.Activities, in.Reminders = c.Notes, c.Activities, c.Reminders
+	*c = in
+	c.SyncPrimary()
+}

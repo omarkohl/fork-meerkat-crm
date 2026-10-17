@@ -1,9 +1,7 @@
 package controllers
 
 import (
-	"errors"
 	apperrors "meerkat/errors"
-	"meerkat/logger"
 	"meerkat/middleware"
 	"meerkat/models"
 	"meerkat/search"
@@ -15,64 +13,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
-
-func CreateContact(c *gin.Context) {
-	// Save to the database
-	db := c.MustGet("db").(*gorm.DB)
-
-	userID, ok := currentUserID(c)
-	if !ok {
-		return
-	}
-
-	// Get validated input from validation middleware
-	contactInput, err := middleware.GetValidated[models.ContactInput](c)
-	if err != nil {
-		apperrors.AbortWithError(c, err)
-		return
-	}
-
-	// Create contact from validated input
-	contact := models.Contact{
-		UserID:             userID,
-		Firstname:          contactInput.Firstname,
-		Lastname:           contactInput.Lastname,
-		Nickname:           contactInput.Nickname,
-		Gender:             contactInput.Gender,
-		Email:              contactInput.Email,
-		Phone:              contactInput.Phone,
-		Birthday:           contactInput.Birthday,
-		Address:            contactInput.Address,
-		HowWeMet:           contactInput.HowWeMet,
-		FoodPreference:     contactInput.FoodPreference,
-		WorkInformation:    contactInput.WorkInformation,
-		ContactInformation: contactInput.ContactInformation,
-		Circles:            contactInput.Circles,
-		CustomFields:       contactInput.CustomFields,
-		Emails:             contactInput.Emails,
-		Phones:             contactInput.Phones,
-		Addresses:          contactInput.Addresses,
-		URLs:               contactInput.URLs,
-		IMPPs:              contactInput.IMPPs,
-		Prefix:             contactInput.Prefix,
-		MiddleName:         contactInput.MiddleName,
-		Suffix:             contactInput.Suffix,
-		Organization:       contactInput.Organization,
-		Department:         contactInput.Department,
-		JobTitle:           contactInput.JobTitle,
-		Role:               contactInput.Role,
-		Anniversary:        contactInput.Anniversary,
-		Note:               contactInput.Note,
-	}
-	if err := db.Create(&contact).Error; err != nil {
-		logger.FromContext(c).Error().Err(err).Msg("Error saving contact to database")
-		apperrors.AbortWithError(c, apperrors.ErrDatabase("Failed to save contact").WithError(err))
-		return
-	}
-
-	go services.TriggerWebhooks(db, currentConfig(c), userID, "contact.created", contact, middleware.RequestClock(c))
-	c.JSON(http.StatusCreated, gin.H{"message": "Contact created successfully", "contact": contact})
-}
 
 // contactFTSMatch returns the FTS5 expression for a search term, or "" when the LIKE search
 // has to be used (no index, or nothing but punctuation was typed).
@@ -340,117 +280,4 @@ func GetUpcomingBirthdays(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"birthdays": birthdays,
 	})
-}
-
-func GetContact(c *gin.Context) {
-	id := c.Param("id")
-
-	userID, ok := currentUserID(c)
-	if !ok {
-		return
-	}
-
-	db := c.MustGet("db").(*gorm.DB)
-
-	// Check for fields query parameter to enable partial fetching
-	allowedFields := []string{"ID", "firstname", "lastname", "nickname", "gender", "email", "phone", "birthday", "address", "how_we_met", "food_preference", "work_information", "contact_information", "circles", "photo", "photo_thumbnail", "custom_fields", "archived", "emails", "phones", "addresses", "urls", "impps", "prefix", "middle_name", "suffix", "organization", "department", "job_title", "role", "anniversary", "note"}
-	var selectedFields []string
-	fields := c.Query("fields")
-	if fields != "" {
-		for _, field := range strings.Split(fields, ",") {
-			if slices.Contains(allowedFields, field) {
-				selectedFields = append(selectedFields, field)
-			}
-		}
-	}
-
-	var contact models.Contact
-	query := db.Where("user_id = ?", userID)
-
-	if len(selectedFields) > 0 {
-		// Partial fetch: only select requested fields, skip preloading associations
-		query = query.Select(thumbnailColumns(selectedFields))
-	} else {
-		// Full fetch: preload all associations (the legacy thumbnail blob is never needed)
-		query = query.Omit("photo_thumbnail").
-			Preload("Notes", "notes.user_id = ?", userID).
-			Preload("Activities", "activities.user_id = ?", userID).
-			Preload("Relationships", "relationships.user_id = ?", userID).
-			Preload("Reminders", "reminders.user_id = ?", userID)
-	}
-
-	if err := query.First(&contact, id).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			apperrors.AbortWithError(c, apperrors.ErrNotFound("Contact").WithDetails("id", id))
-		} else {
-			apperrors.AbortWithError(c, apperrors.ErrDatabase("Failed to retrieve contact").WithError(err))
-		}
-		return
-	}
-	c.JSON(http.StatusOK, contact)
-}
-
-func UpdateContact(c *gin.Context) {
-	id := c.Param("id")
-	db := c.MustGet("db").(*gorm.DB)
-
-	userID, ok := currentUserID(c)
-	if !ok {
-		return
-	}
-
-	var contact models.Contact
-	if err := db.Where("user_id = ?", userID).First(&contact, id).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			apperrors.AbortWithError(c, apperrors.ErrNotFound("Contact").WithDetails("id", id))
-		} else {
-			apperrors.AbortWithError(c, apperrors.ErrDatabase("Failed to retrieve contact").WithError(err))
-		}
-		return
-	}
-
-	// Get validated input from validation middleware
-	contactInput, err := middleware.GetValidated[models.ContactInput](c)
-	if err != nil {
-		apperrors.AbortWithError(c, err)
-		return
-	}
-
-	// Updateable fields
-	contact.Firstname = contactInput.Firstname
-	contact.Lastname = contactInput.Lastname
-	contact.Nickname = contactInput.Nickname
-	contact.Gender = contactInput.Gender
-	contact.Email = contactInput.Email
-	contact.Phone = contactInput.Phone
-	contact.Birthday = contactInput.Birthday
-	contact.Address = contactInput.Address
-	contact.HowWeMet = contactInput.HowWeMet
-	contact.FoodPreference = contactInput.FoodPreference
-	contact.WorkInformation = contactInput.WorkInformation
-	contact.ContactInformation = contactInput.ContactInformation
-	contact.Circles = contactInput.Circles
-	contact.CustomFields = contactInput.CustomFields
-	contact.Emails = contactInput.Emails
-	contact.Phones = contactInput.Phones
-	contact.Addresses = contactInput.Addresses
-	contact.URLs = contactInput.URLs
-	contact.IMPPs = contactInput.IMPPs
-	contact.Prefix = contactInput.Prefix
-	contact.MiddleName = contactInput.MiddleName
-	contact.Suffix = contactInput.Suffix
-	contact.Organization = contactInput.Organization
-	contact.Department = contactInput.Department
-	contact.JobTitle = contactInput.JobTitle
-	contact.Role = contactInput.Role
-	contact.Anniversary = contactInput.Anniversary
-	contact.Note = contactInput.Note
-
-	if err := db.Save(&contact).Error; err != nil {
-		apperrors.AbortWithError(c, apperrors.ErrDatabase("Failed to update contact").WithError(err))
-		return
-	}
-
-	go services.TriggerWebhooks(db, currentConfig(c), userID, "contact.updated", contact, middleware.RequestClock(c))
-	c.JSON(http.StatusOK, contact)
 }

@@ -52,7 +52,7 @@ test-scripts: ## Tests of the helper scripts in scripts/
 
 GO_TEST_FLAGS ?=
 # Minimum total Go coverage in percent (current value rounded down). Raise it when coverage rises.
-GO_COVERAGE_MIN ?= 62
+GO_COVERAGE_MIN ?= 71
 
 test: test-scripts test-go test-frontend ## Backend, frontend and script unit tests
 
@@ -65,7 +65,7 @@ test-frontend: install-frontend ## Vitest
 test-coverage: test-coverage-go test-coverage-frontend ## Tests with coverage (backend coverage.out, frontend coverage/)
 
 test-coverage-go: install-go ## Go tests with coverage (backend/coverage.out), fail below GO_COVERAGE_MIN
-	cd backend && go test $(GO_TEST_FLAGS) -coverprofile=coverage.out ./...
+	cd backend && go test $(GO_TEST_FLAGS) -coverpkg=./... -coverprofile=coverage.out ./...
 	cd backend && node ../scripts/check-go-coverage.mjs $(GO_COVERAGE_MIN)
 
 test-coverage-frontend: install-frontend ## Vitest with coverage (frontend/coverage/), fail below the thresholds in vite.config.ts
