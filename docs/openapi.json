@@ -1,6 +1,159 @@
 {
   "components": {
     "schemas": {
+      "ActivityBody": {
+        "properties": {
+          "contact_ids": {
+            "description": "The contacts that took part. On update, leaving it out keeps the current ones; an empty list removes them.",
+            "items": {
+              "format": "int64",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "date": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "date"
+        ],
+        "type": "object"
+      },
+      "ActivityCreatedOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "activity": {
+            "$ref": "#/components/schemas/ActivityResponse"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message",
+          "activity"
+        ],
+        "type": "object"
+      },
+      "ActivityListOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "activities": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityResponse"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "limit": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "page": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "total": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "activities",
+          "total",
+          "page",
+          "limit"
+        ],
+        "type": "object"
+      },
+      "ActivityMessageOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "type": "object"
+      },
+      "ActivityResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "CreatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "DeletedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ID": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "UpdatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "contacts": {
+            "items": {
+              "$ref": "#/components/schemas/ContactRefResponse"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "date": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ID",
+          "CreatedAt",
+          "UpdatedAt",
+          "DeletedAt",
+          "title",
+          "description",
+          "location",
+          "date"
+        ],
+        "type": "object"
+      },
       "AddressInput": {
         "properties": {
           "city": {
@@ -78,6 +231,24 @@
         },
         "required": [
           "birthdays"
+        ],
+        "type": "object"
+      },
+      "ContactActivitiesOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "activities": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityResponse"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "activities"
         ],
         "type": "object"
       },
@@ -290,6 +461,22 @@
         },
         "required": [
           "firstname"
+        ],
+        "type": "object"
+      },
+      "ContactCreatedOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "contact": {
+            "$ref": "#/components/schemas/ContactResponse"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message",
+          "contact"
         ],
         "type": "object"
       },
@@ -528,6 +715,51 @@
         ],
         "type": "object"
       },
+      "ContactListOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "contacts": {
+            "items": {
+              "$ref": "#/components/schemas/ContactListItem"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "limit": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "page": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "total": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "contacts",
+          "total",
+          "page",
+          "limit"
+        ],
+        "type": "object"
+      },
+      "ContactMessageOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "type": "object"
+      },
       "ContactNote": {
         "additionalProperties": false,
         "properties": {
@@ -575,6 +807,38 @@
           "content",
           "date",
           "contact_id"
+        ],
+        "type": "object"
+      },
+      "ContactRefResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "ID": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "circles": {
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "firstname": {
+            "type": "string"
+          },
+          "lastname": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ID",
+          "firstname",
+          "lastname",
+          "circles"
         ],
         "type": "object"
       },
@@ -909,22 +1173,6 @@
         ],
         "type": "object"
       },
-      "CreatedOutputBody": {
-        "additionalProperties": false,
-        "properties": {
-          "contact": {
-            "$ref": "#/components/schemas/ContactResponse"
-          },
-          "message": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "message",
-          "contact"
-        ],
-        "type": "object"
-      },
       "EmailInput": {
         "properties": {
           "type": {
@@ -992,40 +1240,29 @@
         ],
         "type": "object"
       },
-      "ListOutputBody": {
-        "additionalProperties": false,
+      "NoteBody": {
         "properties": {
-          "contacts": {
-            "items": {
-              "$ref": "#/components/schemas/ContactListItem"
-            },
-            "type": [
-              "array",
-              "null"
-            ]
-          },
-          "limit": {
+          "contact_id": {
+            "description": "Ignored when the note is added under /contacts/{id}/notes. On update, leaving it out keeps the current contact.",
             "format": "int64",
+            "minimum": 0,
             "type": "integer"
           },
-          "page": {
-            "format": "int64",
-            "type": "integer"
+          "content": {
+            "type": "string"
           },
-          "total": {
-            "format": "int64",
-            "type": "integer"
+          "date": {
+            "format": "date-time",
+            "type": "string"
           }
         },
         "required": [
-          "contacts",
-          "total",
-          "page",
-          "limit"
+          "content",
+          "date"
         ],
         "type": "object"
       },
-      "ListOutputBody1": {
+      "NoteListOutputBody": {
         "additionalProperties": false,
         "properties": {
           "limit": {
@@ -1058,7 +1295,7 @@
         ],
         "type": "object"
       },
-      "MessageOutputBody": {
+      "NoteMessageOutputBody": {
         "additionalProperties": false,
         "properties": {
           "message": {
@@ -1067,28 +1304,6 @@
         },
         "required": [
           "message"
-        ],
-        "type": "object"
-      },
-      "NoteBody": {
-        "properties": {
-          "contact_id": {
-            "description": "Ignored when the note is added under /contacts/{id}/notes. On update, leaving it out keeps the current contact.",
-            "format": "int64",
-            "minimum": 0,
-            "type": "integer"
-          },
-          "content": {
-            "type": "string"
-          },
-          "date": {
-            "format": "date-time",
-            "type": "string"
-          }
-        },
-        "required": [
-          "content",
-          "date"
         ],
         "type": "object"
       },
@@ -1139,6 +1354,22 @@
           "content",
           "date",
           "contact_id"
+        ],
+        "type": "object"
+      },
+      "NoteSavedOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "note": {
+            "$ref": "#/components/schemas/NoteResponse"
+          }
+        },
+        "required": [
+          "message",
+          "note"
         ],
         "type": "object"
       },
@@ -1272,22 +1503,6 @@
         ],
         "type": "object"
       },
-      "SavedOutputBody": {
-        "additionalProperties": false,
-        "properties": {
-          "message": {
-            "type": "string"
-          },
-          "note": {
-            "$ref": "#/components/schemas/NoteResponse"
-          }
-        },
-        "required": [
-          "message",
-          "note"
-        ],
-        "type": "object"
-      },
       "URLInput": {
         "properties": {
           "type": {
@@ -1311,6 +1526,279 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/activities": {
+      "get": {
+        "operationId": "list-activities",
+        "parameters": [
+          {
+            "description": "Page number, from 1",
+            "explode": false,
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "description": "Page number, from 1",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Page size, 1 to 100, default 25",
+            "explode": false,
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "description": "Page size, 1 to 100, default 25",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Full-text search over title, description, location and contact names",
+            "explode": false,
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "description": "Full-text search over title, description, location and contact names",
+              "type": "string"
+            }
+          },
+          {
+            "description": "First day, YYYY-MM-DD; ignored when not a date",
+            "explode": false,
+            "in": "query",
+            "name": "fromDate",
+            "schema": {
+              "description": "First day, YYYY-MM-DD; ignored when not a date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last day, inclusive, YYYY-MM-DD; ignored when not a date",
+            "explode": false,
+            "in": "query",
+            "name": "toDate",
+            "schema": {
+              "description": "Last day, inclusive, YYYY-MM-DD; ignored when not a date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "contacts: add the contacts of each activity",
+            "explode": false,
+            "in": "query",
+            "name": "include",
+            "schema": {
+              "description": "contacts: add the contacts of each activity",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityListOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "List activities with search, date range and paging",
+        "tags": [
+          "activities"
+        ]
+      },
+      "post": {
+        "operationId": "create-activity",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityCreatedOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Add an activity with some contacts",
+        "tags": [
+          "activities"
+        ]
+      }
+    },
+    "/activities/{id}": {
+      "delete": {
+        "operationId": "delete-activity",
+        "parameters": [
+          {
+            "description": "The activity's ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The activity's ID",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityMessageOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete an activity",
+        "tags": [
+          "activities"
+        ]
+      },
+      "get": {
+        "operationId": "get-activity",
+        "parameters": [
+          {
+            "description": "The activity's ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The activity's ID",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Get an activity with its contacts",
+        "tags": [
+          "activities"
+        ]
+      },
+      "put": {
+        "operationId": "update-activity",
+        "parameters": [
+          {
+            "description": "The activity's ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The activity's ID",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActivityBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Replace the fields of an activity, and its contacts when contact_ids is given",
+        "tags": [
+          "activities"
+        ]
+      }
+    },
     "/auth/oidc/config": {
       "get": {
         "operationId": "get-oidc-config",
@@ -1452,7 +1940,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ListOutputBody"
+                  "$ref": "#/components/schemas/ContactListOutputBody"
                 }
               }
             },
@@ -1491,7 +1979,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreatedOutputBody"
+                  "$ref": "#/components/schemas/ContactCreatedOutputBody"
                 }
               }
             },
@@ -1635,7 +2123,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MessageOutputBody"
+                  "$ref": "#/components/schemas/ContactMessageOutputBody"
                 }
               }
             },
@@ -1764,6 +2252,51 @@
         ]
       }
     },
+    "/contacts/{id}/activities": {
+      "get": {
+        "operationId": "list-contact-activities",
+        "parameters": [
+          {
+            "description": "The contact's ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The contact's ID",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactActivitiesOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "The activities a contact took part in",
+        "tags": [
+          "activities"
+        ]
+      }
+    },
     "/contacts/{id}/archive": {
       "post": {
         "operationId": "archive-contact",
@@ -1884,7 +2417,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SavedOutputBody"
+                  "$ref": "#/components/schemas/NoteSavedOutputBody"
                 }
               }
             },
@@ -2012,7 +2545,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ListOutputBody1"
+                  "$ref": "#/components/schemas/NoteListOutputBody"
                 }
               }
             },
@@ -2051,7 +2584,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SavedOutputBody"
+                  "$ref": "#/components/schemas/NoteSavedOutputBody"
                 }
               }
             },
@@ -2096,7 +2629,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MessageOutputBody"
+                  "$ref": "#/components/schemas/NoteMessageOutputBody"
                 }
               }
             },
@@ -2192,7 +2725,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SavedOutputBody"
+                  "$ref": "#/components/schemas/NoteSavedOutputBody"
                 }
               }
             },

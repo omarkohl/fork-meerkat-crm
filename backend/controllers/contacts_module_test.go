@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"meerkat/activities"
 	"meerkat/api"
 	"meerkat/config"
 	"meerkat/contacts"
@@ -18,4 +19,8 @@ func mountContacts(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 
 func mountNotes(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	notes.New(notes.Deps{DB: db, Config: cfg}).Register(api.New(router.Group(""), router), router)
+}
+
+func mountActivities(router *gin.Engine, db *gorm.DB, cfg *config.Config) {
+	activities.New(activities.Deps{DB: db, Config: cfg}).Register(api.New(router.Group(""), router), router)
 }

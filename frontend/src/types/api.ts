@@ -72,32 +72,6 @@ export interface DeleteContactResponse {
 }
 
 /**
- * Activity API responses
- */
-export interface GetActivitiesResponse {
-  activities: Activity[];
-  total: number;
-  page: number;
-  limit: number;
-}
-
-export interface GetActivityResponse extends Activity {}
-
-export interface CreateActivityResponse {
-  message: string;
-  activity: Activity;
-}
-
-export interface UpdateActivityResponse {
-  message: string;
-  activity: Activity;
-}
-
-export interface DeleteActivityResponse {
-  message: string;
-}
-
-/**
  * Reminder API responses
  */
 export interface GetRemindersResponse {

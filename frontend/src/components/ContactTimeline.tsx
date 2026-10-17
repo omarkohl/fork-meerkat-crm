@@ -121,9 +121,7 @@ export default function ContactTimeline({ timelineItems, onEditItem, onDeleteCom
                               '&:hover': { textDecoration: 'underline' },
                             }}
                           >
-                            {activityContact.firstname}{' '}
-                            {activityContact.nickname ? `"${activityContact.nickname}" ` : ''}
-                            {activityContact.lastname}
+                            {activityContact.firstname} {activityContact.lastname}
                           </Link>
                           {idx < (item.data as Activity).contacts!.length - 1 && (
                             <Typography variant="caption" color="text.secondary">

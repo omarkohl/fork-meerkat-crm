@@ -33,7 +33,7 @@ func ftsRouter(t *testing.T) (*gorm.DB, *gin.Engine, models.User) {
 	require.NoError(t, db.First(&user).Error)
 	mountContacts(router, db, &config.Config{})
 	mountNotes(router, db, &config.Config{})
-	router.GET("/activities", GetActivities)
+	mountActivities(router, db, &config.Config{})
 	return db, router, user
 }
 

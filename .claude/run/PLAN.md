@@ -130,7 +130,7 @@ Read first: `.claude/plans/engineering-principles-reference.md`, `.claude/AUTONO
       (huma handlers, generated frontend types); remove each module's exemptions from the arch
       rules:
   - [x] 13a. notes
-  - [ ] 13b. activities
+  - [x] 13b. activities
   - [ ] 13c. reminders (incl. scheduler job)
   - [ ] 13d. relationships and graph
   - [ ] 13e. photos and thumbnails

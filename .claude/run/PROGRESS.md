@@ -2,7 +2,7 @@
 
 ## Next step
 
-13b (activities, same pattern as notes).
+13c (reminders incl. scheduler job, same pattern).
 
 ## Stack
 
@@ -130,6 +130,14 @@
   embedded response types renamed `ContactNote/Activity/Reminder` (schema names collide). Frontend
   `Note`, `NotesResponse` and request bodies from the generated types; create/update now typed as
   the `{message, note}` they always returned. `make precommit` green.
+- Step 13b: `backend/activities` (domain `Activity.Edit`, use cases, ports `Activities`/`Store`/
+  `Events`, persistence/http/webhooks adapters) with huma operations for the six activity endpoints
+  plus `/contacts/{id}/activities`; webhooks `activity.created/updated/deleted`; depguard rules
+  `activities-*` (shown to fail); `routes.NewModules` extended. Old controller and its tests and
+  `models.ActivityInput` removed (shared test helpers moved to `controllers/helpers_test.go`); 10
+  module tests on real SQLite incl. isolation, search, contact links and webhook payloads. Frontend
+  `Activity`, `ActivityContact`, responses and request bodies derive from the generated types; the
+  dead `*ActivityResponse` types are gone. `make precommit` green.
 
 ## Decisions
 
@@ -176,6 +184,18 @@
   it used to answer 404. The notes webhooks adapter also imports the HTTP adapter's
   `NewNoteResponse`: with two modules doing it the pattern stays (one JSON shape for responses and
   payloads); extract a shared presenter only if a third kind of consumer appears.
+- 13b: contacts inside an activity are now `{ID, firstname, lastname, circles}` only; before, the
+  whole zero-valued contact object was serialised (all other fields empty). Same for the
+  `activity.*` webhook payloads. The create and update responses and payloads now list the linked
+  contacts in that form (create used to return the full contact rows).
+  `GET /contacts/{id}/activities` lists by activity ID (it had no `ORDER BY`). Contacts are linked
+  through the `activity_contacts` rows directly, not through GORM's association save. The update
+  error says "Failed to save activity" as before. The frontend no longer reads `nickname` of an
+  activity's contacts: the API never sent it, so the timeline line that showed it was dead.
+- 13b review: a database error while listing a contact's activities says "Failed to retrieve
+  activities for contact" for both the contact lookup and the list (the lookup used to say "Failed
+  to retrieve contact"). Response types of the three modules are prefixed with the module's noun
+  (`NoteSavedOutput`, ...) so the OpenAPI schema names are stable instead of `CreatedOutputBody1`.
 - 12a keeps behaviour: `GET /contacts/circles` still answers `null` when there are no circles;
   non-numeric `{id}` now answers `400` (a Gin string param used to reach the database); a missing
   user answers `401`.
@@ -229,6 +249,10 @@
   `YARN: yarn`, `make fuzz` env vars.
 
 ## Questions
+
+- A request body with `"date": "2026-03-01"` (no time) answers "date is required" for notes and
+  activities, which is misleading (the value is there, it is not an RFC 3339 timestamp). Seen while
+  testing step 13b; same cause in the old Gin handlers' `time.Time` binding is likely.
 
 - E2E flake seen twice (step 8 and step 10, first run only, rerun green): `relationships.spec.ts`
   "Relationship ..." failed once in step 10. Cause not investigated; watch for it. Seen again in

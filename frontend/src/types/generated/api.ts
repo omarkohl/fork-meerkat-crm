@@ -4,6 +4,43 @@
  */
 
 export interface paths {
+    "/activities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List activities with search, date range and paging */
+        get: operations["list-activities"];
+        put?: never;
+        /** Add an activity with some contacts */
+        post: operations["create-activity"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/activities/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an activity with its contacts */
+        get: operations["get-activity"];
+        /** Replace the fields of an activity, and its contacts when contact_ids is given */
+        put: operations["update-activity"];
+        post?: never;
+        /** Delete an activity */
+        delete: operations["delete-activity"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/oidc/config": {
         parameters: {
             query?: never;
@@ -109,6 +146,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/contacts/{id}/activities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The activities a contact took part in */
+        get: operations["list-contact-activities"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/contacts/{id}/archive": {
         parameters: {
             query?: never;
@@ -202,6 +256,47 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ActivityBody: {
+            /** @description The contacts that took part. On update, leaving it out keeps the current ones; an empty list removes them. */
+            contact_ids?: number[] | null;
+            /** Format: date-time */
+            date: string;
+            description?: string;
+            location?: string;
+            title: string;
+        };
+        ActivityCreatedOutputBody: {
+            activity: components["schemas"]["ActivityResponse"];
+            message: string;
+        };
+        ActivityListOutputBody: {
+            activities: components["schemas"]["ActivityResponse"][] | null;
+            /** Format: int64 */
+            limit: number;
+            /** Format: int64 */
+            page: number;
+            /** Format: int64 */
+            total: number;
+        };
+        ActivityMessageOutputBody: {
+            message: string;
+        };
+        ActivityResponse: {
+            /** Format: date-time */
+            CreatedAt: string;
+            /** Format: date-time */
+            DeletedAt: string | null;
+            /** Format: int64 */
+            ID: number;
+            /** Format: date-time */
+            UpdatedAt: string;
+            contacts?: components["schemas"]["ContactRefResponse"][] | null;
+            /** Format: date-time */
+            date: string;
+            description: string;
+            location: string;
+            title: string;
+        };
         AddressInput: {
             city?: string;
             country?: string;
@@ -223,6 +318,9 @@ export interface components {
         };
         BirthdaysOutputBody: {
             birthdays: components["schemas"]["BirthdayResponse"][] | null;
+        };
+        ContactActivitiesOutputBody: {
+            activities: components["schemas"]["ActivityResponse"][] | null;
         };
         ContactActivity: {
             /** Format: date-time */
@@ -279,6 +377,10 @@ export interface components {
             urls?: components["schemas"]["URLInput"][] | null;
             work_information?: string;
         };
+        ContactCreatedOutputBody: {
+            contact: components["schemas"]["ContactResponse"];
+            message: string;
+        };
         ContactListItem: {
             /** Format: date-time */
             CreatedAt: string;
@@ -326,6 +428,18 @@ export interface components {
             urls: components["schemas"]["ContactValue"][] | null;
             work_information: string;
         };
+        ContactListOutputBody: {
+            contacts: components["schemas"]["ContactListItem"][] | null;
+            /** Format: int64 */
+            limit: number;
+            /** Format: int64 */
+            page: number;
+            /** Format: int64 */
+            total: number;
+        };
+        ContactMessageOutputBody: {
+            message: string;
+        };
         ContactNote: {
             /** Format: date-time */
             CreatedAt: string;
@@ -340,6 +454,13 @@ export interface components {
             content: string;
             /** Format: date-time */
             date: string;
+        };
+        ContactRefResponse: {
+            /** Format: int64 */
+            ID: number;
+            circles: string[] | null;
+            firstname: string;
+            lastname: string;
         };
         ContactReminder: {
             /** Format: date-time */
@@ -413,10 +534,6 @@ export interface components {
             type: string;
             value: string;
         };
-        CreatedOutputBody: {
-            contact: components["schemas"]["ContactResponse"];
-            message: string;
-        };
         EmailInput: {
             type?: string;
             value: string;
@@ -437,27 +554,6 @@ export interface components {
             type?: string;
             value: string;
         };
-        ListOutputBody: {
-            contacts: components["schemas"]["ContactListItem"][] | null;
-            /** Format: int64 */
-            limit: number;
-            /** Format: int64 */
-            page: number;
-            /** Format: int64 */
-            total: number;
-        };
-        ListOutputBody1: {
-            /** Format: int64 */
-            limit: number;
-            notes: components["schemas"]["NoteResponse"][] | null;
-            /** Format: int64 */
-            page: number;
-            /** Format: int64 */
-            total: number;
-        };
-        MessageOutputBody: {
-            message: string;
-        };
         NoteBody: {
             /**
              * Format: int64
@@ -467,6 +563,18 @@ export interface components {
             content: string;
             /** Format: date-time */
             date: string;
+        };
+        NoteListOutputBody: {
+            /** Format: int64 */
+            limit: number;
+            notes: components["schemas"]["NoteResponse"][] | null;
+            /** Format: int64 */
+            page: number;
+            /** Format: int64 */
+            total: number;
+        };
+        NoteMessageOutputBody: {
+            message: string;
         };
         NoteResponse: {
             /** Format: date-time */
@@ -482,6 +590,10 @@ export interface components {
             content: string;
             /** Format: date-time */
             date: string;
+        };
+        NoteSavedOutputBody: {
+            message: string;
+            note: components["schemas"]["NoteResponse"];
         };
         NotesOutputBody: {
             notes: components["schemas"]["NoteResponse"][] | null;
@@ -517,10 +629,6 @@ export interface components {
             related_contact_id: number | null;
             type: string;
         };
-        SavedOutputBody: {
-            message: string;
-            note: components["schemas"]["NoteResponse"];
-        };
         URLInput: {
             type?: string;
             value: string;
@@ -534,6 +642,181 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    "list-activities": {
+        parameters: {
+            query?: {
+                /** @description Page number, from 1 */
+                page?: string;
+                /** @description Page size, 1 to 100, default 25 */
+                limit?: string;
+                /** @description Full-text search over title, description, location and contact names */
+                search?: string;
+                /** @description First day, YYYY-MM-DD; ignored when not a date */
+                fromDate?: string;
+                /** @description Last day, inclusive, YYYY-MM-DD; ignored when not a date */
+                toDate?: string;
+                /** @description contacts: add the contacts of each activity */
+                include?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityListOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "create-activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActivityBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityCreatedOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "get-activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The activity's ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "update-activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The activity's ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActivityBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "delete-activity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The activity's ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActivityMessageOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     "get-oidc-config": {
         parameters: {
             query?: never;
@@ -599,7 +882,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ListOutputBody"];
+                    "application/json": components["schemas"]["ContactListOutputBody"];
                 };
             };
             /** @description Error */
@@ -632,7 +915,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["CreatedOutputBody"];
+                    "application/json": components["schemas"]["ContactCreatedOutputBody"];
                 };
             };
             /** @description Error */
@@ -822,7 +1105,39 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MessageOutputBody"];
+                    "application/json": components["schemas"]["ContactMessageOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "list-contact-activities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The contact's ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContactActivitiesOutputBody"];
                 };
             };
             /** @description Error */
@@ -922,7 +1237,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SavedOutputBody"];
+                    "application/json": components["schemas"]["NoteSavedOutputBody"];
                 };
             };
             /** @description Error */
@@ -994,7 +1309,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ListOutputBody1"];
+                    "application/json": components["schemas"]["NoteListOutputBody"];
                 };
             };
             /** @description Error */
@@ -1027,7 +1342,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SavedOutputBody"];
+                    "application/json": components["schemas"]["NoteSavedOutputBody"];
                 };
             };
             /** @description Error */
@@ -1095,7 +1410,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SavedOutputBody"];
+                    "application/json": components["schemas"]["NoteSavedOutputBody"];
                 };
             };
             /** @description Error */
@@ -1127,7 +1442,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MessageOutputBody"];
+                    "application/json": components["schemas"]["NoteMessageOutputBody"];
                 };
             };
             /** @description Error */

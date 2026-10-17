@@ -238,7 +238,7 @@ func TestTrashIsolationBetweenUsers(t *testing.T) {
 
 func TestTrashedContactIsNotFoundBySearchAndActivities(t *testing.T) {
 	e := newTrashEnv(t)
-	e.routerA.GET("/activities", GetActivities)
+	mountActivities(e.routerA, e.db, &config.Config{})
 	c := e.contact(t, e.userA.ID, "Zebulon")
 	act := models.Activity{UserID: e.userA.ID, Title: "Picnic", Date: time.Now()}
 	require.NoError(t, e.db.Create(&act).Error)

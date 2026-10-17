@@ -159,14 +159,14 @@ everywhere else (lists, search, circles, birthdays, graph, ICS feed, reminders, 
 
 ### Activities
 
-| Method   | Path                       | Description                   |
-| -------- | -------------------------- | ----------------------------- |
-| `GET`    | `/activities`              | List all activities           |
-| `POST`   | `/activities`              | Create an activity            |
-| `GET`    | `/activities/:id`          | Get an activity               |
-| `PUT`    | `/activities/:id`          | Update an activity            |
-| `DELETE` | `/activities/:id`          | Delete an activity            |
-| `GET`    | `/contacts/:id/activities` | List activities for a contact |
+| Method   | Path                       | Description                                                                                  |
+| -------- | -------------------------- | -------------------------------------------------------------------------------------------- |
+| `GET`    | `/activities`              | List all activities                                                                          |
+| `POST`   | `/activities`              | Create an activity                                                                           |
+| `GET`    | `/activities/:id`          | Get an activity                                                                              |
+| `PUT`    | `/activities/:id`          | Update an activity. Leaving out `contact_ids` keeps its contacts, an empty list removes them |
+| `DELETE` | `/activities/:id`          | Delete an activity                                                                           |
+| `GET`    | `/contacts/:id/activities` | List activities for a contact                                                                |
 
 ### Reminders
 

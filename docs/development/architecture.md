@@ -29,6 +29,7 @@ backend/
   api/                 # huma wiring: operations on Gin groups, AppError format (ADR 0011)
   contacts/            # first hexagonal module (all contact endpoints): domain, app, adapters (ADR 0012)
   notes/               # hexagonal module for notes, same layout
+  activities/          # hexagonal module for activities, same layout
   models/              # GORM models and input DTOs
   services/            # Business logic (reminders, import, birthdays, password reset)
   errors/              # AppError type and error handler middleware

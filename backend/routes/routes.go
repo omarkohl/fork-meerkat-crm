@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"meerkat/activities"
 	"meerkat/api"
 	"meerkat/carddav"
 	"meerkat/config"
@@ -19,16 +20,18 @@ import (
 
 // Modules are the converted modules (docs/adr/0012-module-layout.md), built by main.go.
 type Modules struct {
-	Contacts *contacts.Module
-	Notes    *notes.Module
+	Contacts   *contacts.Module
+	Notes      *notes.Module
+	Activities *activities.Module
 }
 
 // NewModules builds every converted module on db. db may be nil when only the operations'
 // descriptions are needed.
 func NewModules(db *gorm.DB, cfg *config.Config) Modules {
 	return Modules{
-		Contacts: contacts.New(contacts.Deps{DB: db, Config: cfg}),
-		Notes:    notes.New(notes.Deps{DB: db, Config: cfg}),
+		Contacts:   contacts.New(contacts.Deps{DB: db, Config: cfg}),
+		Notes:      notes.New(notes.Deps{DB: db, Config: cfg}),
+		Activities: activities.New(activities.Deps{DB: db, Config: cfg}),
 	}
 }
 
@@ -48,6 +51,7 @@ func RegisterAPI(a huma.API, cfg *config.Config, m Modules, g Groups) {
 	controllers.RegisterOIDCConfig(a, cfg)
 	m.Contacts.Register(a, g.Protected)
 	m.Notes.Register(a, g.Protected)
+	m.Activities.Register(a, g.Protected)
 }
 
 func RegisterRoutes(router *gin.Engine, cfg *config.Config, db *gorm.DB, oidcProvider *services.OIDCProvider, modules Modules) {
@@ -169,16 +173,6 @@ func RegisterRoutes(router *gin.Engine, cfg *config.Config, db *gorm.DB, oidcPro
 
 			// Image proxy route (for fetching images from external URLs)
 			protected.GET("/proxy/image", controllers.ProxyImage)
-
-			// Note routes
-
-			// Activity routes
-			protected.GET("/contacts/:id/activities", controllers.GetActivitiesForContact)
-			protected.POST("/activities", middleware.ValidateJSONMiddleware(&models.ActivityInput{}), controllers.CreateActivity)
-			protected.GET("/activities", controllers.GetActivities)
-			protected.GET("/activities/:id", controllers.GetActivity)
-			protected.PUT("/activities/:id", middleware.ValidateJSONMiddleware(&models.ActivityInput{}), controllers.UpdateActivity)
-			protected.DELETE("/activities/:id", controllers.DeleteActivity)
 
 			// Reminder routes
 			protected.GET("/reminders", controllers.GetAllReminders)

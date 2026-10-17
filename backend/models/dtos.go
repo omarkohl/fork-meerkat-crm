@@ -5,15 +5,6 @@ import (
 	"time"
 )
 
-// ActivityInput represents the DTO for creating/updating activities
-type ActivityInput struct {
-	Title       string    `json:"title" validate:"required,min=1,max=200"`
-	Description string    `json:"description" validate:"max=2000"`
-	Location    string    `json:"location" validate:"max=300"`
-	Date        time.Time `json:"date" validate:"required"`
-	ContactIDs  []uint    `json:"contact_ids"` // Accept an array of contact IDs for many-to-many association
-}
-
 // CalendarSubscriptionInput is the DTO for creating/updating a calendar subscription.
 // Credentials are optional (public/unprotected calendars). On update, an empty
 // password keeps the stored one; set ClearPassword to remove it.

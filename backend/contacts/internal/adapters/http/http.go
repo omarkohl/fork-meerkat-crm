@@ -103,7 +103,7 @@ type ContactListItem struct {
 	PhotoThumbnail string `json:"photo_thumbnail"`
 }
 
-type ListOutput struct {
+type ContactListOutput struct {
 	Body struct {
 		Contacts []ContactListItem `json:"contacts"`
 		Total    int64             `json:"total"`
@@ -134,16 +134,16 @@ type BirthdaysOutput struct {
 	}
 }
 
-// CreatedOutput is the response of POST /contacts.
-type CreatedOutput struct {
+// ContactCreatedOutput is the response of POST /contacts.
+type ContactCreatedOutput struct {
 	Body struct {
 		Message string          `json:"message"`
 		Contact ContactResponse `json:"contact"`
 	}
 }
 
-// MessageOutput is the response of the operations that only confirm.
-type MessageOutput struct {
+// ContactMessageOutput is the response of the operations that only confirm.
+type ContactMessageOutput struct {
 	Body struct {
 		Message string `json:"message"`
 	}
@@ -154,7 +154,7 @@ type CirclesOutput struct {
 	Body []string
 }
 
-func (h *handlers) list(ctx context.Context, in *ListInput) (*ListOutput, error) {
+func (h *handlers) list(ctx context.Context, in *ListInput) (*ContactListOutput, error) {
 	actor, err := actorOf(ctx)
 	if err != nil {
 		return nil, err
@@ -168,7 +168,7 @@ func (h *handlers) list(ctx context.Context, in *ListInput) (*ListOutput, error)
 	if err != nil {
 		return nil, toAppError(err, 0)
 	}
-	out := &ListOutput{}
+	out := &ContactListOutput{}
 	out.Body.Contacts = listItems(page.Contacts)
 	out.Body.Total, out.Body.Page, out.Body.Limit = page.Total, page.Page, page.Limit
 	return out, nil
@@ -251,7 +251,7 @@ func (h *handlers) get(ctx context.Context, in *GetInput) (*ContactOutput, error
 	return &ContactOutput{Body: NewContactResponse(c)}, nil
 }
 
-func (h *handlers) create(ctx context.Context, in *CreateInput) (*CreatedOutput, error) {
+func (h *handlers) create(ctx context.Context, in *CreateInput) (*ContactCreatedOutput, error) {
 	actor, err := actorOf(ctx)
 	if err != nil {
 		return nil, err
@@ -260,7 +260,7 @@ func (h *handlers) create(ctx context.Context, in *CreateInput) (*CreatedOutput,
 	if err != nil {
 		return nil, toAppError(err, 0)
 	}
-	out := &CreatedOutput{}
+	out := &ContactCreatedOutput{}
 	out.Body.Message = "Contact created successfully"
 	out.Body.Contact = NewContactResponse(c)
 	return out, nil
@@ -302,7 +302,7 @@ func (h *handlers) unarchive(ctx context.Context, in *contactPath) (*ContactOutp
 	return &ContactOutput{Body: NewContactResponse(c)}, nil
 }
 
-func (h *handlers) delete(ctx context.Context, in *contactPath) (*MessageOutput, error) {
+func (h *handlers) delete(ctx context.Context, in *contactPath) (*ContactMessageOutput, error) {
 	actor, err := actorOf(ctx)
 	if err != nil {
 		return nil, err
@@ -310,7 +310,7 @@ func (h *handlers) delete(ctx context.Context, in *contactPath) (*MessageOutput,
 	if err := h.uc.DeleteContact(ctx, actor, domain.ContactID(in.ID), api.Now(ctx)); err != nil {
 		return nil, toAppError(err, in.ID)
 	}
-	out := &MessageOutput{}
+	out := &ContactMessageOutput{}
 	out.Body.Message = "Contact deleted"
 	return out, nil
 }

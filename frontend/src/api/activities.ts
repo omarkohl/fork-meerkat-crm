@@ -1,30 +1,19 @@
 // Activities-related API calls
 import { apiFetch, API_BASE_URL, getAuthHeaders, parseErrorResponse } from './client';
+import type { components, operations } from '../types/generated/api';
 
-export interface ActivityContact {
-  ID: number;
-  firstname: string;
-  lastname: string;
-  nickname?: string;
-}
-
-export interface Activity {
-  ID: number;
-  title: string;
-  description?: string;
-  location?: string;
-  date: string;
-  CreatedAt: string;
-  UpdatedAt: string;
-  contacts?: ActivityContact[];
-}
-
-export interface ActivitiesResponse {
+// The API sends null for a contact without circles; the UI treats that as absent.
+export type ActivityContact = Omit<components['schemas']['ContactRefResponse'], 'circles'> & { circles?: string[] };
+export type Activity = Omit<components['schemas']['ActivityResponse'], 'contacts'> & { contacts?: ActivityContact[] };
+type ActivitiesListResponse = operations['list-activities']['responses']['200']['content']['application/json'];
+export interface ActivitiesResponse extends Omit<ActivitiesListResponse, 'activities'> {
   activities: Activity[];
-  total: number;
-  page: number;
-  limit: number;
 }
+interface ContactActivitiesResponse {
+  activities: Activity[];
+}
+type ActivityBody = components['schemas']['ActivityBody'];
+type SavedActivityResponse = operations['create-activity']['responses']['200']['content']['application/json'];
 
 export interface GetActivitiesParams {
   page?: number;
@@ -69,18 +58,18 @@ export async function getActivities(params: GetActivitiesParams): Promise<Activi
     throw await parseErrorResponse(response);
   }
 
-  return response.json();
+  return (await response.json()) as ActivitiesResponse;
 }
 
 // Get activities for a contact
-export async function getContactActivities(contactId: string | number): Promise<{ activities: Activity[] }> {
+export async function getContactActivities(contactId: string | number): Promise<ContactActivitiesResponse> {
   const response = await apiFetch(`${API_BASE_URL}/contacts/${contactId}/activities`, { headers: getAuthHeaders() });
 
   if (!response.ok) {
     throw await parseErrorResponse(response);
   }
 
-  return response.json();
+  return (await response.json()) as ContactActivitiesResponse;
 }
 
 // Get single activity
@@ -91,17 +80,11 @@ export async function getActivity(id: string | number): Promise<Activity> {
     throw await parseErrorResponse(response);
   }
 
-  return response.json();
+  return (await response.json()) as Activity;
 }
 
 // Create activity
-export async function createActivity(data: {
-  title: string;
-  description: string;
-  location: string;
-  date: string;
-  contact_ids: number[];
-}): Promise<Activity> {
+export async function createActivity(data: ActivityBody): Promise<SavedActivityResponse> {
   const response = await apiFetch(`${API_BASE_URL}/activities`, {
     method: 'POST',
     headers: getAuthHeaders(),
@@ -112,20 +95,11 @@ export async function createActivity(data: {
     throw await parseErrorResponse(response);
   }
 
-  return response.json();
+  return (await response.json()) as SavedActivityResponse;
 }
 
 // Update activity
-export async function updateActivity(
-  id: string | number,
-  data: {
-    title?: string;
-    description?: string;
-    location?: string;
-    date?: string;
-    contact_ids?: number[];
-  },
-): Promise<Activity> {
+export async function updateActivity(id: string | number, data: ActivityBody): Promise<Activity> {
   const response = await apiFetch(`${API_BASE_URL}/activities/${id}`, {
     method: 'PUT',
     headers: getAuthHeaders(),
@@ -136,7 +110,7 @@ export async function updateActivity(
     throw await parseErrorResponse(response);
   }
 
-  return response.json();
+  return (await response.json()) as Activity;
 }
 
 // Delete activity

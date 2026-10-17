@@ -115,7 +115,7 @@ type ListInput struct {
 
 type NoteOutput struct{ Body NoteResponse }
 
-type SavedOutput struct {
+type NoteSavedOutput struct {
 	Body struct {
 		Message string       `json:"message"`
 		Note    NoteResponse `json:"note"`
@@ -128,7 +128,7 @@ type NotesOutput struct {
 	}
 }
 
-type ListOutput struct {
+type NoteListOutput struct {
 	Body struct {
 		Notes []NoteResponse `json:"notes"`
 		Total int64          `json:"total"`
@@ -137,7 +137,7 @@ type ListOutput struct {
 	}
 }
 
-type MessageOutput struct {
+type NoteMessageOutput struct {
 	Body struct {
 		Message string `json:"message"`
 	}
@@ -157,7 +157,7 @@ func (h *handlers) contactNotes(ctx context.Context, in *contactPath) (*NotesOut
 	return out, nil
 }
 
-func (h *handlers) createForContact(ctx context.Context, in *CreateForContactInput) (*SavedOutput, error) {
+func (h *handlers) createForContact(ctx context.Context, in *CreateForContactInput) (*NoteSavedOutput, error) {
 	actor, err := actorOf(ctx)
 	if err != nil {
 		return nil, err
@@ -170,7 +170,7 @@ func (h *handlers) createForContact(ctx context.Context, in *CreateForContactInp
 	return saved("Note created successfully", n), nil
 }
 
-func (h *handlers) create(ctx context.Context, in *CreateInput) (*SavedOutput, error) {
+func (h *handlers) create(ctx context.Context, in *CreateInput) (*NoteSavedOutput, error) {
 	actor, err := actorOf(ctx)
 	if err != nil {
 		return nil, err
@@ -194,7 +194,7 @@ func (h *handlers) get(ctx context.Context, in *notePath) (*NoteOutput, error) {
 	return &NoteOutput{Body: NewNoteResponse(n)}, nil
 }
 
-func (h *handlers) list(ctx context.Context, in *ListInput) (*ListOutput, error) {
+func (h *handlers) list(ctx context.Context, in *ListInput) (*NoteListOutput, error) {
 	actor, err := actorOf(ctx)
 	if err != nil {
 		return nil, err
@@ -206,13 +206,13 @@ func (h *handlers) list(ctx context.Context, in *ListInput) (*ListOutput, error)
 	if err != nil {
 		return nil, toAppError(err, 0, 0)
 	}
-	out := &ListOutput{}
+	out := &NoteListOutput{}
 	out.Body.Notes = responses(notes)
 	out.Body.Total, out.Body.Page, out.Body.Limit = total, page, limit
 	return out, nil
 }
 
-func (h *handlers) update(ctx context.Context, in *UpdateInput) (*SavedOutput, error) {
+func (h *handlers) update(ctx context.Context, in *UpdateInput) (*NoteSavedOutput, error) {
 	actor, err := actorOf(ctx)
 	if err != nil {
 		return nil, err
@@ -224,7 +224,7 @@ func (h *handlers) update(ctx context.Context, in *UpdateInput) (*SavedOutput, e
 	return saved("Note updated successfully", n), nil
 }
 
-func (h *handlers) delete(ctx context.Context, in *notePath) (*MessageOutput, error) {
+func (h *handlers) delete(ctx context.Context, in *notePath) (*NoteMessageOutput, error) {
 	actor, err := actorOf(ctx)
 	if err != nil {
 		return nil, err
@@ -232,7 +232,7 @@ func (h *handlers) delete(ctx context.Context, in *notePath) (*MessageOutput, er
 	if err := h.uc.DeleteNote(ctx, actor, domain.NoteID(in.ID), api.Now(ctx)); err != nil {
 		return nil, toAppError(err, in.ID, 0)
 	}
-	out := &MessageOutput{}
+	out := &NoteMessageOutput{}
 	out.Body.Message = "Note deleted"
 	return out, nil
 }
@@ -257,8 +257,8 @@ func responses(notes []domain.Note) []NoteResponse {
 	return out
 }
 
-func saved(message string, n domain.Note) *SavedOutput {
-	out := &SavedOutput{}
+func saved(message string, n domain.Note) *NoteSavedOutput {
+	out := &NoteSavedOutput{}
 	out.Body.Message = message
 	out.Body.Note = NewNoteResponse(n)
 	return out
