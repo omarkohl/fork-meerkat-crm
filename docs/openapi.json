@@ -1,6 +1,258 @@
 {
   "components": {
     "schemas": {
+      "ContactAddress": {
+        "additionalProperties": false,
+        "properties": {
+          "city": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "postal": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "street": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "street",
+          "city",
+          "region",
+          "postal",
+          "country"
+        ],
+        "type": "object"
+      },
+      "ContactResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "CreatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "DeletedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ID": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "UpdatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "addresses": {
+            "items": {
+              "$ref": "#/components/schemas/ContactAddress"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "anniversary": {
+            "type": "string"
+          },
+          "archived": {
+            "type": "boolean"
+          },
+          "birthday": {
+            "type": "string"
+          },
+          "circles": {
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "contact_information": {
+            "type": "string"
+          },
+          "custom_fields": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "department": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "emails": {
+            "items": {
+              "$ref": "#/components/schemas/ContactValue"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "firstname": {
+            "type": "string"
+          },
+          "food_preference": {
+            "type": "string"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "how_we_met": {
+            "type": "string"
+          },
+          "impps": {
+            "items": {
+              "$ref": "#/components/schemas/ContactValue"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "job_title": {
+            "type": "string"
+          },
+          "lastname": {
+            "type": "string"
+          },
+          "middle_name": {
+            "type": "string"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "organization": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "phones": {
+            "items": {
+              "$ref": "#/components/schemas/ContactValue"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "photo": {
+            "type": "string"
+          },
+          "prefix": {
+            "type": "string"
+          },
+          "relationships": {
+            "items": {
+              "$ref": "#/components/schemas/RelationshipResponse"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "role": {
+            "type": "string"
+          },
+          "suffix": {
+            "type": "string"
+          },
+          "urls": {
+            "items": {
+              "$ref": "#/components/schemas/ContactValue"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "work_information": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ID",
+          "CreatedAt",
+          "UpdatedAt",
+          "DeletedAt",
+          "firstname",
+          "lastname",
+          "nickname",
+          "gender",
+          "email",
+          "phone",
+          "birthday",
+          "photo",
+          "relationships",
+          "address",
+          "how_we_met",
+          "food_preference",
+          "work_information",
+          "contact_information",
+          "circles",
+          "emails",
+          "phones",
+          "addresses",
+          "urls",
+          "impps",
+          "prefix",
+          "middle_name",
+          "suffix",
+          "organization",
+          "department",
+          "job_title",
+          "role",
+          "anniversary",
+          "note",
+          "custom_fields",
+          "archived"
+        ],
+        "type": "object"
+      },
+      "ContactValue": {
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "value"
+        ],
+        "type": "object"
+      },
       "Error": {
         "additionalProperties": false,
         "properties": {
@@ -40,6 +292,18 @@
         ],
         "type": "object"
       },
+      "MessageOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "type": "object"
+      },
       "OIDCConfigOutputBody": {
         "additionalProperties": false,
         "properties": {
@@ -54,6 +318,69 @@
         },
         "required": [
           "enabled"
+        ],
+        "type": "object"
+      },
+      "RelationshipResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "CreatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "DeletedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ID": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "UpdatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "birthday": {
+            "type": "string"
+          },
+          "contact_id": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "related_contact_id": {
+            "format": "int64",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ID",
+          "CreatedAt",
+          "UpdatedAt",
+          "DeletedAt",
+          "contact_id",
+          "related_contact_id",
+          "name",
+          "type",
+          "birthday",
+          "gender"
         ],
         "type": "object"
       }
@@ -94,6 +421,178 @@
         "summary": "Single sign-on status",
         "tags": [
           "auth"
+        ]
+      }
+    },
+    "/contacts/circles": {
+      "get": {
+        "operationId": "list-circles",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": [
+                    "array",
+                    "null"
+                  ]
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "The distinct circle names of all contacts",
+        "tags": [
+          "contacts"
+        ]
+      }
+    },
+    "/contacts/{id}": {
+      "delete": {
+        "operationId": "delete-contact",
+        "parameters": [
+          {
+            "description": "The contact's ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The contact's ID",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Move a contact and its notes, reminders and relationships to the trash",
+        "tags": [
+          "contacts"
+        ]
+      }
+    },
+    "/contacts/{id}/archive": {
+      "post": {
+        "operationId": "archive-contact",
+        "parameters": [
+          {
+            "description": "The contact's ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The contact's ID",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Archive a contact and delete its reminders",
+        "tags": [
+          "contacts"
+        ]
+      }
+    },
+    "/contacts/{id}/unarchive": {
+      "post": {
+        "operationId": "unarchive-contact",
+        "parameters": [
+          {
+            "description": "The contact's ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The contact's ID",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Restore an archived contact",
+        "tags": [
+          "contacts"
         ]
       }
     }

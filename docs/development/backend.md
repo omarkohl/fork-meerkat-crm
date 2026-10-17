@@ -81,6 +81,10 @@ Complex business logic lives in `services/`. Controllers call services; services
 
 Endpoints are being converted to [huma](https://huma.rocks) operations in `backend/api` (see [ADR 0011](../adr/0011-api-contract-with-huma.md)): typed input and output structs, registered with `api.Register` on the same Gin groups, errors in the AppError format, `api.ValidateBody` for the project validators. After changing an operation run `make openapi` (writes `docs/openapi.json` and `frontend/src/types/generated/api.ts`); `make openapi-check` fails when they are stale. Use the generated types in the frontend instead of hand-written ones.
 
+## Modules (hexagonal)
+
+Converted modules live in `backend/<module>/` (today `backend/contacts/`, partly): a public entry package, and under `internal/` the `domain` (entities and rules, standard library only), `app` (use cases and the ports they need), and `adapters` (`persistence` is the only code that imports GORM; `http` registers the huma operations; `webhooks` implements the event port). `main.go` builds the module (`contacts.New(contacts.Deps{...})`) and `routes` registers it. To add behaviour to a converted module write the use case in `app` (it takes the actor and `now`, and does its writes in one `Store.InTx`), a port if it needs new persistence, and a thin HTTP handler. See [ADR 0012](../adr/0012-module-layout.md); the rules are enforced by `make arch`.
+
 ## Layering
 
 `controllers` call `services`, `services` use `models`; never the other way round. `make arch` (depguard) fails when `models` imports `controllers`, `services` or `gin`, when `services` imports `controllers` or `gin`, or when anything but `routes` (and `main.go`) imports `controllers`. See [ADR 0010](../adr/0010-target-layering.md).

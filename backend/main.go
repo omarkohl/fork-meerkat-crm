@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"meerkat/clock"
 	"meerkat/config"
+	"meerkat/contacts"
 	"meerkat/controllers"
 	"meerkat/database"
 	apperrors "meerkat/errors"
@@ -280,7 +281,9 @@ func main() {
 	}
 
 	// Register all routes from routes.go
-	routes.RegisterRoutes(r, cfg, db, oidcProvider)
+	// Composition root: the converted modules are built here from concrete adapters
+	modules := routes.Modules{Contacts: contacts.New(contacts.Deps{DB: db, Config: cfg})}
+	routes.RegisterRoutes(r, cfg, db, oidcProvider, modules)
 
 	// Create HTTP server with timeout configuration
 	srv := &http.Server{

@@ -4,6 +4,7 @@ import (
 	"meerkat/api"
 	"meerkat/carddav"
 	"meerkat/config"
+	"meerkat/contacts"
 	"meerkat/controllers"
 	"meerkat/metrics"
 	"meerkat/middleware"
@@ -15,16 +16,29 @@ import (
 	"gorm.io/gorm"
 )
 
+// Modules are the converted modules (docs/adr/0012-module-layout.md), built by main.go.
+type Modules struct {
+	Contacts *contacts.Module
+}
+
+// Groups are the Gin groups huma operations can be registered on. A nil group means the
+// API's default one; cmd/openapi passes none.
+type Groups struct {
+	// Protected carries authentication and the general rate limit.
+	Protected gin.IRoutes
+}
+
 // RegisterAPI registers every huma operation on a. It is also what cmd/openapi calls to
 // write the OpenAPI document, so it must not need a database or any running service.
 // Operations are registered unconditionally (cmd/openapi passes an empty config): a feature
 // that can be switched off registers its operation anyway and the handler answers as the
 // disabled feature would. Do not register an operation inside an `if cfg.X`.
-func RegisterAPI(a huma.API, cfg *config.Config) {
+func RegisterAPI(a huma.API, cfg *config.Config, m Modules, g Groups) {
 	controllers.RegisterOIDCConfig(a, cfg)
+	m.Contacts.Register(a, g.Protected)
 }
 
-func RegisterRoutes(router *gin.Engine, cfg *config.Config, db *gorm.DB, oidcProvider *services.OIDCProvider) {
+func RegisterRoutes(router *gin.Engine, cfg *config.Config, db *gorm.DB, oidcProvider *services.OIDCProvider, modules Modules) {
 
 	// Health check endpoint (no versioning, standard practice)
 	router.GET("/health", controllers.HealthCheck)
@@ -38,10 +52,12 @@ func RegisterRoutes(router *gin.Engine, cfg *config.Config, db *gorm.DB, oidcPro
 	// API v1 routes
 	v1 := router.Group("/api/v1")
 	{
-		// OIDC routes (config always public; login/callback only when OIDC is enabled)
-		// Operations served by huma (the API contract); the rest are plain Gin handlers
-		// until they are converted (docs/adr/0011-api-contract-with-huma.md).
-		RegisterAPI(api.New(v1, router), cfg)
+		// Operations served by huma (the API contract) are registered where their group
+		// exists, see RegisterAPI; the rest are plain Gin handlers until they are converted
+		// (docs/adr/0011-api-contract-with-huma.md).
+		humaAPI := api.New(v1, router)
+
+		// OIDC routes (config is a huma operation; login/callback only when OIDC is enabled)
 		if cfg.OIDC.Enabled && oidcProvider != nil {
 			v1.GET("/auth/oidc/login", middleware.AuthRateLimitMiddleware(), controllers.OIDCLoginHandler(oidcProvider, cfg))
 			v1.GET("/auth/oidc/callback", middleware.AuthRateLimitMiddleware(), controllers.OIDCCallbackHandler(oidcProvider, cfg))
@@ -92,21 +108,18 @@ func RegisterRoutes(router *gin.Engine, cfg *config.Config, db *gorm.DB, oidcPro
 			protected.POST("/users/me/2fa/recovery-codes", middleware.ValidateJSONMiddleware(&models.TOTPConfirmInput{}), controllers.RegenerateRecoveryCodes)
 
 			// Contact routes
+			RegisterAPI(humaAPI, cfg, modules, Groups{Protected: protected})
 			protected.GET("/contacts", controllers.GetContacts)
-			protected.GET("/contacts/circles", controllers.GetCircles)
 			protected.GET("/contacts/random", controllers.GetContactsRandom)
 			protected.GET("/contacts/birthdays", controllers.GetUpcomingBirthdays)
 			protected.POST("/contacts", middleware.ValidateJSONMiddleware(&models.ContactInput{}), controllers.CreateContact)
 			protected.GET("/contacts/:id", controllers.GetContact)
 			protected.PUT("/contacts/:id", middleware.ValidateJSONMiddleware(&models.ContactInput{}), controllers.UpdateContact)
-			protected.DELETE("/contacts/:id", controllers.DeleteContact)
 			// Trash: soft-deleted contacts (restore, purge, empty)
 			protected.GET("/trash/contacts", controllers.GetTrash)
 			protected.DELETE("/trash/contacts", controllers.EmptyTrash)
 			protected.POST("/trash/contacts/:id/restore", controllers.RestoreTrashedContact)
 			protected.DELETE("/trash/contacts/:id", controllers.PurgeTrashedContact)
-			protected.POST("/contacts/:id/archive", controllers.ArchiveContact)
-			protected.POST("/contacts/:id/unarchive", controllers.UnarchiveContact)
 
 			// Contact import routes (CSV)
 			protected.POST("/contacts/import/upload", controllers.UploadCSVForImport)

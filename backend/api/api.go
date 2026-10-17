@@ -22,7 +22,10 @@ import (
 )
 
 // ginMiddlewareKey holds the per-operation Gin middleware in Operation.Metadata.
-const ginMiddlewareKey = "gin.middleware"
+const (
+	ginMiddlewareKey = "gin.middleware"
+	ginGroupKey      = "gin.group"
+)
 
 var setupErrors sync.Once
 
@@ -60,6 +63,23 @@ func Register[I, O any](a huma.API, op huma.Operation, handler func(context.Cont
 		}
 		op.Metadata[ginMiddlewareKey] = ginMiddleware
 	}
+	register(a, op, handler)
+}
+
+// RegisterOn is Register for an operation that belongs on another Gin group than the
+// API's default, typically the authenticated group: its middleware (auth, rate limit)
+// then runs around the operation. A nil group means the default one.
+func RegisterOn[I, O any](a huma.API, group gin.IRoutes, op huma.Operation, handler func(context.Context, *I) (*O, error), ginMiddleware ...gin.HandlerFunc) {
+	if group != nil {
+		if op.Metadata == nil {
+			op.Metadata = map[string]any{}
+		}
+		op.Metadata[ginGroupKey] = group
+	}
+	Register(a, op, handler, ginMiddleware...)
+}
+
+func register[I, O any](a huma.API, op huma.Operation, handler func(context.Context, *I) (*O, error)) {
 	if op.MaxBodyBytes == 0 {
 		// The limit the global body-size middleware already enforces on every request.
 		op.MaxBodyBytes = middleware.DefaultMaxBodySize
@@ -79,8 +99,14 @@ func (a *adapter) Handle(op *huma.Operation, handler func(huma.Context)) {
 	if mws, ok := op.Metadata[ginMiddlewareKey].([]gin.HandlerFunc); ok {
 		handlers = append(handlers, mws...)
 	}
-	handlers = append(handlers, func(c *gin.Context) { handler(humagin.NewContext(op, c)) })
-	a.router.Handle(op.Method, path, handlers...)
+	handlers = append(handlers, func(c *gin.Context) {
+		handler(huma.WithValue(humagin.NewContext(op, c), ginContextKey{}, c))
+	})
+	router := a.router
+	if g, ok := op.Metadata[ginGroupKey].(gin.IRoutes); ok {
+		router = g
+	}
+	router.Handle(op.Method, path, handlers...)
 }
 
 // Error is the response body of every error: the AppError format. It also implements

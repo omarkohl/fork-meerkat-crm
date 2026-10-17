@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"meerkat/contacts"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,7 +17,7 @@ func metricsStatus(t *testing.T, cfg *config.Config, auth string) int {
 	gin.SetMode(gin.ReleaseMode)
 	cfg.JWTSecretKey = "test-secret-key-32-chars-minimum!"
 	r := gin.New()
-	RegisterRoutes(r, cfg, nil, nil)
+	RegisterRoutes(r, cfg, nil, nil, Modules{Contacts: contacts.New(contacts.Deps{DB: nil, Config: cfg})})
 	req := httptest.NewRequest(http.MethodGet, "/metrics", nil)
 	if auth != "" {
 		req.Header.Set("Authorization", auth)

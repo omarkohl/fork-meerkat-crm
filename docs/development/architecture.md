@@ -23,6 +23,8 @@ backend/
   routes/routes.go     # All route registrations
   middleware/          # Auth, rate limiting, validation, logging, request ID
   controllers/         # HTTP handlers — thin, delegate to services or query DB directly
+  api/                 # huma wiring: operations on Gin groups, AppError format (ADR 0011)
+  contacts/            # first hexagonal module: domain, app, adapters (ADR 0012)
   models/              # GORM models and input DTOs
   services/            # Business logic (reminders, import, birthdays, password reset)
   errors/              # AppError type and error handler middleware

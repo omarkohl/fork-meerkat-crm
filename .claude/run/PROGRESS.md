@@ -2,7 +2,7 @@
 
 ## Next step
 
-12.
+12b (rest of the contacts pilot, see Decisions).
 
 ## Stack
 
@@ -22,8 +22,13 @@
 - Step 9: ADR 0009; `backend/clock` (Clock, Real, Fake, `FAKE_NOW` clock; tests first); `middleware.ClockMiddleware` + `RequestNow`; scheduler tasks take `clk.Now()` once per job; all 84 `time.Now()` outside main/middleware/clock/metrics replaced (services take `now time.Time`, import session managers hold a clock set by `controllers.SetImportClock`, GORM `NowFunc`, JWT time func); `forbidigo` bans `time.Now` with the ADR link (shown to fail on a violation file; two reasoned `nolint`: SMTP deadline, health duration); `FAKE_NOW` config + validation + warning; frontend `src/utils/now.ts` and an ESLint ban on `new Date()`/`Date.now()` elsewhere in `src` (shown to fail). Docs: backend.md, getting-started.md. One commit. Review fixes: job-like work (outbox, webhooks, reminders, calendar and contact sync) takes the `clock.Clock` and reads it where it stamps something (after slow I/O, lock release at the end); TOTP always uses the real time; purge jobs are skipped while `FAKE_NOW` is set; `forbidigo` runs with `analyze-types` (an aliased `time` import is caught; without it the alias passed); Monica import reads the clock once per import; `Date()` without `new` is banned too; tests for the manager clocks and for retry scheduling after a slow send; `FAKE_NOW` in deployment.md and `.env.example` (test only). `make precommit` green.
 - Step 10: ADR 0010; Go `depguard` rules (models, services, controllers) in `.golangci.yml` with no exemptions (one unused gin router in a services test removed); frontend `dependency-cruiser` rules (no-circular, no-unresolvable, pages-use-api-through-hooks, api-client-is-private-to-api) with the 30 existing pairs in `.dependency-cruiser-known-violations.json` and `scripts/arch-frontend.mjs` (new violations fail, fixed-but-still-listed ones fail too; test first). Two cycles fixed (`types/entities.ts`). Every rule shown to fail on a violation; the `src/api/index.ts` barrel no longer re-exports `client.ts` and a rule keeps it so. `make arch` runs both (already in `precommit`), new `arch` job in lint.yml. `make precommit` green.
 - Step 11: spike passed all checks, no blocker. ADR 0011; `backend/api` (huma v2.39.1 mounted on Gin groups via an own adapter with per-operation Gin middleware; AppError error format incl. 422 -> 400; `ValidateBody` for the six validators, tested on all six; request clock timestamp); `cmd/openapi`; `make openapi` / `openapi-check` (in precommit and a CI job); `openapi-typescript` types in `frontend/src/types/generated/api.ts`; `GET /auth/oidc/config` converted and `useOIDCConfig` uses the generated type. `make precommit` green.
+- Step 11 follow-ups (squashed into step 11): error logging, request bodies as with `ShouldBindJSON` (unknown fields ignored, required from `validate` tags, JSON detail keys), 413/415, `MaxBodyBytes`, byte differences documented, `go mod tidy`, goimports, unconditional registration documented.
+- Step 12a: ADR 0012 (module layout); `backend/contacts` with `internal/domain`, `internal/app` (use cases `ArchiveContact`, `UnarchiveContact`, `DeleteContact`, `ListCircles`; ports `Contacts`, `Store`/`Tx`, `Events`), `internal/adapters/{persistence,http,webhooks}`; huma operations for `POST /contacts/{id}/archive`, `/unarchive`, `DELETE /contacts/{id}`, `GET /contacts/circles` with a typed `ContactResponse` (same JSON names as the GORM model); `api.RegisterOn` puts operations on the authenticated Gin group, `api.UserID/Now/Clock` read the request; composition in `main.go` (`routes.Modules`); depguard rules `contacts-domain-stays-pure`, `contacts-use-cases-depend-on-ports`, `contacts-repositories-stay-in-persistence` (each shown to fail); old Gin handlers and their tests removed, replaced by module tests on real SQLite (response keys, reminders deleted, trash, photos kept, isolation 404 for every operation, 401 without a user); frontend uses the generated `ContactResponse` for archive/unarchive. `make precommit` green.
 
 ## Decisions
+
+- Step 12 is too large for one reviewable commit (10 endpoints, a 40-field entity, search/FTS/`fields` handling, and the whole frontend contact type). Split: **12a** (done) layout and lifecycle endpoints with the typed `ContactResponse`; **12b** `GET /contacts/{id}` (with `fields`), `POST /contacts`, `PUT /contacts/{id}`: domain rules for the denormalised primary email/phone/address, the `ContactInput` validation through `api.ValidateBody`, webhooks `contact.created/updated`; **12c** `GET /contacts` (search, FTS, circles, sort, paging, `fields`), `/contacts/random`, `/contacts/birthdays`, then delete the hand-written frontend `Contact` types and the remaining Gin handlers.
+- 12a keeps behaviour: `GET /contacts/circles` still answers `null` when there are no circles; non-numeric `{id}` now answers `400` (a Gin string param used to reach the database); a missing user answers `401`.
 
 - First converted endpoint is `GET /auth/oidc/config` (public, no database, used by the frontend), not `check-password-strength` (not used by the frontend). Error behaviour, per-route Gin middleware and the validators are covered by tests in `backend/api` instead.
 - huma's `DefaultConfig` is not used: it adds `$schema` fields to responses and serves docs routes.
@@ -53,7 +58,7 @@
 
 ## Questions
 
-- E2E flake seen twice (step 8 and step 10, first run only, rerun green): `relationships.spec.ts` "Relationship ..." failed once in step 10. Cause not investigated; watch for it.
+- E2E flake seen twice (step 8 and step 10, first run only, rerun green): `relationships.spec.ts` "Relationship ..." failed once in step 10. Cause not investigated; watch for it. Seen again in step 12a: `relationships.spec.ts` beforeEach got `failed to create test contact: 500` from `POST /contacts` (about one full precommit in three, reruns green). Likely SQLite contention right after the heavy checks; the 500 itself was not captured.
 
 - One full `make precommit` run during step 8 had 2 E2E failures (52 passed); a rerun and a second full run passed 54/54. Names not captured. Possible flake; watch for it.
 

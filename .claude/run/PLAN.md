@@ -127,16 +127,20 @@ Read first: `.claude/plans/engineering-principles-reference.md`, `.claude/AUTONO
       prove the chain. `make openapi` writes the committed spec (OpenAPI 3.1);
       `openapi-typescript` generates `frontend/src/types/generated/api.ts`. CI
       regenerates both and fails on a diff.
-- [ ] 12. **Hexagonal pilot: contacts (§3)**: ADR with folder layout
-      (`domain/`, `app/` use cases with ports, `adapters/http`,
-      `adapters/persistence`) and a composition root in `main.go`. Move contact
-      logic: entity and rules to domain, use cases take actor + `now` and run writes
-      in one transaction, GORM code to a repository. HTTP handlers become huma
-      operations with typed input/output (no `gin.H`) and only map HTTP to the use
-      case. The frontend uses the generated contact types; delete the hand-written
-      ones. Tests through the HTTP handler on real SQLite stay green. Tighten
-      `depguard` for the migrated module (`domain-stays-pure`,
-      `use-cases-depend-on-ports`, `repositories-stay-in-persistence`).
+- [ ] 12. **Hexagonal pilot: contacts (§3)** (split in three parts, see PROGRESS.md, ADR 0012):
+  - [x] 12a. Layout, ADR, depguard rules, composition root; archive, unarchive, delete, circles
+  - [ ] 12b. Get, create and update one contact
+  - [ ] 12c. Lists (search, random, birthdays); delete hand-written frontend contact types and the Gin handlers
+        Full scope: ADR with folder layout
+        (`domain/`, `app/` use cases with ports, `adapters/http`,
+        `adapters/persistence`) and a composition root in `main.go`. Move contact
+        logic: entity and rules to domain, use cases take actor + `now` and run writes
+        in one transaction, GORM code to a repository. HTTP handlers become huma
+        operations with typed input/output (no `gin.H`) and only map HTTP to the use
+        case. The frontend uses the generated contact types; delete the hand-written
+        ones. Tests through the HTTP handler on real SQLite stay green. Tighten
+        `depguard` for the migrated module (`domain-stays-pure`,
+        `use-cases-depend-on-ports`, `repositories-stay-in-persistence`).
 - [ ] 13. **Hexagonal: remaining modules (§3)**, one commit per module, same
       pattern as step 12 (huma handlers, generated frontend types); remove each
       module's exemptions from the arch rules:

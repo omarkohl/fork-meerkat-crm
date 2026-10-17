@@ -278,13 +278,13 @@
   },
   "src/api/contacts.ts": {
     "@typescript-eslint/no-unsafe-assignment": {
-      "count": 4
+      "count": 3
     },
     "@typescript-eslint/no-unsafe-member-access": {
       "count": 3
     },
     "@typescript-eslint/no-unsafe-return": {
-      "count": 9
+      "count": 8
     },
     "@typescript-eslint/restrict-template-expressions": {
       "count": 8

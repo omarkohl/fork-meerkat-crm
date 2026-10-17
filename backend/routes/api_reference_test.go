@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"meerkat/contacts"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -69,7 +70,7 @@ func TestAPIReferenceMatchesRegisteredRoutes(t *testing.T) {
 	cfg := &config.Config{JWTSecretKey: "test-secret-key-32-chars-minimum!", CardDAVEnabled: true, MetricsEnabled: true}
 	cfg.OIDC.Enabled = true
 	r := gin.New()
-	RegisterRoutes(r, cfg, nil, &services.OIDCProvider{})
+	RegisterRoutes(r, cfg, nil, &services.OIDCProvider{}, Modules{Contacts: contacts.New(contacts.Deps{DB: nil, Config: cfg})})
 
 	registered := map[string]bool{}
 	for _, route := range r.Routes() {

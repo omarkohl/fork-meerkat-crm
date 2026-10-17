@@ -1,5 +1,11 @@
 // Contact-related API calls
 import { apiFetch, API_BASE_URL, getAuthHeaders, parseErrorResponse } from './client';
+import type { components, operations } from '../types/generated/api';
+
+// Responses of the operations served by the contacts module, generated from the OpenAPI
+// document (docs/openapi.json). The hand-written Contact below goes when the lists move too.
+export type ContactResponse = components['schemas']['ContactResponse'];
+type CirclesResponse = operations['list-circles']['responses']['200']['content']['application/json'];
 
 export interface ContactValue {
   type: string;
@@ -205,8 +211,8 @@ export async function getCircles(): Promise<string[]> {
     throw await parseErrorResponse(response);
   }
 
-  const data = await response.json();
-  // Backend returns array directly, not wrapped in object
+  const data = (await response.json()) as CirclesResponse | null;
+  // The backend returns the array directly (null when there are no circles)
   return Array.isArray(data) ? data : [];
 }
 
@@ -235,7 +241,7 @@ export async function getUpcomingBirthdays(): Promise<Birthday[]> {
 }
 
 // Archive a contact (deletes all reminders)
-export async function archiveContact(id: string | number): Promise<Contact> {
+export async function archiveContact(id: string | number): Promise<ContactResponse> {
   const response = await apiFetch(`${API_BASE_URL}/contacts/${id}/archive`, {
     method: 'POST',
     headers: getAuthHeaders(),
@@ -249,7 +255,7 @@ export async function archiveContact(id: string | number): Promise<Contact> {
 }
 
 // Unarchive a contact
-export async function unarchiveContact(id: string | number): Promise<Contact> {
+export async function unarchiveContact(id: string | number): Promise<ContactResponse> {
   const response = await apiFetch(`${API_BASE_URL}/contacts/${id}/unarchive`, {
     method: 'POST',
     headers: getAuthHeaders(),

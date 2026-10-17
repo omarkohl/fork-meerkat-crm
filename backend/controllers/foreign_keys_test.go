@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"meerkat/config"
 	"meerkat/database"
 	"meerkat/models"
 	"net/http"
@@ -46,7 +47,7 @@ func TestDeletePathsWithForeignKeysEnforced(t *testing.T) {
 		c.Set("userID", victim.ID)
 		c.Next()
 	})
-	router.DELETE("/contacts/:id", DeleteContact)
+	mountContacts(router, db, &config.Config{})
 	adminRouter := gin.New()
 	adminRouter.Use(func(c *gin.Context) {
 		c.Set("db", db)
