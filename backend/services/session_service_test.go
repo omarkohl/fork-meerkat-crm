@@ -40,7 +40,7 @@ func claimsOf(t *testing.T, token string) jwt.MapClaims {
 
 func TestIssueSessionStoresASessionAndPutsItsIdInTheToken(t *testing.T) {
 	db, a, _ := sessionTestDB(t)
-	token, err := IssueSession(db, a, sessionCfg, "203.0.113.5", "Mozilla/5.0 Firefox")
+	token, err := IssueSession(db, a, sessionCfg, "203.0.113.5", "Mozilla/5.0 Firefox", time.Now())
 	require.NoError(t, err)
 
 	var s models.Session
@@ -53,7 +53,7 @@ func TestIssueSessionStoresASessionAndPutsItsIdInTheToken(t *testing.T) {
 	assert.Len(t, s.PublicID, 32)
 
 	// Two logins, two sessions with different ids
-	_, err = IssueSession(db, a, sessionCfg, "", "")
+	_, err = IssueSession(db, a, sessionCfg, "", "", time.Now())
 	require.NoError(t, err)
 	var n int64
 	db.Model(&models.Session{}).Where("user_id = ?", a.ID).Count(&n)
@@ -62,7 +62,7 @@ func TestIssueSessionStoresASessionAndPutsItsIdInTheToken(t *testing.T) {
 
 func TestIssueSessionTruncatesLongUserAgents(t *testing.T) {
 	db, a, _ := sessionTestDB(t)
-	_, err := IssueSession(db, a, sessionCfg, "", string(make([]byte, 5000)))
+	_, err := IssueSession(db, a, sessionCfg, "", string(make([]byte, 5000)), time.Now())
 	require.NoError(t, err)
 	var s models.Session
 	require.NoError(t, db.First(&s).Error)
@@ -71,48 +71,48 @@ func TestIssueSessionTruncatesLongUserAgents(t *testing.T) {
 
 // sessionActive is what the auth middleware asks, through the shared package.
 func sessionActive(db *gorm.DB, userID uint, publicID string) bool {
-	_, err := session.Find(db, userID, publicID)
+	_, err := session.Find(db, userID, publicID, time.Now())
 	return err == nil
 }
 
 func TestCheckSession(t *testing.T) {
 	db, a, b := sessionTestDB(t)
-	token, _ := IssueSession(db, a, sessionCfg, "", "")
+	token, _ := IssueSession(db, a, sessionCfg, "", "", time.Now())
 	sid := claimsOf(t, token)["sid"].(string)
 
 	assert.True(t, sessionActive(db, a.ID, sid))
 	assert.False(t, sessionActive(db, b.ID, sid), "another user's id never matches")
 	assert.False(t, sessionActive(db, a.ID, "nope"))
 
-	ok, err := RevokeSession(db, a.ID, sid)
+	ok, err := RevokeSession(db, a.ID, sid, time.Now())
 	require.NoError(t, err)
 	assert.True(t, ok)
 	assert.False(t, sessionActive(db, a.ID, sid))
 
-	ok, _ = RevokeSession(db, a.ID, sid)
+	ok, _ = RevokeSession(db, a.ID, sid, time.Now())
 	assert.False(t, ok, "already revoked")
 }
 
 func TestExpiredSessionIsNotActive(t *testing.T) {
 	db, a, _ := sessionTestDB(t)
-	token, _ := IssueSession(db, a, sessionCfg, "", "")
+	token, _ := IssueSession(db, a, sessionCfg, "", "", time.Now())
 	sid := claimsOf(t, token)["sid"].(string)
 	require.NoError(t, db.Model(&models.Session{}).Where("public_id = ?", sid).Update("expires_at", time.Now().Add(-time.Minute)).Error)
 	assert.False(t, sessionActive(db, a.ID, sid))
-	list, _ := ListSessions(db, a.ID)
+	list, _ := ListSessions(db, a.ID, time.Now())
 	assert.Empty(t, list)
 }
 
 func TestListSessionsIsPerUserAndNewestFirst(t *testing.T) {
 	db, a, b := sessionTestDB(t)
-	first, _ := IssueSession(db, a, sessionCfg, "", "one")
+	first, _ := IssueSession(db, a, sessionCfg, "", "one", time.Now())
 	time.Sleep(10 * time.Millisecond)
-	_, _ = IssueSession(db, a, sessionCfg, "", "two")
-	_, _ = IssueSession(db, b, sessionCfg, "", "other user")
-	revoked, _ := IssueSession(db, a, sessionCfg, "", "revoked")
-	_, _ = RevokeSession(db, a.ID, claimsOf(t, revoked)["sid"].(string))
+	_, _ = IssueSession(db, a, sessionCfg, "", "two", time.Now())
+	_, _ = IssueSession(db, b, sessionCfg, "", "other user", time.Now())
+	revoked, _ := IssueSession(db, a, sessionCfg, "", "revoked", time.Now())
+	_, _ = RevokeSession(db, a.ID, claimsOf(t, revoked)["sid"].(string), time.Now())
 
-	list, err := ListSessions(db, a.ID)
+	list, err := ListSessions(db, a.ID, time.Now())
 	require.NoError(t, err)
 	require.Len(t, list, 2)
 	assert.Equal(t, "two", list[0].UserAgent)
@@ -121,16 +121,16 @@ func TestListSessionsIsPerUserAndNewestFirst(t *testing.T) {
 
 func TestSignOutEverywhereBumpsTheVersionAndRevokesEverySession(t *testing.T) {
 	db, a, b := sessionTestDB(t)
-	_, _ = IssueSession(db, a, sessionCfg, "", "")
-	_, _ = IssueSession(db, a, sessionCfg, "", "")
-	other, _ := IssueSession(db, b, sessionCfg, "", "")
+	_, _ = IssueSession(db, a, sessionCfg, "", "", time.Now())
+	_, _ = IssueSession(db, a, sessionCfg, "", "", time.Now())
+	other, _ := IssueSession(db, b, sessionCfg, "", "", time.Now())
 
-	require.NoError(t, RevokeAllSessions(db, a.ID))
+	require.NoError(t, RevokeAllSessions(db, a.ID, time.Now()))
 
 	var got models.User
 	require.NoError(t, db.First(&got, a.ID).Error)
 	assert.Equal(t, 1, got.TokenVersion)
-	list, _ := ListSessions(db, a.ID)
+	list, _ := ListSessions(db, a.ID, time.Now())
 	assert.Empty(t, list)
 
 	// The other user is untouched
@@ -140,17 +140,17 @@ func TestSignOutEverywhereBumpsTheVersionAndRevokesEverySession(t *testing.T) {
 	assert.True(t, sessionActive(db, b.ID, claimsOf(t, other)["sid"].(string)))
 
 	// A token issued afterwards carries the new version
-	token, _ := IssueSession(db, got, sessionCfg, "", "")
+	token, _ := IssueSession(db, got, sessionCfg, "", "", time.Now())
 	assert.EqualValues(t, 1, claimsOf(t, token)["tv"])
 }
 
 func TestSessionIDFromToken(t *testing.T) {
 	db, a, _ := sessionTestDB(t)
-	token, _ := IssueSession(db, a, sessionCfg, "", "")
+	token, _ := IssueSession(db, a, sessionCfg, "", "", time.Now())
 	assert.Equal(t, claimsOf(t, token)["sid"], SessionIDFromToken(token, sessionCfg))
 	assert.Empty(t, SessionIDFromToken("garbage", sessionCfg))
 	assert.Empty(t, SessionIDFromToken(token, &config.Config{JWTSecretKey: "another-secret-another-secret-12345"}))
-	legacy, _ := GenerateToken(a, sessionCfg)
+	legacy, _ := GenerateToken(a, sessionCfg, time.Now())
 	assert.Empty(t, SessionIDFromToken(legacy, sessionCfg))
 }
 
@@ -209,7 +209,7 @@ func TestSavingAStaleUserDoesNotRollBackTheTokenVersion(t *testing.T) {
 	var stale models.User
 	require.NoError(t, db.First(&stale, a.ID).Error)
 
-	require.NoError(t, RevokeAllSessions(db, a.ID))
+	require.NoError(t, RevokeAllSessions(db, a.ID, time.Now()))
 
 	stale.Language = "de"
 	require.NoError(t, db.Save(&stale).Error)

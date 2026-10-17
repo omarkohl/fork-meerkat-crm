@@ -18,5 +18,6 @@ One file per significant decision, see [0001](0001-record-decisions.md). Never d
 | [0006](0006-never-edit-a-migration.md)      | Never edit an existing migration           | Accepted |
 | [0007](0007-apperror.md)                    | Errors are \*apperrors.AppError            | Accepted |
 | [0008](0008-five-locales.md)                | Five locales for every UI string           | Accepted |
+| [0009](0009-injected-clock.md)              | Injected clock                             | Accepted |
 
 New ADR: copy a recent one, take the next number, add a row here.

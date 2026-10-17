@@ -1,8 +1,10 @@
 package services
 
 import (
+	"meerkat/clock"
 	"strings"
 	"testing"
+	"time"
 
 	"meerkat/config"
 	"meerkat/models"
@@ -268,4 +270,18 @@ func TestVCFImport_ResultListsSkippedRows(t *testing.T) {
 		{Row: 4, Name: "Pia Poe", Reason: "failed", Detail: "Cannot update - no existing contact found"},
 	}, result.SkippedRows)
 	assert.Equal(t, []string{"Row 4: Cannot update - no existing contact found"}, result.Errors)
+}
+
+func TestImportSessionManagerExpiresOnItsClock(t *testing.T) {
+	fake := clock.NewFake(time.Date(2031, 1, 2, 3, 4, 5, 0, time.UTC))
+	mgr := NewImportSessionManager()
+	mgr.SetClock(fake)
+
+	id := mgr.CreateCSVSession(7, []string{"a"}, [][]string{{"x"}})
+	_, appErr := mgr.get(id, 7)
+	assert.Nil(t, appErr, "a fresh session is usable")
+
+	fake.Advance(sessionExpiry + time.Minute)
+	_, appErr = mgr.get(id, 7)
+	require.NotNil(t, appErr, "the session expires by the injected clock, not the wall clock")
 }

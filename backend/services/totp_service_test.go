@@ -202,8 +202,8 @@ func TestRevokeOtherSessionsKeepsTheCurrentOne(t *testing.T) {
 	for _, id := range []string{"keep", "other1", "other2"} {
 		require.NoError(t, db.Create(&models.Session{UserID: u.ID, PublicID: id, ExpiresAt: time.Now().Add(time.Hour)}).Error)
 	}
-	require.NoError(t, RevokeOtherSessions(db, u.ID, "keep"))
-	live, err := ListSessions(db, u.ID)
+	require.NoError(t, RevokeOtherSessions(db, u.ID, "keep", time.Now()))
+	live, err := ListSessions(db, u.ID, time.Now())
 	require.NoError(t, err)
 	require.Len(t, live, 1)
 	assert.Equal(t, "keep", live[0].PublicID)

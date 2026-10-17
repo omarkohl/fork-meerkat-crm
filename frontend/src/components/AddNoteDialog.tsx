@@ -3,6 +3,7 @@ import { DialogTitle, DialogContent, DialogActions, TextField, Button, Box } fro
 import AppDialog from './AppDialog';
 import DateField from './DateField';
 import { useTranslation } from 'react-i18next';
+import { now } from '../utils/now';
 
 interface AddNoteDialogProps {
   open: boolean;
@@ -13,7 +14,7 @@ interface AddNoteDialogProps {
 export default function AddNoteDialog({ open, onClose, onSave }: AddNoteDialogProps) {
   const { t } = useTranslation();
   const [content, setContent] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(now().toISOString().slice(0, 10));
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -36,7 +37,7 @@ export default function AddNoteDialog({ open, onClose, onSave }: AddNoteDialogPr
 
   const handleClose = () => {
     setContent('');
-    setDate(new Date().toISOString().slice(0, 10));
+    setDate(now().toISOString().slice(0, 10));
     setError('');
     onClose();
   };

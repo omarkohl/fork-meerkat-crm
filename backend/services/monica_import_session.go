@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"meerkat/clock"
 	"sort"
 	"strconv"
 	"strings"
@@ -97,19 +98,23 @@ func (s *monicaImportSession) fail(msg string) {
 type MonicaImportManager struct {
 	mu       sync.RWMutex
 	sessions map[string]*monicaImportSession
+	clock    clock.Clock
 }
 
 // NewMonicaImportManager creates an empty manager.
 func NewMonicaImportManager() *MonicaImportManager {
-	return &MonicaImportManager{sessions: make(map[string]*monicaImportSession)}
+	return &MonicaImportManager{sessions: make(map[string]*monicaImportSession), clock: clock.Real()}
 }
+
+// SetClock replaces the clock the manager reads (set once at startup).
+func (m *MonicaImportManager) SetClock(c clock.Clock) { m.clock = c }
 
 // CleanupExpired removes expired sessions and cancels their running fetches.
 // Safe to call from a goroutine.
 func (m *MonicaImportManager) CleanupExpired() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	now := time.Now()
+	now := m.clock.Now()
 	for id, s := range m.sessions {
 		s.mu.Lock()
 		expired := now.After(s.expiresAt)
@@ -135,7 +140,7 @@ func (m *MonicaImportManager) get(sessionID string, userID uint) (*monicaImportS
 		return nil, apperrors.ErrNotFound("Import session expired or not found")
 	}
 	s.mu.Lock()
-	now := time.Now()
+	now := m.clock.Now()
 	expired := now.After(s.expiresAt) || now.After(s.hardExpiry)
 	if !expired {
 		s.expiresAt = now.Add(monicaSessionExpiry)
@@ -218,7 +223,7 @@ func (m *MonicaImportManager) Connect(ctx context.Context, userID uint, req mode
 	}
 
 	sessionID := generateSessionID()
-	now := time.Now()
+	now := m.clock.Now()
 	session := &monicaImportSession{
 		id:         sessionID,
 		userID:     userID,
@@ -465,8 +470,9 @@ func (m *MonicaImportManager) buildPreview(db *gorm.DB, s *monicaImportSession, 
 
 	mapped := make([]MonicaMappedContact, 0, len(snapshot.Contacts))
 	previews := make([]models.MonicaImportRowPreview, 0, len(snapshot.Contacts))
+	now := m.clock.Now() // once per import, not per row
 	for rowIdx, mc := range snapshot.Contacts {
-		mappedContact := MapMonicaContact(mc)
+		mappedContact := MapMonicaContact(mc, now)
 		mapped = append(mapped, mappedContact)
 
 		preview := models.MonicaImportRowPreview{
@@ -1060,8 +1066,9 @@ func (m *MonicaImportManager) createImportedNote(tx *gorm.DB, userID uint, note 
 }
 
 func (m *MonicaImportManager) importNotes(tx *gorm.DB, userID uint, snapshot *monica.Snapshot, idMap map[int]uint, seen importKeySet, result *models.MonicaImportResult) {
+	now := m.clock.Now() // once per import, not per row
 	for _, mn := range snapshot.Notes {
-		note, monicaContactID, ok := MapMonicaNote(mn)
+		note, monicaContactID, ok := MapMonicaNote(mn, now)
 		if !ok {
 			continue
 		}
@@ -1101,7 +1108,7 @@ func (m *MonicaImportManager) importReminders(tx *gorm.DB, userID uint, snapshot
 		return err
 	}
 	birthdays := birthdayMonthDayByMonicaID(snapshot)
-	now := time.Now()
+	now := m.clock.Now()
 	for _, mr := range snapshot.Reminders {
 		birthdayMonthDay := ""
 		if mr.Contact != nil {
@@ -1131,6 +1138,7 @@ func (m *MonicaImportManager) importReminders(tx *gorm.DB, userID uint, snapshot
 
 // importExtraNotes converts calls, tasks, gifts and debts into dated notes.
 func (m *MonicaImportManager) importExtraNotes(tx *gorm.DB, userID uint, lang string, snapshot *monica.Snapshot, idMap map[int]uint, seen importKeySet, result *models.MonicaImportResult) {
+	now := m.clock.Now() // once per import, not per row
 	create := func(note models.Note, monicaContactID int, ok bool) {
 		if !ok {
 			return
@@ -1140,19 +1148,19 @@ func (m *MonicaImportManager) importExtraNotes(tx *gorm.DB, userID uint, lang st
 		}
 	}
 	for _, call := range snapshot.Calls {
-		note, contactID, ok := MapMonicaCall(call, lang)
+		note, contactID, ok := MapMonicaCall(call, lang, now)
 		create(note, contactID, ok)
 	}
 	for _, task := range snapshot.Tasks {
-		note, contactID, ok := MapMonicaTask(task, lang)
+		note, contactID, ok := MapMonicaTask(task, lang, now)
 		create(note, contactID, ok)
 	}
 	for _, gift := range snapshot.Gifts {
-		note, contactID, ok := MapMonicaGift(gift, lang)
+		note, contactID, ok := MapMonicaGift(gift, lang, now)
 		create(note, contactID, ok)
 	}
 	for _, debt := range snapshot.Debts {
-		note, contactID, ok := MapMonicaDebt(debt, lang)
+		note, contactID, ok := MapMonicaDebt(debt, lang, now)
 		create(note, contactID, ok)
 	}
 }

@@ -117,7 +117,7 @@ func LoginUser(context *gin.Context, cfg *config.Config) {
 			"error":          "Account temporarily locked",
 			"message":        "Too many failed login attempts. Please try again later.",
 			"retry_after":    remainingSecs,
-			"retry_after_at": time.Now().Add(time.Duration(remainingSecs) * time.Second).Format(time.RFC3339),
+			"retry_after_at": middleware.RequestNow(context).Add(time.Duration(remainingSecs) * time.Second).Format(time.RFC3339),
 		})
 		context.Abort()
 		return
@@ -160,7 +160,7 @@ func LoginUser(context *gin.Context, cfg *config.Config) {
 				"error":          "Account temporarily locked",
 				"message":        "Too many failed login attempts. Please try again later.",
 				"retry_after":    lockoutSecs,
-				"retry_after_at": time.Now().Add(time.Duration(lockoutSecs) * time.Second).Format(time.RFC3339),
+				"retry_after_at": middleware.RequestNow(context).Add(time.Duration(lockoutSecs) * time.Second).Format(time.RFC3339),
 			})
 			context.Abort()
 			return
@@ -204,7 +204,7 @@ func LoginUser(context *gin.Context, cfg *config.Config) {
 	accountLimiter.RecordSuccessfulLogin(identifier)
 
 	// Create JWT token
-	tokenString, err := services.IssueSession(db, foundUser, cfg, context.ClientIP(), context.Request.UserAgent())
+	tokenString, err := services.IssueSession(db, foundUser, cfg, context.ClientIP(), context.Request.UserAgent(), middleware.RequestNow(context))
 	if err != nil {
 		apperrors.AbortWithError(context, apperrors.ErrInternal("Could not generate token").WithError(err))
 		return
@@ -316,8 +316,8 @@ func RequestPasswordReset(context *gin.Context, cfg *config.Config) {
 		return
 	}
 
-	expires := services.PasswordResetExpiry()
-	requested := time.Now()
+	requested := middleware.RequestNow(context)
+	expires := services.PasswordResetExpiry(requested)
 
 	user.PasswordResetTokenHash = &hash
 	user.PasswordResetExpiresAt = &expires
@@ -329,7 +329,7 @@ func RequestPasswordReset(context *gin.Context, cfg *config.Config) {
 		return
 	}
 
-	if err := services.SendPasswordResetEmail(db, user.ID, user.Email, token, user.Language, cfg); err != nil {
+	if err := services.SendPasswordResetEmail(db, user.ID, user.Email, token, user.Language, cfg, middleware.RequestClock(context)); err != nil {
 		log.Error().Err(err).Uint("user_id", user.ID).Msg("Failed to send password reset email")
 		apperrors.AbortWithError(context, apperrors.ErrExternal("email", "Failed to queue password reset email").WithError(err))
 		return
@@ -377,7 +377,7 @@ func ConfirmPasswordReset(context *gin.Context) {
 		return
 	}
 
-	if user.PasswordResetExpiresAt == nil || time.Now().After(*user.PasswordResetExpiresAt) {
+	if user.PasswordResetExpiresAt == nil || middleware.RequestNow(context).After(*user.PasswordResetExpiresAt) {
 		user.PasswordResetTokenHash = nil
 		user.PasswordResetExpiresAt = nil
 		user.PasswordResetRequestedAt = nil
@@ -410,7 +410,7 @@ func ConfirmPasswordReset(context *gin.Context) {
 		if err := tx.Save(&user).Error; err != nil {
 			return err
 		}
-		return services.RevokeAllSessions(tx, user.ID)
+		return services.RevokeAllSessions(tx, user.ID, middleware.RequestNow(context))
 	}); err != nil {
 		log.Error().Err(err).Uint("user_id", user.ID).Msg("Failed to persist password reset")
 		apperrors.AbortWithError(context, apperrors.ErrDatabase("update user").WithError(err))
@@ -745,7 +745,7 @@ func ChangePassword(context *gin.Context) {
 		if err := tx.Save(&user).Error; err != nil {
 			return err
 		}
-		return services.RevokeAllSessions(tx, user.ID)
+		return services.RevokeAllSessions(tx, user.ID, middleware.RequestNow(context))
 	}); err != nil {
 		log.Error().Err(err).Uint("user_id", user.ID).Msg("Failed to persist password change")
 		apperrors.AbortWithError(context, apperrors.ErrDatabase("update user").WithError(err))
@@ -756,7 +756,7 @@ func ChangePassword(context *gin.Context) {
 	if cfg := currentConfig(context); cfg.JWTSecretKey != "" && !context.GetBool("isAPIToken") {
 		fresh := user
 		fresh.TokenVersion++
-		if token, err := services.IssueSession(db, fresh, &cfg, context.ClientIP(), context.Request.UserAgent()); err == nil {
+		if token, err := services.IssueSession(db, fresh, &cfg, context.ClientIP(), context.Request.UserAgent(), middleware.RequestNow(context)); err == nil {
 			context.SetSameSite(http.SameSiteLaxMode)
 			context.SetCookie("auth_token", token, cfg.JWTExpiryHours*3600, "/", cfg.CookieDomain, cfg.CookieSecure, true)
 		} else {
@@ -773,7 +773,7 @@ func revokeSessionOnLogout(c *gin.Context, db *gorm.DB, sid string) {
 	if err := db.Where("public_id = ?", sid).Take(&session).Error; err != nil {
 		return
 	}
-	if revoked, err := services.RevokeSession(db, session.UserID, sid); err == nil && revoked {
+	if revoked, err := services.RevokeSession(db, session.UserID, sid, middleware.RequestNow(c)); err == nil && revoked {
 		uid := session.UserID
 		auditFor(c, db, &uid, models.AuditLogout, "")
 	}

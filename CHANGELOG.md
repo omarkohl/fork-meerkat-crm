@@ -11,6 +11,10 @@ Versions `X.Y.Z` are upstream releases of
 
 ## [Unreleased]
 
+### Internal
+
+- **`FAKE_NOW`** sets the app's clock, to test and preview time-dependent behaviour.
+
 ## [1.7.0-omk.1] - 2026-10-16
 
 First fork release. Based on upstream 1.7.0 plus later upstream changes.

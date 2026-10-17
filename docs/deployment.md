@@ -156,6 +156,17 @@ Alert ideas (adapt the thresholds):
 
 Counters start at zero on every restart and the metrics are per instance. Job run counters of a job that never ran do not exist yet; use `absent()` with care.
 
+## Fake clock for demos and tests
+
+`FAKE_NOW` (an RFC 3339 time such as `2026-12-24T12:00:00Z`) starts the server clock at that instant and lets it run, so a demo or a manual test can walk through time: a birthday next week, a reminder due tomorrow, a session about to expire. **Do not set it on a real instance.** The server logs a warning at startup. While it is set:
+
+- the purge jobs (trash, delivery queue, ended sessions, audit log) are skipped, because a clock set into the future would delete data for good;
+- two-factor codes are still checked against the real time (authenticator apps know no other), and the schedule of the background jobs still follows the real time;
+- stored timestamps (`created_at`, `updated_at`, sync times) use the fake time, so contact sync against a real CardDAV server compares real remote revisions with fake local ones;
+- the browser does not follow it: dates the web app computes itself (the default date of a new note, "overdue") use the browser clock.
+
+See [ADR 0009](adr/0009-injected-clock.md).
+
 ## Two-factor authentication
 
 Each user can turn on a second login step (TOTP, works with any authenticator app) under Settings, Profile: scan the QR code (or type the key), enter the code the app shows, and save the ten recovery codes, which are shown only once. From then on a password login also asks for a code from the app, or for one recovery code (each works once). Turning it on needs the password and a code from the app; disabling it and creating new recovery codes need the password and a code. Turning it on or off signs out the account's other sessions. Accounts without a password (single sign-on only) cannot use it.

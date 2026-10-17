@@ -3,6 +3,7 @@ package controllers
 import (
 	"errors"
 	"fmt"
+	"meerkat/clock"
 	"net/http"
 	"time"
 
@@ -40,7 +41,7 @@ func respondLocked(c *gin.Context, remainingSecs int) {
 		"error":          "Account temporarily locked",
 		"message":        "Too many failed attempts. Please try again later.",
 		"retry_after":    remainingSecs,
-		"retry_after_at": time.Now().Add(time.Duration(remainingSecs) * time.Second).Format(time.RFC3339),
+		"retry_after_at": totpNow().Add(time.Duration(remainingSecs) * time.Second).Format(time.RFC3339),
 	})
 	c.Abort()
 }
@@ -64,7 +65,7 @@ func verifySecondFactor(c *gin.Context, db *gorm.DB, user models.User, code, rec
 	if rejectIfTOTPLocked(c, user.ID) {
 		return factorLocked, 0
 	}
-	ok, usedRecovery := services.CheckSecondFactor(db, &cfg, user, code, recovery, time.Now())
+	ok, usedRecovery := services.CheckSecondFactor(db, &cfg, user, code, recovery, totpNow())
 	if ok {
 		limiter.RecordSuccessfulLogin(key)
 		if usedRecovery {
@@ -180,7 +181,7 @@ func EnableTOTP(c *gin.Context) {
 		return
 	}
 	cfg := currentConfig(c)
-	codes, err := services.EnableTOTP(db, &cfg, user.ID, input.Code, time.Now())
+	codes, err := services.EnableTOTP(db, &cfg, user.ID, input.Code, totpNow())
 	switch {
 	case errors.Is(err, services.ErrInvalidSecondFactor):
 		if locked, secs := limiter.RecordFailedAttempt(key); locked {
@@ -205,7 +206,7 @@ func EnableTOTP(c *gin.Context) {
 // endOtherSessions signs out every browser but the one making the change: a login that
 // happened before the second step existed (or that is about to lose it) should not linger.
 func endOtherSessions(c *gin.Context, db *gorm.DB, userID uint) {
-	if err := services.RevokeOtherSessions(db, userID, c.GetString("sessionID")); err != nil {
+	if err := services.RevokeOtherSessions(db, userID, c.GetString("sessionID"), middleware.RequestNow(c)); err != nil {
 		logger.FromContext(c).Error().Err(err).Uint("user_id", userID).Msg("Failed to revoke other sessions after a two-factor change")
 	}
 }
@@ -314,7 +315,7 @@ func ResetUserTOTP(c *gin.Context) {
 		apperrors.AbortWithError(c, apperrors.ErrDatabase("update").WithError(err))
 		return
 	}
-	if err := services.RevokeAllSessions(db, user.ID); err != nil {
+	if err := services.RevokeAllSessions(db, user.ID, middleware.RequestNow(c)); err != nil {
 		apperrors.AbortWithError(c, apperrors.ErrDatabase("update").WithError(err))
 		return
 	}
@@ -322,3 +323,7 @@ func ResetUserTOTP(c *gin.Context) {
 	audit(c, db, models.AuditTOTPAdminReset, fmt.Sprintf("user:%s#%d", auditValue(user.Username), user.ID))
 	c.JSON(http.StatusOK, gin.H{"message": "Two-factor authentication reset"})
 }
+
+// totpNow is the time codes are checked against. Authenticator apps compute them from the
+// real time, so FAKE_NOW must not move it or two-factor users would be locked out.
+func totpNow() time.Time { return clock.Real().Now() }

@@ -59,8 +59,9 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 			}
 			c.Set("userID", apiToken.UserID)
 			c.Set("isAPIToken", true)
+			usedAt := RequestNow(c)
 			go func(id uint) {
-				if err := db.Model(&models.ApiToken{}).Where("id = ?", id).Update("last_used_at", time.Now()).Error; err != nil {
+				if err := db.Model(&models.ApiToken{}).Where("id = ?", id).Update("last_used_at", usedAt).Error; err != nil {
 					logger.Logger.Warn().Err(err).Uint("api_token_id", id).Msg("Failed to update api token last_used_at")
 				}
 			}(apiToken.ID)
@@ -78,6 +79,8 @@ func AuthMiddleware(cfg *config.Config) gin.HandlerFunc {
 			jwt.WithValidMethods([]string{"HS256"}),
 			jwt.WithExpirationRequired(),
 			jwt.WithIssuedAt(), // v4 rejected a future iat by default; v5 needs this
+			// expiry is judged by the request clock, which FAKE_NOW may move
+			jwt.WithTimeFunc(func() time.Time { return RequestNow(c) }),
 		)
 
 		if err != nil {
@@ -210,7 +213,7 @@ func sessionStillValid(c *gin.Context, db *gorm.DB, userID uint, version int, cl
 	if !isString || sid == "" {
 		return refuse("Invalid token")
 	}
-	live, err := session.Find(db, userID, sid)
+	live, err := session.Find(db, userID, sid, RequestNow(c))
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return refuse("Session revoked")
 	}
@@ -221,7 +224,7 @@ func sessionStillValid(c *gin.Context, db *gorm.DB, userID uint, version int, cl
 		return false
 	}
 	// Writes only when last_seen_at is older than a minute.
-	if err := session.Touch(db, live); err != nil {
+	if err := session.Touch(db, live, RequestNow(c)); err != nil {
 		logger.Logger.Warn().Err(err).Msg("Failed to update session last_seen_at")
 	}
 	c.Set("sessionID", sid)

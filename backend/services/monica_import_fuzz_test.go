@@ -29,7 +29,7 @@ func FuzzMonicaMapping(f *testing.F) {
 	f.Fuzz(func(t *testing.T, data []byte) {
 		var c monica.Contact
 		if json.Unmarshal(data, &c) == nil {
-			MapMonicaContact(c)
+			MapMonicaContact(c, time.Now())
 			MapMonicaRelationship(monica.Relationship{}, &c)
 		}
 		var a monica.Activity
@@ -38,7 +38,7 @@ func FuzzMonicaMapping(f *testing.F) {
 		}
 		var n monica.Note
 		if json.Unmarshal(data, &n) == nil {
-			MapMonicaNote(n)
+			MapMonicaNote(n, time.Now())
 		}
 		var r monica.Reminder
 		if json.Unmarshal(data, &r) == nil {
@@ -52,19 +52,19 @@ func FuzzMonicaMapping(f *testing.F) {
 		}
 		var call monica.Call
 		if json.Unmarshal(data, &call) == nil {
-			MapMonicaCall(call, "de")
+			MapMonicaCall(call, "de", time.Now())
 		}
 		var task monica.Task
 		if json.Unmarshal(data, &task) == nil {
-			MapMonicaTask(task, "en")
+			MapMonicaTask(task, "en", time.Now())
 		}
 		var gift monica.Gift
 		if json.Unmarshal(data, &gift) == nil {
-			MapMonicaGift(gift, "en")
+			MapMonicaGift(gift, "en", time.Now())
 		}
 		var debt monica.Debt
 		if json.Unmarshal(data, &debt) == nil {
-			MapMonicaDebt(debt, "en")
+			MapMonicaDebt(debt, "en", time.Now())
 		}
 		var snap monica.Snapshot
 		if json.Unmarshal(data, &snap) == nil {

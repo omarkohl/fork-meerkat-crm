@@ -31,14 +31,14 @@ func TestFind(t *testing.T) {
 		{UserID: 1, PublicID: "expired", ExpiresAt: time.Now().Add(-time.Minute)},
 	}).Error)
 
-	s, err := Find(db, 1, "live")
+	s, err := Find(db, 1, "live", time.Now())
 	require.NoError(t, err)
 	assert.Equal(t, "live", s.PublicID)
 	for _, id := range []string{"revoked", "expired", "unknown"} {
-		_, err := Find(db, 1, id)
+		_, err := Find(db, 1, id, time.Now())
 		assert.ErrorIs(t, err, gorm.ErrRecordNotFound, id)
 	}
-	_, err = Find(db, 2, "live")
+	_, err = Find(db, 2, "live", time.Now())
 	assert.ErrorIs(t, err, gorm.ErrRecordNotFound, "another user's id never matches")
 }
 
@@ -47,18 +47,18 @@ func TestTouchWritesOnlyWhenTheStampIsOld(t *testing.T) {
 	old := time.Now().Add(-time.Hour)
 	require.NoError(t, db.Create(&models.Session{UserID: 1, PublicID: "s", ExpiresAt: time.Now().Add(time.Hour), LastSeenAt: old}).Error)
 
-	s, _ := Find(db, 1, "s")
-	require.NoError(t, Touch(db, s))
+	s, _ := Find(db, 1, "s", time.Now())
+	require.NoError(t, Touch(db, s, time.Now()))
 	var after models.Session
 	require.NoError(t, db.First(&after).Error)
 	assert.WithinDuration(t, time.Now(), after.LastSeenAt, time.Minute)
 
 	// Fresh stamp: no write at all. Prove it by making the row unwritable for this id.
-	s, _ = Find(db, 1, "s")
+	s, _ = Find(db, 1, "s", time.Now())
 	require.NoError(t, db.Exec("CREATE TRIGGER no_writes BEFORE UPDATE ON sessions BEGIN SELECT RAISE(ABORT, 'write'); END").Error)
-	assert.NoError(t, Touch(db, s), "no UPDATE is issued while the stamp is fresh")
+	assert.NoError(t, Touch(db, s, time.Now()), "no UPDATE is issued while the stamp is fresh")
 
 	// With an old stamp the same trigger makes the write visible
 	s.LastSeenAt = old
-	assert.Error(t, Touch(db, s))
+	assert.Error(t, Touch(db, s, time.Now()))
 }

@@ -2,6 +2,7 @@ package errors
 
 import (
 	"fmt"
+	"meerkat/clock"
 	"meerkat/logger"
 	"runtime/debug"
 	"time"
@@ -63,6 +64,17 @@ func ErrorHandlerMiddleware() gin.HandlerFunc {
 	}
 }
 
+// requestTime is the time ClockMiddleware stored for the request. This package cannot
+// import middleware (middleware imports it), so it reads the context key itself.
+func requestTime(c *gin.Context) time.Time {
+	if v, ok := c.Get(clock.ContextKey); ok {
+		if t, ok := v.(time.Time); ok {
+			return t
+		}
+	}
+	return clock.Real().Now()
+}
+
 // RespondWithError sends a formatted error response
 func RespondWithError(c *gin.Context, err *AppError) {
 	requestID, _ := c.Get("request_id")
@@ -75,7 +87,7 @@ func RespondWithError(c *gin.Context, err *AppError) {
 			Details: err.Details,
 		},
 		RequestID: requestIDStr,
-		Timestamp: time.Now().UTC().Format(time.RFC3339),
+		Timestamp: requestTime(c).UTC().Format(time.RFC3339),
 	}
 
 	// Log the error with context

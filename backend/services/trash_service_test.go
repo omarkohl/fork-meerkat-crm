@@ -177,7 +177,7 @@ func TestPurgeRemovesContactDependantsAndPhotos(t *testing.T) {
 	require.NoError(t, db.Create(&link).Error)
 	softDeleteLikeController(t, db, f)
 
-	n, err := PurgeTrashedContacts(db, a.ID, []uint{f.contact.ID}, dir)
+	n, err := PurgeTrashedContacts(db, a.ID, []uint{f.contact.ID}, dir, time.Now())
 	require.NoError(t, err)
 	assert.Equal(t, 1, n)
 
@@ -211,7 +211,7 @@ func TestPurgeKeepsCardDAVLinks(t *testing.T) {
 	require.NoError(t, db.Create(&models.CardDAVContactLink{ConnectionID: conn.ID, UserID: a.ID, ContactID: f.contact.ID, RemoteUID: "u", RemotePath: "/ab/u.vcf"}).Error)
 	softDeleteLikeController(t, db, f)
 
-	_, err := PurgeTrashedContacts(db, a.ID, nil, "")
+	_, err := PurgeTrashedContacts(db, a.ID, nil, "", time.Now())
 	require.NoError(t, err)
 	// The link is the only record that the remote object still has to be deleted.
 	assert.EqualValues(t, 1, count(t, db, &models.CardDAVContactLink{}, "contact_id = ?", f.contact.ID))
@@ -227,14 +227,14 @@ func TestPurgeIsScopedToUserAndTrash(t *testing.T) {
 	live := models.Contact{UserID: b.ID, Firstname: "Live"}
 	require.NoError(t, db.Create(&live).Error)
 
-	n, err := PurgeTrashedContacts(db, b.ID, []uint{fa.contact.ID, live.ID}, "")
+	n, err := PurgeTrashedContacts(db, b.ID, []uint{fa.contact.ID, live.ID}, "", time.Now())
 	require.NoError(t, err)
 	assert.Zero(t, n)
 	assert.EqualValues(t, 1, count(t, db, &models.Contact{}, "id = ?", fa.contact.ID))
 	assert.EqualValues(t, 1, count(t, db, &models.Contact{}, "id = ?", live.ID))
 
 	// Emptying B's trash does not touch A's.
-	n, err = PurgeTrashedContacts(db, b.ID, nil, "")
+	n, err = PurgeTrashedContacts(db, b.ID, nil, "", time.Now())
 	require.NoError(t, err)
 	assert.Zero(t, n)
 	assert.EqualValues(t, 1, count(t, db, &models.Contact{}, "id = ?", fa.contact.ID))
@@ -252,7 +252,7 @@ func TestPurgeAllEmptiesOnlyThatUsersTrash(t *testing.T) {
 	softDeleteLikeController(t, db, f2)
 	softDeleteLikeController(t, db, fb)
 
-	n, err := PurgeTrashedContacts(db, a.ID, nil, "")
+	n, err := PurgeTrashedContacts(db, a.ID, nil, "", time.Now())
 	require.NoError(t, err)
 	assert.Equal(t, 2, n)
 	assert.EqualValues(t, 1, count(t, db, &models.Contact{}, "user_id = ?", b.ID))
@@ -271,7 +271,7 @@ func TestPurgeRollsBackOnFailure(t *testing.T) {
 	require.NoError(t, db.Exec(`CREATE TRIGGER block_contact_delete BEFORE DELETE ON contacts
 		BEGIN SELECT RAISE(ABORT, 'blocked'); END`).Error)
 
-	_, err := PurgeTrashedContacts(db, a.ID, nil, dir)
+	_, err := PurgeTrashedContacts(db, a.ID, nil, dir, time.Now())
 	require.Error(t, err)
 	assert.EqualValues(t, 1, count(t, db, &models.Contact{}, "id = ?", f.contact.ID))
 	assert.EqualValues(t, 1, count(t, db, &models.Note{}, "contact_id = ?", f.contact.ID))
@@ -368,7 +368,7 @@ func TestPurgeSkipsContactRestoredAfterListing(t *testing.T) {
 	_, err = RestoreTrashedContact(db, a.ID, f.contact.ID)
 	require.NoError(t, err)
 
-	n, err := purgeContacts(db, stale, dir)
+	n, err := purgeContacts(db, stale, dir, time.Now())
 	require.NoError(t, err)
 	assert.Zero(t, n)
 	assert.EqualValues(t, 1, count(t, db, &models.Contact{}, "id = ? AND deleted_at IS NULL", f.contact.ID))
@@ -396,7 +396,7 @@ func TestPurgeSkipsContactDeletedAgainAfterListing(t *testing.T) {
 	time.Sleep(5 * time.Millisecond)
 	require.NoError(t, models.TrashContact(db, a.ID, f.contact.ID))
 
-	n, err := purgeContacts(db, stale, "")
+	n, err := purgeContacts(db, stale, "", time.Now())
 	require.NoError(t, err)
 	assert.Zero(t, n)
 	assert.EqualValues(t, 1, count(t, db, &models.Contact{}, "id = ?", f.contact.ID))

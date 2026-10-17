@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"meerkat/middleware"
 	"net/http"
 	"regexp"
 
@@ -38,7 +39,7 @@ func ListSessions(c *gin.Context) {
 	if !ok || refuseAPIToken(c) {
 		return
 	}
-	sessions, err := services.ListSessions(db, userID)
+	sessions, err := services.ListSessions(db, userID, middleware.RequestNow(c))
 	if err != nil {
 		apperrors.AbortWithError(c, apperrors.ErrDatabase("query").WithError(err))
 		return
@@ -63,7 +64,7 @@ func RevokeSession(c *gin.Context) {
 		apperrors.AbortWithError(c, apperrors.ErrNotFound("Session"))
 		return
 	}
-	revoked, err := services.RevokeSession(db, userID, id)
+	revoked, err := services.RevokeSession(db, userID, id, middleware.RequestNow(c))
 	if err != nil {
 		apperrors.AbortWithError(c, apperrors.ErrDatabase("update").WithError(err))
 		return
@@ -87,7 +88,7 @@ func SignOutEverywhere(c *gin.Context) {
 	if !ok || refuseAPIToken(c) {
 		return
 	}
-	if err := services.RevokeAllSessions(db, userID); err != nil {
+	if err := services.RevokeAllSessions(db, userID, middleware.RequestNow(c)); err != nil {
 		apperrors.AbortWithError(c, apperrors.ErrDatabase("update").WithError(err))
 		return
 	}

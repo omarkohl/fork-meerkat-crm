@@ -1,6 +1,7 @@
 package services
 
 import (
+	"meerkat/clock"
 	"testing"
 	"time"
 
@@ -400,4 +401,18 @@ func TestImportRemindersPinsBirthdaysToTheCalendar(t *testing.T) {
 	checkIn := byMessage["Yearly check-in"]
 	require.NotNil(t, checkIn.ReoccurFromCompletion)
 	assert.True(t, *checkIn.ReoccurFromCompletion, "ordinary reminders keep the flexible default")
+}
+
+func TestMonicaImportManagerCleanupUsesItsClock(t *testing.T) {
+	fake := clock.NewFake(time.Date(2031, 1, 2, 3, 4, 5, 0, time.UTC))
+	m := NewMonicaImportManager()
+	m.SetClock(fake)
+	m.sessions["s"] = &monicaImportSession{userID: 1, expiresAt: fake.Now().Add(time.Hour), hardExpiry: fake.Now().Add(2 * time.Hour)}
+
+	m.CleanupExpired()
+	assert.Len(t, m.sessions, 1, "not expired yet")
+
+	fake.Advance(90 * time.Minute)
+	m.CleanupExpired()
+	assert.Empty(t, m.sessions, "expired by the injected clock")
 }

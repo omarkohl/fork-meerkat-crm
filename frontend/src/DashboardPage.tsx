@@ -29,6 +29,7 @@ import { ContactListSkeleton } from './components/LoadingSkeletons';
 import { handleFetchError, handleError } from './utils/errorHandler';
 import { useDateFormat } from './DateFormatProvider';
 import { thumbnailSrc } from './utils/thumbnail';
+import { now } from './utils/now';
 
 function DashboardPage() {
   const { t } = useTranslation();
@@ -118,7 +119,7 @@ function DashboardPage() {
   };
 
   const isOverdue = (remindAt: string) => {
-    return new Date(remindAt) < new Date();
+    return new Date(remindAt) < now();
   };
 
   const isBirthdayToday = (birthday: string | undefined) => {
@@ -129,7 +130,7 @@ function DashboardPage() {
     const month = parseInt(parts[parts.length - 2] ?? '', 10);
     const day = parseInt(parts[parts.length - 1] ?? '', 10);
     if (isNaN(month) || isNaN(day)) return false;
-    const today = new Date();
+    const today = now();
     return today.getMonth() + 1 === month && today.getDate() === day;
   };
 
@@ -146,7 +147,7 @@ function DashboardPage() {
       if (parts.length === 3 && yearPart.length === 4) {
         const birthYear = parseInt(yearPart, 10);
         if (!isNaN(birthYear)) {
-          const currentYear = new Date().getFullYear();
+          const currentYear = now().getFullYear();
           const age = currentYear - birthYear;
           // Remove the year from the formatted date for dashboard display (just show DD.MM. or MM/DD)
           const dateWithoutYear = formatBirthdayDate(`--${parts[1]}-${parts[2]}`);

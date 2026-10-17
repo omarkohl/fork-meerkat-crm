@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"errors"
+	"meerkat/middleware"
 	"net/http"
 	"os"
 
@@ -89,7 +90,7 @@ func RestoreTrashedContact(c *gin.Context) {
 		apperrors.AbortWithError(c, apperrors.ErrDatabase("Failed to restore contact").WithError(err))
 		return
 	}
-	go services.TriggerWebhooks(db, currentConfig(c), userID, "contact.restored", contact)
+	go services.TriggerWebhooks(db, currentConfig(c), userID, "contact.restored", contact, middleware.RequestClock(c))
 	c.JSON(http.StatusOK, gin.H{"message": "Contact restored", "id": contact.ID})
 }
 
@@ -104,7 +105,7 @@ func PurgeTrashedContact(c *gin.Context) {
 	if !ok {
 		return
 	}
-	n, err := services.PurgeTrashedContacts(db, userID, []uint{id}, trashPhotoDir(c))
+	n, err := services.PurgeTrashedContacts(db, userID, []uint{id}, trashPhotoDir(c), middleware.RequestNow(c))
 	if err != nil {
 		apperrors.AbortWithError(c, apperrors.ErrDatabase("Failed to delete contact permanently").WithError(err))
 		return
@@ -123,7 +124,7 @@ func EmptyTrash(c *gin.Context) {
 	if !ok {
 		return
 	}
-	n, err := services.PurgeTrashedContacts(db, userID, nil, trashPhotoDir(c))
+	n, err := services.PurgeTrashedContacts(db, userID, nil, trashPhotoDir(c), middleware.RequestNow(c))
 	if err != nil {
 		apperrors.AbortWithError(c, apperrors.ErrDatabase("Failed to empty trash").WithError(err))
 		return

@@ -9,7 +9,6 @@ import (
 	"meerkat/middleware"
 	"meerkat/models"
 	"net/http"
-	"time"
 
 	apperrors "meerkat/errors"
 
@@ -113,7 +112,7 @@ func RevokeApiToken(c *gin.Context) {
 		return
 	}
 
-	now := time.Now()
+	now := middleware.RequestNow(c)
 	if err := db.Model(&token).Update("revoked_at", now).Error; err != nil {
 		apperrors.AbortWithError(c, apperrors.ErrDatabase("update"))
 		return

@@ -24,6 +24,7 @@ import EmailIcon from '@mui/icons-material/Email';
 import RepeatIcon from '@mui/icons-material/Repeat';
 import { Reminder } from '../api/reminders';
 import { useDateFormat } from '../DateFormatProvider';
+import { now } from '../utils/now';
 
 interface ReminderListProps {
   reminders: Reminder[];
@@ -72,7 +73,7 @@ export default function ReminderList({ reminders, onComplete, onEdit, onDelete }
 
   const isOverdue = (dateString: string) => {
     const reminderDate = new Date(dateString);
-    const today = new Date();
+    const today = now();
     today.setHours(0, 0, 0, 0);
     return reminderDate < today;
   };

@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -71,7 +70,7 @@ func CreateContact(c *gin.Context) {
 		return
 	}
 
-	go services.TriggerWebhooks(db, currentConfig(c), userID, "contact.created", contact)
+	go services.TriggerWebhooks(db, currentConfig(c), userID, "contact.created", contact, middleware.RequestClock(c))
 	c.JSON(http.StatusCreated, gin.H{"message": "Contact created successfully", "contact": contact})
 }
 
@@ -332,7 +331,7 @@ func GetUpcomingBirthdays(c *gin.Context) {
 		return
 	}
 
-	birthdays, err := services.GetUpcomingBirthdays(db, userID, time.Now())
+	birthdays, err := services.GetUpcomingBirthdays(db, userID, middleware.RequestNow(c))
 	if err != nil {
 		apperrors.AbortWithError(c, apperrors.ErrDatabase("Failed to retrieve upcoming birthdays").WithError(err))
 		return
@@ -452,7 +451,7 @@ func UpdateContact(c *gin.Context) {
 		return
 	}
 
-	go services.TriggerWebhooks(db, currentConfig(c), userID, "contact.updated", contact)
+	go services.TriggerWebhooks(db, currentConfig(c), userID, "contact.updated", contact, middleware.RequestClock(c))
 	c.JSON(http.StatusOK, contact)
 }
 
@@ -488,7 +487,7 @@ func DeleteContact(c *gin.Context) {
 		return
 	}
 
-	go services.TriggerWebhooks(db, currentConfig(c), userID, "contact.deleted", gin.H{"id": contact.ID})
+	go services.TriggerWebhooks(db, currentConfig(c), userID, "contact.deleted", gin.H{"id": contact.ID}, middleware.RequestClock(c))
 	c.JSON(http.StatusOK, gin.H{"message": "Contact deleted"})
 }
 

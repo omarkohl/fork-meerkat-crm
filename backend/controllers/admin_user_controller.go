@@ -23,7 +23,7 @@ func TriggerReminders(c *gin.Context, cfg config.Config) {
 	log := logger.FromContext(c)
 	db := c.MustGet("db").(*gorm.DB)
 
-	if err := services.SendReminders(db, cfg); err != nil {
+	if err := services.SendReminders(db, cfg, middleware.RequestClock(c)); err != nil {
 		log.Error().Err(err).Msg("Failed to trigger reminder emails")
 		apperrors.AbortWithError(c, apperrors.ErrInternal("Failed to send reminder emails").WithError(err))
 		return
@@ -252,7 +252,7 @@ func UpdateUser(c *gin.Context) {
 			return err
 		}
 		if input.Password != nil {
-			return services.RevokeAllSessions(tx, user.ID)
+			return services.RevokeAllSessions(tx, user.ID, middleware.RequestNow(c))
 		}
 		return nil
 	}); err != nil {

@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"gorm.io/gorm"
+	"meerkat/clock"
 	"meerkat/config"
 	"meerkat/i18n"
 	"meerkat/logger"
@@ -37,14 +38,14 @@ func HashPasswordResetToken(token string) string {
 }
 
 // PasswordResetExpiry returns when a reset token should expire.
-func PasswordResetExpiry() time.Time {
-	return time.Now().Add(passwordResetTTL)
+func PasswordResetExpiry(now time.Time) time.Time {
+	return now.Add(passwordResetTTL)
 }
 
 // SendPasswordResetEmail queues a reset email (sent in the background, retried by the
 // outbox) when an email channel is configured.
 // The lang parameter specifies the user's preferred language for the email content.
-func SendPasswordResetEmail(db *gorm.DB, userID uint, email, token, lang string, cfg *config.Config) error {
+func SendPasswordResetEmail(db *gorm.DB, userID uint, email, token, lang string, cfg *config.Config, clk clock.Clock) error {
 	if cfg == nil {
 		return fmt.Errorf("config is required")
 	}
@@ -75,7 +76,7 @@ func SendPasswordResetEmail(db *gorm.DB, userID uint, email, token, lang string,
 		To:      email,
 		Subject: i18n.T(lang, "email.passwordReset.subject"),
 		HTML:    htmlBody,
-	}, PasswordResetExpiry()); err != nil {
+	}, PasswordResetExpiry(clk.Now()), clk); err != nil {
 		return err
 	}
 

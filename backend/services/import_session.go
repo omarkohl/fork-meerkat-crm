@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"meerkat/carddav"
+	"meerkat/clock"
 	"meerkat/config"
 	apperrors "meerkat/errors"
 	"meerkat/models"
@@ -35,12 +36,16 @@ type importSessionData struct {
 type ImportSessionManager struct {
 	mu       sync.RWMutex
 	sessions map[string]*importSessionData
+	clock    clock.Clock
 }
 
 // NewImportSessionManager creates an empty session manager.
 func NewImportSessionManager() *ImportSessionManager {
-	return &ImportSessionManager{sessions: make(map[string]*importSessionData)}
+	return &ImportSessionManager{sessions: make(map[string]*importSessionData), clock: clock.Real()}
 }
+
+// SetClock replaces the clock the manager reads for session expiry (set once at startup).
+func (m *ImportSessionManager) SetClock(c clock.Clock) { m.clock = c }
 
 // generateSessionID creates a random session ID.
 func generateSessionID() string {
@@ -78,7 +83,7 @@ func (m *ImportSessionManager) CleanupExpired() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	now := time.Now()
+	now := m.clock.Now()
 	for id, data := range m.sessions {
 		if now.After(data.session.ExpiresAt) {
 			delete(m.sessions, id)
@@ -100,7 +105,7 @@ func (m *ImportSessionManager) get(sessionID string, userID uint) (*importSessio
 		return nil, apperrors.ErrNotFound("Import session expired or not found")
 	}
 
-	if time.Now().After(sessionData.session.ExpiresAt) {
+	if m.clock.Now().After(sessionData.session.ExpiresAt) {
 		m.mu.Lock()
 		delete(m.sessions, sessionID)
 		m.mu.Unlock()
@@ -120,7 +125,7 @@ func (m *ImportSessionManager) Delete(sessionID string) {
 // CreateCSVSession stores a freshly parsed CSV upload and returns its session ID.
 func (m *ImportSessionManager) CreateCSVSession(userID uint, headers []string, rows [][]string) string {
 	sessionID := generateSessionID()
-	now := time.Now()
+	now := m.clock.Now()
 
 	m.mu.Lock()
 	m.sessions[sessionID] = &importSessionData{
@@ -144,7 +149,7 @@ func (m *ImportSessionManager) CreateCSVSession(userID uint, headers []string, r
 // upload time) and returns its session ID.
 func (m *ImportSessionManager) CreateVCFSession(userID uint, vcfContacts []VCFContactData, previews []models.ImportRowPreview) string {
 	sessionID := generateSessionID()
-	now := time.Now()
+	now := m.clock.Now()
 
 	m.mu.Lock()
 	m.sessions[sessionID] = &importSessionData{

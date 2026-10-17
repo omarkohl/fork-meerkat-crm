@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"meerkat/clock"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"meerkat/config"
 	"meerkat/middleware"
@@ -128,4 +130,16 @@ func TestUploadVCFValidation(t *testing.T) {
 	// Garbage is reported per row or as a client error, never as a server error.
 	w = upload(router, "/import/vcf", "c.vcf", "this is not a vcard")
 	assert.Less(t, w.Code, 500)
+}
+
+func TestSetImportClockIsUsedForSessionExpiry(t *testing.T) {
+	fake := clock.NewFake(time.Date(2031, 1, 2, 3, 4, 5, 0, time.UTC))
+	SetImportClock(fake)
+	t.Cleanup(func() { SetImportClock(clock.Real()) })
+
+	id := importSessions.CreateCSVSession(7, []string{"a"}, [][]string{{"x"}})
+	fake.Advance(time.Hour)
+	_, appErr := importSessions.PreviewCSV(nil, 7, models.ImportPreviewRequest{SessionID: id})
+	require.NotNil(t, appErr)
+	assert.Contains(t, appErr.Message, "expired")
 }

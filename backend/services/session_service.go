@@ -29,12 +29,11 @@ func truncate(s string, n int) string {
 
 // IssueSession records a new login session and returns the JWT that belongs to it. The
 // token carries the session id ("sid") and the user's token version ("tv").
-func IssueSession(db *gorm.DB, user models.User, cfg *config.Config, ip, userAgent string) (string, error) {
+func IssueSession(db *gorm.DB, user models.User, cfg *config.Config, ip, userAgent string, now time.Time) (string, error) {
 	raw := make([]byte, 16)
 	if _, err := rand.Read(raw); err != nil {
 		return "", err
 	}
-	now := time.Now()
 	session := models.Session{
 		UserID:     user.ID,
 		PublicID:   hex.EncodeToString(raw),
@@ -43,7 +42,7 @@ func IssueSession(db *gorm.DB, user models.User, cfg *config.Config, ip, userAge
 		LastSeenAt: now,
 		ExpiresAt:  now.Add(time.Hour * time.Duration(cfg.JWTExpiryHours)),
 	}
-	token, err := signToken(user, cfg, session.PublicID)
+	token, err := signToken(user, cfg, session.PublicID, now)
 	if err != nil {
 		return "", err
 	}
@@ -53,34 +52,34 @@ func IssueSession(db *gorm.DB, user models.User, cfg *config.Config, ip, userAge
 	return token, nil
 }
 
-func activeSessions(db *gorm.DB, userID uint) *gorm.DB {
-	return db.Where("user_id = ? AND revoked_at IS NULL AND expires_at > ?", userID, time.Now())
+func activeSessions(db *gorm.DB, userID uint, now time.Time) *gorm.DB {
+	return db.Where("user_id = ? AND revoked_at IS NULL AND expires_at > ?", userID, now)
 }
 
 // ListSessions returns the user's live sessions, newest first.
-func ListSessions(db *gorm.DB, userID uint) ([]models.Session, error) {
+func ListSessions(db *gorm.DB, userID uint, now time.Time) ([]models.Session, error) {
 	var sessions []models.Session
-	err := activeSessions(db, userID).Order("created_at DESC, id DESC").Find(&sessions).Error
+	err := activeSessions(db, userID, now).Order("created_at DESC, id DESC").Find(&sessions).Error
 	return sessions, err
 }
 
 // RevokeSession revokes one of the user's live sessions. It reports false when there is no
 // such session (unknown, someone else's, already revoked or expired).
-func RevokeSession(db *gorm.DB, userID uint, publicID string) (bool, error) {
-	res := activeSessions(db, userID).Model(&models.Session{}).Where("public_id = ?", publicID).Update("revoked_at", time.Now())
+func RevokeSession(db *gorm.DB, userID uint, publicID string, now time.Time) (bool, error) {
+	res := activeSessions(db, userID, now).Model(&models.Session{}).Where("public_id = ?", publicID).Update("revoked_at", now)
 	return res.RowsAffected > 0, res.Error
 }
 
 // RevokeAllSessions signs the user out everywhere: sessions are revoked and the token
 // version is raised, which also kills tokens issued before sessions existed.
-func RevokeAllSessions(db *gorm.DB, userID uint) error {
+func RevokeAllSessions(db *gorm.DB, userID uint, now time.Time) error {
 	return db.Transaction(func(tx *gorm.DB) error {
 		// Raw SQL: the field is read-only for gorm so that Save() cannot overwrite it.
 		if err := tx.Exec("UPDATE users SET token_version = token_version + 1 WHERE id = ?", userID).Error; err != nil {
 			return err
 		}
 		return tx.Model(&models.Session{}).Where("user_id = ? AND revoked_at IS NULL", userID).
-			Update("revoked_at", time.Now()).Error
+			Update("revoked_at", now).Error
 	})
 }
 

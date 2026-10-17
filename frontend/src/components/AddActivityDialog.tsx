@@ -14,6 +14,7 @@ import AppDialog from './AppDialog';
 import DateField from './DateField';
 import { useTranslation } from 'react-i18next';
 import { Contact, getContacts } from '../api/contacts';
+import { now } from '../utils/now';
 
 interface AddActivityDialogProps {
   open: boolean;
@@ -33,7 +34,7 @@ export default function AddActivityDialog({ open, onClose, onSave, preselectedCo
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(now().toISOString().slice(0, 10));
   const [selectedContacts, setSelectedContacts] = useState<Contact[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [searchInput, setSearchInput] = useState('');
@@ -100,7 +101,7 @@ export default function AddActivityDialog({ open, onClose, onSave, preselectedCo
     setTitle('');
     setDescription('');
     setLocation('');
-    setDate(new Date().toISOString().slice(0, 10));
+    setDate(now().toISOString().slice(0, 10));
     setSelectedContacts([]);
     setSearchInput('');
     setContacts([]);

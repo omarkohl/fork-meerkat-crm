@@ -23,6 +23,7 @@ import { useSnackbar } from '../context/SnackbarContext';
 import { handleError, getErrorMessage } from '../utils/errorHandler';
 import { useDateFormat } from '../DateFormatProvider';
 import { ContactFieldKey, resolveEnabledFields } from '../contactFields';
+import { now } from '../utils/now';
 
 interface AddContactDialogProps {
   open: boolean;
@@ -203,7 +204,7 @@ export default function AddContactDialog({
         }
 
         if (day !== undefined && month !== undefined && !isNaN(day) && !isNaN(month)) {
-          const today = new Date();
+          const today = now();
           const nextBirthday = new Date(today.getFullYear(), month, day);
 
           if (nextBirthday < today) {

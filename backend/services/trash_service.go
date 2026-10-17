@@ -151,7 +151,7 @@ func deletedWith(dependant gorm.DeletedAt, contactDeletedAt time.Time) bool {
 // nil or empty means the whole trash) with their dependants, then removes their
 // photo files from photoDir. Live contacts and other users' contacts are never
 // touched. It returns how many contacts were removed.
-func PurgeTrashedContacts(db *gorm.DB, userID uint, ids []uint, photoDir string) (int, error) {
+func PurgeTrashedContacts(db *gorm.DB, userID uint, ids []uint, photoDir string, now time.Time) (int, error) {
 	q := db.Unscoped().Select("id", "user_id", "photo", "photo_thumbnail", "photo_thumbnail_file", "deleted_at").
 		Where("user_id = ? AND deleted_at IS NOT NULL", userID)
 	if len(ids) > 0 {
@@ -161,7 +161,7 @@ func PurgeTrashedContacts(db *gorm.DB, userID uint, ids []uint, photoDir string)
 	if err := q.Find(&contacts).Error; err != nil {
 		return 0, err
 	}
-	return purgeContacts(db, contacts, photoDir)
+	return purgeContacts(db, contacts, photoDir, now)
 }
 
 // PurgeExpiredTrash permanently deletes, for every user, contacts deleted more
@@ -184,21 +184,21 @@ func PurgeExpiredTrash(db *gorm.DB, retentionDays int, photoDir string, now time
 			expired = append(expired, c)
 		}
 	}
-	return purgeContacts(db, expired, photoDir)
+	return purgeContacts(db, expired, photoDir, now)
 }
 
 // purgeContacts purges the candidates that are still in the trash exactly as
 // listed. The caller read them outside any transaction, so each chunk is
 // re-checked inside its own: a contact restored (or restored and deleted again)
 // in between keeps its dependants and photo files.
-func purgeContacts(db *gorm.DB, candidates []models.Contact, photoDir string) (int, error) {
+func purgeContacts(db *gorm.DB, candidates []models.Contact, photoDir string, now time.Time) (int, error) {
 	purged := 0
 	for start := 0; start < len(candidates); start += purgeChunk {
 		end := min(start+purgeChunk, len(candidates))
 		var confirmed []models.Contact
 		err := db.Transaction(func(tx *gorm.DB) error {
 			var err error
-			confirmed, err = purgeChunkTx(tx, candidates[start:end])
+			confirmed, err = purgeChunkTx(tx, candidates[start:end], now)
 			return err
 		})
 		if err != nil {
@@ -218,7 +218,7 @@ func purgeContacts(db *gorm.DB, candidates []models.Contact, photoDir string) (i
 // CardDAV links are kept on purpose and marked purged (a tombstone): the sync
 // engine uses them to delete the remote object (two-way, push) or to never import
 // it again (pull-only), and drops the link itself when it is done.
-func purgeChunkTx(tx *gorm.DB, chunk []models.Contact) ([]models.Contact, error) {
+func purgeChunkTx(tx *gorm.DB, chunk []models.Contact, now time.Time) ([]models.Contact, error) {
 	byUser := map[uint][]models.Contact{}
 	for _, c := range chunk {
 		byUser[c.UserID] = append(byUser[c.UserID], c)
@@ -263,7 +263,7 @@ func purgeChunkTx(tx *gorm.DB, chunk []models.Contact) ([]models.Contact, error)
 		}
 		if err := tx.Model(&models.CardDAVContactLink{}).
 			Where("contact_id IN ? AND user_id = ? AND purged_at IS NULL", ids, userID).
-			UpdateColumn("purged_at", time.Now()).Error; err != nil {
+			UpdateColumn("purged_at", now).Error; err != nil {
 			return nil, err
 		}
 		if err := tx.Unscoped().Where("id IN ? AND user_id = ? AND deleted_at IS NOT NULL", ids, userID).

@@ -3,6 +3,7 @@ import { getContacts } from '../api/contacts';
 import { updateNote, deleteNote, Note } from '../api/notes';
 import { updateActivity, deleteActivity, Activity } from '../api/activities';
 import { handleError, handleFetchError, ErrorNotifier } from '../utils/errorHandler';
+import { now } from '../utils/now';
 
 export function useTimelineEditing(
   contactId: number | undefined,
@@ -68,9 +69,7 @@ export function useTimelineEditing(
     try {
       await updateNote(noteId, {
         content: editTimelineValues.noteContent,
-        date: editTimelineValues.noteDate
-          ? new Date(editTimelineValues.noteDate).toISOString()
-          : new Date().toISOString(),
+        date: editTimelineValues.noteDate ? new Date(editTimelineValues.noteDate).toISOString() : now().toISOString(),
         contact_id: contactId,
       });
       await onRefresh();
@@ -90,7 +89,7 @@ export function useTimelineEditing(
         location: editTimelineValues.activityLocation || '',
         date: editTimelineValues.activityDate
           ? new Date(editTimelineValues.activityDate).toISOString()
-          : new Date().toISOString(),
+          : now().toISOString(),
         contact_ids: editTimelineValues.activityContacts?.map((c) => c.ID) || [],
       });
       await onRefresh();

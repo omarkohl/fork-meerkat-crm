@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"errors"
+	"meerkat/middleware"
 	"net/http"
 	"os"
 	"time"
@@ -61,7 +62,7 @@ func CreateBackup(c *gin.Context) {
 	log := logger.FromContext(c)
 	liftWriteDeadline(c)
 
-	b, err := services.CreateBackup(db, cfg.BackupDir, trashPhotoDir(c), time.Now())
+	b, err := services.CreateBackup(db, cfg.BackupDir, trashPhotoDir(c), middleware.RequestNow(c))
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to create backup")
 		apperrors.AbortWithError(c, apperrors.ErrInternal("Failed to create backup").WithError(err))

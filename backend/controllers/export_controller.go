@@ -7,6 +7,7 @@ import (
 	"meerkat/carddav"
 	apperrors "meerkat/errors"
 	"meerkat/logger"
+	"meerkat/middleware"
 	"meerkat/models"
 	"net/http"
 	"strings"
@@ -319,7 +320,7 @@ func ExportData(c *gin.Context) {
 	}
 
 	// Generate filename with timestamp
-	filename := fmt.Sprintf("meerkat-export-%s.csv", time.Now().Format("2006-01-02"))
+	filename := fmt.Sprintf("meerkat-export-%s.csv", middleware.RequestNow(c).Format("2006-01-02"))
 
 	// Everything loaded: the export is going out
 	audit(c, db, models.AuditExport, "format:csv")
@@ -374,7 +375,7 @@ func ExportContactsAsVCF(c *gin.Context, photoDir string) {
 	}
 
 	// Generate filename with timestamp
-	filename := fmt.Sprintf("meerkat-contacts-%s.vcf", time.Now().Format("2006-01-02"))
+	filename := fmt.Sprintf("meerkat-contacts-%s.vcf", middleware.RequestNow(c).Format("2006-01-02"))
 
 	// Everything loaded: the export is going out
 	audit(c, db, models.AuditExport, "format:vcf")

@@ -104,7 +104,7 @@ Read first: `.claude/plans/engineering-principles-reference.md`, `.claude/AUTONO
 - [x] 8. **Coverage thresholds (§4)**: Vitest `coverage.thresholds` and a Go
       threshold check on `coverage.out` (script), both at the current value rounded
       down. `make test-coverage` in `precommit` and CI.
-- [ ] 9. **Injected clock (§5)**: ADR. Go: a `clock` package (`Clock` interface,
+- [x] 9. **Injected clock (§5)**: ADR. Go: a `clock` package (`Clock` interface,
       real and fake); `now` taken once per request in middleware and per job in the
       scheduler, then passed down. Replace all `time.Now()` outside `main.go`,
       middleware and the clock package. `forbidigo` bans `time.Now` elsewhere with a

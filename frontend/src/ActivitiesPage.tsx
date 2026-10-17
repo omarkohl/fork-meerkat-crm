@@ -23,6 +23,7 @@ import EditTimelineItemDialog from './components/EditTimelineItemDialog';
 import DateField from './components/DateField';
 import { ListSkeleton } from './components/LoadingSkeletons';
 import { useDateFormat } from './DateFormatProvider';
+import { now } from './utils/now';
 
 const ActivitiesPage: React.FC = () => {
   const { t } = useTranslation();
@@ -140,7 +141,7 @@ const ActivitiesPage: React.FC = () => {
         title: editValues.activityTitle,
         description: editValues.activityDescription || '',
         location: editValues.activityLocation || '',
-        date: editValues.activityDate ? new Date(editValues.activityDate).toISOString() : new Date().toISOString(),
+        date: editValues.activityDate ? new Date(editValues.activityDate).toISOString() : now().toISOString(),
         contact_ids: editValues.activityContacts?.map((c) => c.ID) || [],
       });
       setEditingActivity(null);

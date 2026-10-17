@@ -27,6 +27,7 @@ import { GraphNode } from './types/graph';
 import { Activity, getActivity, updateActivity, deleteActivity } from './api/activities';
 import { Contact, getContacts } from './api/contacts';
 import { NetworkFilters, loadNetworkFilters, saveNetworkFilters } from './networkFilters';
+import { now } from './utils/now';
 
 export default function NetworkPage() {
   const { t } = useTranslation();
@@ -142,7 +143,7 @@ export default function NetworkPage() {
         title: editValues.activityTitle,
         description: editValues.activityDescription || '',
         location: editValues.activityLocation || '',
-        date: editValues.activityDate ? new Date(editValues.activityDate).toISOString() : new Date().toISOString(),
+        date: editValues.activityDate ? new Date(editValues.activityDate).toISOString() : now().toISOString(),
         contact_ids: editValues.activityContacts?.map((c) => c.ID) || [],
       });
       handleActivityEditClose();

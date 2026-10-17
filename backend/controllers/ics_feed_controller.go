@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"meerkat/middleware"
 	"net/http"
 	"regexp"
 	"strings"
@@ -179,7 +180,7 @@ func ServeIcsFeed(c *gin.Context) {
 		return
 	}
 
-	recordIcsFetch(db, feed.ID)
+	recordIcsFetch(db, feed.ID, middleware.RequestNow(c))
 
 	sum := sha256.Sum256([]byte(body))
 	etag := fmt.Sprintf(`"%x"`, sum[:16])
@@ -196,8 +197,8 @@ func ServeIcsFeed(c *gin.Context) {
 // recordIcsFetch stamps last_fetched_at unless it was stamped less than a minute ago.
 // The condition lives in the UPDATE, so concurrent fetches write at most once. A failure
 // is logged and ignored: serving the calendar matters more than the timestamp.
-func recordIcsFetch(db *gorm.DB, feedID uint) {
-	now := time.Now().UTC()
+func recordIcsFetch(db *gorm.DB, feedID uint, at time.Time) {
+	now := at.UTC()
 	err := db.Model(&models.IcsFeed{}).
 		Where("id = ? AND (last_fetched_at IS NULL OR last_fetched_at < ?)", feedID, now.Add(-icsFetchedThrottle)).
 		UpdateColumn("last_fetched_at", now).Error

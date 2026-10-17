@@ -22,6 +22,7 @@ import AddNoteDialog from './components/AddNoteDialog';
 import EditTimelineItemDialog from './components/EditTimelineItemDialog';
 import { handleError } from './utils/errorHandler';
 import { useDateFormat } from './DateFormatProvider';
+import { now } from './utils/now';
 
 const NotesPage: React.FC = () => {
   const { t } = useTranslation();
@@ -104,7 +105,7 @@ const NotesPage: React.FC = () => {
     try {
       await updateNote(editingNote.ID, {
         content: editValues.noteContent,
-        date: editValues.noteDate ? new Date(editValues.noteDate).toISOString() : new Date().toISOString(),
+        date: editValues.noteDate ? new Date(editValues.noteDate).toISOString() : now().toISOString(),
       });
       setEditingNote(null);
       setEditValues({});

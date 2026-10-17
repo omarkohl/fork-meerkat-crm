@@ -16,6 +16,7 @@ linters:
     - revive
     - bodyclose
     - sqlclosecheck
+    - forbidigo
   settings:
     errcheck:
       exclude-functions:
@@ -54,6 +55,15 @@ linters:
         - G104 # unhandled errors are errcheck's job (with its exclusions)
         # G115, G201, G202, G301, G304 are not excluded: the known hits carry a
         # line-level //nolint:gosec with the reason, so new code is still checked.
+    forbidigo:
+      # Resolve names through types, so an aliased import (tm "time") is caught too
+      analyze-types: true
+      forbid:
+        - pattern: ^time\.Now$
+          msg: >-
+            Do not read the wall clock in business code: take now as a parameter (controllers:
+            middleware.RequestNow(c); jobs: the scheduler passes clk.Now()). See
+            docs/adr/0009-injected-clock.md.
     revive:
       rules:
         - name: blank-imports
@@ -83,3 +93,10 @@ linters:
         linters:
           - errcheck
           - gosec
+          - forbidigo
+      # The places that may read the clock (docs/adr/0009-injected-clock.md): the
+      # composition root, the clock itself, and middleware (request time, rate limits,
+      # request durations). metrics only measures durations.
+      - path: ^(main\.go|clock/|middleware/|metrics/)
+        linters:
+          - forbidigo

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"meerkat/clock"
 	"meerkat/config"
 	"meerkat/controllers"
 	"meerkat/database"
@@ -59,11 +60,21 @@ func main() {
 	logger.Info().Msg("Validating configuration...")
 	cfg.ValidateOrPanic()
 
+	clk, fakeClock, err := clock.FromEnv(cfg.FakeNow)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Invalid FAKE_NOW")
+	}
+	if fakeClock {
+		logger.Warn().Str("fake_now", cfg.FakeNow).Msg("FAKE_NOW is set: the clock started at this time. Do not use this on a real instance")
+	}
+
 	logger.Info().Msg("Loading database and running migrations...")
 	db, err := database.InitDB(cfg.DBPath)
 	if err != nil {
 		logger.Fatal().Err(err).Msg("Failed to initialize database")
 	}
+	// created_at and updated_at follow the same clock as everything else
+	db.NowFunc = clk.Now
 
 	// Thumbnails used to live in the database as base64: move them into files (idempotent,
 	// before serving, so lists never miss a thumbnail).
@@ -105,48 +116,54 @@ func main() {
 	}
 	// Use rate-limited versions to prevent duplicate work during rapid restarts
 	reminderTask := func() {
-		if err := services.SendRemindersWithRateLimit(db, *cfg); err != nil {
+		if err := services.SendRemindersWithRateLimit(db, *cfg, clk); err != nil {
 			logger.Error().Err(err).Msg("Error sending reminders")
 		}
 	}
 	calendarSyncTask := func() {
-		services.SyncCalendarsWithRateLimit(db, *cfg)
+		services.SyncCalendarsWithRateLimit(db, *cfg, clk)
 	}
 	contactSyncTask := func() {
-		services.SyncContactsWithRateLimit(db, *cfg)
+		services.SyncContactsWithRateLimit(db, *cfg, clk)
 	}
 	trashPurgeTask := func() {
-		n, err := services.PurgeExpiredTrash(db, cfg.TrashRetentionDays, cfg.ProfilePhotoDir, time.Now())
+		if fakeClock {
+			// Purges delete for good by age: a clock set into the future would erase real data
+			logger.Warn().Msg("FAKE_NOW is set: skipping the purge jobs (trash, outbox, sessions, audit log)")
+			return
+		}
+		now := clk.Now()
+		n, err := services.PurgeExpiredTrash(db, cfg.TrashRetentionDays, cfg.ProfilePhotoDir, now)
 		metrics.JobDone(services.JobTrashPurge, err)
 		if err != nil {
 			logger.Error().Err(err).Msg("Error purging expired trash")
 		} else if n > 0 {
 			logger.Info().Int("contacts", n).Msg("Purged expired contacts from the trash")
 		}
-		if n, err := services.PurgeEmailOutbox(db, time.Now()); err != nil {
+		if n, err := services.PurgeEmailOutbox(db, now); err != nil {
 			logger.Error().Err(err).Msg("Error purging the email outbox")
 		} else if n > 0 {
 			logger.Info().Int64("emails", n).Msg("Purged old emails from the outbox")
 		}
-		if n, err := services.PurgeWebhookDeliveries(db, time.Now()); err != nil {
+		if n, err := services.PurgeWebhookDeliveries(db, now); err != nil {
 			logger.Error().Err(err).Msg("Error purging webhook deliveries")
 		} else if n > 0 {
 			logger.Info().Int64("deliveries", n).Msg("Purged old webhook deliveries")
 		}
 		// Same daily slot: ended sessions and old audit entries
-		if n, err := services.PurgeSessions(db, time.Now()); err != nil {
+		if n, err := services.PurgeSessions(db, now); err != nil {
 			logger.Error().Err(err).Msg("Error purging ended sessions")
 		} else if n > 0 {
 			logger.Info().Int64("sessions", n).Msg("Purged ended sessions")
 		}
-		if n, err := services.PurgeAuditLog(db, cfg.AuditLogRetentionDays, time.Now()); err != nil {
+		if n, err := services.PurgeAuditLog(db, cfg.AuditLogRetentionDays, now); err != nil {
 			logger.Error().Err(err).Msg("Error purging the audit log")
 		} else if n > 0 {
 			logger.Info().Int64("entries", n).Msg("Purged old audit log entries")
 		}
 	}
 	backupTask := func() {
-		b, err := services.RunScheduledBackup(db, cfg.BackupDir, cfg.ProfilePhotoDir, cfg.BackupRetentionCount, time.Now())
+		b, err := services.RunScheduledBackup(db, cfg.BackupDir, cfg.ProfilePhotoDir, cfg.BackupRetentionCount, clk.Now())
 		metrics.JobDone(services.JobBackup, err)
 		if err != nil {
 			logger.Error().Err(err).Msg("Scheduled backup failed")
@@ -157,8 +174,8 @@ func main() {
 	s, err := services.NewScheduler(cfg, services.SchedulerTasks{
 		Reminders: reminderTask,
 		WebhookRetries: func() {
-			services.ProcessWebhookOutbox(db, *cfg)
-			services.ProcessEmailOutbox(db, *cfg)
+			services.ProcessWebhookOutbox(db, *cfg, clk)
+			services.ProcessEmailOutbox(db, *cfg, clk)
 		},
 		CalendarSync: calendarSyncTask,
 		ContactSync:  contactSyncTask,
@@ -225,6 +242,11 @@ func main() {
 
 	// Add request ID middleware for tracing
 	r.Use(middleware.RequestIDMiddleware())
+
+	controllers.SetImportClock(clk)
+
+	// Take the time once per request; handlers read it with middleware.RequestNow
+	r.Use(middleware.ClockMiddleware(clk))
 
 	// Add logging middleware (after request ID)
 	r.Use(middleware.LoggingMiddleware())

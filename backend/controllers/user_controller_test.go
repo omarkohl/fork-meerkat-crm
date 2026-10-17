@@ -354,7 +354,7 @@ func TestConfirmPasswordReset_Succeeds(t *testing.T) {
 
 	initialPassword, _ := services.HashPassword(strongPassword)
 	token, tokenHash, _ := services.GeneratePasswordResetToken()
-	expires := services.PasswordResetExpiry()
+	expires := services.PasswordResetExpiry(time.Now())
 	requested := time.Now()
 
 	user := models.User{

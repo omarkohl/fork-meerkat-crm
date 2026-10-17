@@ -16,16 +16,15 @@ const TouchInterval = time.Minute
 
 // Find returns the user's session with this id when it is neither revoked nor expired.
 // It is one read; gorm.ErrRecordNotFound means there is no such live session.
-func Find(db *gorm.DB, userID uint, publicID string) (models.Session, error) {
+func Find(db *gorm.DB, userID uint, publicID string, now time.Time) (models.Session, error) {
 	var s models.Session
-	err := db.Where("public_id = ? AND user_id = ? AND revoked_at IS NULL AND expires_at > ?", publicID, userID, time.Now()).Take(&s).Error
+	err := db.Where("public_id = ? AND user_id = ? AND revoked_at IS NULL AND expires_at > ?", publicID, userID, now).Take(&s).Error
 	return s, err
 }
 
 // Touch stamps last_seen_at, but only when the value read by Find is older than
 // TouchInterval, so most requests do not write at all.
-func Touch(db *gorm.DB, s models.Session) error {
-	now := time.Now()
+func Touch(db *gorm.DB, s models.Session, now time.Time) error {
 	if now.Sub(s.LastSeenAt) < TouchInterval {
 		return nil
 	}

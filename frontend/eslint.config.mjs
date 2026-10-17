@@ -29,6 +29,30 @@ export default tseslint.config(
       'react-hooks/exhaustive-deps': 'error',
       '@eslint-community/eslint-comments/require-description': 'error',
       '@eslint-community/eslint-comments/no-unlimited-disable': 'error',
+      // One clock read, in src/utils/now.ts (docs/adr/0009-injected-clock.md)
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "NewExpression[callee.name='Date'][arguments.length=0]",
+          message:
+            'Do not read the clock directly: use now() from src/utils/now.ts. See docs/adr/0009-injected-clock.md.',
+        },
+        {
+          selector: "CallExpression[callee.name='Date']",
+          message:
+            'Date() without new reads the clock: use now() from src/utils/now.ts. See docs/adr/0009-injected-clock.md.',
+        },
+        {
+          selector: "CallExpression[callee.object.name='Date'][callee.property.name='now']",
+          message:
+            'Do not read the clock directly: use now() from src/utils/now.ts. See docs/adr/0009-injected-clock.md.',
+        },
+      ],
     },
+  },
+  {
+    // Tests may read the clock
+    files: ['src/**/*.test.{ts,tsx}'],
+    rules: { 'no-restricted-syntax': 'off' },
   },
 );

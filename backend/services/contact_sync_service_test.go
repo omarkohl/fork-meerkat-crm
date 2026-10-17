@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	mcarddav "meerkat/carddav"
+	"meerkat/clock"
 	"meerkat/config"
 	"meerkat/models"
 	"net/http"
@@ -75,7 +76,7 @@ func setupContactSyncEnv(t *testing.T, direction string, remote *davRemote) *con
 
 func (env *contactSyncEnv) sync(t *testing.T) ContactSyncStats {
 	t.Helper()
-	stats, err := env.service.SyncConnection(context.Background(), env.db, env.cfg, env.conn)
+	stats, err := env.service.SyncConnection(context.Background(), env.db, env.cfg, env.conn, clock.Real())
 	require.NoError(t, err)
 	return stats
 }
@@ -626,7 +627,7 @@ func TestStartContactSyncRunsInBackground(t *testing.T) {
 	runContactSync(t, models.CardDAVDirectionTwoWay, func(t *testing.T, env *contactSyncEnv) {
 		env.remote.putContact(t, "uid-async", "Ana", "Sync", "ana@example.com")
 
-		require.True(t, StartContactSync(env.db, env.cfg, *env.conn))
+		require.True(t, StartContactSync(env.db, env.cfg, *env.conn, clock.Real()))
 		require.Eventually(t, func() bool { return !IsContactSyncRunning(env.conn.ID) },
 			30*time.Second, 10*time.Millisecond, "the background run should finish")
 
@@ -654,9 +655,9 @@ func TestStartContactSyncRefusesConcurrentRun(t *testing.T) {
 			return false
 		})
 
-		require.True(t, StartContactSync(env.db, env.cfg, *env.conn))
+		require.True(t, StartContactSync(env.db, env.cfg, *env.conn, clock.Real()))
 		assert.True(t, IsContactSyncRunning(env.conn.ID))
-		assert.False(t, StartContactSync(env.db, env.cfg, *env.conn),
+		assert.False(t, StartContactSync(env.db, env.cfg, *env.conn, clock.Real()),
 			"a second run must be refused while one is already in flight")
 
 		close(release)
@@ -664,7 +665,7 @@ func TestStartContactSyncRefusesConcurrentRun(t *testing.T) {
 			30*time.Second, 10*time.Millisecond)
 
 		// Once it is done, a fresh run is allowed again.
-		require.True(t, StartContactSync(env.db, env.cfg, *env.conn))
+		require.True(t, StartContactSync(env.db, env.cfg, *env.conn, clock.Real()))
 		require.Eventually(t, func() bool { return !IsContactSyncRunning(env.conn.ID) },
 			30*time.Second, 10*time.Millisecond)
 	})
@@ -755,7 +756,7 @@ func TestContactSyncPurgedContactIsDeletedRemotelyAndStaysGone(t *testing.T) {
 		env.sync(t)
 
 		require.NoError(t, env.db.Delete(&models.Contact{}, local.ID).Error)
-		n, err := PurgeTrashedContacts(env.db, local.UserID, nil, "")
+		n, err := PurgeTrashedContacts(env.db, local.UserID, nil, "", time.Now())
 		require.NoError(t, err)
 		require.Equal(t, 1, n)
 
@@ -817,7 +818,7 @@ func TestContactSyncPullOnlyPurgedContactIsNotReimported(t *testing.T) {
 		var local models.Contact
 		require.NoError(t, env.db.Where("vcard_uid = ?", "uid-pru").First(&local).Error)
 		require.NoError(t, env.db.Delete(&local).Error)
-		n, err := PurgeTrashedContacts(env.db, env.user.ID, nil, "")
+		n, err := PurgeTrashedContacts(env.db, env.user.ID, nil, "", time.Now())
 		require.NoError(t, err)
 		require.Equal(t, 1, n)
 
@@ -841,7 +842,7 @@ func TestContactSyncPurgedContactEditedRemotelyIsDeletedNotReimported(t *testing
 		var local models.Contact
 		require.NoError(t, env.db.Where("vcard_uid = ?", "uid-pre").First(&local).Error)
 		require.NoError(t, env.db.Delete(&local).Error)
-		_, err := PurgeTrashedContacts(env.db, env.user.ID, nil, "")
+		_, err := PurgeTrashedContacts(env.db, env.user.ID, nil, "", time.Now())
 		require.NoError(t, err)
 
 		env.remote.putContact(t, "uid-pre", "Pre", "Edited", "pre@example.com")
@@ -925,10 +926,10 @@ func TestContactSyncSaveLinkKeepsPurgeTombstone(t *testing.T) {
 		var local models.Contact
 		require.NoError(t, env.db.Where("vcard_uid = ?", "uid-race").First(&local).Error)
 		require.NoError(t, env.db.Delete(&local).Error)
-		_, err := PurgeTrashedContacts(env.db, env.user.ID, nil, "")
+		_, err := PurgeTrashedContacts(env.db, env.user.ID, nil, "", time.Now())
 		require.NoError(t, err)
 
-		run := &contactSyncRun{db: env.db}
+		run := &contactSyncRun{db: env.db, clock: clock.Real()}
 		stale.RemoteETag = "changed"
 		run.saveLink(&stale)
 

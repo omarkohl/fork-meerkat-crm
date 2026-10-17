@@ -273,12 +273,12 @@ func RecoveryCodesRemaining(db *gorm.DB, userID uint) int {
 
 // RevokeOtherSessions ends the user's sessions except keep (the one making the change). With
 // no current session id (a token from before sessions existed) it only ends the stored rows.
-func RevokeOtherSessions(db *gorm.DB, userID uint, keep string) error {
+func RevokeOtherSessions(db *gorm.DB, userID uint, keep string, now time.Time) error {
 	q := db.Model(&models.Session{}).Where("user_id = ? AND revoked_at IS NULL", userID)
 	if keep != "" {
 		q = q.Where("public_id <> ?", keep)
 	}
-	return q.Update("revoked_at", time.Now()).Error
+	return q.Update("revoked_at", now).Error
 }
 
 // DisableTOTP removes the secret and the recovery codes.

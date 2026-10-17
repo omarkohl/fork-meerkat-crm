@@ -329,6 +329,6 @@ func TestAdminUserUpdateAuditDetailIsStructured(t *testing.T) {
 	require.NoError(t, db.Where("event = ?", models.AuditAdminUserUpdated).First(&entry).Error)
 	assert.Equal(t, fmt.Sprintf("user:target#%d;changed:email,password", target.ID), entry.Detail)
 	assert.NotContains(t, entry.Detail, strongPasswordAlt)
-	live, _ := services.ListSessions(db, target.ID)
+	live, _ := services.ListSessions(db, target.ID, time.Now())
 	assert.Empty(t, live, "a password set by an admin ends the sessions")
 }

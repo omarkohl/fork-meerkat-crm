@@ -16,6 +16,7 @@ import AppDialog from './AppDialog';
 import { Reminder, ReminderFormData } from '../api/reminders';
 import { getErrorMessage } from '../utils/errorHandler';
 import DateField from './DateField';
+import { now } from '../utils/now';
 
 interface InitialReminderValues {
   message?: string;
@@ -49,7 +50,7 @@ export default function ReminderDialog({
   const [loading, setLoading] = useState(false);
 
   const getDateForRecurrence = (rec: ReminderFormData['recurrence']): string => {
-    const d = new Date();
+    const d = now();
     switch (rec) {
       case 'weekly':
         d.setDate(d.getDate() + 7);
@@ -183,7 +184,7 @@ export default function ReminderDialog({
             onChange={setRemindAt}
             required
             fullWidth
-            min={new Date().toISOString().slice(0, 10)}
+            min={now().toISOString().slice(0, 10)}
           />
 
           {recurrence !== 'once' && (

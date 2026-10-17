@@ -75,7 +75,7 @@ All models include `UserID uint` for tenant isolation.
 
 ## Services
 
-Complex business logic lives in `services/`. Controllers call services; services own multi-step operations (e.g. sending emails). Services receive a `*gorm.DB` and any needed config, they do not access `*gin.Context`.
+Complex business logic lives in `services/`. Controllers call services; services own multi-step operations (e.g. sending emails). Services receive a `*gorm.DB` and any needed config, they do not access `*gin.Context`. They never read the wall clock: take `now time.Time` as a parameter (controllers pass `middleware.RequestNow(c)`, jobs the time taken by the scheduler). `forbidigo` fails the build on `time.Now`; see [ADR 0009](../adr/0009-injected-clock.md). In tests pass a fixed time or a `clock.Fake`.
 
 ## Testing
 
