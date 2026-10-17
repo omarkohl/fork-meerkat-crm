@@ -25,7 +25,9 @@ describe('useTrash', () => {
     const { result } = renderHook(() => useTrash());
 
     expect(result.current.loading).toBe(true);
-    await waitFor(() => expect(result.current.loading).toBe(false));
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+    });
     expect(result.current.contacts).toEqual([contact]);
     expect(result.current.retentionDays).toBe(14);
     expect(result.current.error).toBeNull();
@@ -34,7 +36,9 @@ describe('useTrash', () => {
   test('exposes an error and refetch recovers from it', async () => {
     vi.mocked(trashApi.getTrash).mockRejectedValueOnce(new Error('boom'));
     const { result } = renderHook(() => useTrash());
-    await waitFor(() => expect(result.current.error).toBeTruthy());
+    await waitFor(() => {
+      expect(result.current.error).toBeTruthy();
+    });
     expect(result.current.contacts).toEqual([]);
 
     vi.mocked(trashApi.getTrash).mockResolvedValue({ contacts: [contact], retention_days: 30 });

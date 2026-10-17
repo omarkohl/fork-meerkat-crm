@@ -37,7 +37,7 @@ lint-go: install-go ## go vet + golangci-lint (the golangci-lint binary must be 
 	cd backend && golangci-lint run
 
 lint-frontend: install-frontend ## ESLint
-	cd frontend && npx eslint --max-warnings=0 src
+	cd frontend && npx eslint --max-warnings=0
 
 typecheck: install-frontend ## TypeScript type check (app and E2E/Playwright config)
 	cd frontend && npx tsc --noEmit

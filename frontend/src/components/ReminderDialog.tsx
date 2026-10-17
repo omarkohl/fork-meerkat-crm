@@ -148,7 +148,9 @@ export default function ReminderDialog({
           <TextField
             label={t('reminders.message')}
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={(e) => {
+              setMessage(e.target.value);
+            }}
             multiline
             rows={3}
             required
@@ -162,7 +164,9 @@ export default function ReminderDialog({
             label={t('reminders.recurrence.label')}
             select
             value={recurrence}
-            onChange={(e) => handleRecurrenceChange(e.target.value as ReminderFormData['recurrence'])}
+            onChange={(e) => {
+              handleRecurrenceChange(e.target.value as ReminderFormData['recurrence']);
+            }}
             required
             fullWidth
           >
@@ -187,7 +191,9 @@ export default function ReminderDialog({
               control={
                 <Checkbox
                   checked={reoccurFromCompletion}
-                  onChange={(e) => setReoccurFromCompletion(e.target.checked)}
+                  onChange={(e) => {
+                    setReoccurFromCompletion(e.target.checked);
+                  }}
                 />
               }
               label={t('reminders.reoccurFromCompletion')}
@@ -195,7 +201,14 @@ export default function ReminderDialog({
           )}
 
           <FormControlLabel
-            control={<Checkbox checked={byMail} onChange={(e) => setByMail(e.target.checked)} />}
+            control={
+              <Checkbox
+                checked={byMail}
+                onChange={(e) => {
+                  setByMail(e.target.checked);
+                }}
+              />
+            }
             label={t('reminders.sendEmail')}
           />
         </Box>

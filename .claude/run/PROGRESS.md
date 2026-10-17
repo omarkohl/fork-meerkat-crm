@@ -2,7 +2,7 @@
 
 ## Next step
 
-7.
+8.
 
 ## Stack
 
@@ -17,8 +17,15 @@
 - Step 4: Makefile split into `install-go`/`install-frontend`, `lint-go`/`lint-frontend`, `test-go`/`test-frontend`, `test-coverage-go`/`-frontend`, `test-carddav`, `test-e2e-docker`, `vuln-go`, `audit-frontend`, `fuzz`. Lint, unit, e2e, security and fuzz workflows call them (docs, docker-build, docker-publish unchanged: Jekyll and image build, not make). actionlint v1.7.7 clean; Go version in fuzz.yml and the CardDAV job of unit-tests.yml raised 1.26 -> 1.27 (needed: `backend/go.mod` requires 1.27.0); CI itself not run locally. `make precommit` green.
 - Step 5: the full reformat (`04bed7d6` "style: format all files with gofmt and Prettier") and `format-check` on all files (no `BASE` logic) were already in the history below this run (`4eb6e3b1`); `make format` changes nothing. So no new reformat commit; this commit only adds `.git-blame-ignore-revs` for `04bed7d6` and a note in contributing.md. `make precommit` green.
 - Step 6: enabled `noUncheckedIndexedAccess`, `noImplicitOverride`, `noPropertyAccessFromIndexSignature` in `frontend/tsconfig.json`; fixed 86 errors (bracket access for index signatures incl. `process.env['REACT_APP_...']`, `override` on class members, destructuring with defaults for regex/split parts, `.slice(0, 10)` instead of `.split('T')[0]` in four dialogs, `?.` in tests). No non-null assertions. The three flags are also in `tsconfig.node.json` (E2E and Playwright config) and `make typecheck` now checks that project too. `make precommit` green incl. E2E.
+- Step 7: ESLint 9 flat config `frontend/eslint.config.mjs` (`typescript-eslint` strictTypeChecked, `jsx-a11y` recommended, `eslint-comments` recommended + `require-description`/`no-unlimited-disable`, `react-hooks` rules-of-hooks/exhaustive-deps, `reportUnusedDisableDirectives: error`; all errors); `--fix` applied (mostly braces for `no-confusing-void-expression`); 4 unused catch/param variables, 2 undescribed disables fixed by hand; stale file-wide disable in `service-worker.ts` removed (rule was not active). 529 findings remain, bulk-suppressed (counts per file and rule) in `frontend/eslint-suppressions.json`, reasons per rule class in `docs/development/frontend.md`. Only `src/**/*.{ts,tsx}` is linted (e2e comes with step 16). Checked: a new floating promise in `src/ContactsPage.tsx` fails; fixing one makes `make lint-frontend` fail until `--prune-suppressions` (exit 2). Each rule shown to fail on a violation file (rules-of-hooks, exhaustive-deps, no-floating-promises, no-non-null-assertion, eslint-comments, jsx-a11y/alt-text, restrict-template-expressions). Build and tests green.
 
 ## Decisions
+
+- Baseline via ESLint bulk suppressions, not per-file `off` entries: a file's existing violations are counted, so new ones in the same file fail. `eslint-suppressions.json` is in `.prettierignore` (the tool writes it).
+
+- ESLint 9 vs `react-scripts` 5 (bundles ESLint 8): yarn nests ESLint 8 under react-scripts, but its `eslint-webpack-plugin` would pick the hoisted ESLint 9, so `start` and `build` set `DISABLE_ESLINT_PLUGIN=true` and the `eslintConfig` block in package.json is removed. Lint runs only through `make lint-frontend`. The build itself is unchanged.
+- `react-hooks` v7 `recommended` adds React Compiler rules; only `rules-of-hooks` and `exhaustive-deps` (what `react-app` had) are enabled.
+- `no-confusing-void-expression` auto-fix changed ~250 arrow handlers to block bodies (behaviour unchanged).
 
 - CI sets `YARN: yarn` (runner yarn) because the Makefile default `corepack yarn` needs a `packageManager` field.
 - golangci-lint job uses the action with `install-only: true`, then `make lint-go` (adds `go vet`); loses the action's lint cache.
@@ -26,6 +33,8 @@
 - `test-coverage` is not in `precommit` yet (step 8 adds thresholds first).
 
 ## For review
+
+- Step 7: `frontend/eslint-suppressions.json` hides 529 findings (mostly `no-confusing-void-expression` fixed; remaining: restrict-template-expressions 91, no-misused-promises 90, no-floating-promises 65, no-unsafe-* ~140, no-unnecessary-condition 61, no-deprecated 34). Later steps should shrink it. `no-autofocus` is exempted as a design choice to confirm.
 
 - Step 4: CI cannot run locally. Check the first PR run: `install-only` of golangci-lint-action v8, `YARN: yarn`, `make fuzz` env vars.
 

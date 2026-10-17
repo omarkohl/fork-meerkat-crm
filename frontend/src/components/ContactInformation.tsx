@@ -116,7 +116,9 @@ export default function ContactInformation({
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs
           value={activeTab}
-          onChange={(_, newValue) => setActiveTab(newValue)}
+          onChange={(_, newValue) => {
+            setActiveTab(newValue);
+          }}
           aria-label="contact information tabs"
         >
           <Tab label={t('contactDetail.generalInfo')} />

@@ -68,7 +68,9 @@ export default function AddActivityDialog({ open, onClose, onSave, preselectedCo
       loadContacts(searchInput);
     }, 300);
 
-    return () => clearTimeout(timeoutId);
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, [searchInput, open, loadContacts]);
 
   const handleSave = async () => {
@@ -87,7 +89,7 @@ export default function AddActivityDialog({ open, onClose, onSave, preselectedCo
         contact_ids: selectedContacts.map((c) => c.ID),
       });
       handleClose();
-    } catch (err) {
+    } catch {
       setError('Failed to save activity');
     } finally {
       setSaving(false);
@@ -136,7 +138,9 @@ export default function AddActivityDialog({ open, onClose, onSave, preselectedCo
             multiline
             rows={3}
             value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            onChange={(e) => {
+              setDescription(e.target.value);
+            }}
             fullWidth
           />
 
@@ -144,7 +148,9 @@ export default function AddActivityDialog({ open, onClose, onSave, preselectedCo
             label={t('activityDialog.location')}
             placeholder={t('activityDialog.locationPlaceholder')}
             value={location}
-            onChange={(e) => setLocation(e.target.value)}
+            onChange={(e) => {
+              setLocation(e.target.value);
+            }}
             fullWidth
           />
 
@@ -155,8 +161,12 @@ export default function AddActivityDialog({ open, onClose, onSave, preselectedCo
             options={contacts}
             getOptionLabel={getContactLabel}
             value={selectedContacts}
-            onChange={(_, newValue) => setSelectedContacts(newValue)}
-            onInputChange={(_, value) => setSearchInput(value)}
+            onChange={(_, newValue) => {
+              setSelectedContacts(newValue);
+            }}
+            onInputChange={(_, value) => {
+              setSearchInput(value);
+            }}
             inputValue={searchInput}
             loading={loading}
             filterOptions={(x) => x}

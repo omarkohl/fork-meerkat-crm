@@ -257,10 +257,23 @@ export default function TwoFactorSettings() {
             <Stack direction="row" spacing={1}>
               {status.enabled ? (
                 <>
-                  <Button size="small" variant="outlined" onClick={() => openConfirm('codes')}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => {
+                      openConfirm('codes');
+                    }}
+                  >
                     {t('twoFactor.newCodes')}
                   </Button>
-                  <Button size="small" variant="outlined" color="error" onClick={() => openConfirm('disable')}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    color="error"
+                    onClick={() => {
+                      openConfirm('disable');
+                    }}
+                  >
                     {t('twoFactor.disable')}
                   </Button>
                 </>
@@ -301,7 +314,9 @@ export default function TwoFactorSettings() {
                       label={t('twoFactor.confirm.password')}
                       type="password"
                       value={setupPassword}
-                      onChange={(e) => setSetupPassword(e.target.value)}
+                      onChange={(e) => {
+                        setSetupPassword(e.target.value);
+                      }}
                       required
                       fullWidth
                       size="small"
@@ -310,7 +325,9 @@ export default function TwoFactorSettings() {
                     <TextField
                       label={t('twoFactor.setup.code')}
                       value={setupCode}
-                      onChange={(e) => setSetupCode(e.target.value)}
+                      onChange={(e) => {
+                        setSetupCode(e.target.value);
+                      }}
                       required
                       fullWidth
                       size="small"
@@ -351,7 +368,9 @@ export default function TwoFactorSettings() {
                 label={t('twoFactor.confirm.password')}
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                }}
                 required
                 fullWidth
                 size="small"
@@ -360,7 +379,9 @@ export default function TwoFactorSettings() {
               <TextField
                 label={useRecovery ? t('twoFactor.confirm.recoveryCode') : t('twoFactor.confirm.code')}
                 value={confirmCode}
-                onChange={(e) => setConfirmCode(e.target.value)}
+                onChange={(e) => {
+                  setConfirmCode(e.target.value);
+                }}
                 required
                 fullWidth
                 size="small"
@@ -397,7 +418,14 @@ export default function TwoFactorSettings() {
 
       {/* Recovery codes made from the settings card (not during enrolment) */}
       <AppDialog open={codes !== null && !setupOpen} maxWidth="xs" fullWidth>
-        {codes && <RecoveryCodes codes={codes} onDone={() => setCodes(null)} />}
+        {codes && (
+          <RecoveryCodes
+            codes={codes}
+            onDone={() => {
+              setCodes(null);
+            }}
+          />
+        )}
       </AppDialog>
     </Card>
   );

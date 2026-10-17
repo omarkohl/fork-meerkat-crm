@@ -71,7 +71,9 @@ describe('IcsFeedSettings', () => {
     const dialog = await screen.findByRole('dialog');
     fireEvent.click(within(dialog).getByRole('button', { name: 'Revoke' }));
 
-    await waitFor(() => expect(icsApi.revokeIcsFeed).toHaveBeenCalledTimes(1));
+    await waitFor(() => {
+      expect(icsApi.revokeIcsFeed).toHaveBeenCalledTimes(1);
+    });
     expect(await screen.findByRole('button', { name: 'Generate feed URL' })).toBeInTheDocument();
   });
 

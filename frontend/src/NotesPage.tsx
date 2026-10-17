@@ -174,7 +174,9 @@ const NotesPage: React.FC = () => {
             size="small"
             label={t('notes.search')}
             value={searchInput}
-            onChange={(e) => handleSearchChange(e.target.value)}
+            onChange={(e) => {
+              handleSearchChange(e.target.value);
+            }}
             variant="outlined"
             sx={{ flex: 1, minWidth: 200 }}
           />
@@ -235,7 +237,12 @@ const NotesPage: React.FC = () => {
                         className="edit-actions"
                         sx={{ opacity: 0, transition: 'opacity 0.2s', display: 'flex', gap: 1 }}
                       >
-                        <IconButton size="small" onClick={() => handleEditClick(note)}>
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            handleEditClick(note);
+                          }}
+                        >
                           <EditIcon fontSize="small" />
                         </IconButton>
                       </Box>
@@ -261,7 +268,13 @@ const NotesPage: React.FC = () => {
         </Box>
       )}
 
-      <AddNoteDialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} onSave={handleNoteSave} />
+      <AddNoteDialog
+        open={addDialogOpen}
+        onClose={() => {
+          setAddDialogOpen(false);
+        }}
+        onSave={handleNoteSave}
+      />
 
       {editingNote && (
         <EditTimelineItemDialog

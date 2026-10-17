@@ -7,7 +7,7 @@ export function extractDetailMessage(details: ErrorDetails): string | null {
     return null;
   }
 
-  const normalized = details as Record<string, unknown>;
+  const normalized = details;
 
   const reason = normalized['reason'];
   if (typeof reason === 'string' && reason.trim().length > 0) {
@@ -45,7 +45,7 @@ export async function handleResponse(response: Response, fallback: string): Prom
   if (raw) {
     try {
       data = JSON.parse(raw);
-    } catch (error) {
+    } catch {
       data = raw;
     }
   }

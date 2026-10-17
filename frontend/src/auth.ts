@@ -110,7 +110,7 @@ export async function fetchAndCacheUserInfo(): Promise<UserInfo | null> {
 }
 
 // No-op: token is now in httpOnly cookie, not stored in localStorage
-export function saveToken(_token: string) {
+export function saveToken() {
   // Kept for backward compatibility - token is now set via httpOnly cookie by server
 }
 

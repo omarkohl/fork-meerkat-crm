@@ -42,7 +42,9 @@ describe('LoginPage two-factor step', () => {
 
     fireEvent.change(screen.getByLabelText(/^Authentication code/), { target: { value: '123456' } });
     fireEvent.click(screen.getByRole('button', { name: 'Verify' }));
-    await waitFor(() => expect(auth.loginUser).toHaveBeenLastCalledWith('alice', 'pw-12345678', { code: '123456' }));
+    await waitFor(() => {
+      expect(auth.loginUser).toHaveBeenLastCalledWith('alice', 'pw-12345678', { code: '123456' });
+    });
   });
 
   test('a wrong code shows a message and a recovery code can be used instead', async () => {
@@ -59,9 +61,9 @@ describe('LoginPage two-factor step', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Use a recovery code' }));
     fireEvent.change(screen.getByLabelText(/^Recovery code/), { target: { value: 'AAAAA-BBBBB' } });
     fireEvent.click(screen.getByRole('button', { name: 'Verify' }));
-    await waitFor(() =>
-      expect(auth.loginUser).toHaveBeenLastCalledWith('alice', 'pw-12345678', { recoveryCode: 'AAAAA-BBBBB' }),
-    );
+    await waitFor(() => {
+      expect(auth.loginUser).toHaveBeenLastCalledWith('alice', 'pw-12345678', { recoveryCode: 'AAAAA-BBBBB' });
+    });
   });
 
   test('a locked account says so', async () => {

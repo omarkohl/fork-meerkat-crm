@@ -84,8 +84,12 @@ export default function DateField({ label, value, onChange, min, required, fullW
       required={required}
       fullWidth={fullWidth}
       value={text}
-      onChange={(e) => handleTextChange(e.target.value)}
-      onBlur={() => setTouched(true)}
+      onChange={(e) => {
+        handleTextChange(e.target.value);
+      }}
+      onBlur={() => {
+        setTouched(true);
+      }}
       error={invalid}
       helperText={invalid ? t('common.invalidDate') : undefined}
       variant="outlined"
@@ -106,7 +110,9 @@ export default function DateField({ label, value, onChange, min, required, fullW
                 aria-hidden
                 value={value}
                 min={min}
-                onChange={(e) => onChange(e.target.value)}
+                onChange={(e) => {
+                  onChange(e.target.value);
+                }}
                 style={{
                   position: 'absolute',
                   right: 0,

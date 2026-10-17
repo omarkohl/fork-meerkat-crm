@@ -27,7 +27,7 @@ export default function AddNoteDialog({ open, onClose, onSave }: AddNoteDialogPr
     try {
       await onSave(content, date);
       handleClose();
-    } catch (err) {
+    } catch {
       setError(t('noteDialog.saveError'));
     } finally {
       setSaving(false);

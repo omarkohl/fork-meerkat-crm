@@ -71,7 +71,9 @@ export default function EditableField({
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                 <TextField
                   value={editValue}
-                  onChange={(e) => onEditValueChange(e.target.value)}
+                  onChange={(e) => {
+                    onEditValueChange(e.target.value);
+                  }}
                   size="small"
                   fullWidth
                   multiline={multiline}
@@ -80,7 +82,13 @@ export default function EditableField({
                   error={!!showError}
                   placeholder={placeholder}
                 />
-                <IconButton size="small" color="primary" onClick={() => onEditSave(field)}>
+                <IconButton
+                  size="small"
+                  color="primary"
+                  onClick={() => {
+                    onEditSave(field);
+                  }}
+                >
                   <SaveIcon fontSize="small" />
                 </IconButton>
                 <IconButton size="small" onClick={onEditCancel}>
@@ -106,7 +114,9 @@ export default function EditableField({
           <IconButton
             className="edit-icon"
             size="small"
-            onClick={() => onEditStart(field, value)}
+            onClick={() => {
+              onEditStart(field, value);
+            }}
             sx={{
               opacity: 0,
               transition: 'opacity 0.2s',

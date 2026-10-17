@@ -72,7 +72,9 @@ describe('TrashPage', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Restore Alice Johnson' }));
 
-    await waitFor(() => expect(trashApi.restoreTrashedContact).toHaveBeenCalledWith(1));
+    await waitFor(() => {
+      expect(trashApi.restoreTrashedContact).toHaveBeenCalledWith(1);
+    });
     await waitFor(() => expect(screen.queryByText('Alice Johnson')).not.toBeInTheDocument());
     expect(screen.getByText('Bob Smith')).toBeInTheDocument();
   });
@@ -89,7 +91,9 @@ describe('TrashPage', () => {
     expect(trashApi.purgeTrashedContact).not.toHaveBeenCalled();
 
     fireEvent.click(within(dialog).getByRole('button', { name: 'Delete permanently' }));
-    await waitFor(() => expect(trashApi.purgeTrashedContact).toHaveBeenCalledWith(1));
+    await waitFor(() => {
+      expect(trashApi.purgeTrashedContact).toHaveBeenCalledWith(1);
+    });
     expect(await screen.findByText('The trash is empty.')).toBeInTheDocument();
   });
 
@@ -119,7 +123,9 @@ describe('TrashPage', () => {
     expect(within(dialog).getByText(/all 2 contacts/)).toBeInTheDocument();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Empty trash' }));
 
-    await waitFor(() => expect(trashApi.emptyTrash).toHaveBeenCalled());
+    await waitFor(() => {
+      expect(trashApi.emptyTrash).toHaveBeenCalled();
+    });
     expect(await screen.findByText('The trash is empty.')).toBeInTheDocument();
   });
 

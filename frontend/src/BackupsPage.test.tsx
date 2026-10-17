@@ -76,7 +76,9 @@ describe('BackupsPage', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Create backup now' }));
 
-    await waitFor(() => expect(backupsApi.createBackup).toHaveBeenCalled());
+    await waitFor(() => {
+      expect(backupsApi.createBackup).toHaveBeenCalled();
+    });
     expect(await screen.findByText(/meerkat-backup-20300102-030405\.tar\.gz/)).toBeInTheDocument();
   });
 
@@ -87,7 +89,9 @@ describe('BackupsPage', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: `Download ${first.name}` }));
 
-    await waitFor(() => expect(backupsApi.downloadBackup).toHaveBeenCalledWith(first.name));
+    await waitFor(() => {
+      expect(backupsApi.downloadBackup).toHaveBeenCalledWith(first.name);
+    });
   });
 
   test('deleting asks for confirmation first', async () => {
@@ -102,7 +106,9 @@ describe('BackupsPage', () => {
     expect(backupsApi.deleteBackup).not.toHaveBeenCalled();
 
     fireEvent.click(within(dialog).getByRole('button', { name: 'Delete' }));
-    await waitFor(() => expect(backupsApi.deleteBackup).toHaveBeenCalledWith(first.name));
+    await waitFor(() => {
+      expect(backupsApi.deleteBackup).toHaveBeenCalledWith(first.name);
+    });
     expect(await screen.findByText('There are no backups yet.')).toBeInTheDocument();
   });
 

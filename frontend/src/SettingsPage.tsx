@@ -57,11 +57,11 @@ export default function SettingsPage() {
   };
 
   const handleThemeChange = (event: SelectChangeEvent<ThemePreference>) => {
-    setThemePreference(event.target.value as ThemePreference);
+    setThemePreference(event.target.value);
   };
 
   const handleDateFormatChange = async (event: SelectChangeEvent<DateFormat>) => {
-    const newFormat = event.target.value as DateFormat;
+    const newFormat = event.target.value;
     // Update frontend immediately for responsive UI
     setDateFormat(newFormat);
 
@@ -263,7 +263,9 @@ export default function SettingsPage() {
                 label={t('settings.password.current')}
                 type="password"
                 value={currentPassword}
-                onChange={(event) => setCurrentPassword(event.target.value)}
+                onChange={(event) => {
+                  setCurrentPassword(event.target.value);
+                }}
                 fullWidth
                 required
                 size="small"
@@ -272,7 +274,9 @@ export default function SettingsPage() {
                 label={t('settings.password.new')}
                 type="password"
                 value={newPassword}
-                onChange={(event) => setNewPassword(event.target.value)}
+                onChange={(event) => {
+                  setNewPassword(event.target.value);
+                }}
                 fullWidth
                 required
                 size="small"
@@ -281,7 +285,9 @@ export default function SettingsPage() {
                 label={t('settings.password.confirm')}
                 type="password"
                 value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
+                onChange={(event) => {
+                  setConfirmPassword(event.target.value);
+                }}
                 fullWidth
                 required
                 size="small"

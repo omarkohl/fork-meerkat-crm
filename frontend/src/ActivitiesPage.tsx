@@ -212,7 +212,9 @@ const ActivitiesPage: React.FC = () => {
             size="small"
             label={t('activities.search')}
             value={searchInput}
-            onChange={(e) => handleSearchChange(e.target.value)}
+            onChange={(e) => {
+              handleSearchChange(e.target.value);
+            }}
             variant="outlined"
             sx={{ flex: 1, minWidth: 200 }}
           />
@@ -330,7 +332,13 @@ const ActivitiesPage: React.FC = () => {
         </Box>
       )}
 
-      <AddActivityDialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} onSave={handleActivitySave} />
+      <AddActivityDialog
+        open={addDialogOpen}
+        onClose={() => {
+          setAddDialogOpen(false);
+        }}
+        onSave={handleActivitySave}
+      />
 
       {editingActivity && (
         <EditTimelineItemDialog

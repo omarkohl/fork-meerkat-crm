@@ -86,7 +86,9 @@ export default function RelationshipList({
                   <Link
                     component="button"
                     variant="subtitle1"
-                    onClick={() => handleLinkedContactClick(linkedContact.ID)}
+                    onClick={() => {
+                      handleLinkedContactClick(linkedContact.ID);
+                    }}
                     sx={{ fontWeight: 500, textAlign: 'left', p: 0 }}
                   >
                     {displayName}
@@ -114,12 +116,20 @@ export default function RelationshipList({
                   transition: 'opacity 0.2s ease-in-out',
                 }}
               >
-                <IconButton size="small" onClick={() => onEdit(relationship)} aria-label={t('common.edit')}>
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    onEdit(relationship);
+                  }}
+                  aria-label={t('common.edit')}
+                >
                   <EditIcon fontSize="small" />
                 </IconButton>
                 <IconButton
                   size="small"
-                  onClick={() => handleDeleteClick(relationship.ID)}
+                  onClick={() => {
+                    handleDeleteClick(relationship.ID);
+                  }}
                   aria-label={t('common.delete')}
                   color="error"
                 >
@@ -151,7 +161,9 @@ export default function RelationshipList({
                   <Link
                     component="button"
                     variant="subtitle1"
-                    onClick={() => handleLinkedContactClick(sourceContact.ID)}
+                    onClick={() => {
+                      handleLinkedContactClick(sourceContact.ID);
+                    }}
                     sx={{ fontWeight: 500, textAlign: 'left', p: 0 }}
                   >
                     {sourceName}

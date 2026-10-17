@@ -61,8 +61,12 @@ describe('UsersPage private URL banner', () => {
   test('is hidden when there is no warning', async () => {
     vi.mocked(adminApi.getSystemStatus).mockResolvedValue(status({ private_url_warning: false }));
     renderPage();
-    await waitFor(() => expect(adminApi.getSystemStatus).toHaveBeenCalled());
-    await waitFor(() => expect(adminApi.getUsers).toHaveBeenCalled());
+    await waitFor(() => {
+      expect(adminApi.getSystemStatus).toHaveBeenCalled();
+    });
+    await waitFor(() => {
+      expect(adminApi.getUsers).toHaveBeenCalled();
+    });
     expect(screen.queryByText(/BLOCK_PRIVATE_URLS/)).not.toBeInTheDocument();
   });
 
@@ -84,7 +88,9 @@ describe('UsersPage private URL banner', () => {
 
     // Same situation: still dismissed
     renderPage().unmount();
-    await waitFor(() => expect(adminApi.getSystemStatus).toHaveBeenCalledTimes(2));
+    await waitFor(() => {
+      expect(adminApi.getSystemStatus).toHaveBeenCalledTimes(2);
+    });
     expect(screen.queryByText(/BLOCK_PRIVATE_URLS/)).not.toBeInTheDocument();
 
     // A feature more allows private URLs: shown again
@@ -142,7 +148,9 @@ describe('UsersPage two-factor reset', () => {
     fireEvent.click(resetButton);
     expect(twoFactorApi.resetUserTwoFactor).not.toHaveBeenCalled();
     fireEvent.click(await screen.findByRole('button', { name: 'Reset' }));
-    await waitFor(() => expect(twoFactorApi.resetUserTwoFactor).toHaveBeenCalledWith(1));
+    await waitFor(() => {
+      expect(twoFactorApi.resetUserTwoFactor).toHaveBeenCalledWith(1);
+    });
     await waitFor(() => expect(screen.queryByText('2FA')).not.toBeInTheDocument());
   });
 });

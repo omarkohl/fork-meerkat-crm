@@ -204,7 +204,7 @@ export default function AddContactDialog({
 
         if (day !== undefined && month !== undefined && !isNaN(day) && !isNaN(month)) {
           const today = new Date();
-          let nextBirthday = new Date(today.getFullYear(), month, day);
+          const nextBirthday = new Date(today.getFullYear(), month, day);
 
           if (nextBirthday < today) {
             nextBirthday.setFullYear(today.getFullYear() + 1);
@@ -383,7 +383,9 @@ export default function AddContactDialog({
                   control={
                     <Switch
                       checked={createBirthdayReminder}
-                      onChange={(e) => setCreateBirthdayReminder(e.target.checked)}
+                      onChange={(e) => {
+                        setCreateBirthdayReminder(e.target.checked);
+                      }}
                     />
                   }
                   label={t('contacts.add.createBirthdayReminder')}
@@ -500,7 +502,9 @@ export default function AddContactDialog({
                 <Chip
                   key={circle}
                   label={circle}
-                  onDelete={() => handleRemoveCircle(circle)}
+                  onDelete={() => {
+                    handleRemoveCircle(circle);
+                  }}
                   color="primary"
                   size="small"
                 />
@@ -531,7 +535,9 @@ export default function AddContactDialog({
               <TextField
                 label={t('contacts.newCircle')}
                 value={newCircle}
-                onChange={(e) => setNewCircle(e.target.value)}
+                onChange={(e) => {
+                  setNewCircle(e.target.value);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();

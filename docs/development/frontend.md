@@ -55,6 +55,30 @@ Reusable components live in `src/components/`. They are MUI-based and receive da
 
 All user-facing strings must be translated. Add keys to both `src/i18n/locales/en.json` and `de.json`. Do not hardcode English strings in components.
 
+## Linting
+
+`make lint-frontend` runs ESLint 9 (`frontend/eslint.config.mjs`) on `src/**/*.{ts,tsx}`: `typescript-eslint` strict-type-checked, `react-hooks`, `jsx-a11y`, `eslint-comments`. Every rule is an error. E2E specs and config files are not linted yet (step 16 of the engineering-principles run adds `eslint-plugin-playwright` and them).
+
+`react-scripts` bundles ESLint 8, so its own ESLint plugin is off (`DISABLE_ESLINT_PLUGIN` in the `start` and `build` scripts).
+
+### Suppressions (existing findings)
+
+Findings that existed when the rules were introduced are recorded as ESLint bulk suppressions in `frontend/eslint-suppressions.json`: a count per file and rule. A file with a suppression for a rule may not get more violations of it (ESLint then reports all of that rule's violations in the file). Fixing violations makes the suppression stale and `make lint-frontend` fails with "There are suppressions left that do not occur anymore": run `cd frontend && npx eslint --prune-suppressions` and commit the smaller file. Never run `--suppress-all` to silence new code. For one justified exception use a line comment with a description: `// eslint-disable-next-line rule -- why`.
+
+Why each rule class is suppressed today (fix the cause, not the count):
+
+| Rule                                                                                                                                                                                                          | Reason                                                                                           |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `restrict-template-expressions`                                                                                                                                                                               | Numbers, unknown and nullable values interpolated into strings. Use `String()` or types.         |
+| `no-misused-promises`                                                                                                                                                                                         | Async functions passed as event handlers expecting void. Wrap in a handler that catches.         |
+| `no-floating-promises`                                                                                                                                                                                        | Promises started without await, catch or `void`. Await, or `void` plus a catch.                  |
+| `no-unsafe-return`, `no-unsafe-assignment`, `no-unsafe-member-access`, `no-unsafe-argument`, `no-unsafe-call`                                                                                                 | `handleResponse` returns `Record<string, any>` and graph refs are `any`. Type the API responses. |
+| `no-unnecessary-condition`                                                                                                                                                                                    | Defensive checks the types say cannot happen. Type the data as it really is, or delete.          |
+| `no-deprecated`                                                                                                                                                                                               | Deprecated MUI props and React types. Move to the replacement API.                               |
+| `no-non-null-assertion`                                                                                                                                                                                       | Assertions on values checked elsewhere. Use a guard or a narrowed variable.                      |
+| `no-empty-object-type`, `no-explicit-any`, `prefer-promise-reject-errors`, `use-unknown-in-catch-callback-variable`, `no-unused-expressions`, `no-confusing-void-expression`, `no-unnecessary-type-assertion` | Single leftovers in a few files. Fix when touching the file.                                     |
+| `jsx-a11y/no-autofocus`                                                                                                                                                                                       | Dialog fields use `autoFocus` to start typing at once. Decide per dialog.                        |
+
 ## Testing
 
 The frontend is tested via Playwright E2E tests against a running application. See [Testing](testing.md).

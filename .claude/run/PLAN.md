@@ -96,7 +96,7 @@ Read first: `.claude/plans/engineering-principles-reference.md`, `.claude/AUTONO
       Remove the `BASE` logic.
 - [x] 6. **TypeScript strictness (§2)**: enable `noUncheckedIndexedAccess`,
       `noImplicitOverride`, `noPropertyAccessFromIndexSignature`; fix the errors.
-- [ ] 7. **ESLint flat config (§2)**: ESLint 9 flat config with
+- [x] 7. **ESLint flat config (§2)**: ESLint 9 flat config with
       `typescript-eslint` `strict-type-checked`, `react-hooks`, `jsx-a11y`,
       `eslint-comments` (`require-description`, `no-unlimited-disable`). All rules
       `error`. Replace the file-wide disable in `service-worker.ts` with line-level

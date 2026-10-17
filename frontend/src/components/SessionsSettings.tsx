@@ -91,7 +91,9 @@ export default function SessionsSettings() {
             color="error"
             variant="outlined"
             disabled={busyId !== null}
-            onClick={() => setConfirmAll(true)}
+            onClick={() => {
+              setConfirmAll(true);
+            }}
           >
             {t('sessions.signOutAll')}
           </Button>
@@ -140,13 +142,23 @@ export default function SessionsSettings() {
         )}
       </CardContent>
 
-      <Dialog open={confirmAll} onClose={() => setConfirmAll(false)}>
+      <Dialog
+        open={confirmAll}
+        onClose={() => {
+          setConfirmAll(false);
+        }}
+      >
         <DialogTitle>{t('sessions.signOutAllDialog.title')}</DialogTitle>
         <DialogContent>
           <DialogContentText>{t('sessions.signOutAllDialog.message')}</DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmAll(false)} disabled={busyId !== null}>
+          <Button
+            onClick={() => {
+              setConfirmAll(false);
+            }}
+            disabled={busyId !== null}
+          >
             {t('common.cancel')}
           </Button>
           <Button color="error" variant="contained" onClick={handleSignOutEverywhere} disabled={busyId !== null}>

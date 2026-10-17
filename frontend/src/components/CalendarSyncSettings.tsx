@@ -245,12 +245,24 @@ export default function CalendarSyncSettings() {
               {t('settings.calendarSync.description')}
             </Typography>
             {error && (
-              <Alert severity="error" sx={{ py: 0 }} onClose={() => setError('')}>
+              <Alert
+                severity="error"
+                sx={{ py: 0 }}
+                onClose={() => {
+                  setError('');
+                }}
+              >
                 {error}
               </Alert>
             )}
             {success && (
-              <Alert severity="success" sx={{ py: 0 }} onClose={() => setSuccess('')}>
+              <Alert
+                severity="success"
+                sx={{ py: 0 }}
+                onClose={() => {
+                  setSuccess('');
+                }}
+              >
                 {success}
               </Alert>
             )}
@@ -278,10 +290,20 @@ export default function CalendarSyncSettings() {
                             </IconButton>
                           </span>
                         </Tooltip>
-                        <IconButton size="small" onClick={() => openEdit(cal)}>
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            openEdit(cal);
+                          }}
+                        >
                           <EditIcon fontSize="small" />
                         </IconButton>
-                        <IconButton size="small" onClick={() => handleDeleteClick(cal)}>
+                        <IconButton
+                          size="small"
+                          onClick={() => {
+                            handleDeleteClick(cal);
+                          }}
+                        >
                           <DeleteIcon fontSize="small" />
                         </IconButton>
                       </Stack>
@@ -315,7 +337,14 @@ export default function CalendarSyncSettings() {
         </CardContent>
       </Card>
 
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={dialogOpen}
+        onClose={() => {
+          setDialogOpen(false);
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>
           {editingId !== null ? t('settings.calendarSync.editTitle') : t('settings.calendarSync.addTitle')}
         </DialogTitle>
@@ -332,7 +361,9 @@ export default function CalendarSyncSettings() {
             <TextField
               label={t('settings.calendarSync.name')}
               value={form.name}
-              onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+              onChange={(e) => {
+                setForm((prev) => ({ ...prev, name: e.target.value }));
+              }}
               fullWidth
               required
               size="small"
@@ -340,7 +371,9 @@ export default function CalendarSyncSettings() {
             <TextField
               label={t('settings.calendarSync.url')}
               value={form.url}
-              onChange={(e) => setForm((prev) => ({ ...prev, url: e.target.value }))}
+              onChange={(e) => {
+                setForm((prev) => ({ ...prev, url: e.target.value }));
+              }}
               fullWidth
               required
               size="small"
@@ -357,7 +390,9 @@ export default function CalendarSyncSettings() {
               <TextField
                 label={t('settings.calendarSync.username')}
                 value={form.username}
-                onChange={(e) => setForm((prev) => ({ ...prev, username: e.target.value }))}
+                onChange={(e) => {
+                  setForm((prev) => ({ ...prev, username: e.target.value }));
+                }}
                 fullWidth
                 size="small"
                 helperText={t('settings.calendarSync.credentialsOptional')}
@@ -366,7 +401,9 @@ export default function CalendarSyncSettings() {
                 label={t('settings.calendarSync.password')}
                 type="password"
                 value={form.password}
-                onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
+                onChange={(e) => {
+                  setForm((prev) => ({ ...prev, password: e.target.value }));
+                }}
                 fullWidth
                 size="small"
                 autoComplete="new-password"
@@ -380,7 +417,9 @@ export default function CalendarSyncSettings() {
                 label={t('settings.calendarSync.pastDays')}
                 type="number"
                 value={form.past_days}
-                onChange={(e) => setForm((prev) => ({ ...prev, past_days: e.target.value }))}
+                onChange={(e) => {
+                  setForm((prev) => ({ ...prev, past_days: e.target.value }));
+                }}
                 inputProps={{ min: 0, max: 3650 }}
                 size="small"
               />
@@ -388,7 +427,9 @@ export default function CalendarSyncSettings() {
                 label={t('settings.calendarSync.futureDays')}
                 type="number"
                 value={form.future_days}
-                onChange={(e) => setForm((prev) => ({ ...prev, future_days: e.target.value }))}
+                onChange={(e) => {
+                  setForm((prev) => ({ ...prev, future_days: e.target.value }));
+                }}
                 inputProps={{ min: 0, max: 3650 }}
                 size="small"
               />
@@ -397,7 +438,9 @@ export default function CalendarSyncSettings() {
               control={
                 <Switch
                   checked={form.sync_enabled}
-                  onChange={(e) => setForm((prev) => ({ ...prev, sync_enabled: e.target.checked }))}
+                  onChange={(e) => {
+                    setForm((prev) => ({ ...prev, sync_enabled: e.target.checked }));
+                  }}
                 />
               }
               label={t('settings.calendarSync.autoSync')}
@@ -405,7 +448,13 @@ export default function CalendarSyncSettings() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>{t('common.cancel')}</Button>
+          <Button
+            onClick={() => {
+              setDialogOpen(false);
+            }}
+          >
+            {t('common.cancel')}
+          </Button>
           <Button
             variant="contained"
             onClick={handleSave}
@@ -417,7 +466,12 @@ export default function CalendarSyncSettings() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+        }}
+      >
         <DialogTitle>{t('settings.calendarSync.deleteTitle')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
@@ -425,7 +479,13 @@ export default function CalendarSyncSettings() {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>{t('common.cancel')}</Button>
+          <Button
+            onClick={() => {
+              setDeleteDialogOpen(false);
+            }}
+          >
+            {t('common.cancel')}
+          </Button>
           <Button color="error" variant="contained" onClick={handleDeleteConfirm} disabled={deleting}>
             {t('common.delete')}
           </Button>

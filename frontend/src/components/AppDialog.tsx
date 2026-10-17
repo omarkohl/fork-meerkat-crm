@@ -23,7 +23,9 @@ export default function AppDialog({ onClose, slotProps, ...props }: AppDialogPro
       if (reason === 'backdropClick') {
         if (!shaking) {
           setShaking(true);
-          setTimeout(() => setShaking(false), 400);
+          setTimeout(() => {
+            setShaking(false);
+          }, 400);
         }
         return;
       }

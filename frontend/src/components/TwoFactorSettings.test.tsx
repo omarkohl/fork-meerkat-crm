@@ -51,7 +51,9 @@ describe('TwoFactorSettings', () => {
     fireEvent.change(within(dialog).getByLabelText(/^Current password/), { target: { value: 'secret-pass' } });
     fireEvent.change(within(dialog).getByLabelText(/^6-digit code from the app/), { target: { value: '123456' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Turn on' }));
-    await waitFor(() => expect(api.enableTwoFactor).toHaveBeenCalledWith('secret-pass', '123456'));
+    await waitFor(() => {
+      expect(api.enableTwoFactor).toHaveBeenCalledWith('secret-pass', '123456');
+    });
 
     expect(await screen.findByText('AAAAA-BBBBB')).toBeInTheDocument();
     expect(screen.getByText('CCCCC-DDDDD')).toBeInTheDocument();
@@ -101,9 +103,9 @@ describe('TwoFactorSettings', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'Use a recovery code' }));
     fireEvent.change(within(dialog).getByLabelText(/^Recovery code/), { target: { value: 'AAAAA-BBBBB' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Turn off' }));
-    await waitFor(() =>
-      expect(api.disableTwoFactor).toHaveBeenLastCalledWith({ password: 'secret-pass', recovery_code: 'AAAAA-BBBBB' }),
-    );
+    await waitFor(() => {
+      expect(api.disableTwoFactor).toHaveBeenLastCalledWith({ password: 'secret-pass', recovery_code: 'AAAAA-BBBBB' });
+    });
     expect((await screen.findAllByText('Two-factor authentication is off.')).length).toBeGreaterThan(0);
   });
 
@@ -132,7 +134,9 @@ describe('TwoFactorSettings', () => {
       available: false,
     });
     const { container } = renderIt();
-    await waitFor(() => expect(api.getTwoFactorStatus).toHaveBeenCalled());
+    await waitFor(() => {
+      expect(api.getTwoFactorStatus).toHaveBeenCalled();
+    });
     await waitFor(() => expect(container).toBeEmptyDOMElement());
   });
 

@@ -163,7 +163,9 @@ export default function AuditLogPage() {
           component="div"
           count={total}
           page={page}
-          onPageChange={(_, p) => setPage(p)}
+          onPageChange={(_, p) => {
+            setPage(p);
+          }}
           rowsPerPage={rowsPerPage}
           onRowsPerPageChange={(e) => {
             setRowsPerPage(parseInt(e.target.value, 10));

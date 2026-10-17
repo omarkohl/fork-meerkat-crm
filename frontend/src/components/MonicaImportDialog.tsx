@@ -251,7 +251,9 @@ export default function MonicaImportDialog({ open, onClose, onImportComplete }: 
         // Best effort: a failed keepalive is surfaced by confirm instead.
       });
     }, KEEPALIVE_INTERVAL_MS);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+    };
   }, [open, step, connectResponse]);
 
   const handleRowActionChange = (rowIndex: number, action: string) => {
@@ -345,7 +347,9 @@ export default function MonicaImportDialog({ open, onClose, onImportComplete }: 
           label={t('settings.monicaImport.connect.baseUrl', 'Monica URL')}
           placeholder="https://monica.example.com"
           value={baseUrl}
-          onChange={(e) => setBaseUrl(e.target.value)}
+          onChange={(e) => {
+            setBaseUrl(e.target.value);
+          }}
           fullWidth
           size="small"
           disabled={!!connectResponse}
@@ -354,7 +358,9 @@ export default function MonicaImportDialog({ open, onClose, onImportComplete }: 
           label={t('settings.monicaImport.connect.apiToken', 'API token')}
           type="password"
           value={apiToken}
-          onChange={(e) => setApiToken(e.target.value)}
+          onChange={(e) => {
+            setApiToken(e.target.value);
+          }}
           fullWidth
           size="small"
           autoComplete="off"
@@ -407,7 +413,12 @@ export default function MonicaImportDialog({ open, onClose, onImportComplete }: 
 
           <FormControlLabel
             control={
-              <Checkbox checked={includeRelationships} onChange={(e) => setIncludeRelationships(e.target.checked)} />
+              <Checkbox
+                checked={includeRelationships}
+                onChange={(e) => {
+                  setIncludeRelationships(e.target.checked);
+                }}
+              />
             }
             label={t(
               'settings.monicaImport.connect.includeRelationships',
@@ -418,7 +429,12 @@ export default function MonicaImportDialog({ open, onClose, onImportComplete }: 
             <FormControlLabel
               disabled={!includeRelationships}
               control={
-                <Checkbox checked={collapseReciprocal} onChange={(e) => setCollapseReciprocal(e.target.checked)} />
+                <Checkbox
+                  checked={collapseReciprocal}
+                  onChange={(e) => {
+                    setCollapseReciprocal(e.target.checked);
+                  }}
+                />
               }
               label={t('settings.monicaImport.connect.collapseReciprocal', 'Import each relationship only once')}
             />
@@ -430,7 +446,14 @@ export default function MonicaImportDialog({ open, onClose, onImportComplete }: 
             </Typography>
           </Box>
           <FormControlLabel
-            control={<Checkbox checked={includeExtras} onChange={(e) => setIncludeExtras(e.target.checked)} />}
+            control={
+              <Checkbox
+                checked={includeExtras}
+                onChange={(e) => {
+                  setIncludeExtras(e.target.checked);
+                }}
+              />
+            }
             label={t('settings.monicaImport.connect.includeExtras', 'Import calls, tasks, gifts and debts as notes')}
           />
 
@@ -455,7 +478,7 @@ export default function MonicaImportDialog({ open, onClose, onImportComplete }: 
   const renderProgressStep = (mode: 'fetching' | 'importing') => {
     const phase = status?.phase;
     const showDeterminate = !!status && status.phase_total > 0;
-    const progress = showDeterminate ? Math.min(100, (status!.phase_done / status!.phase_total) * 100) : 0;
+    const progress = showDeterminate ? Math.min(100, (status.phase_done / status.phase_total) * 100) : 0;
 
     return (
       <Box sx={{ py: 4, textAlign: 'center' }}>
@@ -467,7 +490,7 @@ export default function MonicaImportDialog({ open, onClose, onImportComplete }: 
         {phase && (
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             {t(`settings.monicaImport.phase.${phase}`, phase)}
-            {showDeterminate && ` (${status!.phase_done}/${status!.phase_total})`}
+            {showDeterminate && ` (${status.phase_done}/${status.phase_total})`}
           </Typography>
         )}
         <LinearProgress
@@ -616,7 +639,9 @@ export default function MonicaImportDialog({ open, onClose, onImportComplete }: 
                     <FormControl size="small" fullWidth>
                       <Select
                         value={rowActions.get(row.row_index) || 'skip'}
-                        onChange={(e) => handleRowActionChange(row.row_index, e.target.value)}
+                        onChange={(e) => {
+                          handleRowActionChange(row.row_index, e.target.value);
+                        }}
                         disabled={row.validation_errors.length > 0}
                       >
                         <MenuItem value="skip">{t('contacts.import.preview.actionSkip', 'Skip')}</MenuItem>
@@ -817,7 +842,13 @@ export default function MonicaImportDialog({ open, onClose, onImportComplete }: 
         {loading && <LinearProgress sx={{ mb: 2 }} />}
 
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          <Alert
+            severity="error"
+            sx={{ mb: 2 }}
+            onClose={() => {
+              setError(null);
+            }}
+          >
             {error}
           </Alert>
         )}

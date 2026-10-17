@@ -19,7 +19,13 @@ const renderIt = (format: DateFormat, initial = '', onChange = vi.fn()) => {
             setValue(v);
           }}
         />
-        <button onClick={() => setValue('')}>reset</button>
+        <button
+          onClick={() => {
+            setValue('');
+          }}
+        >
+          reset
+        </button>
       </>
     );
   };

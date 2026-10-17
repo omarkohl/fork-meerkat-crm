@@ -13,7 +13,7 @@ pre-commit:
     eslint:
       root: frontend/
       glob: "*.{ts,tsx}"
-      run: npx eslint --max-warnings=0 {staged_files}
+      run: npx eslint --max-warnings=0 --no-warn-ignored {staged_files}
     i18n:
       glob: "{backend,frontend}/**/i18n/locales/*.json"
       run: make i18n-check

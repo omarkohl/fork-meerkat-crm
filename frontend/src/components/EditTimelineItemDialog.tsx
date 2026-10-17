@@ -69,7 +69,9 @@ export default function EditTimelineItemDialog({
               multiline
               rows={6}
               value={values.noteContent || ''}
-              onChange={(e) => onChange({ ...values, noteContent: e.target.value })}
+              onChange={(e) => {
+                onChange({ ...values, noteContent: e.target.value });
+              }}
               label={t('noteDialog.content')}
               placeholder={t('noteDialog.contentPlaceholder')}
               autoFocus
@@ -77,7 +79,9 @@ export default function EditTimelineItemDialog({
             <DateField
               fullWidth
               value={values.noteDate || ''}
-              onChange={(noteDate) => onChange({ ...values, noteDate })}
+              onChange={(noteDate) => {
+                onChange({ ...values, noteDate });
+              }}
               label={t('noteDialog.date')}
             />
           </Box>
@@ -87,7 +91,9 @@ export default function EditTimelineItemDialog({
             <TextField
               fullWidth
               value={values.activityTitle || ''}
-              onChange={(e) => onChange({ ...values, activityTitle: e.target.value })}
+              onChange={(e) => {
+                onChange({ ...values, activityTitle: e.target.value });
+              }}
               label={t('activityDialog.activityTitle')}
               autoFocus
             />
@@ -96,19 +102,25 @@ export default function EditTimelineItemDialog({
               multiline
               rows={3}
               value={values.activityDescription || ''}
-              onChange={(e) => onChange({ ...values, activityDescription: e.target.value })}
+              onChange={(e) => {
+                onChange({ ...values, activityDescription: e.target.value });
+              }}
               label={t('activityDialog.description')}
             />
             <TextField
               fullWidth
               value={values.activityLocation || ''}
-              onChange={(e) => onChange({ ...values, activityLocation: e.target.value })}
+              onChange={(e) => {
+                onChange({ ...values, activityLocation: e.target.value });
+              }}
               label={t('activityDialog.location')}
             />
             <DateField
               fullWidth
               value={values.activityDate || ''}
-              onChange={(activityDate) => onChange({ ...values, activityDate })}
+              onChange={(activityDate) => {
+                onChange({ ...values, activityDate });
+              }}
               label={t('activityDialog.date')}
             />
             <Autocomplete
@@ -118,7 +130,9 @@ export default function EditTimelineItemDialog({
                 `${contact.firstname}${contact.nickname ? ` "${contact.nickname}"` : ''} ${contact.lastname}`
               }
               value={values.activityContacts || []}
-              onChange={(_, newValue) => onChange({ ...values, activityContacts: newValue })}
+              onChange={(_, newValue) => {
+                onChange({ ...values, activityContacts: newValue });
+              }}
               renderInput={(params) => (
                 <TextField
                   {...params}

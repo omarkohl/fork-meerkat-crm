@@ -96,7 +96,9 @@ export default function ApiTokensPage() {
     if (createdToken) {
       navigator.clipboard.writeText(createdToken.token);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => {
+        setCopied(false);
+      }, 2000);
     }
   };
 
@@ -140,7 +142,14 @@ export default function ApiTokensPage() {
                 {t('apiTokens.title')}
               </Typography>
             </Box>
-            <Button variant="outlined" size="small" startIcon={<AddIcon />} onClick={() => setCreateDialogOpen(true)}>
+            <Button
+              variant="outlined"
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={() => {
+                setCreateDialogOpen(true);
+              }}
+            >
               {t('apiTokens.createButton')}
             </Button>
           </Box>
@@ -208,14 +217,23 @@ export default function ApiTokensPage() {
       </Card>
 
       {/* Create dialog */}
-      <AppDialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="sm" fullWidth>
+      <AppDialog
+        open={createDialogOpen}
+        onClose={() => {
+          setCreateDialogOpen(false);
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>{t('apiTokens.createDialog.title')}</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
             label={t('apiTokens.createDialog.nameLabel')}
             value={newTokenName}
-            onChange={(e) => setNewTokenName(e.target.value)}
+            onChange={(e) => {
+              setNewTokenName(e.target.value);
+            }}
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleCreate();
             }}
@@ -225,7 +243,12 @@ export default function ApiTokensPage() {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setCreateDialogOpen(false)} disabled={createLoading}>
+          <Button
+            onClick={() => {
+              setCreateDialogOpen(false);
+            }}
+            disabled={createLoading}
+          >
             {t('common.cancel')}
           </Button>
           <Button variant="contained" onClick={handleCreate} disabled={createLoading || !newTokenName.trim()}>
@@ -235,7 +258,14 @@ export default function ApiTokensPage() {
       </AppDialog>
 
       {/* Token created dialog */}
-      <Dialog open={!!createdToken} onClose={() => setCreatedToken(null)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={!!createdToken}
+        onClose={() => {
+          setCreatedToken(null);
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>{t('apiTokens.createdDialog.title')}</DialogTitle>
         <DialogContent>
           <Alert severity="warning" sx={{ mb: 2 }}>
@@ -257,20 +287,35 @@ export default function ApiTokensPage() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" onClick={() => setCreatedToken(null)}>
+          <Button
+            variant="contained"
+            onClick={() => {
+              setCreatedToken(null);
+            }}
+          >
             {t('apiTokens.createdDialog.done')}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Revoke confirmation dialog */}
-      <Dialog open={revokeDialogOpen} onClose={() => setRevokeDialogOpen(false)}>
+      <Dialog
+        open={revokeDialogOpen}
+        onClose={() => {
+          setRevokeDialogOpen(false);
+        }}
+      >
         <DialogTitle>{t('apiTokens.revokeDialog.title')}</DialogTitle>
         <DialogContent>
           <Typography>{t('apiTokens.revokeDialog.message', { name: revokingToken?.name || '' })}</Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setRevokeDialogOpen(false)} disabled={revokeLoading}>
+          <Button
+            onClick={() => {
+              setRevokeDialogOpen(false);
+            }}
+            disabled={revokeLoading}
+          >
             {t('common.cancel')}
           </Button>
           <Button variant="contained" color="error" onClick={handleRevoke} disabled={revokeLoading}>

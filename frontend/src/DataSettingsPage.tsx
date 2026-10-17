@@ -84,7 +84,9 @@ export default function DataSettingsPage() {
               variant="contained"
               size="small"
               startIcon={<CloudDownloadIcon />}
-              onClick={() => setMonicaDialogOpen(true)}
+              onClick={() => {
+                setMonicaDialogOpen(true);
+              }}
             >
               {t('settings.monicaImport.button')}
             </Button>
@@ -94,7 +96,9 @@ export default function DataSettingsPage() {
 
       <MonicaImportDialog
         open={monicaDialogOpen}
-        onClose={() => setMonicaDialogOpen(false)}
+        onClose={() => {
+          setMonicaDialogOpen(false);
+        }}
         onImportComplete={() => undefined}
       />
 

@@ -661,7 +661,9 @@ export default function ContactDetailPage() {
         onAddCircle={handleAddCircle}
         onDeleteCircle={handleDeleteCircle}
         onNewCircleNameChange={setNewCircleName}
-        onUploadProfilePicture={() => setProfilePictureDialogOpen(true)}
+        onUploadProfilePicture={() => {
+          setProfilePictureDialogOpen(true);
+        }}
         onStayInTouch={contact.archived ? undefined : handleStayInTouch}
         onArchiveContact={contact.archived ? undefined : handleArchiveContact}
         onUnarchiveContact={contact.archived ? handleUnarchiveContact : undefined}
@@ -707,7 +709,9 @@ export default function ContactDetailPage() {
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
             <Tabs
               value={activeTab}
-              onChange={(_, newValue) => setActiveTab(newValue)}
+              onChange={(_, newValue) => {
+                setActiveTab(newValue);
+              }}
               aria-label="timeline and reminders tabs"
             >
               <Tab label={t('contactDetail.timeline')} />
@@ -721,7 +725,9 @@ export default function ContactDetailPage() {
               <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', mb: 1.5, gap: 0.5 }}>
                 <Button
                   startIcon={<NoteIcon />}
-                  onClick={() => setNoteDialogOpen(true)}
+                  onClick={() => {
+                    setNoteDialogOpen(true);
+                  }}
                   variant="outlined"
                   size="small"
                 >
@@ -729,7 +735,9 @@ export default function ContactDetailPage() {
                 </Button>
                 <Button
                   startIcon={<EventIcon />}
-                  onClick={() => setActivityDialogOpen(true)}
+                  onClick={() => {
+                    setActivityDialogOpen(true);
+                  }}
                   variant="outlined"
                   size="small"
                 >
@@ -772,11 +780,19 @@ export default function ContactDetailPage() {
       </Box>
 
       {/* Dialogs */}
-      <AddNoteDialog open={noteDialogOpen} onClose={() => setNoteDialogOpen(false)} onSave={handleSaveNote} />
+      <AddNoteDialog
+        open={noteDialogOpen}
+        onClose={() => {
+          setNoteDialogOpen(false);
+        }}
+        onSave={handleSaveNote}
+      />
 
       <AddActivityDialog
         open={activityDialogOpen}
-        onClose={() => setActivityDialogOpen(false)}
+        onClose={() => {
+          setActivityDialogOpen(false);
+        }}
         onSave={handleSaveActivity}
         preselectedContact={contact ?? undefined}
       />
@@ -821,7 +837,9 @@ export default function ContactDetailPage() {
 
       <ProfilePictureUploadDialog
         open={profilePictureDialogOpen}
-        onClose={() => setProfilePictureDialogOpen(false)}
+        onClose={() => {
+          setProfilePictureDialogOpen(false);
+        }}
         onUpload={handleUploadProfilePicture}
       />
 

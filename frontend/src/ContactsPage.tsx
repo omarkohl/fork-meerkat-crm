@@ -147,7 +147,9 @@ export default function ContactsPage() {
             labelId="circle-select-label"
             value={selectedCircle}
             label={t('contacts.filterByCircle')}
-            onChange={(e) => setSelectedCircle(e.target.value)}
+            onChange={(e) => {
+              setSelectedCircle(e.target.value);
+            }}
           >
             <MenuItem value="">{t('contacts.allCircles')}</MenuItem>
             {circles.map((circle) => (
@@ -163,7 +165,9 @@ export default function ContactsPage() {
             labelId="sort-select-label"
             value={activeSort}
             label={t('contacts.sortBy')}
-            onChange={(e) => (searching ? setSearchSortOption(e.target.value) : setSortOption(e.target.value))}
+            onChange={(e) => {
+              searching ? setSearchSortOption(e.target.value) : setSortOption(e.target.value);
+            }}
           >
             {searching && <MenuItem value="relevance">{t('contacts.sort.relevance')}</MenuItem>}
             <MenuItem value="id-desc">{t('contacts.sort.recentlyAdded')}</MenuItem>
@@ -174,14 +178,24 @@ export default function ContactsPage() {
           </Select>
         </FormControl>
         <FormControlLabel
-          control={<Switch checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} size="small" />}
+          control={
+            <Switch
+              checked={showArchived}
+              onChange={(e) => {
+                setShowArchived(e.target.checked);
+              }}
+              size="small"
+            />
+          }
           label={t('contacts.showArchived')}
           sx={{ ml: 0.5, whiteSpace: 'nowrap' }}
         />
         <Button
           variant="outlined"
           startIcon={<FileUploadIcon />}
-          onClick={() => setImportDialogOpen(true)}
+          onClick={() => {
+            setImportDialogOpen(true);
+          }}
           sx={{ whiteSpace: 'nowrap' }}
         >
           {t('contacts.import.button', 'Import')}
@@ -189,7 +203,9 @@ export default function ContactsPage() {
         <Button
           variant="outlined"
           startIcon={<PersonAddIcon />}
-          onClick={() => setAddDialogOpen(true)}
+          onClick={() => {
+            setAddDialogOpen(true);
+          }}
           sx={{ whiteSpace: 'nowrap' }}
         >
           {t('contacts.add.button')}
@@ -313,7 +329,9 @@ export default function ContactsPage() {
               <Pagination
                 count={Math.max(1, Math.ceil(totalContacts / pageSize))}
                 page={page}
-                onChange={(_, value) => setPage(value)}
+                onChange={(_, value) => {
+                  setPage(value);
+                }}
                 color="primary"
                 size="large"
               />
@@ -323,7 +341,9 @@ export default function ContactsPage() {
       )}
       <AddContactDialog
         open={addDialogOpen}
-        onClose={() => setAddDialogOpen(false)}
+        onClose={() => {
+          setAddDialogOpen(false);
+        }}
         onContactAdded={handleContactAdded}
         availableCircles={circles}
         customFieldNames={customFieldNames}
@@ -331,7 +351,9 @@ export default function ContactsPage() {
       />
       <ImportContactsDialog
         open={importDialogOpen}
-        onClose={() => setImportDialogOpen(false)}
+        onClose={() => {
+          setImportDialogOpen(false);
+        }}
         onImportComplete={handleImportComplete}
       />
     </Box>

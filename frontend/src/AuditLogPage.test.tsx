@@ -68,17 +68,17 @@ describe('AuditLogPage', () => {
     await screen.findByText('alice');
 
     fireEvent.change(screen.getByLabelText('User'), { target: { value: 'ali' } });
-    await waitFor(() =>
-      expect(adminApi.getAuditLog).toHaveBeenLastCalledWith(expect.objectContaining({ username: 'ali', page: 1 })),
-    );
+    await waitFor(() => {
+      expect(adminApi.getAuditLog).toHaveBeenLastCalledWith(expect.objectContaining({ username: 'ali', page: 1 }));
+    });
 
     fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Event' }));
     fireEvent.click(await screen.findByRole('option', { name: 'Failed login' }));
-    await waitFor(() =>
+    await waitFor(() => {
       expect(adminApi.getAuditLog).toHaveBeenLastCalledWith(
         expect.objectContaining({ event: 'login_failed', username: 'ali' }),
-      ),
-    );
+      );
+    });
   });
 
   test('shows an empty state and does not load for non-admins', async () => {

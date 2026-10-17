@@ -40,7 +40,7 @@ export default function NetworkGraph({
   const { t } = useTranslation();
   const theme = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- react-force-graph-2d node/link types are not exported
   const graphRef = useRef<any>(null);
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
   const [hoveredEdge, setHoveredEdge] = useState<GraphEdge | null>(null);
@@ -284,7 +284,7 @@ export default function NetworkGraph({
   }, []);
 
   // Handle link hover
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- react-force-graph-2d node/link types are not exported
   const handleLinkHover = useCallback((link: any) => {
     setHoveredEdge(link as GraphEdge | null);
   }, []);

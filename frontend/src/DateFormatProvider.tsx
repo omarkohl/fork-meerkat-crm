@@ -27,7 +27,7 @@ export function initializeDateFormatFromBackend(dateFormat: string | undefined):
   }
   const supportedDateFormats: DateFormat[] = ['eu', 'us', 'iso'];
   if (dateFormat && supportedDateFormats.includes(dateFormat as DateFormat)) {
-    window.localStorage.setItem(DATE_FORMAT_STORAGE_KEY, dateFormat as DateFormat);
+    window.localStorage.setItem(DATE_FORMAT_STORAGE_KEY, dateFormat);
   }
 }
 

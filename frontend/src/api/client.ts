@@ -44,7 +44,7 @@ export class ApiError extends Error {
   getDisplayMessage(): string {
     if (this.details && Object.keys(this.details).length > 0) {
       const fieldErrors = Object.entries(this.details)
-        .map(([, msg]) => `${msg}`)
+        .map(([, msg]) => msg)
         .join('. ');
       return fieldErrors;
     }
@@ -74,7 +74,9 @@ export async function apiFetch(
 ): Promise<Response> {
   // Create AbortController for timeout
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  const timeoutId = setTimeout(() => {
+    controller.abort();
+  }, timeout);
 
   try {
     const response = await fetch(url, {

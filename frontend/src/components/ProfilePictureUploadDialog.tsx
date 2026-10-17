@@ -64,8 +64,12 @@ async function getCroppedImg(imageSrc: string, pixelCrop: Area, outputSize: numb
 function createImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
-    image.addEventListener('load', () => resolve(image));
-    image.addEventListener('error', (error) => reject(error));
+    image.addEventListener('load', () => {
+      resolve(image);
+    });
+    image.addEventListener('error', (error) => {
+      reject(error);
+    });
     image.src = url;
   });
 }
@@ -240,7 +244,9 @@ export default function ProfilePictureUploadDialog({ open, onClose, onUpload }: 
                 size="small"
                 placeholder={t('profilePicture.urlPlaceholder')}
                 value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
+                onChange={(e) => {
+                  setImageUrl(e.target.value);
+                }}
                 disabled={fetchingUrl}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
@@ -296,7 +302,9 @@ export default function ProfilePictureUploadDialog({ open, onClose, onUpload }: 
                 min={1}
                 max={3}
                 step={0.1}
-                onChange={(_, value) => setZoom(value as number)}
+                onChange={(_, value) => {
+                  setZoom(value);
+                }}
                 aria-label={t('profilePicture.zoom')}
               />
             </Box>

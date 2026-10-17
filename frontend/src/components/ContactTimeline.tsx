@@ -155,7 +155,9 @@ export default function ContactTimeline({ timelineItems, onEditItem, onDeleteCom
                   <IconButton
                     className="action-icon"
                     size="small"
-                    onClick={() => onEditItem(item.type as 'note' | 'activity', item.data as Note | Activity)}
+                    onClick={() => {
+                      onEditItem(item.type as 'note' | 'activity', item.data as Note | Activity);
+                    }}
                     sx={{
                       position: 'absolute',
                       top: 8,

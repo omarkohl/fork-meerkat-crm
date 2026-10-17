@@ -182,7 +182,9 @@ export default function CustomFieldsSettings() {
                             </IconButton>
                             <IconButton
                               size="small"
-                              onClick={() => handleDeleteClick(index)}
+                              onClick={() => {
+                                handleDeleteClick(index);
+                              }}
                               disabled={saving}
                               aria-label={t('settings.customFields.delete')}
                               color="error"
@@ -207,7 +209,9 @@ export default function CustomFieldsSettings() {
                     size="small"
                     placeholder={t('settings.customFields.newFieldPlaceholder')}
                     value={newFieldName}
-                    onChange={(e) => setNewFieldName(e.target.value)}
+                    onChange={(e) => {
+                      setNewFieldName(e.target.value);
+                    }}
                     onKeyDown={handleKeyDown}
                     disabled={saving}
                     sx={{ flexGrow: 1 }}
@@ -229,7 +233,12 @@ export default function CustomFieldsSettings() {
         </CardContent>
       </Card>
 
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+        }}
+      >
         <DialogTitle>{t('settings.customFields.deleteDialog.title')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
@@ -239,7 +248,13 @@ export default function CustomFieldsSettings() {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>{t('settings.customFields.deleteDialog.cancel')}</Button>
+          <Button
+            onClick={() => {
+              setDeleteDialogOpen(false);
+            }}
+          >
+            {t('settings.customFields.deleteDialog.cancel')}
+          </Button>
           <Button onClick={handleDeleteConfirm} color="error" autoFocus>
             {t('settings.customFields.deleteDialog.confirm')}
           </Button>

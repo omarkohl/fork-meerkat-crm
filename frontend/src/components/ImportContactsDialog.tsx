@@ -446,7 +446,9 @@ export default function ImportContactsDialog({ open, onClose, onImportComplete }
                       <FormControl size="small" sx={{ minWidth: 180 }} error={isConflict}>
                         <Select
                           value={mapping.contact_field}
-                          onChange={(e) => handleMappingChange(index, e.target.value)}
+                          onChange={(e) => {
+                            handleMappingChange(index, e.target.value);
+                          }}
                           displayEmpty
                         >
                           <MenuItem value="">
@@ -489,14 +491,18 @@ export default function ImportContactsDialog({ open, onClose, onImportComplete }
     );
     const chipFilterProps = (key: PreviewFilter) => ({
       variant: filter?.key === key ? ('filled' as const) : ('outlined' as const),
-      onClick: () => toggleFilter(key),
+      onClick: () => {
+        toggleFilter(key);
+      },
       'aria-pressed': filter?.key === key,
     });
     const sortHeader = (key: PreviewSortKey, label: string) => (
       <TableSortLabel
         active={sort.key === key}
         direction={sort.key === key ? sort.direction : 'asc'}
-        onClick={() => toggleSort(key)}
+        onClick={() => {
+          toggleSort(key);
+        }}
       >
         {label}
       </TableSortLabel>
@@ -552,7 +558,9 @@ export default function ImportContactsDialog({ open, onClose, onImportComplete }
             <Select
               displayEmpty
               value=""
-              onChange={(e) => applyActionToRows(shownRows, e.target.value)}
+              onChange={(e) => {
+                applyActionToRows(shownRows, e.target.value);
+              }}
               inputProps={{ 'aria-label': t('contacts.import.preview.setAll', 'Set action for all shown rows') }}
             >
               <MenuItem value="" disabled>
@@ -659,7 +667,9 @@ export default function ImportContactsDialog({ open, onClose, onImportComplete }
                     <FormControl size="small" fullWidth>
                       <Select
                         value={rowActions.get(row.row_index) || 'skip'}
-                        onChange={(e) => handleRowActionChange(row.row_index, e.target.value)}
+                        onChange={(e) => {
+                          handleRowActionChange(row.row_index, e.target.value);
+                        }}
                         disabled={row.validation_errors.length > 0}
                       >
                         <MenuItem value="skip">{t('contacts.import.preview.actionSkip', 'Skip')}</MenuItem>
@@ -857,7 +867,13 @@ export default function ImportContactsDialog({ open, onClose, onImportComplete }
 
         {/* Error alert */}
         {error && (
-          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          <Alert
+            severity="error"
+            sx={{ mb: 2 }}
+            onClose={() => {
+              setError(null);
+            }}
+          >
             {error}
           </Alert>
         )}

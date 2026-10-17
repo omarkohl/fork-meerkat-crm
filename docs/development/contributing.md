@@ -24,7 +24,7 @@ Optional: [lefthook](https://lefthook.dev) can run gofmt, Prettier, ESLint and t
 
 **Backend:** Standard Go formatting (`gofmt`), checked together with `golangci-lint` (config in `backend/.golangci.yml`: errcheck, staticcheck, gosec, revive, bodyclose, sqlclosecheck). `make precommit` runs it; the `golangci-lint` binary must be installed (or run `cd backend && golangci-lint run`). Follow existing controller and service patterns with thin controllers, logic in services, always scope queries by `user_id`.
 
-**Frontend:** Prettier formatting (`make format` fixes all files), ESLint without warnings and `tsc --noEmit`. TypeScript strict mode and MUI for all UI components. All user-facing strings through `i18next`. Custom hooks for data fetching, not inline `useEffect` + `fetch`.
+**Frontend:** Prettier formatting (`make format` fixes all files), `tsc --noEmit` and ESLint 9 on `src` (`frontend/eslint.config.mjs`: `typescript-eslint` strict-type-checked, `react-hooks`, `jsx-a11y`, `eslint-comments`; every rule is an error). Findings that exist today are bulk-suppressed in `frontend/eslint-suppressions.json`; new violations fail, and fixed ones must be pruned (details and the reason per rule: [frontend](frontend.md#linting)). An `eslint-disable` needs a rule name and a description (`// eslint-disable-next-line rule -- why`). `react-scripts` bundles ESLint 8, so its own ESLint plugin is off (`DISABLE_ESLINT_PLUGIN` in the `start` and `build` scripts); `make lint-frontend` is the check. TypeScript strict mode and MUI for all UI components. All user-facing strings through `i18next`. Custom hooks for data fetching, not inline `useEffect` + `fetch`.
 
 ## Continuous integration
 

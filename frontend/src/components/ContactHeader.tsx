@@ -161,14 +161,18 @@ export default function ContactHeader({
                   <TextField
                     label={t('contacts.prefix')}
                     value={profileValues.prefix}
-                    onChange={(e) => onProfileValueChange({ ...profileValues, prefix: e.target.value })}
+                    onChange={(e) => {
+                      onProfileValueChange({ ...profileValues, prefix: e.target.value });
+                    }}
                     size="small"
                   />
                 )}
                 <TextField
                   label={t('contactDetail.firstname')}
                   value={profileValues.firstname}
-                  onChange={(e) => onProfileValueChange({ ...profileValues, firstname: e.target.value })}
+                  onChange={(e) => {
+                    onProfileValueChange({ ...profileValues, firstname: e.target.value });
+                  }}
                   size="small"
                   required
                   autoFocus
@@ -177,35 +181,45 @@ export default function ContactHeader({
                   <TextField
                     label={t('contacts.middleName')}
                     value={profileValues.middle_name}
-                    onChange={(e) => onProfileValueChange({ ...profileValues, middle_name: e.target.value })}
+                    onChange={(e) => {
+                      onProfileValueChange({ ...profileValues, middle_name: e.target.value });
+                    }}
                     size="small"
                   />
                 )}
                 <TextField
                   label={t('contactDetail.lastname')}
                   value={profileValues.lastname}
-                  onChange={(e) => onProfileValueChange({ ...profileValues, lastname: e.target.value })}
+                  onChange={(e) => {
+                    onProfileValueChange({ ...profileValues, lastname: e.target.value });
+                  }}
                   size="small"
                 />
                 {isOn('suffix') && (
                   <TextField
                     label={t('contacts.suffix')}
                     value={profileValues.suffix}
-                    onChange={(e) => onProfileValueChange({ ...profileValues, suffix: e.target.value })}
+                    onChange={(e) => {
+                      onProfileValueChange({ ...profileValues, suffix: e.target.value });
+                    }}
                     size="small"
                   />
                 )}
                 <TextField
                   label={t('contactDetail.nickname')}
                   value={profileValues.nickname}
-                  onChange={(e) => onProfileValueChange({ ...profileValues, nickname: e.target.value })}
+                  onChange={(e) => {
+                    onProfileValueChange({ ...profileValues, nickname: e.target.value });
+                  }}
                   size="small"
                 />
                 <TextField
                   select
                   label={t('contactDetail.gender')}
                   value={profileValues.gender}
-                  onChange={(e) => onProfileValueChange({ ...profileValues, gender: e.target.value })}
+                  onChange={(e) => {
+                    onProfileValueChange({ ...profileValues, gender: e.target.value });
+                  }}
                   size="small"
                   SelectProps={{ native: true }}
                 >
@@ -349,7 +363,9 @@ export default function ContactHeader({
                           label={circle}
                           size="small"
                           color="primary"
-                          onDelete={() => onDeleteCircle(circle)}
+                          onDelete={() => {
+                            onDeleteCircle(circle);
+                          }}
                         />
                       ))
                     ) : (
@@ -379,7 +395,9 @@ export default function ContactHeader({
                       size="small"
                       placeholder={t('contactDetail.newCircle')}
                       value={newCircleName}
-                      onChange={(e) => onNewCircleNameChange(e.target.value)}
+                      onChange={(e) => {
+                        onNewCircleNameChange(e.target.value);
+                      }}
                       onKeyPress={(e) => {
                         if (e.key === 'Enter') {
                           onAddCircle();
@@ -390,7 +408,9 @@ export default function ContactHeader({
                     <IconButton
                       size="small"
                       color="primary"
-                      onClick={() => onAddCircle()}
+                      onClick={() => {
+                        onAddCircle();
+                      }}
                       disabled={!newCircleName.trim()}
                     >
                       <AddIcon />

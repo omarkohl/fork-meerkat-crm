@@ -166,7 +166,13 @@ export default function ReminderList({ reminders, onComplete, onEdit, onDelete }
                     }}
                   >
                     <Tooltip title={t('common.edit')}>
-                      <IconButton size="small" onClick={() => onEdit(reminder)} disabled={loading === reminder.ID}>
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          onEdit(reminder);
+                        }}
+                        disabled={loading === reminder.ID}
+                      >
                         <EditIcon />
                       </IconButton>
                     </Tooltip>
@@ -174,7 +180,9 @@ export default function ReminderList({ reminders, onComplete, onEdit, onDelete }
                     <Tooltip title={t('common.delete')}>
                       <IconButton
                         size="small"
-                        onClick={() => handleDeleteClick(reminder.ID)}
+                        onClick={() => {
+                          handleDeleteClick(reminder.ID);
+                        }}
                         disabled={loading === reminder.ID}
                         color="error"
                       >
@@ -190,13 +198,23 @@ export default function ReminderList({ reminders, onComplete, onEdit, onDelete }
       </Stack>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+        }}
+      >
         <DialogTitle>{t('reminders.deleteConfirm')}</DialogTitle>
         <DialogContent>
           <DialogContentText>{t('reminders.deleteMessage')}</DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)} disabled={loading !== null}>
+          <Button
+            onClick={() => {
+              setDeleteDialogOpen(false);
+            }}
+            disabled={loading !== null}
+          >
             {t('common.cancel')}
           </Button>
           <Button onClick={handleDeleteConfirm} color="error" variant="contained" disabled={loading !== null}>

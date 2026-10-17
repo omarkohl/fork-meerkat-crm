@@ -62,7 +62,9 @@ describe('SessionsSettings', () => {
     vi.mocked(sessionsApi.revokeSession).mockResolvedValue();
     renderIt();
     fireEvent.click(await screen.findByRole('button', { name: 'Sign out Firefox on Linux' }));
-    await waitFor(() => expect(sessionsApi.revokeSession).toHaveBeenCalledWith('a'.repeat(32)));
+    await waitFor(() => {
+      expect(sessionsApi.revokeSession).toHaveBeenCalledWith('a'.repeat(32));
+    });
     await waitFor(() => expect(screen.queryByText('Firefox on Linux')).not.toBeInTheDocument());
   });
 
@@ -75,7 +77,9 @@ describe('SessionsSettings', () => {
     expect(sessionsApi.signOutEverywhere).not.toHaveBeenCalled();
     const dialog = await screen.findByRole('dialog');
     fireEvent.click(within(dialog).getByRole('button', { name: 'Sign out everywhere' }));
-    await waitFor(() => expect(sessionsApi.signOutEverywhere).toHaveBeenCalled());
+    await waitFor(() => {
+      expect(sessionsApi.signOutEverywhere).toHaveBeenCalled();
+    });
   });
 
   test('shows an error when loading fails', async () => {

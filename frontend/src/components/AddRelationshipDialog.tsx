@@ -123,7 +123,7 @@ export default function AddRelationshipDialog({
             ID: relationship.related_contact.ID,
             firstname: relationship.related_contact.firstname,
             lastname: relationship.related_contact.lastname,
-          } as Contact);
+          });
         }
       } else {
         setEntryMode('manual');
@@ -142,7 +142,9 @@ export default function AddRelationshipDialog({
       loadContacts(searchInput);
     }, 300);
 
-    return () => clearTimeout(timeoutId);
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, [searchInput, entryMode, loadContacts]);
 
   const resetForm = () => {
@@ -286,7 +288,13 @@ export default function AddRelationshipDialog({
           {/* Entry mode selection */}
           <FormControl component="fieldset">
             <FormLabel component="legend">{t('relationships.entryMode')}</FormLabel>
-            <RadioGroup row value={entryMode} onChange={(e) => handleModeChange(e.target.value as EntryMode)}>
+            <RadioGroup
+              row
+              value={entryMode}
+              onChange={(e) => {
+                handleModeChange(e.target.value as EntryMode);
+              }}
+            >
               <FormControlLabel value="manual" control={<Radio />} label={t('relationships.enterManually')} />
               <FormControlLabel value="new" control={<Radio />} label={t('relationships.createNewContact')} />
               <FormControlLabel value="linked" control={<Radio />} label={t('relationships.linkToContact')} />
@@ -305,7 +313,9 @@ export default function AddRelationshipDialog({
               options={contacts}
               getOptionLabel={(option) => `${option.firstname} ${option.lastname}`}
               value={selectedContact}
-              onChange={(_, value) => handleContactSelect(value)}
+              onChange={(_, value) => {
+                handleContactSelect(value);
+              }}
               onInputChange={(_, value, reason) => {
                 if (reason === 'input') {
                   setSearchInput(value);
@@ -417,7 +427,13 @@ export default function AddRelationshipDialog({
           {entryMode !== 'linked' && (
             <FormControl fullWidth disabled={!!createdContact}>
               <InputLabel>{t('contacts.gender')}</InputLabel>
-              <Select value={gender} label={t('contacts.gender')} onChange={(e) => setGender(e.target.value)}>
+              <Select
+                value={gender}
+                label={t('contacts.gender')}
+                onChange={(e) => {
+                  setGender(e.target.value);
+                }}
+              >
                 <MenuItem value="">{t('contacts.selectGender')}</MenuItem>
                 <MenuItem value="male">{t('contacts.male')}</MenuItem>
                 <MenuItem value="female">{t('contacts.female')}</MenuItem>
@@ -431,7 +447,9 @@ export default function AddRelationshipDialog({
             <TextField
               label={t('contacts.birthday')}
               value={birthday}
-              onChange={(e) => setBirthday(autoFormatBirthdayInput(e.target.value, birthday))}
+              onChange={(e) => {
+                setBirthday(autoFormatBirthdayInput(e.target.value, birthday));
+              }}
               placeholder={getBirthdayPlaceholder()}
               fullWidth
               disabled={!!createdContact}

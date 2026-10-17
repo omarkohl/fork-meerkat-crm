@@ -333,10 +333,22 @@ export default function UsersPage() {
                       <LockResetIcon fontSize="small" />
                     </IconButton>
                   )}
-                  <IconButton size="small" onClick={() => handleEditClick(user)} title={t('common.edit')}>
+                  <IconButton
+                    size="small"
+                    onClick={() => {
+                      handleEditClick(user);
+                    }}
+                    title={t('common.edit')}
+                  >
                     <EditIcon fontSize="small" />
                   </IconButton>
-                  <IconButton size="small" onClick={() => handleDeleteClick(user)} title={t('common.delete')}>
+                  <IconButton
+                    size="small"
+                    onClick={() => {
+                      handleDeleteClick(user);
+                    }}
+                    title={t('common.delete')}
+                  >
                     <DeleteIcon fontSize="small" />
                   </IconButton>
                 </TableCell>
@@ -372,7 +384,9 @@ export default function UsersPage() {
               <TextField
                 label={t('users.editDialog.username')}
                 value={editForm.username || ''}
-                onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+                onChange={(e) => {
+                  setEditForm({ ...editForm, username: e.target.value });
+                }}
                 fullWidth
                 size="small"
               />
@@ -380,7 +394,9 @@ export default function UsersPage() {
                 label={t('users.editDialog.email')}
                 type="email"
                 value={editForm.email || ''}
-                onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                onChange={(e) => {
+                  setEditForm({ ...editForm, email: e.target.value });
+                }}
                 fullWidth
                 size="small"
               />
@@ -388,7 +404,9 @@ export default function UsersPage() {
                 label={t('users.editDialog.password')}
                 type="password"
                 value={editForm.password || ''}
-                onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                onChange={(e) => {
+                  setEditForm({ ...editForm, password: e.target.value });
+                }}
                 fullWidth
                 size="small"
                 helperText={t('users.editDialog.passwordHint')}
@@ -397,7 +415,9 @@ export default function UsersPage() {
                 control={
                   <Switch
                     checked={editForm.is_admin || false}
-                    onChange={(e) => setEditForm({ ...editForm, is_admin: e.target.checked })}
+                    onChange={(e) => {
+                      setEditForm({ ...editForm, is_admin: e.target.checked });
+                    }}
                   />
                 }
                 label={t('users.editDialog.isAdmin')}
@@ -416,7 +436,12 @@ export default function UsersPage() {
       </AppDialog>
 
       {/* Reset two-factor dialog */}
-      <Dialog open={resetUser !== null} onClose={() => setResetUser(null)}>
+      <Dialog
+        open={resetUser !== null}
+        onClose={() => {
+          setResetUser(null);
+        }}
+      >
         <DialogTitle>{t('users.twoFactor.resetDialog.title')}</DialogTitle>
         <DialogContent>
           {resetError && (
@@ -430,7 +455,12 @@ export default function UsersPage() {
           </Alert>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setResetUser(null)} disabled={resetLoading}>
+          <Button
+            onClick={() => {
+              setResetUser(null);
+            }}
+            disabled={resetLoading}
+          >
             {t('common.cancel')}
           </Button>
           <Button onClick={handleResetConfirm} color="error" variant="contained" disabled={resetLoading}>

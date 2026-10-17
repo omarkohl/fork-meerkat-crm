@@ -59,7 +59,9 @@ export default function MultiValueField({
                 label={t('contacts.fieldType')}
                 size="small"
                 value={row.type}
-                onChange={(e) => updateRow(index, { type: e.target.value })}
+                onChange={(e) => {
+                  updateRow(index, { type: e.target.value });
+                }}
                 sx={{ minWidth: 120 }}
               />
             ) : (
@@ -69,10 +71,12 @@ export default function MultiValueField({
               // exported as vCard X-ABLabel and round-trip via CardDAV.
               <Autocomplete
                 freeSolo
-                options={typeOptions as readonly string[]}
+                options={typeOptions}
                 value={row.type}
                 getOptionLabel={(opt) => t(`contacts.types.${opt}`, opt)}
-                onChange={(_, newValue) => updateRow(index, { type: (newValue ?? '').trim() })}
+                onChange={(_, newValue) => {
+                  updateRow(index, { type: (newValue ?? '').trim() });
+                }}
                 onInputChange={(_, newInput, reason) => {
                   if (reason === 'input') updateRow(index, { type: newInput });
                 }}
@@ -86,9 +90,18 @@ export default function MultiValueField({
               type={valueType}
               fullWidth
               value={row.value}
-              onChange={(e) => updateRow(index, { value: e.target.value })}
+              onChange={(e) => {
+                updateRow(index, { value: e.target.value });
+              }}
             />
-            <IconButton size="small" color="error" onClick={() => removeRow(index)} aria-label={t('common.delete')}>
+            <IconButton
+              size="small"
+              color="error"
+              onClick={() => {
+                removeRow(index);
+              }}
+              aria-label={t('common.delete')}
+            >
               <DeleteIcon fontSize="small" />
             </IconButton>
           </Stack>

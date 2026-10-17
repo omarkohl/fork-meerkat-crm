@@ -218,14 +218,21 @@ function DashboardPage() {
             <Typography variant="subtitle1" fontWeight={500}>
               {t('dashboard.upcomingBirthdays')}
             </Typography>
-            <IconButton size="small" onClick={(e) => setBirthdaysInfoAnchor(e.currentTarget)}>
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                setBirthdaysInfoAnchor(e.currentTarget);
+              }}
+            >
               <InfoOutlinedIcon fontSize="small" />
             </IconButton>
           </Box>
           <Popover
             open={Boolean(birthdaysInfoAnchor)}
             anchorEl={birthdaysInfoAnchor}
-            onClose={() => setBirthdaysInfoAnchor(null)}
+            onClose={() => {
+              setBirthdaysInfoAnchor(null);
+            }}
             anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
           >
             <Box sx={{ p: 2, maxWidth: 320 }}>
@@ -309,14 +316,21 @@ function DashboardPage() {
             <Typography variant="subtitle1" fontWeight={500}>
               {t('dashboard.upcomingReminders')}
             </Typography>
-            <IconButton size="small" onClick={(e) => setRemindersInfoAnchor(e.currentTarget)}>
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                setRemindersInfoAnchor(e.currentTarget);
+              }}
+            >
               <InfoOutlinedIcon fontSize="small" />
             </IconButton>
           </Box>
           <Popover
             open={Boolean(remindersInfoAnchor)}
             anchorEl={remindersInfoAnchor}
-            onClose={() => setRemindersInfoAnchor(null)}
+            onClose={() => {
+              setRemindersInfoAnchor(null);
+            }}
             anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
           >
             <Box sx={{ p: 2, maxWidth: 320 }}>
@@ -447,14 +461,21 @@ function DashboardPage() {
             <Typography variant="subtitle1" fontWeight={500}>
               {t('dashboard.randomContacts')}
             </Typography>
-            <IconButton size="small" onClick={(e) => setStayInTouchInfoAnchor(e.currentTarget)}>
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                setStayInTouchInfoAnchor(e.currentTarget);
+              }}
+            >
               <InfoOutlinedIcon fontSize="small" />
             </IconButton>
           </Box>
           <Popover
             open={Boolean(stayInTouchInfoAnchor)}
             anchorEl={stayInTouchInfoAnchor}
-            onClose={() => setStayInTouchInfoAnchor(null)}
+            onClose={() => {
+              setStayInTouchInfoAnchor(null);
+            }}
             anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
           >
             <Box sx={{ p: 2, maxWidth: 320 }}>

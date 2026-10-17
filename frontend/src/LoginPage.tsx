@@ -93,7 +93,9 @@ export default function LoginPage({ setToken }: LoginPageProps) {
               <TextField
                 label={useRecovery ? t('login.twoFactor.recoveryCode') : t('login.twoFactor.code')}
                 value={code}
-                onChange={(e) => setCode(e.target.value)}
+                onChange={(e) => {
+                  setCode(e.target.value);
+                }}
                 required
                 fullWidth
                 autoFocus
@@ -136,7 +138,9 @@ export default function LoginPage({ setToken }: LoginPageProps) {
                 label={t('login.identifier')}
                 type="text"
                 value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
+                onChange={(e) => {
+                  setIdentifier(e.target.value);
+                }}
                 required
                 fullWidth
               />
@@ -144,7 +148,9 @@ export default function LoginPage({ setToken }: LoginPageProps) {
                 label={t('login.password')}
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                }}
                 required
                 fullWidth
               />
@@ -152,7 +158,13 @@ export default function LoginPage({ setToken }: LoginPageProps) {
               <Button type="submit" variant="contained" color="primary" disabled={loading}>
                 {loading ? t('login.loggingIn') : t('login.loginButton')}
               </Button>
-              <Button variant="text" color="secondary" onClick={() => setForgotOpen(true)}>
+              <Button
+                variant="text"
+                color="secondary"
+                onClick={() => {
+                  setForgotOpen(true);
+                }}
+              >
                 {t('login.forgotPassword')}
               </Button>
               <Button component={Link} to="/register" color="secondary" variant="text">
@@ -176,7 +188,12 @@ export default function LoginPage({ setToken }: LoginPageProps) {
           </form>
         )}
       </Paper>
-      <ForgotPasswordDialog open={forgotOpen} onClose={() => setForgotOpen(false)} />
+      <ForgotPasswordDialog
+        open={forgotOpen}
+        onClose={() => {
+          setForgotOpen(false);
+        }}
+      />
     </Box>
   );
 }

@@ -131,7 +131,9 @@ function AppContent({ token, setToken }: { token: string | null; setToken: (toke
       }
     }, 300);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+    };
   }, [searchQuery, token]);
 
   // The header search is a quick jump, not a page filter: leaving the page discards it
@@ -241,7 +243,9 @@ function AppContent({ token, setToken }: { token: string | null; setToken: (toke
         <ListItem disablePadding>
           <Tooltip title={collapsed ? t('nav.settings') : ''} placement="right">
             <ListItemButton
-              onClick={(event) => handleSettingsMenuToggle(event, collapsed)}
+              onClick={(event) => {
+                handleSettingsMenuToggle(event, collapsed);
+              }}
               selected={isSettingsActive && (collapsed || !settingsMenuOpen)}
               sx={{
                 justifyContent: collapsed ? 'center' : 'flex-start',
@@ -374,7 +378,9 @@ function AppContent({ token, setToken }: { token: string | null; setToken: (toke
               typeof option === 'string' ? option : `${option.firstname} ${option.lastname}`
             }
             loading={searchLoading}
-            onInputChange={(_, value) => setSearchQuery(value)}
+            onInputChange={(_, value) => {
+              setSearchQuery(value);
+            }}
             onChange={(_, value) => {
               if (value && typeof value !== 'string') {
                 navigate(`/contacts/${value.ID}`);
@@ -742,7 +748,7 @@ function App() {
         if (info) setToken(getToken());
       });
     }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     // Listen for storage changes (e.g., logout in another tab)
@@ -752,7 +758,9 @@ function App() {
       }
     };
     window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+    };
   }, []);
 
   return (

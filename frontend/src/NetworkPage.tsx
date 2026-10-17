@@ -161,7 +161,7 @@ export default function NetworkPage() {
     }
   };
 
-  const handleCircleChange = (event: SelectChangeEvent<string>) => {
+  const handleCircleChange = (event: SelectChangeEvent) => {
     updateFilters({ selectedCircle: event.target.value });
   };
 
@@ -214,7 +214,9 @@ export default function NetworkPage() {
           options={contactNodes}
           getOptionLabel={(n) => n.label}
           value={contactNodes.find((n) => n.id === centeredNodeId) ?? null}
-          onChange={(_e, node) => setCenteredNodeId(node ? node.id : null)}
+          onChange={(_e, node) => {
+            setCenteredNodeId(node ? node.id : null);
+          }}
           renderInput={(params) => <TextField {...params} label={t('network.filterByContact')} />}
           clearOnEscape
         />
@@ -235,7 +237,9 @@ export default function NetworkPage() {
           control={
             <Switch
               checked={showRelationships}
-              onChange={(e) => updateFilters({ showRelationships: e.target.checked })}
+              onChange={(e) => {
+                updateFilters({ showRelationships: e.target.checked });
+              }}
               color="primary"
             />
           }
@@ -246,7 +250,9 @@ export default function NetworkPage() {
           control={
             <Switch
               checked={showActivities}
-              onChange={(e) => updateFilters({ showActivities: e.target.checked })}
+              onChange={(e) => {
+                updateFilters({ showActivities: e.target.checked });
+              }}
               color="secondary"
             />
           }
@@ -257,7 +263,9 @@ export default function NetworkPage() {
           control={
             <Switch
               checked={showCircles}
-              onChange={(e) => updateFilters({ showCircles: e.target.checked })}
+              onChange={(e) => {
+                updateFilters({ showCircles: e.target.checked });
+              }}
               color="warning"
             />
           }

@@ -105,7 +105,9 @@ export default function TrashPage() {
               color="error"
               size="small"
               disabled={loading || contacts.length === 0}
-              onClick={() => setEmptyOpen(true)}
+              onClick={() => {
+                setEmptyOpen(true);
+              }}
             >
               {t('trash.emptyButton')}
             </Button>
@@ -160,7 +162,9 @@ export default function TrashPage() {
                         color="error"
                         aria-label={t('trash.purgeAria', { name: displayName(contact) })}
                         disabled={busyId === contact.id}
-                        onClick={() => setPurgeTarget(contact)}
+                        onClick={() => {
+                          setPurgeTarget(contact);
+                        }}
                       >
                         <DeleteForeverIcon />
                       </IconButton>
@@ -173,7 +177,12 @@ export default function TrashPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={purgeTarget !== null} onClose={() => setPurgeTarget(null)}>
+      <Dialog
+        open={purgeTarget !== null}
+        onClose={() => {
+          setPurgeTarget(null);
+        }}
+      >
         <DialogTitle>{t('trash.purgeDialog.title')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
@@ -181,7 +190,12 @@ export default function TrashPage() {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setPurgeTarget(null)} disabled={confirmBusy}>
+          <Button
+            onClick={() => {
+              setPurgeTarget(null);
+            }}
+            disabled={confirmBusy}
+          >
             {t('common.cancel')}
           </Button>
           <Button color="error" variant="contained" onClick={handlePurge} disabled={confirmBusy}>
@@ -190,13 +204,23 @@ export default function TrashPage() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={emptyOpen} onClose={() => setEmptyOpen(false)}>
+      <Dialog
+        open={emptyOpen}
+        onClose={() => {
+          setEmptyOpen(false);
+        }}
+      >
         <DialogTitle>{t('trash.emptyDialog.title')}</DialogTitle>
         <DialogContent>
           <DialogContentText>{t('trash.emptyDialog.message', { count: contacts.length })}</DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEmptyOpen(false)} disabled={confirmBusy}>
+          <Button
+            onClick={() => {
+              setEmptyOpen(false);
+            }}
+            disabled={confirmBusy}
+          >
             {t('common.cancel')}
           </Button>
           <Button color="error" variant="contained" onClick={handleEmpty} disabled={confirmBusy}>

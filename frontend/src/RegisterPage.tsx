@@ -70,7 +70,9 @@ export default function RegisterPage() {
             <TextField
               label={t('register.username')}
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => {
+                setUsername(e.target.value);
+              }}
               required
               fullWidth
             />
@@ -78,7 +80,9 @@ export default function RegisterPage() {
               label={t('register.email')}
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+              }}
               required
               fullWidth
             />
@@ -86,7 +90,9 @@ export default function RegisterPage() {
               label={t('register.password')}
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+              }}
               required
               fullWidth
             />

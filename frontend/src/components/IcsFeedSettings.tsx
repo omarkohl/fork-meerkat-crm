@@ -38,7 +38,12 @@ export default function IcsFeedSettings() {
   const [copied, setCopied] = useState(false);
   const copiedTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  useEffect(() => () => clearTimeout(copiedTimer.current), []);
+  useEffect(
+    () => () => {
+      clearTimeout(copiedTimer.current);
+    },
+    [],
+  );
 
   const [confirm, setConfirm] = useState<'regenerate' | 'revoke' | null>(null);
 
@@ -97,7 +102,9 @@ export default function IcsFeedSettings() {
       await navigator.clipboard.writeText(feedUrl);
       setCopied(true);
       clearTimeout(copiedTimer.current);
-      copiedTimer.current = setTimeout(() => setCopied(false), 2000);
+      copiedTimer.current = setTimeout(() => {
+        setCopied(false);
+      }, 2000);
     } catch {
       showError(t('icsFeed.copyError'));
     }
@@ -134,7 +141,14 @@ export default function IcsFeedSettings() {
                     ? t('icsFeed.lastFetched', { date: new Date(status.last_fetched_at).toLocaleString() })
                     : t('icsFeed.neverFetched')}
                 </Typography>
-                <Button variant="outlined" size="small" disabled={busy} onClick={() => setConfirm('regenerate')}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  disabled={busy}
+                  onClick={() => {
+                    setConfirm('regenerate');
+                  }}
+                >
                   {t('icsFeed.regenerateButton')}
                 </Button>
                 <Button
@@ -142,7 +156,9 @@ export default function IcsFeedSettings() {
                   color="error"
                   size="small"
                   disabled={busy}
-                  onClick={() => setConfirm('revoke')}
+                  onClick={() => {
+                    setConfirm('revoke');
+                  }}
                 >
                   {t('icsFeed.revokeButton')}
                 </Button>
@@ -161,7 +177,14 @@ export default function IcsFeedSettings() {
         )}
       </CardContent>
 
-      <Dialog open={!!feedUrl} onClose={() => setFeedUrl(null)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={!!feedUrl}
+        onClose={() => {
+          setFeedUrl(null);
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>{t('icsFeed.createdDialog.title')}</DialogTitle>
         <DialogContent>
           <Alert severity="warning" sx={{ mb: 2 }}>
@@ -188,13 +211,23 @@ export default function IcsFeedSettings() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" onClick={() => setFeedUrl(null)}>
+          <Button
+            variant="contained"
+            onClick={() => {
+              setFeedUrl(null);
+            }}
+          >
             {t('icsFeed.createdDialog.done')}
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={confirm !== null} onClose={() => setConfirm(null)}>
+      <Dialog
+        open={confirm !== null}
+        onClose={() => {
+          setConfirm(null);
+        }}
+      >
         <DialogTitle>
           {confirm === 'revoke' ? t('icsFeed.revokeDialog.title') : t('icsFeed.regenerateDialog.title')}
         </DialogTitle>
@@ -204,7 +237,12 @@ export default function IcsFeedSettings() {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirm(null)} disabled={busy}>
+          <Button
+            onClick={() => {
+              setConfirm(null);
+            }}
+            disabled={busy}
+          >
             {t('common.cancel')}
           </Button>
           <Button

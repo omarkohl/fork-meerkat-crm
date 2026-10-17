@@ -237,12 +237,24 @@ export default function WebhooksSettings() {
             </Typography>
 
             {error && (
-              <Alert severity="error" sx={{ py: 0 }} onClose={() => setError('')}>
+              <Alert
+                severity="error"
+                sx={{ py: 0 }}
+                onClose={() => {
+                  setError('');
+                }}
+              >
                 {error}
               </Alert>
             )}
             {success && (
-              <Alert severity="success" sx={{ py: 0 }} onClose={() => setSuccess('')}>
+              <Alert
+                severity="success"
+                sx={{ py: 0 }}
+                onClose={() => {
+                  setSuccess('');
+                }}
+              >
                 {success}
               </Alert>
             )}
@@ -271,12 +283,20 @@ export default function WebhooksSettings() {
                           >
                             <PlayArrowIcon fontSize="small" />
                           </IconButton>
-                          <IconButton size="small" onClick={() => openEdit(wh)} title={t('settings.webhooks.edit')}>
+                          <IconButton
+                            size="small"
+                            onClick={() => {
+                              openEdit(wh);
+                            }}
+                            title={t('settings.webhooks.edit')}
+                          >
                             <EditIcon fontSize="small" />
                           </IconButton>
                           <IconButton
                             size="small"
-                            onClick={() => handleDeleteClick(wh)}
+                            onClick={() => {
+                              handleDeleteClick(wh);
+                            }}
                             color="error"
                             title={t('settings.webhooks.delete')}
                           >
@@ -391,7 +411,14 @@ export default function WebhooksSettings() {
       </Card>
 
       {/* Add/Edit dialog */}
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={dialogOpen}
+        onClose={() => {
+          setDialogOpen(false);
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>
           {editingId !== null ? t('settings.webhooks.editTitle') : t('settings.webhooks.addTitle')}
         </DialogTitle>
@@ -400,7 +427,9 @@ export default function WebhooksSettings() {
             <TextField
               label={t('settings.webhooks.name')}
               value={form.name}
-              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              onChange={(e) => {
+                setForm((f) => ({ ...f, name: e.target.value }));
+              }}
               size="small"
               required
               fullWidth
@@ -408,7 +437,9 @@ export default function WebhooksSettings() {
             <TextField
               label={t('settings.webhooks.url')}
               value={form.url}
-              onChange={(e) => setForm((f) => ({ ...f, url: e.target.value }))}
+              onChange={(e) => {
+                setForm((f) => ({ ...f, url: e.target.value }));
+              }}
               size="small"
               required
               fullWidth
@@ -418,7 +449,9 @@ export default function WebhooksSettings() {
               multiple
               options={SUPPORTED_EVENTS}
               value={form.events}
-              onChange={(_, value) => setForm((f) => ({ ...f, events: value }))}
+              onChange={(_, value) => {
+                setForm((f) => ({ ...f, events: value }));
+              }}
               getOptionLabel={getEventLabel}
               renderInput={(params) => (
                 <TextField {...params} label={t('settings.webhooks.events')} size="small" required />
@@ -433,7 +466,9 @@ export default function WebhooksSettings() {
               control={
                 <Switch
                   checked={form.is_active}
-                  onChange={(e) => setForm((f) => ({ ...f, is_active: e.target.checked }))}
+                  onChange={(e) => {
+                    setForm((f) => ({ ...f, is_active: e.target.checked }));
+                  }}
                   size="small"
                 />
               }
@@ -442,7 +477,13 @@ export default function WebhooksSettings() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>{t('settings.webhooks.cancel')}</Button>
+          <Button
+            onClick={() => {
+              setDialogOpen(false);
+            }}
+          >
+            {t('settings.webhooks.cancel')}
+          </Button>
           <Button
             onClick={handleSave}
             variant="contained"
@@ -454,7 +495,14 @@ export default function WebhooksSettings() {
       </Dialog>
 
       {/* Secret revealed dialog — shown once after creation */}
-      <Dialog open={!!createdWebhook} onClose={() => setCreatedWebhook(null)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={!!createdWebhook}
+        onClose={() => {
+          setCreatedWebhook(null);
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>{t('settings.webhooks.secretDialog.title')}</DialogTitle>
         <DialogContent>
           <Alert severity="warning" sx={{ mb: 2 }}>
@@ -474,7 +522,9 @@ export default function WebhooksSettings() {
                   if (createdWebhook) {
                     navigator.clipboard.writeText(createdWebhook.secret);
                     setSecretCopied(true);
-                    setTimeout(() => setSecretCopied(false), 2000);
+                    setTimeout(() => {
+                      setSecretCopied(false);
+                    }, 2000);
                   }
                 }}
                 color={secretCopied ? 'success' : 'default'}
@@ -485,14 +535,24 @@ export default function WebhooksSettings() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button variant="contained" onClick={() => setCreatedWebhook(null)}>
+          <Button
+            variant="contained"
+            onClick={() => {
+              setCreatedWebhook(null);
+            }}
+          >
             {t('apiTokens.createdDialog.done')}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Delete confirmation dialog */}
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+        }}
+      >
         <DialogTitle>{t('settings.webhooks.deleteDialog.title')}</DialogTitle>
         <DialogContent>
           <DialogContentText>
@@ -500,7 +560,13 @@ export default function WebhooksSettings() {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>{t('settings.webhooks.deleteDialog.cancel')}</Button>
+          <Button
+            onClick={() => {
+              setDeleteDialogOpen(false);
+            }}
+          >
+            {t('settings.webhooks.deleteDialog.cancel')}
+          </Button>
           <Button onClick={handleDeleteConfirm} color="error" disabled={deleting} autoFocus>
             {t('settings.webhooks.deleteDialog.confirm')}
           </Button>

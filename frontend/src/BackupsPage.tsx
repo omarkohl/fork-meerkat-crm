@@ -177,7 +177,9 @@ export default function BackupsPage() {
                         color="error"
                         aria-label={t('backups.deleteAria', { name: backup.name })}
                         disabled={busyName === backup.name}
-                        onClick={() => setDeleteTarget(backup)}
+                        onClick={() => {
+                          setDeleteTarget(backup);
+                        }}
                       >
                         <DeleteIcon />
                       </IconButton>
@@ -190,13 +192,23 @@ export default function BackupsPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={deleteTarget !== null} onClose={() => setDeleteTarget(null)}>
+      <Dialog
+        open={deleteTarget !== null}
+        onClose={() => {
+          setDeleteTarget(null);
+        }}
+      >
         <DialogTitle>{t('backups.deleteDialog.title')}</DialogTitle>
         <DialogContent>
           <DialogContentText>{t('backups.deleteDialog.message', { name: deleteTarget?.name ?? '' })}</DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)} disabled={busyName !== null}>
+          <Button
+            onClick={() => {
+              setDeleteTarget(null);
+            }}
+            disabled={busyName !== null}
+          >
             {t('common.cancel')}
           </Button>
           <Button color="error" variant="contained" onClick={handleDelete} disabled={busyName !== null}>

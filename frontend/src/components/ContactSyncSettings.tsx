@@ -100,7 +100,9 @@ export default function ContactSyncSettings() {
   useEffect(() => {
     if (!syncRunning) return;
     const timer = setInterval(() => loadConnection(true), SYNC_POLL_INTERVAL_MS);
-    return () => clearInterval(timer);
+    return () => {
+      clearInterval(timer);
+    };
   }, [syncRunning, loadConnection]);
 
   // Report the result once, on the transition out of "running".
@@ -281,12 +283,24 @@ export default function ContactSyncSettings() {
               {t('settings.contactSync.description')}
             </Typography>
             {error && (
-              <Alert severity="error" sx={{ py: 0 }} onClose={() => setError('')}>
+              <Alert
+                severity="error"
+                sx={{ py: 0 }}
+                onClose={() => {
+                  setError('');
+                }}
+              >
                 {error}
               </Alert>
             )}
             {success && (
-              <Alert severity="success" sx={{ py: 0 }} onClose={() => setSuccess('')}>
+              <Alert
+                severity="success"
+                sx={{ py: 0 }}
+                onClose={() => {
+                  setSuccess('');
+                }}
+              >
                 {success}
               </Alert>
             )}
@@ -352,7 +366,9 @@ export default function ContactSyncSettings() {
                   <Button
                     size="small"
                     color="error"
-                    onClick={() => setDisconnectDialogOpen(true)}
+                    onClick={() => {
+                      setDisconnectDialogOpen(true);
+                    }}
                     startIcon={<LinkOffIcon fontSize="small" />}
                   >
                     {t('settings.contactSync.disconnect')}
@@ -364,7 +380,14 @@ export default function ContactSyncSettings() {
         </CardContent>
       </Card>
 
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={dialogOpen}
+        onClose={() => {
+          setDialogOpen(false);
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>
           {connection ? t('settings.contactSync.editTitle') : t('settings.contactSync.connectTitle')}
         </DialogTitle>
@@ -382,7 +405,9 @@ export default function ContactSyncSettings() {
               <TextField
                 label={t('settings.contactSync.serverUrl')}
                 value={baseUrl}
-                onChange={(e) => setBaseUrl(e.target.value)}
+                onChange={(e) => {
+                  setBaseUrl(e.target.value);
+                }}
                 fullWidth
                 required
                 size="small"
@@ -393,7 +418,9 @@ export default function ContactSyncSettings() {
                 <TextField
                   label={t('settings.contactSync.username')}
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={(e) => {
+                    setUsername(e.target.value);
+                  }}
                   fullWidth
                   size="small"
                 />
@@ -401,7 +428,9 @@ export default function ContactSyncSettings() {
                   label={t('settings.contactSync.password')}
                   type="password"
                   value={clearPassword ? '' : password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                  }}
                   fullWidth
                   size="small"
                   disabled={clearPassword}
@@ -419,7 +448,9 @@ export default function ContactSyncSettings() {
                     <Checkbox
                       size="small"
                       checked={clearPassword}
-                      onChange={(e) => setClearPassword(e.target.checked)}
+                      onChange={(e) => {
+                        setClearPassword(e.target.checked);
+                      }}
                     />
                   }
                   label={<Typography variant="body2">{t('settings.contactSync.clearPassword')}</Typography>}
@@ -436,7 +467,12 @@ export default function ContactSyncSettings() {
               <Typography variant="body2" color="text.secondary">
                 {t('settings.contactSync.chooseAddressBook')}
               </Typography>
-              <RadioGroup value={selectedPath} onChange={(e) => setSelectedPath(e.target.value)}>
+              <RadioGroup
+                value={selectedPath}
+                onChange={(e) => {
+                  setSelectedPath(e.target.value);
+                }}
+              >
                 {books.map((book) => (
                   <FormControlLabel
                     key={book.path}
@@ -461,7 +497,9 @@ export default function ContactSyncSettings() {
                   labelId="carddav-direction-label"
                   label={t('settings.contactSync.directionLabel')}
                   value={direction}
-                  onChange={(e) => setDirection(e.target.value as CardDAVDirection)}
+                  onChange={(e) => {
+                    setDirection(e.target.value);
+                  }}
                 >
                   <MenuItem value="two_way">{t('settings.contactSync.direction.twoWay')}</MenuItem>
                   <MenuItem value="pull">{t('settings.contactSync.direction.pull')}</MenuItem>
@@ -474,15 +512,36 @@ export default function ContactSyncSettings() {
                 </Alert>
               )}
               <FormControlLabel
-                control={<Switch checked={syncEnabled} onChange={(e) => setSyncEnabled(e.target.checked)} />}
+                control={
+                  <Switch
+                    checked={syncEnabled}
+                    onChange={(e) => {
+                      setSyncEnabled(e.target.checked);
+                    }}
+                  />
+                }
                 label={t('settings.contactSync.autoSync')}
               />
             </Stack>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDialogOpen(false)}>{t('common.cancel')}</Button>
-          {step === 'addressBook' && <Button onClick={() => setStep('server')}>{t('common.back')}</Button>}
+          <Button
+            onClick={() => {
+              setDialogOpen(false);
+            }}
+          >
+            {t('common.cancel')}
+          </Button>
+          {step === 'addressBook' && (
+            <Button
+              onClick={() => {
+                setStep('server');
+              }}
+            >
+              {t('common.back')}
+            </Button>
+          )}
           {step === 'server' ? (
             <Button
               variant="contained"
@@ -505,13 +564,24 @@ export default function ContactSyncSettings() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={disconnectDialogOpen} onClose={() => setDisconnectDialogOpen(false)}>
+      <Dialog
+        open={disconnectDialogOpen}
+        onClose={() => {
+          setDisconnectDialogOpen(false);
+        }}
+      >
         <DialogTitle>{t('settings.contactSync.disconnectTitle')}</DialogTitle>
         <DialogContent>
           <DialogContentText>{t('settings.contactSync.disconnectConfirm')}</DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDisconnectDialogOpen(false)}>{t('common.cancel')}</Button>
+          <Button
+            onClick={() => {
+              setDisconnectDialogOpen(false);
+            }}
+          >
+            {t('common.cancel')}
+          </Button>
           <Button color="error" variant="contained" onClick={handleDisconnect} disabled={disconnecting}>
             {t('settings.contactSync.disconnect')}
           </Button>

@@ -10,7 +10,7 @@
 // To learn more about the benefits of this model and instructions on how to
 // opt-in, read https://cra.link/PWA
 
-declare var process: {
+declare let process: {
   env: {
     NODE_ENV: string;
     PUBLIC_URL: string;

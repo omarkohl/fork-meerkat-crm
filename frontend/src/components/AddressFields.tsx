@@ -56,7 +56,9 @@ export default function AddressFields({ label, value, onChange }: AddressFieldsP
                   options={CONTACT_TYPE_OPTIONS as readonly string[]}
                   value={addr.type}
                   getOptionLabel={(opt) => t(`contacts.types.${opt}`, opt)}
-                  onChange={(_, newValue) => updateAddr(index, { type: (newValue ?? '').trim() })}
+                  onChange={(_, newValue) => {
+                    updateAddr(index, { type: (newValue ?? '').trim() });
+                  }}
                   onInputChange={(_, newInput, reason) => {
                     if (reason === 'input') updateAddr(index, { type: newInput });
                   }}
@@ -67,7 +69,9 @@ export default function AddressFields({ label, value, onChange }: AddressFieldsP
                 <IconButton
                   size="small"
                   color="error"
-                  onClick={() => removeAddr(index)}
+                  onClick={() => {
+                    removeAddr(index);
+                  }}
                   aria-label={t('common.delete')}
                 >
                   <DeleteIcon fontSize="small" />
@@ -78,7 +82,9 @@ export default function AddressFields({ label, value, onChange }: AddressFieldsP
                 size="small"
                 fullWidth
                 value={addr.street}
-                onChange={(e) => updateAddr(index, { street: e.target.value })}
+                onChange={(e) => {
+                  updateAddr(index, { street: e.target.value });
+                }}
               />
               <Stack direction="row" spacing={1}>
                 <TextField
@@ -86,14 +92,18 @@ export default function AddressFields({ label, value, onChange }: AddressFieldsP
                   size="small"
                   fullWidth
                   value={addr.city}
-                  onChange={(e) => updateAddr(index, { city: e.target.value })}
+                  onChange={(e) => {
+                    updateAddr(index, { city: e.target.value });
+                  }}
                 />
                 <TextField
                   label={t('contacts.addressFields.region')}
                   size="small"
                   fullWidth
                   value={addr.region}
-                  onChange={(e) => updateAddr(index, { region: e.target.value })}
+                  onChange={(e) => {
+                    updateAddr(index, { region: e.target.value });
+                  }}
                 />
               </Stack>
               <Stack direction="row" spacing={1}>
@@ -102,14 +112,18 @@ export default function AddressFields({ label, value, onChange }: AddressFieldsP
                   size="small"
                   fullWidth
                   value={addr.postal}
-                  onChange={(e) => updateAddr(index, { postal: e.target.value })}
+                  onChange={(e) => {
+                    updateAddr(index, { postal: e.target.value });
+                  }}
                 />
                 <TextField
                   label={t('contacts.addressFields.country')}
                   size="small"
                   fullWidth
                   value={addr.country}
-                  onChange={(e) => updateAddr(index, { country: e.target.value })}
+                  onChange={(e) => {
+                    updateAddr(index, { country: e.target.value });
+                  }}
                 />
               </Stack>
             </Stack>
