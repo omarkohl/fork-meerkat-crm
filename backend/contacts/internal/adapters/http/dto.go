@@ -41,9 +41,9 @@ type ContactResponse struct {
 
 	// Relationships is null unless the endpoint loads them.
 	Relationships []RelationshipResponse `json:"relationships" nullable:"true"`
-	Notes         []NoteResponse         `json:"notes,omitempty"`
-	Activities    []ActivityResponse     `json:"activities,omitempty"`
-	Reminders     []ReminderResponse     `json:"reminders,omitempty"`
+	Notes         []ContactNote          `json:"notes,omitempty"`
+	Activities    []ContactActivity      `json:"activities,omitempty"`
+	Reminders     []ContactReminder      `json:"reminders,omitempty"`
 
 	Address            string   `json:"address"`
 	HowWeMet           string   `json:"how_we_met"`
@@ -91,7 +91,7 @@ type RelationshipResponse struct {
 }
 
 // NewContactResponse maps a contact to the JSON shape of the API, also used for webhooks.
-type NoteResponse struct {
+type ContactNote struct {
 	ID        uint       `json:"ID"`
 	CreatedAt time.Time  `json:"CreatedAt"`
 	UpdatedAt time.Time  `json:"UpdatedAt"`
@@ -101,8 +101,8 @@ type NoteResponse struct {
 	ContactID *uint      `json:"contact_id" nullable:"true"`
 }
 
-// ActivityResponse is an activity of a contact, embedded when the contact is loaded in full.
-type ActivityResponse struct {
+// ContactActivity is an activity of a contact, embedded when the contact is loaded in full.
+type ContactActivity struct {
 	ID          uint       `json:"ID"`
 	CreatedAt   time.Time  `json:"CreatedAt"`
 	UpdatedAt   time.Time  `json:"UpdatedAt"`
@@ -113,7 +113,7 @@ type ActivityResponse struct {
 	Date        time.Time  `json:"date"`
 }
 
-type ReminderResponse struct {
+type ContactReminder struct {
 	ID                    uint       `json:"ID"`
 	CreatedAt             time.Time  `json:"CreatedAt"`
 	UpdatedAt             time.Time  `json:"UpdatedAt"`
@@ -146,15 +146,15 @@ func NewContactResponse(c domain.Contact) ContactResponse {
 		r.Relationships = []RelationshipResponse{}
 	}
 	for _, n := range c.Notes {
-		r.Notes = append(r.Notes, NoteResponse{ID: n.ID, CreatedAt: n.CreatedAt, UpdatedAt: n.UpdatedAt, DeletedAt: n.DeletedAt,
+		r.Notes = append(r.Notes, ContactNote{ID: n.ID, CreatedAt: n.CreatedAt, UpdatedAt: n.UpdatedAt, DeletedAt: n.DeletedAt,
 			Content: n.Content, Date: n.Date, ContactID: contactIDPtr(n.ContactID)})
 	}
 	for _, a := range c.Activities {
-		r.Activities = append(r.Activities, ActivityResponse{ID: a.ID, CreatedAt: a.CreatedAt, UpdatedAt: a.UpdatedAt, DeletedAt: a.DeletedAt,
+		r.Activities = append(r.Activities, ContactActivity{ID: a.ID, CreatedAt: a.CreatedAt, UpdatedAt: a.UpdatedAt, DeletedAt: a.DeletedAt,
 			Title: a.Title, Description: a.Description, Location: a.Location, Date: a.Date})
 	}
 	for _, m := range c.Reminders {
-		r.Reminders = append(r.Reminders, ReminderResponse{ID: m.ID, CreatedAt: m.CreatedAt, UpdatedAt: m.UpdatedAt, DeletedAt: m.DeletedAt,
+		r.Reminders = append(r.Reminders, ContactReminder{ID: m.ID, CreatedAt: m.CreatedAt, UpdatedAt: m.UpdatedAt, DeletedAt: m.DeletedAt,
 			Message: m.Message, ByMail: m.ByMail, RemindAt: m.RemindAt, Recurrence: m.Recurrence,
 			ReoccurFromCompletion: m.ReoccurFromCompletion, Completed: m.Completed, EmailSent: m.EmailSent,
 			LastSent: m.LastSent, ContactID: contactIDPtr(m.ContactID)})

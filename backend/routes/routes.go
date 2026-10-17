@@ -9,6 +9,7 @@ import (
 	"meerkat/metrics"
 	"meerkat/middleware"
 	"meerkat/models"
+	"meerkat/notes"
 	"meerkat/services"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -19,6 +20,16 @@ import (
 // Modules are the converted modules (docs/adr/0012-module-layout.md), built by main.go.
 type Modules struct {
 	Contacts *contacts.Module
+	Notes    *notes.Module
+}
+
+// NewModules builds every converted module on db. db may be nil when only the operations'
+// descriptions are needed.
+func NewModules(db *gorm.DB, cfg *config.Config) Modules {
+	return Modules{
+		Contacts: contacts.New(contacts.Deps{DB: db, Config: cfg}),
+		Notes:    notes.New(notes.Deps{DB: db, Config: cfg}),
+	}
 }
 
 // Groups are the Gin groups huma operations can be registered on. A nil group means the
@@ -36,6 +47,7 @@ type Groups struct {
 func RegisterAPI(a huma.API, cfg *config.Config, m Modules, g Groups) {
 	controllers.RegisterOIDCConfig(a, cfg)
 	m.Contacts.Register(a, g.Protected)
+	m.Notes.Register(a, g.Protected)
 }
 
 func RegisterRoutes(router *gin.Engine, cfg *config.Config, db *gorm.DB, oidcProvider *services.OIDCProvider, modules Modules) {
@@ -159,13 +171,6 @@ func RegisterRoutes(router *gin.Engine, cfg *config.Config, db *gorm.DB, oidcPro
 			protected.GET("/proxy/image", controllers.ProxyImage)
 
 			// Note routes
-			protected.GET("/contacts/:id/notes", controllers.GetNotesForContact)
-			protected.POST("/contacts/:id/notes", middleware.ValidateJSONMiddleware(&models.NoteInput{}), controllers.CreateNote)
-			protected.GET("/notes/:id", controllers.GetNote)
-			protected.GET("/notes", controllers.GetUnassignedNotes)
-			protected.POST("/notes", middleware.ValidateJSONMiddleware(&models.NoteInput{}), controllers.CreateUnassignedNote)
-			protected.PUT("/notes/:id", middleware.ValidateJSONMiddleware(&models.NoteInput{}), controllers.UpdateNote)
-			protected.DELETE("/notes/:id", controllers.DeleteNote)
 
 			// Activity routes
 			protected.GET("/contacts/:id/activities", controllers.GetActivitiesForContact)

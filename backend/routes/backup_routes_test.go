@@ -3,7 +3,6 @@ package routes
 import (
 	"crypto/sha256"
 	"fmt"
-	"meerkat/contacts"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -42,7 +41,7 @@ func TestBackupRoutesRefuseAdminAPIToken(t *testing.T) {
 		c.Set("cfg", *cfg)
 		c.Next()
 	})
-	RegisterRoutes(r, cfg, db, nil, Modules{Contacts: contacts.New(contacts.Deps{DB: db, Config: cfg})})
+	RegisterRoutes(r, cfg, db, nil, NewModules(db, cfg))
 
 	for _, tc := range []struct{ method, path string }{
 		{"GET", "/api/v1/admin/backups"},

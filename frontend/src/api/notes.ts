@@ -1,21 +1,14 @@
 // Notes-related API calls
 import { apiFetch, API_BASE_URL, getAuthHeaders, parseErrorResponse } from './client';
+import type { components, operations } from '../types/generated/api';
 
-export interface Note {
-  ID: number;
-  content: string;
-  date: string;
-  contact_id?: number;
-  CreatedAt: string;
-  UpdatedAt: string;
-}
+export type Note = components['schemas']['NoteResponse'];
+type NotesListResponse = operations['list-unassigned-notes']['responses']['200']['content']['application/json'];
+type ContactNotesResponse = operations['list-contact-notes']['responses']['200']['content']['application/json'];
+type NoteBody = components['schemas']['NoteBody'];
+type SavedNoteResponse = operations['create-note']['responses']['200']['content']['application/json'];
 
-export interface NotesResponse {
-  notes: Note[];
-  total?: number;
-  page?: number;
-  limit?: number;
-}
+export type NotesResponse = Partial<NotesListResponse> & ContactNotesResponse;
 
 export interface GetNotesParams {
   page?: number;
@@ -33,7 +26,7 @@ export async function getContactNotes(contactId: string | number): Promise<Notes
     throw await parseErrorResponse(response);
   }
 
-  return response.json();
+  return (await response.json()) as NotesResponse;
 }
 
 // Get all unassigned notes
@@ -64,7 +57,7 @@ export async function getUnassignedNotes(params: GetNotesParams = {}): Promise<N
     throw await parseErrorResponse(response);
   }
 
-  return response.json();
+  return (await response.json()) as NotesListResponse;
 }
 
 // Get single note
@@ -75,14 +68,11 @@ export async function getNote(id: string | number): Promise<Note> {
     throw await parseErrorResponse(response);
   }
 
-  return response.json();
+  return (await response.json()) as Note;
 }
 
 // Create note for contact
-export async function createNote(
-  contactId: string | number,
-  data: { content: string; date: string; contact_id?: number },
-): Promise<Note> {
+export async function createNote(contactId: string | number, data: NoteBody): Promise<SavedNoteResponse> {
   const response = await apiFetch(`${API_BASE_URL}/contacts/${contactId}/notes`, {
     method: 'POST',
     headers: getAuthHeaders(),
@@ -93,11 +83,11 @@ export async function createNote(
     throw await parseErrorResponse(response);
   }
 
-  return response.json();
+  return (await response.json()) as SavedNoteResponse;
 }
 
 // Create unassigned note
-export async function createUnassignedNote(data: { content: string; date: string }): Promise<Note> {
+export async function createUnassignedNote(data: NoteBody): Promise<SavedNoteResponse> {
   const response = await apiFetch(`${API_BASE_URL}/notes`, {
     method: 'POST',
     headers: getAuthHeaders(),
@@ -108,14 +98,11 @@ export async function createUnassignedNote(data: { content: string; date: string
     throw await parseErrorResponse(response);
   }
 
-  return response.json();
+  return (await response.json()) as SavedNoteResponse;
 }
 
 // Update note
-export async function updateNote(
-  id: string | number,
-  data: { content: string; date: string; contact_id?: number },
-): Promise<Note> {
+export async function updateNote(id: string | number, data: NoteBody): Promise<SavedNoteResponse> {
   const response = await apiFetch(`${API_BASE_URL}/notes/${id}`, {
     method: 'PUT',
     headers: getAuthHeaders(),
@@ -126,7 +113,7 @@ export async function updateNote(
     throw await parseErrorResponse(response);
   }
 
-  return response.json();
+  return (await response.json()) as SavedNoteResponse;
 }
 
 // Delete note

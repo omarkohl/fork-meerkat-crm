@@ -147,15 +147,15 @@ everywhere else (lists, search, circles, birthdays, graph, ICS feed, reminders, 
 
 ### Notes
 
-| Method   | Path                  | Description                 |
-| -------- | --------------------- | --------------------------- |
-| `GET`    | `/contacts/:id/notes` | List notes for a contact    |
-| `POST`   | `/contacts/:id/notes` | Create a note for a contact |
-| `GET`    | `/notes`              | List unassigned notes       |
-| `POST`   | `/notes`              | Create an unassigned note   |
-| `GET`    | `/notes/:id`          | Get a note                  |
-| `PUT`    | `/notes/:id`          | Update a note               |
-| `DELETE` | `/notes/:id`          | Delete a note               |
+| Method   | Path                  | Description                                                      |
+| -------- | --------------------- | ---------------------------------------------------------------- |
+| `GET`    | `/contacts/:id/notes` | List notes for a contact                                         |
+| `POST`   | `/contacts/:id/notes` | Create a note for a contact                                      |
+| `GET`    | `/notes`              | List unassigned notes                                            |
+| `POST`   | `/notes`              | Create an unassigned note                                        |
+| `GET`    | `/notes/:id`          | Get a note                                                       |
+| `PUT`    | `/notes/:id`          | Update a note. Leaving out `contact_id` keeps the note's contact |
+| `DELETE` | `/notes/:id`          | Delete a note                                                    |
 
 ### Activities
 

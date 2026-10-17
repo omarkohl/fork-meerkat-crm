@@ -98,32 +98,6 @@ export interface DeleteActivityResponse {
 }
 
 /**
- * Note API responses
- */
-export interface GetNotesResponse {
-  notes: Note[];
-  total: number;
-  page: number;
-  limit: number;
-}
-
-export interface GetNoteResponse extends Note {}
-
-export interface CreateNoteResponse {
-  message: string;
-  note: Note;
-}
-
-export interface UpdateNoteResponse {
-  message: string;
-  note: Note;
-}
-
-export interface DeleteNoteResponse {
-  message: string;
-}
-
-/**
  * Reminder API responses
  */
 export interface GetRemindersResponse {

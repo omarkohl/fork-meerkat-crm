@@ -46,9 +46,10 @@ backend/contacts/
   and the errors (`domain.ErrNotFound` becomes `apperrors.ErrNotFound`) to the exact responses the
   Gin handlers sent before. Other entry points (CardDAV, jobs, imports) will call the same use
   cases.
-- **Composition root.** `main.go` builds each module from concrete values
-  (`contacts.New(contacts.Deps{DB: db, Config: cfg})`) and hands it to `routes`, which registers the
-  operations on the Gin groups. `cmd/openapi` builds the module with no database to write the spec.
+- **Composition root.** `main.go` calls `routes.NewModules(db, cfg)`, which builds each module from
+  concrete values (`contacts.New(contacts.Deps{DB: db, Config: cfg})`) in one place; `routes`
+  registers the operations on the Gin groups. `cmd/openapi` and the route tests call it too, with no
+  database where only the spec is needed.
 - **Entities versus tables.** The domain entity is the module's vocabulary; `models.Contact` stays
   the GORM model other, not yet converted code (CardDAV, sync, imports) still uses. Until those are
   converted the persistence adapter is the bridge, and `models` keeps the GORM hooks that maintain

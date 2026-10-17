@@ -93,13 +93,6 @@ type DiscoveredAddressBook struct {
 	Description string `json:"description"`
 }
 
-// NoteInput represents the DTO for creating/updating notes
-type NoteInput struct {
-	Content   string    `json:"content" validate:"required,min=1,max=5000"`
-	Date      time.Time `json:"date" validate:"required"`
-	ContactID *uint     `json:"contact_id" validate:"omitempty,gt=0"`
-}
-
 // CustomFieldNamesInput represents the DTO for updating user's custom field definitions
 type CustomFieldNamesInput struct {
 	Names []string `json:"names" validate:"dive,max=100"`

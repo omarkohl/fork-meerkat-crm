@@ -6,7 +6,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"meerkat/contacts"
 	"os"
 
 	"meerkat/api"
@@ -21,7 +20,7 @@ func main() {
 	r := gin.New()
 	a := api.New(r.Group("/api/v1"), r)
 	// No database: the handlers are never run, only described
-	routes.RegisterAPI(a, &config.Config{}, routes.Modules{Contacts: contacts.New(contacts.Deps{})}, routes.Groups{})
+	routes.RegisterAPI(a, &config.Config{}, routes.NewModules(nil, nil), routes.Groups{})
 
 	// json.MarshalIndent sorts map keys, so the output is stable.
 	doc, err := json.MarshalIndent(a.OpenAPI(), "", "  ")

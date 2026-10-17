@@ -126,6 +126,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/contacts/{id}/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The notes about a contact */
+        get: operations["list-contact-notes"];
+        put?: never;
+        /** Add a note about a contact */
+        post: operations["create-contact-note"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/contacts/{id}/unarchive": {
         parameters: {
             query?: never;
@@ -143,25 +161,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Notes without a contact, with search, date range and paging */
+        get: operations["list-unassigned-notes"];
+        put?: never;
+        /** Add a note, about a contact or free-floating */
+        post: operations["create-note"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/notes/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a note */
+        get: operations["get-note"];
+        /** Replace the content and date of a note, and move it to another contact */
+        put: operations["update-note"];
+        post?: never;
+        /** Delete a note */
+        delete: operations["delete-note"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        ActivityResponse: {
-            /** Format: date-time */
-            CreatedAt: string;
-            /** Format: date-time */
-            DeletedAt: string | null;
-            /** Format: int64 */
-            ID: number;
-            /** Format: date-time */
-            UpdatedAt: string;
-            /** Format: date-time */
-            date: string;
-            description: string;
-            location: string;
-            title: string;
-        };
         AddressInput: {
             city?: string;
             country?: string;
@@ -183,6 +223,21 @@ export interface components {
         };
         BirthdaysOutputBody: {
             birthdays: components["schemas"]["BirthdayResponse"][] | null;
+        };
+        ContactActivity: {
+            /** Format: date-time */
+            CreatedAt: string;
+            /** Format: date-time */
+            DeletedAt: string | null;
+            /** Format: int64 */
+            ID: number;
+            /** Format: date-time */
+            UpdatedAt: string;
+            /** Format: date-time */
+            date: string;
+            description: string;
+            location: string;
+            title: string;
         };
         ContactAddress: {
             city: string;
@@ -233,7 +288,7 @@ export interface components {
             ID: number;
             /** Format: date-time */
             UpdatedAt: string;
-            activities?: components["schemas"]["ActivityResponse"][] | null;
+            activities?: components["schemas"]["ContactActivity"][] | null;
             address: string;
             addresses: components["schemas"]["ContactAddress"][] | null;
             anniversary: string;
@@ -257,7 +312,7 @@ export interface components {
             middle_name: string;
             nickname: string;
             note: string;
-            notes?: components["schemas"]["NoteResponse"][] | null;
+            notes?: components["schemas"]["ContactNote"][] | null;
             organization: string;
             phone: string;
             phones: components["schemas"]["ContactValue"][] | null;
@@ -265,11 +320,48 @@ export interface components {
             photo_thumbnail: string;
             prefix: string;
             relationships: components["schemas"]["RelationshipResponse"][] | null;
-            reminders?: components["schemas"]["ReminderResponse"][] | null;
+            reminders?: components["schemas"]["ContactReminder"][] | null;
             role: string;
             suffix: string;
             urls: components["schemas"]["ContactValue"][] | null;
             work_information: string;
+        };
+        ContactNote: {
+            /** Format: date-time */
+            CreatedAt: string;
+            /** Format: date-time */
+            DeletedAt: string | null;
+            /** Format: int64 */
+            ID: number;
+            /** Format: date-time */
+            UpdatedAt: string;
+            /** Format: int64 */
+            contact_id: number | null;
+            content: string;
+            /** Format: date-time */
+            date: string;
+        };
+        ContactReminder: {
+            /** Format: date-time */
+            CreatedAt: string;
+            /** Format: date-time */
+            DeletedAt: string | null;
+            /** Format: int64 */
+            ID: number;
+            /** Format: date-time */
+            UpdatedAt: string;
+            by_mail: boolean | null;
+            completed: boolean;
+            /** Format: int64 */
+            contact_id: number | null;
+            email_sent: boolean;
+            /** Format: date-time */
+            last_sent: string | null;
+            message: string;
+            recurrence: string;
+            /** Format: date-time */
+            remind_at: string;
+            reoccur_from_completion: boolean | null;
         };
         ContactResponse: {
             /** Format: date-time */
@@ -280,7 +372,7 @@ export interface components {
             ID: number;
             /** Format: date-time */
             UpdatedAt: string;
-            activities?: components["schemas"]["ActivityResponse"][] | null;
+            activities?: components["schemas"]["ContactActivity"][] | null;
             address: string;
             addresses: components["schemas"]["ContactAddress"][] | null;
             anniversary: string;
@@ -304,14 +396,14 @@ export interface components {
             middle_name: string;
             nickname: string;
             note: string;
-            notes?: components["schemas"]["NoteResponse"][] | null;
+            notes?: components["schemas"]["ContactNote"][] | null;
             organization: string;
             phone: string;
             phones: components["schemas"]["ContactValue"][] | null;
             photo: string;
             prefix: string;
             relationships: components["schemas"]["RelationshipResponse"][] | null;
-            reminders?: components["schemas"]["ReminderResponse"][] | null;
+            reminders?: components["schemas"]["ContactReminder"][] | null;
             role: string;
             suffix: string;
             urls: components["schemas"]["ContactValue"][] | null;
@@ -354,8 +446,27 @@ export interface components {
             /** Format: int64 */
             total: number;
         };
+        ListOutputBody1: {
+            /** Format: int64 */
+            limit: number;
+            notes: components["schemas"]["NoteResponse"][] | null;
+            /** Format: int64 */
+            page: number;
+            /** Format: int64 */
+            total: number;
+        };
         MessageOutputBody: {
             message: string;
+        };
+        NoteBody: {
+            /**
+             * Format: int64
+             * @description Ignored when the note is added under /contacts/{id}/notes. On update, leaving it out keeps the current contact.
+             */
+            contact_id?: number;
+            content: string;
+            /** Format: date-time */
+            date: string;
         };
         NoteResponse: {
             /** Format: date-time */
@@ -371,6 +482,9 @@ export interface components {
             content: string;
             /** Format: date-time */
             date: string;
+        };
+        NotesOutputBody: {
+            notes: components["schemas"]["NoteResponse"][] | null;
         };
         OIDCConfigOutputBody: {
             /** @description Whether single sign-on is configured */
@@ -403,27 +517,9 @@ export interface components {
             related_contact_id: number | null;
             type: string;
         };
-        ReminderResponse: {
-            /** Format: date-time */
-            CreatedAt: string;
-            /** Format: date-time */
-            DeletedAt: string | null;
-            /** Format: int64 */
-            ID: number;
-            /** Format: date-time */
-            UpdatedAt: string;
-            by_mail: boolean | null;
-            completed: boolean;
-            /** Format: int64 */
-            contact_id: number | null;
-            email_sent: boolean;
-            /** Format: date-time */
-            last_sent: string | null;
+        SavedOutputBody: {
             message: string;
-            recurrence: string;
-            /** Format: date-time */
-            remind_at: string;
-            reoccur_from_completion: boolean | null;
+            note: components["schemas"]["NoteResponse"];
         };
         URLInput: {
             type?: string;
@@ -772,6 +868,74 @@ export interface operations {
             };
         };
     };
+    "list-contact-notes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The contact's ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotesOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "create-contact-note": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The contact's ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoteBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     "unarchive-contact": {
         parameters: {
             query?: never;
@@ -791,6 +955,179 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ContactResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "list-unassigned-notes": {
+        parameters: {
+            query?: {
+                /** @description Page number, from 1 */
+                page?: string;
+                /** @description Page size, 1 to 100, default 25 */
+                limit?: string;
+                /** @description Full-text search over the content */
+                search?: string;
+                /** @description First day, YYYY-MM-DD; ignored when not a date */
+                fromDate?: string;
+                /** @description Last day, inclusive, YYYY-MM-DD; ignored when not a date */
+                toDate?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListOutputBody1"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "create-note": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoteBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "get-note": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The note's ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoteResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "update-note": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The note's ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoteBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "delete-note": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The note's ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageOutputBody"];
                 };
             };
             /** @description Error */

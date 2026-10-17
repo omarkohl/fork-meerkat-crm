@@ -79,7 +79,7 @@
       "count": 6
     },
     "@typescript-eslint/no-unnecessary-condition": {
-      "count": 9
+      "count": 7
     },
     "@typescript-eslint/no-unsafe-argument": {
       "count": 1
@@ -319,9 +319,6 @@
     }
   },
   "src/api/notes.ts": {
-    "@typescript-eslint/no-unsafe-return": {
-      "count": 6
-    },
     "@typescript-eslint/restrict-template-expressions": {
       "count": 5
     }
@@ -740,9 +737,6 @@
   "src/hooks/useNotes.ts": {
     "@typescript-eslint/no-floating-promises": {
       "count": 1
-    },
-    "@typescript-eslint/no-unnecessary-condition": {
-      "count": 4
     }
   },
   "src/hooks/useRelationships.ts": {
@@ -777,7 +771,7 @@
   },
   "src/types/api.ts": {
     "@typescript-eslint/no-empty-object-type": {
-      "count": 4
+      "count": 3
     }
   },
   "src/types/utils.ts": {

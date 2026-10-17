@@ -2,7 +2,7 @@
 
 ## Next step
 
-13a (notes, same pattern as contacts).
+13b (activities, same pattern as notes).
 
 ## Stack
 
@@ -121,6 +121,15 @@
   derived from the generated types. Fixed `api.relaxRequestBody`, which dropped the value type of
   map properties (`custom_fields` became `Record<string, never>`); test first. depguard rules were
   already in place from 12a. `make precommit` green.
+- Step 13a: `backend/notes` (domain `Note.Edit`, use cases, ports `Notes`/`Store`/`Events`,
+  persistence/http/webhooks adapters) with huma operations for all seven note endpoints
+  (`/contacts/{id}/notes` GET/POST, `/notes` GET/POST, `/notes/{id}` GET/PUT/DELETE); webhooks
+  `note.created/updated/deleted` as before; depguard rules `notes-*` (shown to fail);
+  `routes.NewModules` builds all modules (main, openapi, route tests). Old controller, its tests and
+  `models.NoteInput` removed; 12 module tests on real SQLite incl. isolation and 401. Contacts'
+  embedded response types renamed `ContactNote/Activity/Reminder` (schema names collide). Frontend
+  `Note`, `NotesResponse` and request bodies from the generated types; create/update now typed as
+  the `{message, note}` they always returned. `make precommit` green.
 
 ## Decisions
 
@@ -154,6 +163,19 @@
 - 12c: the page size bounds (default 25, max 100) live in `app.DefaultLimit/MaxLimit` and are
   repeated in the `ListInput` docs of the HTTP adapter and in `controllers.GetPaginationParams`
   (still used by other lists); unify when the last list moves into a module.
+- 13a: `PUT /notes/{id}` used GORM `Updates(struct)`, which skips a nil `contact_id`: a note cannot
+  be made free-floating, but the old response claimed `contact_id: null`. Kept the first
+  (`Note.Edit`, documented in the API reference); the response now shows what is stored.
+  `GET /contacts/{id}/notes` answers `[]` (was possibly `null`) for no notes. A failed update now
+  reports "Failed to update note" (the old code ignored the error). Page size bounds are repeated in
+  the notes use case (see the 12c note).
+- 13a review: the composition moved to `routes.NewModules(db, cfg)` (one place instead of five); ADR
+  0012 and backend.md say so. The webhook payloads of `note.*` no longer carry the zero
+  `"contact": {...}` object the GORM model serialised (nothing used it). `POST /contacts/{id}/notes`
+  with an invalid body for an unknown contact now answers 400 (validation runs before the lookup),
+  it used to answer 404. The notes webhooks adapter also imports the HTTP adapter's
+  `NewNoteResponse`: with two modules doing it the pattern stays (one JSON shape for responses and
+  payloads); extract a shared presenter only if a third kind of consumer appears.
 - 12a keeps behaviour: `GET /contacts/circles` still answers `null` when there are no circles;
   non-numeric `{id}` now answers `400` (a Gin string param used to reach the database); a missing
   user answers `401`.

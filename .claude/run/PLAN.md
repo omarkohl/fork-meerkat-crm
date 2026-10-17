@@ -129,7 +129,7 @@ Read first: `.claude/plans/engineering-principles-reference.md`, `.claude/AUTONO
 - [ ] 13. **Hexagonal: remaining modules (§3)**, one commit per module, same pattern as step 12
       (huma handlers, generated frontend types); remove each module's exemptions from the arch
       rules:
-  - [ ] 13a. notes
+  - [x] 13a. notes
   - [ ] 13b. activities
   - [ ] 13c. reminders (incl. scheduler job)
   - [ ] 13d. relationships and graph
