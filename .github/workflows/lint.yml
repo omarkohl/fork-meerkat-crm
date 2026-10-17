@@ -80,6 +80,9 @@ jobs:
       - name: Check locale files
         run: make i18n-check
 
+      - name: Test helper scripts
+        run: make test-scripts
+
   format:
     permissions:
       contents: read

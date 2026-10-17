@@ -101,7 +101,7 @@ Read first: `.claude/plans/engineering-principles-reference.md`, `.claude/AUTONO
       `eslint-comments` (`require-description`, `no-unlimited-disable`). All rules
       `error`. Replace the file-wide disable in `service-worker.ts` with line-level
       ones. Baseline remaining findings with named exemptions.
-- [ ] 8. **Coverage thresholds (§4)**: Vitest `coverage.thresholds` and a Go
+- [x] 8. **Coverage thresholds (§4)**: Vitest `coverage.thresholds` and a Go
       threshold check on `coverage.out` (script), both at the current value rounded
       down. `make test-coverage` in `precommit` and CI.
 - [ ] 9. **Injected clock (§5)**: ADR. Go: a `clock` package (`Clock` interface,

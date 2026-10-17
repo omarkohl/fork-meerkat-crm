@@ -14,6 +14,8 @@ export default defineConfig({
       exclude: ['src/**/*.{test,spec}.{ts,tsx}', 'src/setupTests.ts'],
       reporter: ['text-summary', 'json-summary', 'html'],
       reportsDirectory: 'coverage',
+      // Current values rounded down. Raise them when coverage rises; never lower them.
+      thresholds: { statements: 28, branches: 80, functions: 33, lines: 28 },
     },
     // Node >= 22 ships its own experimental localStorage global, which is
     // undefined without --localstorage-file and shadows jsdom's working one

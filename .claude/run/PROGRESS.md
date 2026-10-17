@@ -2,7 +2,7 @@
 
 ## Next step
 
-8.
+9.
 
 ## Stack
 
@@ -18,6 +18,7 @@
 - Step 5: the full reformat (`04bed7d6` "style: format all files with gofmt and Prettier") and `format-check` on all files (no `BASE` logic) were already in the history below this run (`4eb6e3b1`); `make format` changes nothing. So no new reformat commit; this commit only adds `.git-blame-ignore-revs` for `04bed7d6` and a note in contributing.md. `make precommit` green.
 - Step 6: enabled `noUncheckedIndexedAccess`, `noImplicitOverride`, `noPropertyAccessFromIndexSignature` in `frontend/tsconfig.json`; fixed 86 errors (bracket access for index signatures incl. `process.env['REACT_APP_...']`, `override` on class members, destructuring with defaults for regex/split parts, `.slice(0, 10)` instead of `.split('T')[0]` in four dialogs, `?.` in tests). No non-null assertions. The three flags are also in `tsconfig.node.json` (E2E and Playwright config) and `make typecheck` now checks that project too. `make precommit` green incl. E2E.
 - Step 7: ESLint 9 flat config `frontend/eslint.config.mjs` (`typescript-eslint` strictTypeChecked, `jsx-a11y` recommended, `eslint-comments` recommended + `require-description`/`no-unlimited-disable`, `react-hooks` rules-of-hooks/exhaustive-deps, `reportUnusedDisableDirectives: error`; all errors); `--fix` applied (mostly braces for `no-confusing-void-expression`); 4 unused catch/param variables, 2 undescribed disables fixed by hand; stale file-wide disable in `service-worker.ts` removed (rule was not active). 529 findings remain, bulk-suppressed (counts per file and rule) in `frontend/eslint-suppressions.json`, reasons per rule class in `docs/development/frontend.md`. Only `src/**/*.{ts,tsx}` is linted (e2e comes with step 16). Checked: a new floating promise in `src/ContactsPage.tsx` fails; fixing one makes `make lint-frontend` fail until `--prune-suppressions` (exit 2). Each rule shown to fail on a violation file (rules-of-hooks, exhaustive-deps, no-floating-promises, no-non-null-assertion, eslint-comments, jsx-a11y/alt-text, restrict-template-expressions). Build and tests green.
+- Step 8: Vitest `coverage.thresholds` (statements 28, branches 80, functions 33, lines 28; current 28.09/80.51/33.76/28.09) and `scripts/check-go-coverage.mjs` (test first, red then green) with `GO_COVERAGE_MIN=62` (current 62.9) called by `make test-coverage-go`. `precommit` runs `test-coverage` instead of `test`; CI already calls the coverage targets, so thresholds apply there. Shown to fail with a too-high threshold for both. Script tests moved from `i18n-check` to `make test-scripts` (in `test`, `precommit` and the lint workflow's locales job); the script checks its main-module test with `pathToFileURL` and rejects a blank threshold (exit 2). `make precommit` green.
 
 ## Decisions
 
@@ -39,6 +40,8 @@
 - Step 4: CI cannot run locally. Check the first PR run: `install-only` of golangci-lint-action v8, `YARN: yarn`, `make fuzz` env vars.
 
 ## Questions
+
+- One full `make precommit` run during step 8 had 2 E2E failures (52 passed); a rerun and a second full run passed 54/54. Names not captured. Possible flake; watch for it.
 
 - `new Date().toISOString().slice(0, 10)` (and the older `.split('T')[0]`) gives the UTC date, so default dates in AddNote/AddActivity and the reminder `min` can show the wrong day near midnight. Pre-existing; not fixed.
 

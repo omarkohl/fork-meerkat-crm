@@ -1,4 +1,4 @@
-.PHONY: help install install-go install-frontend dev seed format format-check lint lint-go lint-frontend typecheck i18n-check test test-go test-frontend test-coverage test-coverage-go test-coverage-frontend test-carddav test-e2e test-e2e-docker arch vuln-go audit-frontend fuzz precommit build
+.PHONY: help install install-go install-frontend dev seed format format-check lint lint-go lint-frontend typecheck i18n-check test test-scripts test-go test-frontend test-coverage test-coverage-go test-coverage-frontend test-carddav test-e2e test-e2e-docker arch vuln-go audit-frontend fuzz precommit build
 
 YARN ?= corepack yarn
 
@@ -44,12 +44,16 @@ typecheck: install-frontend ## TypeScript type check (app and E2E/Playwright con
 	cd frontend && npx tsc -p tsconfig.node.json --noEmit
 
 i18n-check: ## Locale files: missing/extra keys fail, unused/duplicate keys warn (scripts/i18n-check.mjs)
-	node --test scripts/*.test.mjs
 	node scripts/i18n-check.mjs
 
-GO_TEST_FLAGS ?=
+test-scripts: ## Tests of the helper scripts in scripts/
+	node --test scripts/*.test.mjs
 
-test: test-go test-frontend ## Backend and frontend unit tests
+GO_TEST_FLAGS ?=
+# Minimum total Go coverage in percent (current value rounded down). Raise it when coverage rises.
+GO_COVERAGE_MIN ?= 62
+
+test: test-scripts test-go test-frontend ## Backend, frontend and script unit tests
 
 test-go: install-go ## Go tests (GO_TEST_FLAGS="-race" adds flags)
 	cd backend && go test $(GO_TEST_FLAGS) ./...
@@ -59,10 +63,11 @@ test-frontend: install-frontend ## Vitest
 
 test-coverage: test-coverage-go test-coverage-frontend ## Tests with coverage (backend coverage.out, frontend coverage/)
 
-test-coverage-go: install-go ## Go tests with coverage (backend/coverage.out)
+test-coverage-go: install-go ## Go tests with coverage (backend/coverage.out), fail below GO_COVERAGE_MIN
 	cd backend && go test $(GO_TEST_FLAGS) -coverprofile=coverage.out ./...
+	cd backend && node ../scripts/check-go-coverage.mjs $(GO_COVERAGE_MIN)
 
-test-coverage-frontend: install-frontend ## Vitest with coverage (frontend/coverage/)
+test-coverage-frontend: install-frontend ## Vitest with coverage (frontend/coverage/), fail below the thresholds in vitest.config.ts
 	cd frontend && $(YARN) test:coverage
 
 test-carddav: install-go ## Sync tests against a running Radicale (see docs/development/testing.md)
@@ -90,7 +95,7 @@ fuzz: install-go ## Fuzz one target: make fuzz FUZZ_PACKAGE=./services FUZZ_TARG
 arch: install ## Architecture rules (module-graph checks; placeholder until they exist)
 	@echo "arch: no rules yet"
 
-precommit: format-check lint typecheck i18n-check arch test test-e2e ## All checks, including E2E
+precommit: format-check lint typecheck i18n-check arch test-scripts test-coverage test-e2e ## All checks, including E2E
 
 build: install ## Build backend binary and frontend bundle
 	cd backend && go build -o meerkat .
