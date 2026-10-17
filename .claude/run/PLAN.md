@@ -91,7 +91,7 @@ Read first: `.claude/plans/engineering-principles-reference.md`, `.claude/AUTONO
 - [x] 4. **CI calls make targets (§1)**: every workflow job runs one `make` target
       (`lint-go`, `lint-frontend`, `typecheck`, `format-check`, `test-go`, …); split
       `lint` into sub-targets as needed. Lockfile-only installs stay.
-- [ ] 5. **Full format check (§2)**: one reformat commit for all Go and TS files, add
+- [x] 5. **Full format check (§2)**: one reformat commit for all Go and TS files, add
       its revision to `.git-blame-ignore-revs`, then `format-check` checks all files.
       Remove the `BASE` logic.
 - [ ] 6. **TypeScript strictness (§2)**: enable `noUncheckedIndexedAccess`,

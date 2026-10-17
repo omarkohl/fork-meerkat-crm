@@ -36,6 +36,8 @@ Pull requests run these GitHub Actions workflows, and all must pass:
 - **Docker build and scan** (`docker-build.yml`): builds the three images (all-in-one, backend, frontend) without pushing them when a PR touches a Dockerfile, `backend/`, `frontend/` or `docker/`, and scans each with Trivy. It fails on fixable HIGH and CRITICAL vulnerabilities; unfixed ones are ignored. If a finding cannot be fixed by updating the base image or the dependency, add it to `.trivyignore` with a reason and an expiry date. Also runs on `main` and weekly.
 - **Docs** (`docs.yml`): builds the Jekyll site on PRs that touch `docs/**` (deploys only from `main`). To build locally: `cd docs && bundle install && bundle exec jekyll build`.
 
+Reformat-only commits are listed in `.git-blame-ignore-revs` (GitHub honours it; locally run `git config blame.ignoreRevsFile .git-blame-ignore-revs`). List a new one there in a follow-up commit, and only after the reformat commit is pushed (a rebase changes its SHA).
+
 Every CI job runs one `make` target (`lint-go`, `lint-frontend`, `typecheck`, `format-check`, `test-coverage-go`, `test-e2e-docker`, ...), so a failure reproduces locally with the same command. Only setup steps (toolchains, Docker image, Radicale) are not in `make`.
 
 Release images (`docker-publish.yml`) are pushed for `linux/amd64` and `linux/arm64` with an SBOM and SLSA provenance attestation attached (`docker buildx imagetools inspect <image> --format '{{ json .SBOM }}'`).

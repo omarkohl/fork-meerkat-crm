@@ -1,0 +1,5 @@
+# Revisions that only reformat code. GitHub uses this file automatically; locally run
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# style: format all files with gofmt and Prettier
+04bed7d65abdee001e4d83e7dd3c896d3c0f18d7
