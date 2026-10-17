@@ -22,5 +22,6 @@ One file per significant decision, see [0001](0001-record-decisions.md). Never d
 | [0010](0010-target-layering.md)             | Target layering                            | Accepted |
 | [0011](0011-api-contract-with-huma.md)      | API contract with huma                     | Accepted |
 | [0012](0012-module-layout.md)               | Module layout (hexagonal)                  | Accepted |
+| [0013](0013-vite.md)                        | Vite builds the frontend                   | Accepted |
 
 New ADR: copy a recent one, take the next number, add a row here.

@@ -20,7 +20,7 @@ Then:
 
 ```sh
 cd frontend
-cp .env.example .env  # set REACT_APP_API_URL if backend isn't on localhost:8080
+cp .env.example .env  # set VITE_API_URL if backend isn't on localhost:8080
 yarn install
 ```
 
@@ -30,7 +30,7 @@ yarn install
 yarn start  # dev server on port 7300
 ```
 
-Hot reload is enabled. The dev server proxies nothing so requests go directly to `REACT_APP_API_URL`.
+Hot reload is enabled. The dev server proxies nothing so requests go directly to `VITE_API_URL`.
 
 ## Adding a New Page
 
@@ -44,7 +44,7 @@ Hot reload is enabled. The dev server proxies nothing so requests go directly to
 All requests go through `src/api/client.ts`. It handles:
 
 - httpOnly cookie auth (`credentials: 'include'`, no Authorization header)
-- Configurable timeout via `REACT_APP_REQUEST_TIMEOUT` (default 30s)
+- Configurable timeout via `VITE_REQUEST_TIMEOUT` (default 30s)
 - Automatic redirect to `/login` on 401
 - Structured `ApiError` with `code` and `details` fields
 
@@ -66,8 +66,6 @@ All user-facing strings must be translated. Add keys to both `src/i18n/locales/e
 ## Linting
 
 `make lint-frontend` runs ESLint 9 (`frontend/eslint.config.mjs`) on `src/**/*.{ts,tsx}`: `typescript-eslint` strict-type-checked, `react-hooks`, `jsx-a11y`, `eslint-comments`. Every rule is an error. E2E specs and config files are not linted yet (step 16 of the engineering-principles run adds `eslint-plugin-playwright` and them).
-
-`react-scripts` bundles ESLint 8, so its own ESLint plugin is off (`DISABLE_ESLINT_PLUGIN` in the `start` and `build` scripts).
 
 ### Suppressions (existing findings)
 

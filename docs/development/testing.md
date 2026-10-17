@@ -76,7 +76,7 @@ CI runs `make test-coverage-go GO_TEST_FLAGS=-race` (the race detector needs cgo
 
 The Unit Tests workflow prints the total coverage of the Go and Vitest suites in the job summary and uploads the full reports (`go-coverage`, `frontend-coverage`) as workflow artifacts for 14 days. No third-party service is involved. Locally: `make test-coverage` (part of `make precommit`) writes `backend/coverage.out` and `frontend/coverage/`.
 
-**Thresholds.** Coverage may not fall: Vitest fails below `coverage.thresholds` in `frontend/vitest.config.ts`, and `scripts/check-go-coverage.mjs` fails when the total Go coverage is below `GO_COVERAGE_MIN` in the `Makefile`. Both sit at the value of the day they were introduced, rounded down. When coverage rises, raise them in the same commit; never lower them to make a change pass, add tests instead.
+**Thresholds.** Coverage may not fall: Vitest fails below `coverage.thresholds` in `frontend/vite.config.ts`, and `scripts/check-go-coverage.mjs` fails when the total Go coverage is below `GO_COVERAGE_MIN` in the `Makefile`. Both sit at the value of the day they were introduced, rounded down. When coverage rises, raise them in the same commit; never lower them to make a change pass, add tests instead.
 
 ### Migrations
 

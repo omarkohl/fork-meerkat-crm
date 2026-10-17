@@ -1,6 +1,5 @@
 // Flat config (ESLint 9). Every rule is an error: a warning gets ignored by everyone
-// (docs/adr/0002-rules-are-machine-checks.md). react-scripts bundles ESLint 8, so its
-// own ESLint plugin is switched off (DISABLE_ESLINT_PLUGIN in package.json); `make lint-frontend` is the check.
+// (docs/adr/0002-rules-are-machine-checks.md).
 import js from '@eslint/js';
 import comments from '@eslint-community/eslint-plugin-eslint-comments/configs';
 import jsxA11y from 'eslint-plugin-jsx-a11y';

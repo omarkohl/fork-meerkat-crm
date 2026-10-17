@@ -21,5 +21,5 @@ mkdir -p "$PROFILE_PHOTO_DIR"
 # Stop everything when one process exits or on Ctrl+C.
 trap 'trap - INT TERM EXIT; kill 0' INT TERM EXIT
 (cd backend && PORT=$BACKEND_PORT exec go run .) &
-(cd frontend && PORT=$FRONTEND_PORT REACT_APP_API_URL=http://localhost:$BACKEND_PORT exec ${YARN:-yarn} start) &
+(cd frontend && PORT=$FRONTEND_PORT VITE_API_URL=http://localhost:$BACKEND_PORT exec ${YARN:-yarn} start) &
 wait -n

@@ -67,7 +67,7 @@ test-coverage-go: install-go ## Go tests with coverage (backend/coverage.out), f
 	cd backend && go test $(GO_TEST_FLAGS) -coverprofile=coverage.out ./...
 	cd backend && node ../scripts/check-go-coverage.mjs $(GO_COVERAGE_MIN)
 
-test-coverage-frontend: install-frontend ## Vitest with coverage (frontend/coverage/), fail below the thresholds in vitest.config.ts
+test-coverage-frontend: install-frontend ## Vitest with coverage (frontend/coverage/), fail below the thresholds in vite.config.ts
 	cd frontend && $(YARN) test:coverage
 
 test-carddav: install-go ## Sync tests against a running Radicale (see docs/development/testing.md)
@@ -111,4 +111,4 @@ precommit: format-check lint typecheck i18n-check arch openapi-check test-script
 
 build: install ## Build backend binary and frontend bundle
 	cd backend && go build -o meerkat .
-	cd frontend && REACT_APP_API_URL= $(YARN) build
+	cd frontend && VITE_API_URL= $(YARN) build

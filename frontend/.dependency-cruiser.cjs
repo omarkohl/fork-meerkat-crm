@@ -48,9 +48,9 @@ module.exports = {
     doNotFollow: { path: 'node_modules' },
     tsPreCompilationDeps: true,
     tsConfig: { fileName: 'tsconfig.json' },
-    // Tests and setup may reach anywhere. react-app-env.d.ts only references the
-    // react-scripts type package, which has no module to resolve.
-    exclude: { path: '\\.test\\.(ts|tsx)$|^src/setupTests\\.ts$|^src/react-app-env\\.d\\.ts$' },
+    // Tests and setup may reach anywhere. vite-env.d.ts only references the
+    // vite/client types, which have no module to resolve.
+    exclude: { path: '\\.test\\.(ts|tsx)$|^src/setupTests\\.ts$|^src/vite-env\\.d\\.ts$' },
     enhancedResolveOptions: { exportsFields: ['exports'], conditionNames: ['import', 'require', 'node', 'default'] },
   },
 };

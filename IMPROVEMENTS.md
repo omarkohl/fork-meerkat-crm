@@ -2,12 +2,6 @@
 
 Open items only; finished items were removed (numbers stay stable). Ordered by value within each section. Effort: **S** (< 1 day), **M** (days), **L** (week+).
 
-## 1. Tooling & Linting
-
-| #   | Item                                                                    | Effort | Why                                                                                                                                             |
-| --- | ----------------------------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1.2 | Migrate frontend from CRA (`react-scripts` 5, unmaintained) to **Vite** | M      | Vitest + `@vitejs/plugin-react` already present. Faster dev server, modern deps, removes many transitive CVEs. Rename `REACT_APP_*` → `VITE_*`. |
-
 ## 2. Testing
 
 | #    | Item                                                                                          | Effort | Why                                                         |
@@ -39,11 +33,10 @@ Open items only; finished items were removed (numbers stay stable). Ordered by v
 
 ## 6. Dependencies
 
-| #   | Item                                                                                   | Effort | Why                                                                                                                |
-| --- | -------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------ |
-| 6.1 | `react-scripts` → Vite (see 1.2); drop `cra-template-pwa-typescript` from runtime deps | M      | CRA is deprecated.                                                                                                 |
-| 6.5 | `@vitejs/plugin-react` ^4 → current; `jsdom` ^26 → current; Vitest 3 → 4               | S      | Stay in step.                                                                                                      |
-| 6.6 | Evaluate `glebarez/sqlite` (pure Go, wraps modernc) vs `ncruces/go-sqlite3` (wazero)   | S      | Both pure-Go; `ncruces` tracks SQLite upstream faster and supports FTS5 well. `wazero` is already an indirect dep. |
+| #   | Item                                                                                 | Effort | Why                                                                                                                |
+| --- | ------------------------------------------------------------------------------------ | ------ | ------------------------------------------------------------------------------------------------------------------ |
+| 6.5 | `@vitejs/plugin-react` ^4 → current; `jsdom` ^26 → current; Vitest 3 → 4             | S      | Stay in step.                                                                                                      |
+| 6.6 | Evaluate `glebarez/sqlite` (pure Go, wraps modernc) vs `ncruces/go-sqlite3` (wazero) | S      | Both pure-Go; `ncruces` tracks SQLite upstream faster and supports FTS5 well. `wazero` is already an indirect dep. |
 
 ## 7. Security
 
