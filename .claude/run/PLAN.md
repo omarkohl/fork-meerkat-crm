@@ -131,13 +131,13 @@ Read first: `.claude/plans/engineering-principles-reference.md`, `.claude/AUTONO
       rules:
   - [x] 13a. notes
   - [x] 13b. activities
-  - [ ] 13c. reminders (incl. scheduler job)
+  - [x] 13c. reminders (scheduler job deferred to 13i, see PROGRESS)
   - [ ] 13d. relationships and graph
   - [ ] 13e. photos and thumbnails
   - [ ] 13f. trash
   - [ ] 13g. users, sessions, TOTP, OIDC, password reset
   - [ ] 13h. API tokens and ICS feeds
-  - [ ] 13i. webhooks and email outbox
+  - [ ] 13i. webhooks and email outbox (incl. the daily reminder e-mail job)
   - [ ] 13j. import (CSV, VCF, Monica) and export
   - [ ] 13k. CardDAV sync settings and contact/calendar sync (the CardDAV protocol endpoints stay
         plain Gin: they are not JSON)

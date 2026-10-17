@@ -234,6 +234,76 @@
         ],
         "type": "object"
       },
+      "CompletionListOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "completions": {
+            "items": {
+              "$ref": "#/components/schemas/CompletionResponse"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "completions"
+        ],
+        "type": "object"
+      },
+      "CompletionResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "CreatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "DeletedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ID": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "UpdatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "completed_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "contact_id": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          },
+          "reminder_id": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ID",
+          "CreatedAt",
+          "UpdatedAt",
+          "DeletedAt",
+          "contact_id",
+          "message",
+          "completed_at"
+        ],
+        "type": "object"
+      },
       "ContactActivitiesOutputBody": {
         "additionalProperties": false,
         "properties": {
@@ -1503,6 +1573,207 @@
         ],
         "type": "object"
       },
+      "ReminderBody": {
+        "properties": {
+          "by_mail": {
+            "description": "Send it by e-mail. Leaving it out keeps the current value.",
+            "type": "boolean"
+          },
+          "contact_id": {
+            "description": "Required; when the reminder is added under /contacts/{id}/reminders the contact of the URL wins.",
+            "format": "int64",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "recurrence": {
+            "enum": [
+              "once",
+              "weekly",
+              "monthly",
+              "quarterly",
+              "six-months",
+              "yearly"
+            ],
+            "type": "string"
+          },
+          "remind_at": {
+            "description": "Only the day counts; the time of day is dropped.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "reoccur_from_completion": {
+            "description": "Count the next occurrence from completion. Leaving it out keeps the current value.",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "message",
+          "remind_at",
+          "recurrence",
+          "contact_id"
+        ],
+        "type": "object"
+      },
+      "ReminderCompletedOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "reminder": {
+            "$ref": "#/components/schemas/ReminderResponse",
+            "description": "Absent when a once reminder was finished and deleted"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "type": "object"
+      },
+      "ReminderListOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "reminders": {
+            "items": {
+              "$ref": "#/components/schemas/ReminderResponse"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "reminders"
+        ],
+        "type": "object"
+      },
+      "ReminderMessageOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "type": "object"
+      },
+      "ReminderResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "CreatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "DeletedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ID": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "UpdatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "by_mail": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "completed": {
+            "type": "boolean"
+          },
+          "contact_id": {
+            "format": "int64",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "email_sent": {
+            "type": "boolean"
+          },
+          "last_sent": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "recurrence": {
+            "enum": [
+              "once",
+              "weekly",
+              "monthly",
+              "quarterly",
+              "six-months",
+              "yearly"
+            ],
+            "type": "string"
+          },
+          "remind_at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reoccur_from_completion": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "ID",
+          "CreatedAt",
+          "UpdatedAt",
+          "DeletedAt",
+          "message",
+          "by_mail",
+          "remind_at",
+          "recurrence",
+          "reoccur_from_completion",
+          "completed",
+          "email_sent",
+          "last_sent",
+          "contact_id"
+        ],
+        "type": "object"
+      },
+      "ReminderSavedOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "reminder": {
+            "$ref": "#/components/schemas/ReminderResponse"
+          }
+        },
+        "required": [
+          "message",
+          "reminder"
+        ],
+        "type": "object"
+      },
       "URLInput": {
         "properties": {
           "type": {
@@ -2440,6 +2711,149 @@
         ]
       }
     },
+    "/contacts/{id}/reminder-completions": {
+      "get": {
+        "operationId": "list-reminder-completions",
+        "parameters": [
+          {
+            "description": "The ID in the path",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The ID in the path",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompletionListOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "The completed reminders of a contact, newest first",
+        "tags": [
+          "reminders"
+        ]
+      }
+    },
+    "/contacts/{id}/reminders": {
+      "get": {
+        "operationId": "list-contact-reminders",
+        "parameters": [
+          {
+            "description": "The ID in the path",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The ID in the path",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReminderListOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "The reminders about a contact",
+        "tags": [
+          "reminders"
+        ]
+      },
+      "post": {
+        "operationId": "create-reminder",
+        "parameters": [
+          {
+            "description": "The contact's ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The contact's ID",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReminderBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReminderSavedOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Add a reminder about a contact",
+        "tags": [
+          "reminders"
+        ]
+      }
+    },
     "/contacts/{id}/unarchive": {
       "post": {
         "operationId": "unarchive-contact",
@@ -2745,6 +3159,309 @@
         "summary": "Replace the content and date of a note, and move it to another contact",
         "tags": [
           "notes"
+        ]
+      }
+    },
+    "/reminder-completions/{id}": {
+      "delete": {
+        "operationId": "delete-reminder-completion",
+        "parameters": [
+          {
+            "description": "The ID in the path",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The ID in the path",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReminderMessageOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete a completion from the timeline",
+        "tags": [
+          "reminders"
+        ]
+      }
+    },
+    "/reminders": {
+      "get": {
+        "operationId": "list-reminders",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReminderListOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "All reminders, due first",
+        "tags": [
+          "reminders"
+        ]
+      }
+    },
+    "/reminders/upcoming": {
+      "get": {
+        "operationId": "upcoming-reminders",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReminderListOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Reminders due within a week, or the next five when fewer are due",
+        "tags": [
+          "reminders"
+        ]
+      }
+    },
+    "/reminders/{id}": {
+      "delete": {
+        "operationId": "delete-reminder",
+        "parameters": [
+          {
+            "description": "The ID in the path",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The ID in the path",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReminderMessageOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete a reminder",
+        "tags": [
+          "reminders"
+        ]
+      },
+      "get": {
+        "operationId": "get-reminder",
+        "parameters": [
+          {
+            "description": "The ID in the path",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The ID in the path",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReminderResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Get a reminder",
+        "tags": [
+          "reminders"
+        ]
+      },
+      "put": {
+        "operationId": "update-reminder",
+        "parameters": [
+          {
+            "description": "The reminder's ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The reminder's ID",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReminderBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReminderSavedOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Replace the fields of a reminder",
+        "tags": [
+          "reminders"
+        ]
+      }
+    },
+    "/reminders/{id}/complete": {
+      "post": {
+        "operationId": "complete-reminder",
+        "parameters": [
+          {
+            "description": "The reminder's ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The reminder's ID",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "true: reschedule or delete without a timeline entry",
+            "explode": false,
+            "in": "query",
+            "name": "skip",
+            "schema": {
+              "description": "true: reschedule or delete without a timeline entry",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReminderCompletedOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Complete a reminder, or skip it with skip=true; a recurring one is scheduled again",
+        "tags": [
+          "reminders"
         ]
       }
     }

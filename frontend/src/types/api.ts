@@ -8,7 +8,6 @@
 import type { Contact } from '../api/contacts';
 import type { Activity } from '../api/activities';
 import type { Note } from '../api/notes';
-import type { Reminder } from '../api/reminders';
 import type { User, Relationship } from './entities';
 
 /**
@@ -68,32 +67,6 @@ export interface UpdateContactResponse {
 }
 
 export interface DeleteContactResponse {
-  message: string;
-}
-
-/**
- * Reminder API responses
- */
-export interface GetRemindersResponse {
-  reminders: Reminder[];
-  total: number;
-  page: number;
-  limit: number;
-}
-
-export interface GetReminderResponse extends Reminder {}
-
-export interface CreateReminderResponse {
-  message: string;
-  reminder: Reminder;
-}
-
-export interface UpdateReminderResponse {
-  message: string;
-  reminder: Reminder;
-}
-
-export interface DeleteReminderResponse {
   message: string;
 }
 

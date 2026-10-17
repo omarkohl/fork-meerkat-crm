@@ -5,9 +5,11 @@ import (
 	"time"
 
 	"meerkat/clock"
+	"meerkat/logger"
 	"meerkat/middleware"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rs/zerolog"
 )
 
 type ginContextKey struct{}
@@ -32,6 +34,15 @@ func UserID(ctx context.Context) (id uint, ok bool) {
 	}
 	id, ok = v.(uint)
 	return id, ok
+}
+
+// Logger is the request's logger, with its request and user IDs.
+func Logger(ctx context.Context) *zerolog.Logger {
+	if c := ginContext(ctx); c != nil {
+		return logger.FromContext(c)
+	}
+	l := logger.Logger.With().Logger()
+	return &l
 }
 
 // Now is the time the clock middleware took at the start of the request.

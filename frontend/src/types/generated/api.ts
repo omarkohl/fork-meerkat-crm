@@ -198,6 +198,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/contacts/{id}/reminder-completions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The completed reminders of a contact, newest first */
+        get: operations["list-reminder-completions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/contacts/{id}/reminders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The reminders about a contact */
+        get: operations["list-contact-reminders"];
+        put?: never;
+        /** Add a reminder about a contact */
+        post: operations["create-reminder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/contacts/{id}/unarchive": {
         parameters: {
             query?: never;
@@ -247,6 +282,93 @@ export interface paths {
         post?: never;
         /** Delete a note */
         delete: operations["delete-note"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reminder-completions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a completion from the timeline */
+        delete: operations["delete-reminder-completion"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reminders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** All reminders, due first */
+        get: operations["list-reminders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reminders/upcoming": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Reminders due within a week, or the next five when fewer are due */
+        get: operations["upcoming-reminders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reminders/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a reminder */
+        get: operations["get-reminder"];
+        /** Replace the fields of a reminder */
+        put: operations["update-reminder"];
+        post?: never;
+        /** Delete a reminder */
+        delete: operations["delete-reminder"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reminders/{id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Complete a reminder, or skip it with skip=true; a recurring one is scheduled again */
+        post: operations["complete-reminder"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -318,6 +440,26 @@ export interface components {
         };
         BirthdaysOutputBody: {
             birthdays: components["schemas"]["BirthdayResponse"][] | null;
+        };
+        CompletionListOutputBody: {
+            completions: components["schemas"]["CompletionResponse"][] | null;
+        };
+        CompletionResponse: {
+            /** Format: date-time */
+            CreatedAt: string;
+            /** Format: date-time */
+            DeletedAt: string | null;
+            /** Format: int64 */
+            ID: number;
+            /** Format: date-time */
+            UpdatedAt: string;
+            /** Format: date-time */
+            completed_at: string;
+            /** Format: int64 */
+            contact_id: number;
+            message: string;
+            /** Format: int64 */
+            reminder_id?: number;
         };
         ContactActivitiesOutputBody: {
             activities: components["schemas"]["ActivityResponse"][] | null;
@@ -628,6 +770,63 @@ export interface components {
             /** Format: int64 */
             related_contact_id: number | null;
             type: string;
+        };
+        ReminderBody: {
+            /** @description Send it by e-mail. Leaving it out keeps the current value. */
+            by_mail?: boolean;
+            /**
+             * Format: int64
+             * @description Required; when the reminder is added under /contacts/{id}/reminders the contact of the URL wins.
+             */
+            contact_id: number | null;
+            message: string;
+            /** @enum {string} */
+            recurrence: "once" | "weekly" | "monthly" | "quarterly" | "six-months" | "yearly";
+            /**
+             * Format: date-time
+             * @description Only the day counts; the time of day is dropped.
+             */
+            remind_at: string;
+            /** @description Count the next occurrence from completion. Leaving it out keeps the current value. */
+            reoccur_from_completion?: boolean;
+        };
+        ReminderCompletedOutputBody: {
+            message: string;
+            /** @description Absent when a once reminder was finished and deleted */
+            reminder?: components["schemas"]["ReminderResponse"];
+        };
+        ReminderListOutputBody: {
+            reminders: components["schemas"]["ReminderResponse"][] | null;
+        };
+        ReminderMessageOutputBody: {
+            message: string;
+        };
+        ReminderResponse: {
+            /** Format: date-time */
+            CreatedAt: string;
+            /** Format: date-time */
+            DeletedAt: string | null;
+            /** Format: int64 */
+            ID: number;
+            /** Format: date-time */
+            UpdatedAt: string;
+            by_mail: boolean | null;
+            completed: boolean;
+            /** Format: int64 */
+            contact_id: number | null;
+            email_sent: boolean;
+            /** Format: date-time */
+            last_sent: string | null;
+            message: string;
+            /** @enum {string} */
+            recurrence: "once" | "weekly" | "monthly" | "quarterly" | "six-months" | "yearly";
+            /** Format: date-time */
+            remind_at: string;
+            reoccur_from_completion: boolean | null;
+        };
+        ReminderSavedOutputBody: {
+            message: string;
+            reminder: components["schemas"]["ReminderResponse"];
         };
         URLInput: {
             type?: string;
@@ -1251,6 +1450,106 @@ export interface operations {
             };
         };
     };
+    "list-reminder-completions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID in the path */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompletionListOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "list-contact-reminders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID in the path */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReminderListOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "create-reminder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The contact's ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReminderBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReminderSavedOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     "unarchive-contact": {
         parameters: {
             query?: never;
@@ -1443,6 +1742,231 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NoteMessageOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "delete-reminder-completion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID in the path */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReminderMessageOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "list-reminders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReminderListOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "upcoming-reminders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReminderListOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "get-reminder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID in the path */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReminderResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "update-reminder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The reminder's ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReminderBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReminderSavedOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "delete-reminder": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The ID in the path */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReminderMessageOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "complete-reminder": {
+        parameters: {
+            query?: {
+                /** @description true: reschedule or delete without a timeline entry */
+                skip?: string;
+            };
+            header?: never;
+            path: {
+                /** @description The reminder's ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReminderCompletedOutputBody"];
                 };
             };
             /** @description Error */

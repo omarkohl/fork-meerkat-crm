@@ -338,15 +338,6 @@
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 4
     },
-    "@typescript-eslint/no-unsafe-assignment": {
-      "count": 6
-    },
-    "@typescript-eslint/no-unsafe-member-access": {
-      "count": 2
-    },
-    "@typescript-eslint/no-unsafe-return": {
-      "count": 5
-    },
     "@typescript-eslint/restrict-template-expressions": {
       "count": 9
     }
@@ -768,7 +759,7 @@
   },
   "src/types/api.ts": {
     "@typescript-eslint/no-empty-object-type": {
-      "count": 2
+      "count": 1
     }
   },
   "src/types/utils.ts": {

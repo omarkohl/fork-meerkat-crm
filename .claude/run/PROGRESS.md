@@ -2,7 +2,7 @@
 
 ## Next step
 
-13c (reminders incl. scheduler job, same pattern).
+13d (relationships and graph, same pattern).
 
 ## Stack
 
@@ -138,6 +138,14 @@
   module tests on real SQLite incl. isolation, search, contact links and webhook payloads. Frontend
   `Activity`, `ActivityContact`, responses and request bodies derive from the generated types; the
   dead `*ActivityResponse` types are gone. `make precommit` green.
+- Step 13c: `backend/reminders` (domain `Reminder.Edit/Complete/Record/NextOccurrence`, recurrence
+  maths moved from services with its tests; use cases; ports `Reminders`/`Store`; persistence and
+  http adapters) with huma operations for all ten reminder and reminder-completion endpoints;
+  depguard rules `reminders-*` (shown to fail); `routes.NewModules` extended. Old controller and
+  tests removed. 14 module tests on real SQLite plus domain tests, using the fake clock for
+  complete/upcoming. Frontend `Reminder`, `ReminderFormData`, `ReminderCompletion` from the
+  generated types; shared `WithoutNull` moved to `src/types/utils.ts`; dead `*ReminderResponse`
+  types removed. `make precommit` green.
 
 ## Decisions
 
@@ -196,6 +204,22 @@
   activities for contact" for both the contact lookup and the list (the lookup used to say "Failed
   to retrieve contact"). Response types of the three modules are prefixed with the module's noun
   (`NoteSavedOutput`, ...) so the OpenAPI schema names are stable instead of `CreatedOutputBody1`.
+- 13c, scheduler job: the daily e-mail job (`services.SendReminders`, lock, outbox, birthdays,
+  templates) stays in `services`, deferred to 13i. It orchestrates users, birthdays and e-mail, none
+  of which are modules yet, and touches reminders only through `models.Reminder`. It keeps the
+  injected clock (ADR 0009) and its tests. Moving the "due by mail" query and `email_sent` marking
+  behind a port is for 13i, when its other collaborators have ports. Review item.
+- 13c, API: a reminder is returned without the zero-valued nested `contact` object; the body of
+  create no longer accepts `completed`, `email_sent` or `last_sent` (they were taken as sent, now
+  ignored); `by_mail` / `reoccur_from_completion` left out on update keep their value (as with GORM
+  `Updates`), and on create fall back to the database default; update errors now surface ("Failed to
+  update reminder"; the old code ignored them); marking a reminder complete and writing its timeline
+  entry share one transaction (a failed entry is still only logged, now by the HTTP adapter with the
+  request's IDs via `api.Logger`); an unknown recurrence is returned unchanged by `NextOccurrence`
+  without the old warning log (domain has no logger); `GET /contacts/{id}/reminders` orders by ID,
+  and answers `[]` for none. Deleting a completion distinguishes "retrieve" and "delete" failures as
+  before. `services.addMonths/ addYears` stay for the Monica import, duplicated in the domain:
+  remove with step 13j.
 - 12a keeps behaviour: `GET /contacts/circles` still answers `null` when there are no circles;
   non-numeric `{id}` now answers `400` (a Gin string param used to reach the database); a missing
   user answers `401`.
@@ -249,6 +273,11 @@
   `YARN: yarn`, `make fuzz` env vars.
 
 ## Questions
+
+- Vitest timeouts (5000ms) recur under load when `make precommit` runs everything at once: step 13c
+  first run, `ImportContactsDialog.test.tsx` ("a summary chip filters the rows...", "a filtered row
+  stays visible..."), 6.1 s and 5.3 s; earlier in 13a two other files. A rerun passes. Candidate
+  fix: a larger `testTimeout` for the slow component tests.
 
 - A request body with `"date": "2026-03-01"` (no time) answers "date is required" for notes and
   activities, which is misleading (the value is there, it is not an RFC 3339 timestamp). Seen while

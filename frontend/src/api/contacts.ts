@@ -1,6 +1,7 @@
 // Contact-related API calls
 import { apiFetch, API_BASE_URL, getAuthHeaders, parseErrorResponse } from './client';
 import type { components, operations } from '../types/generated/api';
+import type { WithoutNull } from '../types/utils';
 
 // Types of the contacts module's operations, generated from the OpenAPI document (docs/openapi.json).
 export type ContactResponse = components['schemas']['ContactResponse'];
@@ -15,8 +16,6 @@ type BirthdaysResponse = operations['upcoming-birthdays']['responses']['200']['c
 type ContactsListResponse = operations['list-contacts']['responses']['200']['content']['application/json'];
 
 // A contact as the list and detail endpoints return it: with `fields` only some values are filled.
-// The API sends null for an empty list or map; the UI treats that as absent, as it always did.
-type WithoutNull<T> = { [K in keyof T]: K extends 'DeletedAt' ? T[K] : Exclude<T[K], null> };
 type ContactValues = WithoutNull<Omit<ContactListItem, 'notes' | 'activities' | 'reminders' | 'relationships'>>;
 export type Contact = Partial<ContactValues> & Pick<ContactValues, 'ID' | 'firstname' | 'lastname'>;
 export type ContactInput = Partial<components['schemas']['ContactBody']>;

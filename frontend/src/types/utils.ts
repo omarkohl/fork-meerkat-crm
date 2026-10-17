@@ -129,3 +129,9 @@ export type SelectChangeHandler<T = string> = (value: T | null) => void;
 export type Nullable<T> = T | null;
 export type Optional<T> = T | undefined;
 export type Maybe<T> = T | null | undefined;
+
+/**
+ * The API sends null for an empty value; the UI treats that as absent, as it always did.
+ * DeletedAt keeps its null: it is how a live record looks.
+ */
+export type WithoutNull<T> = { [K in keyof T]: K extends 'DeletedAt' ? T[K] : Exclude<T[K], null> };

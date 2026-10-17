@@ -11,6 +11,7 @@ import (
 	"meerkat/middleware"
 	"meerkat/models"
 	"meerkat/notes"
+	"meerkat/reminders"
 	"meerkat/services"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -23,6 +24,7 @@ type Modules struct {
 	Contacts   *contacts.Module
 	Notes      *notes.Module
 	Activities *activities.Module
+	Reminders  *reminders.Module
 }
 
 // NewModules builds every converted module on db. db may be nil when only the operations'
@@ -32,6 +34,7 @@ func NewModules(db *gorm.DB, cfg *config.Config) Modules {
 		Contacts:   contacts.New(contacts.Deps{DB: db, Config: cfg}),
 		Notes:      notes.New(notes.Deps{DB: db, Config: cfg}),
 		Activities: activities.New(activities.Deps{DB: db, Config: cfg}),
+		Reminders:  reminders.New(reminders.Deps{DB: db, Config: cfg}),
 	}
 }
 
@@ -52,6 +55,7 @@ func RegisterAPI(a huma.API, cfg *config.Config, m Modules, g Groups) {
 	m.Contacts.Register(a, g.Protected)
 	m.Notes.Register(a, g.Protected)
 	m.Activities.Register(a, g.Protected)
+	m.Reminders.Register(a, g.Protected)
 }
 
 func RegisterRoutes(router *gin.Engine, cfg *config.Config, db *gorm.DB, oidcProvider *services.OIDCProvider, modules Modules) {
@@ -173,20 +177,6 @@ func RegisterRoutes(router *gin.Engine, cfg *config.Config, db *gorm.DB, oidcPro
 
 			// Image proxy route (for fetching images from external URLs)
 			protected.GET("/proxy/image", controllers.ProxyImage)
-
-			// Reminder routes
-			protected.GET("/reminders", controllers.GetAllReminders)
-			protected.GET("/reminders/upcoming", controllers.GetUpcomingReminders)
-			protected.GET("/contacts/:id/reminders", controllers.GetRemindersForContact)
-			protected.POST("/contacts/:id/reminders", middleware.ValidateJSONMiddleware(&models.Reminder{}), controllers.CreateReminder)
-			protected.GET("/reminders/:id", controllers.GetReminder)
-			protected.PUT("/reminders/:id", middleware.ValidateJSONMiddleware(&models.Reminder{}), controllers.UpdateReminder)
-			protected.POST("/reminders/:id/complete", controllers.CompleteReminder)
-			protected.DELETE("/reminders/:id", controllers.DeleteReminder)
-
-			// Reminder completion routes (for timeline)
-			protected.GET("/contacts/:id/reminder-completions", controllers.GetCompletionsForContact)
-			protected.DELETE("/reminder-completions/:id", controllers.DeleteCompletion)
 
 			// Export routes
 			protected.GET("/export", controllers.ExportData)

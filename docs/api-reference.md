@@ -170,18 +170,18 @@ everywhere else (lists, search, circles, birthdays, graph, ICS feed, reminders, 
 
 ### Reminders
 
-| Method   | Path                                 | Description                                              |
-| -------- | ------------------------------------ | -------------------------------------------------------- |
-| `GET`    | `/reminders`                         | List all reminders                                       |
-| `GET`    | `/reminders/upcoming`                | List upcoming reminders (used by dashboard)              |
-| `GET`    | `/reminders/:id`                     | Get a reminder                                           |
-| `PUT`    | `/reminders/:id`                     | Update a reminder                                        |
-| `DELETE` | `/reminders/:id`                     | Delete a reminder                                        |
-| `POST`   | `/reminders/:id/complete`            | Mark a reminder complete (creates timeline entry)        |
-| `GET`    | `/contacts/:id/reminders`            | List reminders for a contact                             |
-| `POST`   | `/contacts/:id/reminders`            | Create a reminder for a contact                          |
-| `GET`    | `/contacts/:id/reminder-completions` | List completion history for a contact (timeline entries) |
-| `DELETE` | `/reminder-completions/:id`          | Delete a completion entry                                |
+| Method   | Path                                 | Description                                                                                                                                              |
+| -------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET`    | `/reminders`                         | List all reminders                                                                                                                                       |
+| `GET`    | `/reminders/upcoming`                | List upcoming reminders (used by dashboard)                                                                                                              |
+| `GET`    | `/reminders/:id`                     | Get a reminder                                                                                                                                           |
+| `PUT`    | `/reminders/:id`                     | Update a reminder. Leaving out `by_mail` or `reoccur_from_completion` keeps the current value                                                            |
+| `DELETE` | `/reminders/:id`                     | Delete a reminder                                                                                                                                        |
+| `POST`   | `/reminders/:id/complete`            | Mark a reminder complete (creates timeline entry); `?skip=true` skips without one. A recurring reminder is scheduled again, a `once` reminder is deleted |
+| `GET`    | `/contacts/:id/reminders`            | List reminders for a contact                                                                                                                             |
+| `POST`   | `/contacts/:id/reminders`            | Create a reminder for a contact                                                                                                                          |
+| `GET`    | `/contacts/:id/reminder-completions` | List completion history for a contact (timeline entries)                                                                                                 |
+| `DELETE` | `/reminder-completions/:id`          | Delete a completion entry                                                                                                                                |
 
 ### Import
 

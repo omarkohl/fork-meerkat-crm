@@ -1,46 +1,24 @@
 // Reminder-related API calls
 import { apiFetch, API_BASE_URL, getAuthHeaders, parseErrorResponse } from './client';
+import type { components, operations } from '../types/generated/api';
+import type { WithoutNull } from '../types/utils';
 
-export interface Reminder {
-  ID: number;
-  message: string;
-  by_mail: boolean;
-  remind_at: string; // ISO date string
-  recurrence: 'once' | 'weekly' | 'monthly' | 'quarterly' | 'six-months' | 'yearly';
-  reoccur_from_completion: boolean;
-  completed: boolean;
-  email_sent: boolean;
-  last_sent?: string; // ISO date string
-  contact_id: number;
-  CreatedAt?: string;
-  UpdatedAt?: string;
-  DeletedAt?: string | null;
-}
+export type Reminder = WithoutNull<components['schemas']['ReminderResponse']>;
+export type ReminderFormData = components['schemas']['ReminderBody'];
 
-export interface ReminderFormData {
-  message: string;
-  by_mail: boolean;
-  remind_at: string; // ISO date string
-  recurrence: 'once' | 'weekly' | 'monthly' | 'quarterly' | 'six-months' | 'yearly';
-  reoccur_from_completion: boolean;
-  contact_id: number;
-}
+type CompletedReminderBody = operations['complete-reminder']['responses']['200']['content']['application/json'];
+type RemindersListBody = operations['list-reminders']['responses']['200']['content']['application/json'];
+type CompletionsListBody = operations['list-reminder-completions']['responses']['200']['content']['application/json'];
 
-export interface RemindersResponse {
+type CompletedReminder = Omit<CompletedReminderBody, 'reminder'> & { reminder?: Reminder };
+
+export interface RemindersResponse extends Omit<RemindersListBody, 'reminders'> {
   reminders: Reminder[];
 }
 
-export interface ReminderCompletion {
-  ID: number;
-  reminder_id?: number;
-  contact_id: number;
-  message: string;
-  completed_at: string;
-  CreatedAt?: string;
-  UpdatedAt?: string;
-}
+export type ReminderCompletion = WithoutNull<components['schemas']['CompletionResponse']>;
 
-export interface CompletionsResponse {
+export interface CompletionsResponse extends Omit<CompletionsListBody, 'completions'> {
   completions: ReminderCompletion[];
 }
 
@@ -52,7 +30,7 @@ export async function getAllReminders(): Promise<Reminder[]> {
     throw await parseErrorResponse(response);
   }
 
-  const data: RemindersResponse = await response.json();
+  const data = (await response.json()) as RemindersResponse;
   return data.reminders || [];
 }
 
@@ -64,7 +42,7 @@ export async function getUpcomingReminders(): Promise<Reminder[]> {
     throw await parseErrorResponse(response);
   }
 
-  const data: RemindersResponse = await response.json();
+  const data = (await response.json()) as RemindersResponse;
   return data.reminders || [];
 }
 
@@ -76,7 +54,7 @@ export async function getRemindersForContact(contactId: number): Promise<Reminde
     throw await parseErrorResponse(response);
   }
 
-  const data: RemindersResponse = await response.json();
+  const data = (await response.json()) as RemindersResponse;
   return data.reminders || [];
 }
 
@@ -88,7 +66,7 @@ export async function getReminder(reminderId: number): Promise<Reminder> {
     throw await parseErrorResponse(response);
   }
 
-  return response.json();
+  return (await response.json()) as Reminder;
 }
 
 // Create a new reminder
@@ -103,7 +81,7 @@ export async function createReminder(contactId: number, reminderData: ReminderFo
     throw await parseErrorResponse(response);
   }
 
-  const data = await response.json();
+  const data = (await response.json()) as { reminder: Reminder };
   return data.reminder;
 }
 
@@ -119,12 +97,12 @@ export async function updateReminder(reminderId: number, reminderData: Partial<R
     throw await parseErrorResponse(response);
   }
 
-  const data = await response.json();
+  const data = (await response.json()) as { reminder: Reminder };
   return data.reminder;
 }
 
 // Complete a reminder (marks as done and reschedules if recurring)
-export async function completeReminder(reminderId: number): Promise<{ message: string; reminder?: Reminder }> {
+export async function completeReminder(reminderId: number): Promise<CompletedReminder> {
   const response = await apiFetch(`${API_BASE_URL}/reminders/${reminderId}/complete`, {
     method: 'POST',
     headers: getAuthHeaders(),
@@ -134,11 +112,11 @@ export async function completeReminder(reminderId: number): Promise<{ message: s
     throw await parseErrorResponse(response);
   }
 
-  return response.json();
+  return (await response.json()) as CompletedReminder;
 }
 
 // Skip a reminder (reschedules recurring reminders without recording completion)
-export async function skipReminder(reminderId: number): Promise<{ message: string; reminder?: Reminder }> {
+export async function skipReminder(reminderId: number): Promise<CompletedReminder> {
   const response = await apiFetch(`${API_BASE_URL}/reminders/${reminderId}/complete?skip=true`, {
     method: 'POST',
     headers: getAuthHeaders(),
@@ -148,7 +126,7 @@ export async function skipReminder(reminderId: number): Promise<{ message: strin
     throw await parseErrorResponse(response);
   }
 
-  return response.json();
+  return (await response.json()) as CompletedReminder;
 }
 
 // Delete a reminder
@@ -173,7 +151,7 @@ export async function getCompletionsForContact(contactId: number): Promise<Remin
     throw await parseErrorResponse(response);
   }
 
-  const data: CompletionsResponse = await response.json();
+  const data = (await response.json()) as CompletionsResponse;
   return data.completions || [];
 }
 
