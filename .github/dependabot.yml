@@ -5,8 +5,8 @@ updates:
     schedule:
       interval: "weekly"
     groups:
-      go-minor-patch:
-        update-types: ["minor", "patch"]
+      go:
+        patterns: ["*"]
 
   # Covers yarn.lock too (Yarn classic is handled by the npm ecosystem).
   - package-ecosystem: "npm"
@@ -14,16 +14,16 @@ updates:
     schedule:
       interval: "weekly"
     groups:
-      npm-minor-patch:
-        update-types: ["minor", "patch"]
+      npm:
+        patterns: ["*"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
     groups:
-      actions-minor-patch:
-        update-types: ["minor", "patch"]
+      actions:
+        patterns: ["*"]
 
   # Base images in the three Dockerfiles (root, backend, frontend).
   - package-ecosystem: "docker"
@@ -34,8 +34,8 @@ updates:
     schedule:
       interval: "weekly"
     groups:
-      docker-minor-patch:
-        update-types: ["minor", "patch"]
+      docker:
+        patterns: ["*"]
 
   # Jekyll documentation site.
   - package-ecosystem: "bundler"
@@ -43,5 +43,5 @@ updates:
     schedule:
       interval: "weekly"
     groups:
-      bundler-minor-patch:
-        update-types: ["minor", "patch"]
+      bundler:
+        patterns: ["*"]
