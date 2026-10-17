@@ -10,6 +10,8 @@ nav_order: 1
 
 Two codebases: a Go API (`backend/`) and a React SPA (`frontend/`). They communicate over HTTP, the frontend calls `/api/v1/*` endpoints. In production they are bundled into a single all-in-one Docker image where nginx serves the SPA and proxies `/api/` to the backend on `127.0.0.1:8080`; only the nginx port is published.
 
+Significant decisions are recorded as [ADRs](../adr/README.md).
+
 ## Backend
 
 ### Project Structure

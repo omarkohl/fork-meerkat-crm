@@ -65,9 +65,9 @@ Read first: `.claude/plans/engineering-principles-reference.md`, `.claude/AUTONO
 
 ## Steps
 
-- [ ] 0. **Environment check** (no own commit; record in PROGRESS.md with step 1):
+- [x] 0. **Environment check** (no own commit; record in PROGRESS.md with step 1):
       `make precommit` green, whether `make test-e2e` runs.
-- [ ] 1. **ADR folder (§8)**: `docs/adr/` with ADR 0001 "record decisions" and a
+- [x] 1. **ADR folder (§8)**: `docs/adr/` with ADR 0001 "record decisions" and a
       README index. ADRs for the principles: "rules are machine checks with fix
       messages" (overview, §2) and "testing strategy" (§4 tiers, guardrails, TDD;
       details go to `docs/development/testing.md`). Backfill ADRs for decisions

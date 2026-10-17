@@ -6,6 +6,47 @@ nav_order: 4
 
 # Testing
 
+## Strategy
+
+Decision: [ADR 0003](../adr/0003-testing-strategy.md). Test behaviour, not implementation: a test fails when a user's outcome changes, and ideally only then.
+
+### Tiers
+
+| Tier        | Share    | Scope                                                                                                                                                                |
+| ----------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Integration | the bulk | Business logic through its real entry points (HTTP handlers, use cases) against a real SQLite database. Mock only what you cannot run locally (Resend, remote OIDC). |
+| E2E         | few      | Important user workflows in Playwright. Quality over quantity.                                                                                                       |
+| Unit        | rare     | Complex isolated functions only (vCard/CSV parsers, ICS folding). Never duplicate integration coverage.                                                              |
+
+Integration tests:
+
+- Keep the real database cheap: migrate a template database once, copy it per test.
+- Verify results through a read surface, in this order: the matching read endpoint, then repository reads, then raw rows as a last resort.
+- Scheduler jobs do not run implicitly in tests; tests trigger them, then assert.
+
+E2E tests:
+
+- Act like a user: click visible elements, follow links, type into labelled fields. Use role, label and visible text locators, not CSS or test IDs.
+- Never construct URLs with internal IDs (`/contacts/${id}`) and never replay raw API payloads.
+- Tests that change global settings run separately (serial, after the parallel bulk).
+
+### Quality guardrails
+
+- A test that breaks on an internal rename with no user-visible change is a bad test: rewrite or delete it.
+- No assertions on call counts of internal helpers; no reaching into unexported state.
+- Factories build minimal valid entities; tests override only the fields they care about. If a test sets 12 fields, fix the factory.
+- No shared state between tests.
+
+### TDD (mandatory for agents)
+
+1. Find or add the use case; write the failing test.
+2. Run it and confirm the failure output: this proves the test tests something.
+3. Implement the minimum to pass.
+4. Run again; confirm green.
+5. Refactor without touching the test.
+
+Exceptions: pure styling changes, and refactors that tests already cover fully. Write no test for those (no tests that assert layout or spacing).
+
 ## Backend Tests
 
 ### Running Tests
