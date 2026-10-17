@@ -28,7 +28,7 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o meerkat .
 # =============================================================================
 # Stage 2: Build React frontend (same-origin API, served by nginx)
 # =============================================================================
-FROM --platform=$BUILDPLATFORM node:22-alpine AS frontend-builder
+FROM --platform=$BUILDPLATFORM node:25-alpine AS frontend-builder
 
 WORKDIR /app
 
@@ -52,7 +52,7 @@ RUN if [ -f yarn.lock ]; then yarn build; else npm run build; fi
 # =============================================================================
 # Stage 3: Runtime - nginx + Go backend under supervisord
 # =============================================================================
-FROM alpine:3.22
+FROM alpine:3.24
 
 # Runtime dependencies. shadow provides usermod/groupmod for PUID/PGID remap.
 # No sqlite package needed - the backend uses a pure-Go SQLite driver.
