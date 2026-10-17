@@ -8,8 +8,9 @@ nav_order: 3
 
 ## Setup
 
-Requires Node.js 26 and Yarn 1.22.22. Node 25 and later do not include Corepack, so
-install Yarn globally:
+Requires the Node.js version in `.node-version` and Yarn 1.22.22. fnm reads that file; mise
+reads it after `mise settings add idiomatic_version_file_enable_tools node`. Node 25 and
+later do not include Corepack, so install Yarn globally:
 
 ```sh
 npm install -g yarn@1.22.22

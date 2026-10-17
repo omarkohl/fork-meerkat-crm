@@ -25,8 +25,8 @@ if [ ! -f "$stamp" ] || [ frontend/yarn.lock -nt "$stamp" ] || [ frontend/packag
   fi
 fi
 
-if ! node -e 'process.exit(+process.versions.node.split(".")[0] >= 22 ? 0 : 1)'; then
-  echo "WARNING: node $(node -v) is older than 22 (Vitest config needs >= 22.4)."
+if ! node -e 'process.exit(+process.versions.node.split(".")[0] >= 26 ? 0 : 1)'; then
+  echo "WARNING: node $(node -v) is older than 26 (see .node-version)."
 fi
 
 # Playwright browser in the background: the download needs allowlisted hosts.
