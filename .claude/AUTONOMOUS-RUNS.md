@@ -74,7 +74,7 @@ Run from the repository root. All must pass before a commit:
 ## Pushing and PRs (cloud only)
 
 - Branch per step: `<run-name>/<NN>-<slug>`, based on the previous step's branch
-  (stacked). Step 1's base is `main`.
+  (stacked). Step 1's base is `omk`.
 - Never push to `main`. Never merge PRs or delete branches: that is for the user.
 - `gh pr` uses GraphQL, which the cloud GitHub proxy blocks. Use REST:
   `gh api repos/{owner}/{repo}/pulls -f title=... -f head=<branch> -f base=<base> -f body=...`
