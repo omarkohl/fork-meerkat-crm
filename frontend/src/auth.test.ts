@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
-import { loginUser, InvalidSecondFactorError, LoginLockedError } from './auth';
+import { loginUser, logoutUser, isAuthenticated, isAdmin, InvalidSecondFactorError, LoginLockedError } from './auth';
 
 const json = (status: number, body: unknown) =>
   Promise.resolve(new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }));
@@ -10,7 +10,27 @@ describe('loginUser', () => {
     fetchMock.mockReset();
     vi.stubGlobal('fetch', fetchMock);
   });
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    localStorage.clear();
+  });
+
+  test('a successful login remembers the user and returns their preferences', async () => {
+    fetchMock
+      .mockReturnValueOnce(json(200, { language: 'de', date_format: 'dmy' }))
+      .mockReturnValueOnce(json(200, { ID: 7, Username: 'alice', is_admin: true }));
+
+    expect(await loginUser('alice', 'pw')).toEqual({ language: 'de', date_format: 'dmy' });
+    expect(isAuthenticated()).toBe(true);
+    expect(isAdmin()).toBe(true);
+  });
+
+  test('a user whose profile cannot be loaded is not treated as logged in', async () => {
+    fetchMock.mockReturnValueOnce(json(200, {})).mockReturnValueOnce(json(500, {}));
+
+    await loginUser('alice', 'pw');
+    expect(isAuthenticated()).toBe(false);
+  });
 
   test('reports that a code is needed and does not fetch the user', async () => {
     fetchMock.mockReturnValueOnce(json(200, { totp_required: true }));
@@ -39,5 +59,32 @@ describe('loginUser', () => {
   test('a lockout is its own error', async () => {
     fetchMock.mockReturnValueOnce(json(429, { error: 'Account temporarily locked' }));
     await expect(loginUser('a', 'b')).rejects.toBeInstanceOf(LoginLockedError);
+  });
+});
+
+describe('logoutUser', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    localStorage.clear();
+  });
+
+  test('logs out locally even when the server cannot be reached', async () => {
+    localStorage.setItem('user_info', JSON.stringify({ user_id: 1, username: 'alice', is_admin: true }));
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
+
+    await logoutUser();
+    expect(isAuthenticated()).toBe(false);
+    expect(isAdmin()).toBe(false);
+  });
+});
+
+describe('isAdmin', () => {
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  test('corrupt cached user info grants no admin rights', () => {
+    localStorage.setItem('user_info', '{not json');
+    expect(isAdmin()).toBe(false);
   });
 });
