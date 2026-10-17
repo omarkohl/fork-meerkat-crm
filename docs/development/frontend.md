@@ -8,7 +8,14 @@ nav_order: 3
 
 ## Setup
 
-Requires Node.js and Yarn.
+Requires Node.js 26 and Yarn 1.22.22. Node 25 and later do not include Corepack, so
+install Yarn globally:
+
+```sh
+npm install -g yarn@1.22.22
+```
+
+Then:
 
 ```sh
 cd frontend

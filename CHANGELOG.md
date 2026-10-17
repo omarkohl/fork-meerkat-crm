@@ -14,6 +14,7 @@ Versions `X.Y.Z` are upstream releases of
 ### Internal
 
 - **`FAKE_NOW`** sets the app's clock, to test and preview time-dependent behaviour.
+- **Development needs a global Yarn 1.22.22**: Node 26 has no Corepack, so the build no longer uses it.
 
 ## [1.7.0-omk.1] - 2026-10-16
 

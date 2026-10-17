@@ -50,7 +50,7 @@ function run(cmd, args, opts) {
 
 if (process.env.E2E_SKIP_BUILD !== '1') {
   run('go', ['build', '-o', 'meerkat', '.'], { cwd: backendDir });
-  run('corepack', ['yarn', 'build'], {
+  run('yarn', ['build'], {
     cwd: frontendDir,
     env: { ...process.env, REACT_APP_API_URL: '' },
   });

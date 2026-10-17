@@ -14,11 +14,11 @@ else
   echo "WARNING: go not found. Install it in the environment setup script."
 fi
 
-# Frontend: yarn v1 via corepack, npx as fallback. Skip if the lockfile is unchanged.
+# Frontend: yarn v1, npx as fallback. Skip if the lockfile is unchanged.
 stamp=frontend/node_modules/.install-stamp
 if [ ! -f "$stamp" ] || [ frontend/yarn.lock -nt "$stamp" ] || [ frontend/package.json -nt "$stamp" ]; then
-  if (cd frontend && { COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack yarn install --frozen-lockfile ||
-    npx --yes yarn@1 install --frozen-lockfile; } >/tmp/yarn-install.log 2>&1); then
+  if (cd frontend && { yarn install --frozen-lockfile ||
+    npx --yes yarn@1.22.22 install --frozen-lockfile; } >/tmp/yarn-install.log 2>&1); then
     touch "$stamp"
   else
     echo "WARNING: frontend install failed, see /tmp/yarn-install.log"

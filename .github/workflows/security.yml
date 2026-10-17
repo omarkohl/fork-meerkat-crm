@@ -9,10 +9,6 @@ on:
     # New advisories appear without code changes; re-check weekly.
     - cron: "17 5 * * 1"
 
-# The runners ship yarn; the Makefile default (corepack yarn) needs a packageManager field.
-env:
-  YARN: yarn
-
 jobs:
   govulncheck:
     permissions:

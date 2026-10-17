@@ -14,7 +14,7 @@
       "Bash(go vet *)",
       "Bash(go build *)",
       "Bash(gofmt *)",
-      "Bash(corepack yarn test *)",
+      "Bash(yarn test *)",
       "Bash(npx vitest *)",
       "Bash(npx tsc *)",
       "Bash(npx eslint *)",

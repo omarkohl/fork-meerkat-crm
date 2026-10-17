@@ -1,6 +1,6 @@
 .PHONY: help install install-go install-frontend dev seed format format-check lint lint-go lint-frontend typecheck i18n-check test test-scripts test-go test-frontend test-coverage test-coverage-go test-coverage-frontend test-carddav test-e2e test-e2e-docker arch openapi openapi-check vuln-go audit-frontend fuzz precommit build
 
-YARN ?= corepack yarn
+YARN ?= yarn
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-24s %s\n", $$1, $$2}'
