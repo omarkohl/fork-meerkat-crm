@@ -27,7 +27,7 @@ test.describe('Contact thumbnails', () => {
       expect(image.headers()['cache-control']).toContain('max-age=31536000');
       const etag = image.headers()['etag'];
       expect(etag).toBeTruthy();
-      expect((await request.get(url, { headers: { 'If-None-Match': etag } })).status()).toBe(304);
+      expect((await request.get(url, { headers: { 'If-None-Match': etag ?? '' } })).status()).toBe(304);
 
       await page.goto('/contacts');
       await waitForLoading(page);

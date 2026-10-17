@@ -25,7 +25,7 @@ export function withErrorBoundary<P extends object>(
   const { name, fallbackSize = 'medium', showDetails, onError } = options;
 
   return class WithErrorBoundary extends Component<P> {
-    render() {
+    override render() {
       return (
         <ErrorBoundary
           name={name || WrappedComponent.displayName || WrappedComponent.name}
@@ -64,7 +64,7 @@ export function withSectionErrorBoundary<P extends object>(
   const { name, onError } = options;
 
   return class WithSectionErrorBoundary extends Component<P> {
-    render() {
+    override render() {
       return (
         <ErrorBoundary
           name={name || WrappedComponent.displayName || WrappedComponent.name}

@@ -47,7 +47,7 @@ const shownNames = () =>
   screen
     .getAllByRole('row')
     .slice(1)
-    .map((r) => within(r).getAllByRole('cell')[1].textContent);
+    .map((r) => within(r).getAllByRole('cell')[1]?.textContent);
 
 describe('ImportContactsDialog preview', () => {
   beforeEach(async () => {

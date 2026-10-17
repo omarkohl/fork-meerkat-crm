@@ -39,8 +39,9 @@ lint-go: install-go ## go vet + golangci-lint (the golangci-lint binary must be 
 lint-frontend: install-frontend ## ESLint
 	cd frontend && npx eslint --max-warnings=0 src
 
-typecheck: install-frontend ## TypeScript type check
+typecheck: install-frontend ## TypeScript type check (app and E2E/Playwright config)
 	cd frontend && npx tsc --noEmit
+	cd frontend && npx tsc -p tsconfig.node.json --noEmit
 
 i18n-check: ## Locale files: missing/extra keys fail, unused/duplicate keys warn (scripts/i18n-check.mjs)
 	node --test scripts/*.test.mjs

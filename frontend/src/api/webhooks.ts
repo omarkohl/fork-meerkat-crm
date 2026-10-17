@@ -32,7 +32,7 @@ export async function getWebhooks(): Promise<Webhook[]> {
     headers: getAuthHeaders(),
   });
   const data = await handleResponse(response, 'Unable to load webhooks.');
-  return data?.webhooks || [];
+  return data?.['webhooks'] || [];
 }
 
 export async function createWebhook(input: {
@@ -83,5 +83,5 @@ export async function getWebhookDeliveries(id: number): Promise<WebhookDelivery[
     headers: getAuthHeaders(),
   });
   const data = await handleResponse(response, 'Unable to load deliveries.');
-  return data?.deliveries || [];
+  return data?.['deliveries'] || [];
 }

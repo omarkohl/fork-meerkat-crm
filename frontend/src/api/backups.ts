@@ -26,11 +26,11 @@ export async function getBackups(): Promise<BackupList> {
   });
   const data = await handleResponse(response, 'Unable to load the backups.');
   return {
-    backups: data?.backups || [],
-    enabled: !!data?.enabled,
-    time: data?.time ?? '',
-    retention_count: data?.retention_count ?? 0,
-    directory: data?.directory ?? '',
+    backups: data?.['backups'] || [],
+    enabled: !!data?.['enabled'],
+    time: data?.['time'] ?? '',
+    retention_count: data?.['retention_count'] ?? 0,
+    directory: data?.['directory'] ?? '',
   };
 }
 

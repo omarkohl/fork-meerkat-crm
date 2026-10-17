@@ -33,7 +33,7 @@ export default function AddActivityDialog({ open, onClose, onSave, preselectedCo
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [selectedContacts, setSelectedContacts] = useState<Contact[]>([]);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [searchInput, setSearchInput] = useState('');
@@ -98,7 +98,7 @@ export default function AddActivityDialog({ open, onClose, onSave, preselectedCo
     setTitle('');
     setDescription('');
     setLocation('');
-    setDate(new Date().toISOString().split('T')[0]);
+    setDate(new Date().toISOString().slice(0, 10));
     setSelectedContacts([]);
     setSearchInput('');
     setContacts([]);

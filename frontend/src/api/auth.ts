@@ -11,7 +11,7 @@ export async function requestPasswordReset(email: string): Promise<string> {
   });
 
   const data = await handleResponse(response, 'Unable to request password reset.');
-  return data?.message || 'If an account exists, password reset instructions were sent.';
+  return data?.['message'] || 'If an account exists, password reset instructions were sent.';
 }
 
 export async function confirmPasswordReset(token: string, password: string): Promise<string> {
@@ -24,7 +24,7 @@ export async function confirmPasswordReset(token: string, password: string): Pro
   });
 
   const data = await handleResponse(response, 'Unable to reset password.');
-  return data?.message || 'Password reset successful.';
+  return data?.['message'] || 'Password reset successful.';
 }
 
 export async function changePassword(currentPassword: string, newPassword: string): Promise<string> {
@@ -38,5 +38,5 @@ export async function changePassword(currentPassword: string, newPassword: strin
   });
 
   const data = await handleResponse(response, 'Unable to change password.');
-  return data?.message || 'Password updated successfully.';
+  return data?.['message'] || 'Password updated successfully.';
 }

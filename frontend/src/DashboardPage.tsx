@@ -126,8 +126,8 @@ function DashboardPage() {
     // Birthday is either "YYYY-MM-DD" or "--MM-DD"; compare month and day to today
     const parts = birthday.split('-').filter((p) => p !== '');
     if (parts.length < 2) return false;
-    const month = parseInt(parts[parts.length - 2], 10);
-    const day = parseInt(parts[parts.length - 1], 10);
+    const month = parseInt(parts[parts.length - 2] ?? '', 10);
+    const day = parseInt(parts[parts.length - 1] ?? '', 10);
     if (isNaN(month) || isNaN(day)) return false;
     const today = new Date();
     return today.getMonth() + 1 === month && today.getDate() === day;
@@ -142,8 +142,9 @@ function DashboardPage() {
     // Check if year is present to calculate age
     if (!birthday.startsWith('--')) {
       const parts = birthday.split('-');
-      if (parts.length === 3 && parts[0].length === 4) {
-        const birthYear = parseInt(parts[0], 10);
+      const yearPart = parts[0] ?? '';
+      if (parts.length === 3 && yearPart.length === 4) {
+        const birthYear = parseInt(yearPart, 10);
         if (!isNaN(birthYear)) {
           const currentYear = new Date().getFullYear();
           const age = currentYear - birthYear;

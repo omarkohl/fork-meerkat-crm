@@ -67,7 +67,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   /**
    * Log error information
    */
-  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     // Log to console
     console.error('ErrorBoundary caught an error:', error, errorInfo);
 
@@ -107,7 +107,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     window.location.reload();
   };
 
-  render(): ReactNode {
+  override render(): ReactNode {
     const { hasError, error, errorInfo } = this.state;
     const { children, fallback, showDetails, errorMessage, name } = this.props;
 

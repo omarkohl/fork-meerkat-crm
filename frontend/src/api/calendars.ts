@@ -40,7 +40,7 @@ export async function getCalendarSubscriptions(): Promise<CalendarSubscription[]
     headers: getAuthHeaders(),
   });
   const data = await handleResponse(response, 'Unable to load calendar subscriptions.');
-  return data?.calendars || [];
+  return data?.['calendars'] || [];
 }
 
 export async function createCalendarSubscription(input: CalendarSubscriptionInput): Promise<CalendarSubscription> {

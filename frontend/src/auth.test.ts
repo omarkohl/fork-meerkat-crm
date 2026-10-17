@@ -21,7 +21,7 @@ describe('loginUser', () => {
   test('sends the code or the recovery code', async () => {
     fetchMock.mockReturnValueOnce(json(401, { error: { code: 'INVALID_TOTP_CODE' } }));
     await expect(loginUser('a', 'b', { code: '123456' })).rejects.toBeInstanceOf(InvalidSecondFactorError);
-    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+    expect(JSON.parse(fetchMock.mock.calls[0]?.[1].body)).toEqual({
       identifier: 'a',
       password: 'b',
       totp_code: '123456',
@@ -29,7 +29,11 @@ describe('loginUser', () => {
 
     fetchMock.mockReturnValueOnce(json(401, { error: { code: 'INVALID_CREDENTIALS' } }));
     await expect(loginUser('a', 'b', { recoveryCode: 'X' })).rejects.toThrow('Login failed');
-    expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({ identifier: 'a', password: 'b', recovery_code: 'X' });
+    expect(JSON.parse(fetchMock.mock.calls[1]?.[1].body)).toEqual({
+      identifier: 'a',
+      password: 'b',
+      recovery_code: 'X',
+    });
   });
 
   test('a lockout is its own error', async () => {

@@ -24,7 +24,7 @@ export async function getTrash(): Promise<TrashResponse> {
     headers: getAuthHeaders(),
   });
   const data = await handleResponse(response, 'Unable to load the trash.');
-  return { contacts: data?.contacts || [], retention_days: data?.retention_days ?? 30 };
+  return { contacts: data?.['contacts'] || [], retention_days: data?.['retention_days'] ?? 30 };
 }
 
 export async function restoreTrashedContact(id: number): Promise<void> {
@@ -50,5 +50,5 @@ export async function emptyTrash(): Promise<number> {
     headers: getAuthHeaders(),
   });
   const data = await handleResponse(response, 'Unable to empty the trash.');
-  return data?.purged ?? 0;
+  return data?.['purged'] ?? 0;
 }

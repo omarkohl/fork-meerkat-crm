@@ -137,7 +137,9 @@ describe('UsersPage two-factor reset', () => {
     const buttons = screen.getAllByRole('button', { name: 'Reset two-factor' });
     expect(buttons).toHaveLength(1);
 
-    fireEvent.click(buttons[0]);
+    const [resetButton] = buttons;
+    if (!resetButton) throw new Error('no reset button');
+    fireEvent.click(resetButton);
     expect(twoFactorApi.resetUserTwoFactor).not.toHaveBeenCalled();
     fireEvent.click(await screen.findByRole('button', { name: 'Reset' }));
     await waitFor(() => expect(twoFactorApi.resetUserTwoFactor).toHaveBeenCalledWith(1));

@@ -14,7 +14,7 @@ test.describe('Security headers', () => {
       expect(csp, path).toContain("default-src 'self'");
       expect(csp, path).toContain("frame-ancestors 'none'");
       expect(csp, path).toContain("object-src 'none'");
-      expect(csp.match(/script-src[^;]*/)?.[0], path).toBe("script-src 'self'");
+      expect(csp?.match(/script-src[^;]*/)?.[0], path).toBe("script-src 'self'");
       expect(headers['content-security-policy-report-only'], path).toBeUndefined();
       expect(headers['x-frame-options'], path).toBe('DENY');
       expect(headers['x-content-type-options'], path).toBe('nosniff');

@@ -12,8 +12,9 @@ function totp(secret: string, atMs = Date.now()): string {
   const counter = Buffer.alloc(8);
   counter.writeBigUInt64BE(BigInt(Math.floor(atMs / 1000 / 30)));
   const h = createHmac('sha1', key).update(counter).digest();
-  const o = h[h.length - 1] & 0x0f;
-  const n = ((h[o] & 0x7f) << 24) | (h[o + 1] << 16) | (h[o + 2] << 8) | h[o + 3];
+  const byte = (i: number) => h[i] ?? 0;
+  const o = byte(h.length - 1) & 0x0f;
+  const n = ((byte(o) & 0x7f) << 24) | (byte(o + 1) << 16) | (byte(o + 2) << 8) | byte(o + 3);
   return String(n % 1_000_000).padStart(6, '0');
 }
 
@@ -85,7 +86,7 @@ test.describe('Two-factor authentication', () => {
         await page.getByLabel(/^password/i).fill(user.password);
         await page.getByRole('button', { name: 'Login' }).click();
         await page.getByRole('button', { name: 'Use a recovery code' }).click();
-        await page.getByLabel(/Recovery code/).fill(codes[0]);
+        await page.getByLabel(/Recovery code/).fill(codes[0] ?? '');
         await page.getByRole('button', { name: 'Verify' }).click();
         if (attempt === 1) {
           await expect(page.getByRole('heading', { name: /dashboard/i })).toBeVisible({ timeout: 10000 });

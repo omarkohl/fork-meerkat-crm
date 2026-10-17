@@ -18,9 +18,9 @@ export async function getIcsFeed(): Promise<IcsFeedStatus> {
   });
   const data = await handleResponse(response, 'Unable to load calendar feed.');
   return {
-    enabled: !!data?.enabled,
-    created_at: data?.created_at ?? null,
-    last_fetched_at: data?.last_fetched_at ?? null,
+    enabled: !!data?.['enabled'],
+    created_at: data?.['created_at'] ?? null,
+    last_fetched_at: data?.['last_fetched_at'] ?? null,
   };
 }
 

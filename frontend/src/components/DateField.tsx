@@ -18,7 +18,7 @@ export function parseDateInputWithFormat(input: string, format: DateFormat): str
   const parsed = parseBirthdayInputWithFormat(input, format);
   if (parsed === null || parsed === '') return parsed;
   if (parsed.startsWith('--')) return null;
-  const [year, month, day] = parsed.split('-').map(Number);
+  const [year = NaN, month = NaN, day = NaN] = parsed.split('-').map(Number);
   const date = new Date(Date.UTC(year, month - 1, day));
   if (date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return null; // e.g. 31.02.
   return parsed;

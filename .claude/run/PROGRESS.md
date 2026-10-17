@@ -2,7 +2,7 @@
 
 ## Next step
 
-6.
+7.
 
 ## Stack
 
@@ -16,6 +16,7 @@
 - Step 3: targets declare `install` as prerequisite; added `test-coverage`, `arch` (placeholder), `seed` (`scripts/seed.mjs`, needs `make dev` running; tested against a temp backend); `test-e2e` is in `precommit`; Checks in AUTONOMOUS-RUNS.md and run-one-test table in testing.md updated. `make precommit` green incl. E2E (54 passed).
 - Step 4: Makefile split into `install-go`/`install-frontend`, `lint-go`/`lint-frontend`, `test-go`/`test-frontend`, `test-coverage-go`/`-frontend`, `test-carddav`, `test-e2e-docker`, `vuln-go`, `audit-frontend`, `fuzz`. Lint, unit, e2e, security and fuzz workflows call them (docs, docker-build, docker-publish unchanged: Jekyll and image build, not make). actionlint v1.7.7 clean; Go version in fuzz.yml and the CardDAV job of unit-tests.yml raised 1.26 -> 1.27 (needed: `backend/go.mod` requires 1.27.0); CI itself not run locally. `make precommit` green.
 - Step 5: the full reformat (`04bed7d6` "style: format all files with gofmt and Prettier") and `format-check` on all files (no `BASE` logic) were already in the history below this run (`4eb6e3b1`); `make format` changes nothing. So no new reformat commit; this commit only adds `.git-blame-ignore-revs` for `04bed7d6` and a note in contributing.md. `make precommit` green.
+- Step 6: enabled `noUncheckedIndexedAccess`, `noImplicitOverride`, `noPropertyAccessFromIndexSignature` in `frontend/tsconfig.json`; fixed 86 errors (bracket access for index signatures incl. `process.env['REACT_APP_...']`, `override` on class members, destructuring with defaults for regex/split parts, `.slice(0, 10)` instead of `.split('T')[0]` in four dialogs, `?.` in tests). No non-null assertions. The three flags are also in `tsconfig.node.json` (E2E and Playwright config) and `make typecheck` now checks that project too. `make precommit` green incl. E2E.
 
 ## Decisions
 
@@ -29,6 +30,8 @@
 - Step 4: CI cannot run locally. Check the first PR run: `install-only` of golangci-lint-action v8, `YARN: yarn`, `make fuzz` env vars.
 
 ## Questions
+
+- `new Date().toISOString().slice(0, 10)` (and the older `.split('T')[0]`) gives the UTC date, so default dates in AddNote/AddActivity and the reminder `min` can show the wrong day near midnight. Pre-existing; not fixed.
 
 - `frontend/package.json` has no `packageManager` field, so `corepack yarn` (Makefile default) needs CI to set `YARN=yarn`. Adding the field would remove that workaround; not done (out of scope).
 

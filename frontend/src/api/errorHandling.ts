@@ -9,7 +9,7 @@ export function extractDetailMessage(details: ErrorDetails): string | null {
 
   const normalized = details as Record<string, unknown>;
 
-  const reason = normalized.reason;
+  const reason = normalized['reason'];
   if (typeof reason === 'string' && reason.trim().length > 0) {
     return reason.trim();
   }

@@ -1,4 +1,4 @@
-const API_SERVER_URL = process.env.REACT_APP_API_URL || '';
+const API_SERVER_URL = process.env['REACT_APP_API_URL'] || '';
 
 /**
  * The API sends a thumbnail as a path ("/api/v1/contacts/5/profile_picture?thumbnail=true&v=..."),

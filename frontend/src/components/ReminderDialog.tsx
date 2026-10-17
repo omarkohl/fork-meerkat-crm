@@ -67,14 +67,14 @@ export default function ReminderDialog({
         d.setFullYear(d.getFullYear() + 1);
         break;
     }
-    return d.toISOString().split('T')[0];
+    return d.toISOString().slice(0, 10);
   };
 
   useEffect(() => {
     if (reminder) {
       setMessage(reminder.message);
       setByMail(reminder.by_mail);
-      setRemindAt(reminder.remind_at.split('T')[0]); // Extract date part
+      setRemindAt(reminder.remind_at.slice(0, 10)); // Extract date part
       setRecurrence(reminder.recurrence);
       setReoccurFromCompletion(reminder.reoccur_from_completion);
     } else {
@@ -179,7 +179,7 @@ export default function ReminderDialog({
             onChange={setRemindAt}
             required
             fullWidth
-            min={new Date().toISOString().split('T')[0]}
+            min={new Date().toISOString().slice(0, 10)}
           />
 
           {recurrence !== 'once' && (

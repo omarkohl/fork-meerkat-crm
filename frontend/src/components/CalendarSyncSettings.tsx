@@ -164,7 +164,7 @@ export default function CalendarSyncSettings() {
         await handleSync(created);
       }
     } catch (err) {
-      if (err instanceof ApiError && err.details?.field === 'password') {
+      if (err instanceof ApiError && err.details?.['field'] === 'password') {
         setDialogError(t('settings.calendarSync.passwordRequiredForNewServer'));
       } else {
         setDialogError(err instanceof Error ? err.message : t('settings.calendarSync.saveError'));

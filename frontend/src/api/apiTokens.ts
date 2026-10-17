@@ -23,7 +23,7 @@ export async function getApiTokens(): Promise<ApiTokensListResponse> {
     headers: getAuthHeaders(),
   });
   const data = await handleResponse(response, 'Unable to load API tokens.');
-  return { tokens: data?.tokens || [] };
+  return { tokens: data?.['tokens'] || [] };
 }
 
 export async function createApiToken(name: string): Promise<ApiTokenCreateResponse> {

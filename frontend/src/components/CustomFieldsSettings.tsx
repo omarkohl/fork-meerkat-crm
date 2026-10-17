@@ -103,7 +103,9 @@ export default function CustomFieldsSettings() {
   const handleMoveUp = async (index: number) => {
     if (index === 0) return;
     const newNames = [...fieldNames];
-    [newNames[index - 1], newNames[index]] = [newNames[index], newNames[index - 1]];
+    const [previous = '', current = ''] = [newNames[index - 1], newNames[index]];
+    newNames[index - 1] = current;
+    newNames[index] = previous;
     setFieldNames(newNames);
     await saveFields(newNames);
   };
@@ -111,7 +113,9 @@ export default function CustomFieldsSettings() {
   const handleMoveDown = async (index: number) => {
     if (index === fieldNames.length - 1) return;
     const newNames = [...fieldNames];
-    [newNames[index], newNames[index + 1]] = [newNames[index + 1], newNames[index]];
+    const [current = '', next = ''] = [newNames[index], newNames[index + 1]];
+    newNames[index] = next;
+    newNames[index + 1] = current;
     setFieldNames(newNames);
     await saveFields(newNames);
   };

@@ -94,7 +94,7 @@ Read first: `.claude/plans/engineering-principles-reference.md`, `.claude/AUTONO
 - [x] 5. **Full format check (§2)**: one reformat commit for all Go and TS files, add
       its revision to `.git-blame-ignore-revs`, then `format-check` checks all files.
       Remove the `BASE` logic.
-- [ ] 6. **TypeScript strictness (§2)**: enable `noUncheckedIndexedAccess`,
+- [x] 6. **TypeScript strictness (§2)**: enable `noUncheckedIndexedAccess`,
       `noImplicitOverride`, `noPropertyAccessFromIndexSignature`; fix the errors.
 - [ ] 7. **ESLint flat config (§2)**: ESLint 9 flat config with
       `typescript-eslint` `strict-type-checked`, `react-hooks`, `jsx-a11y`,

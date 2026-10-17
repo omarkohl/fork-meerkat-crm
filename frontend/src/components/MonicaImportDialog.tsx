@@ -575,9 +575,9 @@ export default function MonicaImportDialog({ open, onClose, onImportComplete }: 
             <TableBody>
               {preview.rows.map((row) => (
                 <TableRow key={row.row_index}>
-                  <TableCell>{row.parsed_contact.firstname || <EmptyValue />}</TableCell>
-                  <TableCell>{row.parsed_contact.lastname || <EmptyValue />}</TableCell>
-                  <TableCell>{row.parsed_contact.email || <EmptyValue />}</TableCell>
+                  <TableCell>{row.parsed_contact['firstname'] || <EmptyValue />}</TableCell>
+                  <TableCell>{row.parsed_contact['lastname'] || <EmptyValue />}</TableCell>
+                  <TableCell>{row.parsed_contact['email'] || <EmptyValue />}</TableCell>
                   <TableCell>{renderRelatedChips(row)}</TableCell>
                   <TableCell>
                     {row.validation_errors.length > 0 ? (

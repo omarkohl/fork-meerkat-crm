@@ -55,13 +55,14 @@ export function calculateAgeFromBirthday(birthday: string): number | null {
   }
 
   const parts = birthday.split('-');
-  if (parts.length !== 3 || parts[0].length !== 4) {
+  const [yearPart = '', monthPart = '', dayPart = ''] = parts;
+  if (parts.length !== 3 || yearPart.length !== 4) {
     return null;
   }
 
-  const birthYear = parseInt(parts[0], 10);
-  const month = parseInt(parts[1], 10);
-  const day = parseInt(parts[2], 10);
+  const birthYear = parseInt(yearPart, 10);
+  const month = parseInt(monthPart, 10);
+  const day = parseInt(dayPart, 10);
 
   if (isNaN(day) || isNaN(month) || isNaN(birthYear)) {
     return null;
@@ -131,9 +132,7 @@ export function formatBirthdayWithFormat(birthday: string, format: DateFormat, i
   // YYYY-MM-DD format
   const parts = birthday.split('-');
   if (parts.length === 3) {
-    const year = parts[0];
-    const month = parts[1];
-    const day = parts[2];
+    const [year = '', month = '', day = ''] = parts;
 
     let dateStr: string;
 
@@ -235,9 +234,10 @@ export function parseBirthdayInputWithFormat(input: string, format: DateFormat):
     // Full date with year
     const euFullMatch = trimmed.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
     if (euFullMatch) {
-      const day = euFullMatch[1].padStart(2, '0');
-      const month = euFullMatch[2].padStart(2, '0');
-      const year = euFullMatch[3];
+      const [, rawDay = '', rawMonth = '', rawYear = ''] = euFullMatch;
+      const day = rawDay.padStart(2, '0');
+      const month = rawMonth.padStart(2, '0');
+      const year = rawYear;
 
       // Validate date components
       const dayNum = parseInt(day, 10);
@@ -252,8 +252,9 @@ export function parseBirthdayInputWithFormat(input: string, format: DateFormat):
     // Year-less format: DD.MM. or DD.MM
     const euYearlessMatch = trimmed.match(/^(\d{1,2})\.(\d{1,2})\.?$/);
     if (euYearlessMatch) {
-      const day = euYearlessMatch[1].padStart(2, '0');
-      const month = euYearlessMatch[2].padStart(2, '0');
+      const [, rawDay = '', rawMonth = ''] = euYearlessMatch;
+      const day = rawDay.padStart(2, '0');
+      const month = rawMonth.padStart(2, '0');
 
       // Validate date components
       const dayNum = parseInt(day, 10);
@@ -269,9 +270,10 @@ export function parseBirthdayInputWithFormat(input: string, format: DateFormat):
     // Full date with year
     const usFullMatch = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
     if (usFullMatch) {
-      const month = usFullMatch[1].padStart(2, '0');
-      const day = usFullMatch[2].padStart(2, '0');
-      const year = usFullMatch[3];
+      const [, rawMonth = '', rawDay = '', rawYear = ''] = usFullMatch;
+      const month = rawMonth.padStart(2, '0');
+      const day = rawDay.padStart(2, '0');
+      const year = rawYear;
 
       // Validate date components
       const dayNum = parseInt(day, 10);
@@ -286,8 +288,9 @@ export function parseBirthdayInputWithFormat(input: string, format: DateFormat):
     // Year-less format: us MM/DD or iso MM-DD
     const usYearlessMatch = trimmed.match(/^(\d{1,2})[-/](\d{1,2})$/);
     if (usYearlessMatch) {
-      const month = usYearlessMatch[1].padStart(2, '0');
-      const day = usYearlessMatch[2].padStart(2, '0');
+      const [, rawMonth = '', rawDay = ''] = usYearlessMatch;
+      const month = rawMonth.padStart(2, '0');
+      const day = rawDay.padStart(2, '0');
 
       // Validate date components
       const dayNum = parseInt(day, 10);

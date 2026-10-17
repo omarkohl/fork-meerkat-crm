@@ -13,7 +13,7 @@ interface AddNoteDialogProps {
 export default function AddNoteDialog({ open, onClose, onSave }: AddNoteDialogProps) {
   const { t } = useTranslation();
   const [content, setContent] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -36,7 +36,7 @@ export default function AddNoteDialog({ open, onClose, onSave }: AddNoteDialogPr
 
   const handleClose = () => {
     setContent('');
-    setDate(new Date().toISOString().split('T')[0]);
+    setDate(new Date().toISOString().slice(0, 10));
     setError('');
     onClose();
   };

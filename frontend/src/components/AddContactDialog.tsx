@@ -197,8 +197,8 @@ export default function AddContactDialog({
         } else {
           const parts = birthdayISO.split('-');
           if (parts.length === 3) {
-            month = parseInt(parts[1], 10) - 1;
-            day = parseInt(parts[2], 10);
+            month = parseInt(parts[1] ?? '', 10) - 1;
+            day = parseInt(parts[2] ?? '', 10);
           }
         }
 

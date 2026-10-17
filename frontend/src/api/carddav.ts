@@ -95,7 +95,7 @@ export async function discoverCardDAVAddressBooks(input: {
     60000,
   );
   const data = await handleResponse(response, 'Unable to discover address books.');
-  return data?.address_books || [];
+  return data?.['address_books'] || [];
 }
 
 /**

@@ -188,7 +188,7 @@ export default function ContactSyncSettings() {
       // Trigger the first sync right away so the user gets feedback.
       await handleSync();
     } catch (err) {
-      if (err instanceof ApiError && err.details?.field === 'password') {
+      if (err instanceof ApiError && err.details?.['field'] === 'password') {
         setDialogError(t('settings.contactSync.passwordRequiredForNewServer'));
       } else {
         setDialogError(err instanceof Error ? err.message : t('settings.contactSync.saveError'));

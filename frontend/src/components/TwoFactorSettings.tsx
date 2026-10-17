@@ -165,7 +165,7 @@ export default function TwoFactorSettings() {
     try {
       setCodes(await enableTwoFactor(setupPassword, setupCode));
     } catch (err) {
-      if (err instanceof ApiError && err.status === 400 && err.details?.field === 'password') {
+      if (err instanceof ApiError && err.status === 400 && err.details?.['field'] === 'password') {
         setSetupError(t('twoFactor.confirm.wrongPassword'));
       } else if (err instanceof ApiError && err.status === 400) {
         setSetupError(t('twoFactor.setup.invalid'));
@@ -213,7 +213,7 @@ export default function TwoFactorSettings() {
         await load();
       }
     } catch (err) {
-      if (err instanceof ApiError && err.status === 400 && err.details?.field === 'password') {
+      if (err instanceof ApiError && err.status === 400 && err.details?.['field'] === 'password') {
         setConfirmError(t('twoFactor.confirm.wrongPassword'));
       } else if (err instanceof ApiError && err.status === 400) {
         setConfirmError(t('twoFactor.confirm.invalid'));

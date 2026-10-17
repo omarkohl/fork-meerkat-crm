@@ -18,7 +18,7 @@ export async function getSessions(): Promise<Session[]> {
     headers: getAuthHeaders(),
   });
   const data = await handleResponse(response, 'Unable to load sessions.');
-  return data?.sessions ?? [];
+  return data?.['sessions'] ?? [];
 }
 
 export async function revokeSession(id: string): Promise<void> {

@@ -10,8 +10,9 @@ export async function downloadFileFromResponse(response: Response, defaultFilena
   let filename = defaultFilename;
   if (contentDisposition) {
     const filenameMatch = contentDisposition.match(/filename=([^;]+)/);
-    if (filenameMatch) {
-      filename = filenameMatch[1].replace(/"/g, '').trim();
+    const captured = filenameMatch?.[1];
+    if (captured) {
+      filename = captured.replace(/"/g, '').trim();
     }
   }
 

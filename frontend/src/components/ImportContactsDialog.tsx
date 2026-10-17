@@ -207,7 +207,9 @@ export default function ImportContactsDialog({ open, onClose, onImportComplete }
   // Handle mapping change
   const handleMappingChange = (index: number, field: string) => {
     const newMappings = [...mappings];
-    newMappings[index] = { ...newMappings[index], contact_field: field };
+    const current = newMappings[index];
+    if (!current) return;
+    newMappings[index] = { ...current, contact_field: field };
     setMappings(newMappings);
   };
 
@@ -580,9 +582,9 @@ export default function ImportContactsDialog({ open, onClose, onImportComplete }
               {shownRows.map((row) => (
                 <TableRow key={row.row_index}>
                   <TableCell>{row.row_index + 1}</TableCell>
-                  <TableCell>{row.parsed_contact.firstname || <EmptyValue />}</TableCell>
-                  <TableCell>{row.parsed_contact.lastname || <EmptyValue />}</TableCell>
-                  <TableCell>{row.parsed_contact.email || <EmptyValue />}</TableCell>
+                  <TableCell>{row.parsed_contact['firstname'] || <EmptyValue />}</TableCell>
+                  <TableCell>{row.parsed_contact['lastname'] || <EmptyValue />}</TableCell>
+                  <TableCell>{row.parsed_contact['email'] || <EmptyValue />}</TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       {row.validation_errors.length > 0 ? (
