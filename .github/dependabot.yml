@@ -15,6 +15,23 @@ updates:
     groups:
       npm:
         patterns: ["*"]
+    # Major-version pins. Re-evaluate each when its unblock condition holds, then delete the entry.
+    ignore:
+      # Unblock: eslint-plugin-jsx-a11y (and eslint-plugin-react, if added) list ESLint 10 in their
+      # peerDependencies. Check `npm view eslint-plugin-jsx-a11y peerDependencies.eslint`.
+      # https://github.com/jsx-eslint/eslint-plugin-react/issues/3977
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@eslint/js"
+        update-types: ["version-update:semver-major"]
+      # Unblock: openapi-typescript accepts TypeScript 6/7 (`npm view openapi-typescript
+      # peerDependencies.typescript`) and typescript-eslint supports it (currently <6.1).
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      # Unblock: @mui/lab ships a stable release for the next MUI major (v9 only has betas), and the
+      # code is migrated: MUI 9 breaks Stack props, TextField InputProps and Snackbar onClose types.
+      - dependency-name: "@mui/*"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
