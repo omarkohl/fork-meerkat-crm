@@ -60,7 +60,7 @@
 - By default they run against Meerkat's own CardDAV server in-process. It has no sync-collection REPORT, so that pass only covers the full-listing fallback.
 - Add a real Radicale server to also cover token-based incremental sync, deletion tombstones and the address-data multi-get path:
   1.  `docker compose -f docker-compose.carddav-test.yml up -d --wait`
-  2.  `cd backend && MEERKAT_CARDDAV_IT=1 go test ./services/ -run TestContactSync -v`
+  2.  `make test-carddav`
   3.  `docker compose -f docker-compose.carddav-test.yml down -v`
 - `TestContactSyncTokenModeIsUsed` asserts which strategy each server gets, so a regression that silently drops every server onto the fallback fails loudly instead of passing.
 - Fixtures and assertions speak CardDAV over HTTP rather than touching a backing store, so covering another server means adding a `davRemote` constructor, not new scenarios.

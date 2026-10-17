@@ -5,6 +5,10 @@ on:
     branches: [main, omk]
   pull_request:
 
+# The runners ship yarn; the Makefile default (corepack yarn) needs a packageManager field.
+env:
+  YARN: yarn
+
 jobs:
   e2e:
     permissions:
@@ -47,8 +51,7 @@ jobs:
           cache-dependency-path: frontend/yarn.lock
 
       - name: Install frontend dependencies
-        working-directory: frontend
-        run: yarn install --frozen-lockfile
+        run: make install-frontend
 
       - name: Cache Playwright browsers
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
@@ -61,8 +64,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run Playwright tests
-        working-directory: frontend
-        run: npx playwright test
+        run: make test-e2e-docker
         env:
           CI: true
 

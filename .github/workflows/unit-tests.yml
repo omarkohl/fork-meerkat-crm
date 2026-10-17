@@ -5,6 +5,10 @@ on:
     branches: [main, omk]
   pull_request:
 
+# The runners ship yarn; the Makefile default (corepack yarn) needs a packageManager field.
+env:
+  YARN: yarn
+
 jobs:
   backend:
     permissions:
@@ -27,8 +31,7 @@ jobs:
       # -race needs cgo (a C compiler, present on the runner); the SQLite driver itself is pure Go.
       # -race implies atomic coverage counting.
       - name: Run tests (race detector, coverage)
-        working-directory: backend
-        run: go test -race -coverprofile=coverage.out ./...
+        run: make test-coverage-go GO_TEST_FLAGS=-race
 
       - name: Summarise coverage
         if: ${{ !cancelled() && hashFiles('backend/coverage.out') != '' }}
@@ -66,7 +69,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
         with:
-          go-version: "1.26"
+          go-version: "1.27"
           check-latest: true
           cache-dependency-path: backend/go.sum
 
@@ -80,10 +83,7 @@ jobs:
       # The whole package, not only TestContactSync*: the other sync tests (discovery,
       # background start) also use the Radicale harness when the variable is set.
       - name: Run service tests against Radicale
-        working-directory: backend
-        run: go test ./services/ -v
-        env:
-          MEERKAT_CARDDAV_IT: "1"
+        run: make test-carddav
 
       - name: Radicale log
         if: ${{ failure() }}
@@ -108,13 +108,8 @@ jobs:
           cache: "yarn"
           cache-dependency-path: frontend/yarn.lock
 
-      - name: Install dependencies
-        working-directory: frontend
-        run: yarn install --frozen-lockfile
-
       - name: Run tests (coverage)
-        working-directory: frontend
-        run: yarn test:coverage
+        run: make test-coverage-frontend
         env:
           CI: true
 

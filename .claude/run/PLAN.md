@@ -88,7 +88,7 @@ Read first: `.claude/plans/engineering-principles-reference.md`, `.claude/AUTONO
       "Checks" section of `AUTONOMOUS-RUNS.md`.
       Document how to run one test by file, line and name for Go, Vitest, Playwright
       in `docs/development/testing.md`.
-- [ ] 4. **CI calls make targets (§1)**: every workflow job runs one `make` target
+- [x] 4. **CI calls make targets (§1)**: every workflow job runs one `make` target
       (`lint-go`, `lint-frontend`, `typecheck`, `format-check`, `test-go`, …); split
       `lint` into sub-targets as needed. Lockfile-only installs stay.
 - [ ] 5. **Full format check (§2)**: one reformat commit for all Go and TS files, add

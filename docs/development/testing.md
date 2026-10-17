@@ -8,7 +8,7 @@ nav_order: 4
 
 ## Make targets
 
-`make test` (unit and integration), `make test-coverage` (same, with coverage), `make test-e2e` (Playwright against a local stack), `make precommit` (all checks including E2E). Every target that needs dependencies depends on `install` (all but `help`, `seed` and `install` itself).
+`make test` (unit and integration), `make test-coverage` (same, with coverage), `make test-e2e` (Playwright against a local stack), `make precommit` (all checks including E2E). Targets that need dependencies depend on `install-go` and/or `install-frontend` (`install` runs both), so a fresh clone works. CI runs the same targets (`test-coverage-go GO_TEST_FLAGS=-race`, `test-coverage-frontend`, `test-carddav`, `test-e2e-docker`).
 
 ## Running one test
 
@@ -70,7 +70,7 @@ cd backend
 go test ./...
 ```
 
-CI runs `go test -race -coverprofile=coverage.out ./...` (the race detector needs cgo and a C compiler; the SQLite driver itself is pure Go). Run the same locally to reproduce a race, and `go tool cover -func=coverage.out | tail -1` for the total.
+CI runs `make test-coverage-go GO_TEST_FLAGS=-race` (the race detector needs cgo and a C compiler; the SQLite driver itself is pure Go). Run the same locally to reproduce a race, and `go tool cover -func=coverage.out | tail -1` for the total.
 
 ### Coverage
 
@@ -82,7 +82,7 @@ The Unit Tests workflow prints the total coverage of the Go and Vitest suites in
 
 ### CardDAV integration (Radicale)
 
-The contact sync tests (and the other tests of `./services/` that use the same harness) also run against a real Radicale server when `MEERKAT_CARDDAV_IT=1` is set; CI does this in the `CardDAV sync (Radicale)` job. Locally: `docker compose -f docker-compose.carddav-test.yml up -d --wait radicale`, then `cd backend && MEERKAT_CARDDAV_IT=1 go test ./services/ -v`. The Radicale image tag is pinned in the compose file and in `unit-tests.yml`; change both together.
+The contact sync tests (and the other tests of `./services/` that use the same harness) also run against a real Radicale server when `MEERKAT_CARDDAV_IT=1` is set; CI does this in the `CardDAV sync (Radicale)` job. Locally: `docker compose -f docker-compose.carddav-test.yml up -d --wait radicale`, then `make test-carddav`. The Radicale image tag is pinned in the compose file and in `unit-tests.yml`; change both together.
 
 ### Fuzzing
 
@@ -101,8 +101,7 @@ Go native fuzz targets cover the parsers that read untrusted input:
 `go test ./...` runs every target once over its seeds (the `f.Add` values and the files in `testdata/fuzz/<Target>/`), so they double as ordinary regression tests. To fuzz one for real:
 
 ```sh
-cd backend
-go test ./services -run '^$' -fuzz '^FuzzCSVImport$' -fuzztime 60s
+make fuzz FUZZ_PACKAGE=./services FUZZ_TARGET=FuzzCSVImport FUZZ_TIME=60s
 ```
 
 The `Fuzz` workflow does this for every target (30 s each by default) nightly and on demand (Actions, Fuzz, Run workflow; the time per target is an input). It is not part of pull request checks. When a target fails, the failing input is uploaded as the artifact `fuzz-failing-input-<Target>`. Copy the file into `backend/<package>/testdata/fuzz/<Target>/`, fix the bug, and commit the file with the fix: from then on `go test` replays it. Add a plain unit test as well when the bug has a name.

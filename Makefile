@@ -1,12 +1,16 @@
-.PHONY: help install dev seed format format-check lint typecheck i18n-check test test-coverage test-e2e arch precommit build
+.PHONY: help install install-go install-frontend dev seed format format-check lint lint-go lint-frontend typecheck i18n-check test test-go test-frontend test-coverage test-coverage-go test-coverage-frontend test-carddav test-e2e test-e2e-docker arch vuln-go audit-frontend fuzz precommit build
 
 YARN ?= corepack yarn
 
 help: ## Show this help message
-	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-14s %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-24s %s\n", $$1, $$2}'
 
-install: ## Install backend and frontend dependencies
+install: install-go install-frontend ## Install backend and frontend dependencies
+
+install-go: ## Download Go modules
 	cd backend && go mod download
+
+install-frontend: ## Install frontend dependencies from the lockfile
 	cd frontend && $(YARN) install --frozen-lockfile
 
 dev: install ## Run backend and frontend dev servers (no setup; optional overrides in dev.env)
@@ -17,37 +21,70 @@ seed: ## Add a demo user (demo / DemoPassword123!) and contacts to the running "
 
 PRETTIER = frontend/node_modules/.bin/prettier
 
-format: install ## gofmt and Prettier (TS, JSON, YAML, Markdown, ...) on all files
+format: install-frontend ## gofmt and Prettier (TS, JSON, YAML, Markdown, ...) on all files
 	cd backend && gofmt -w .
 	$(PRETTIER) --write --log-level warn .
 
-format-check: install ## Fail if any file is not gofmt/Prettier-clean
+format-check: install-frontend ## Fail if any file is not gofmt/Prettier-clean
 	@bad=$$(cd backend && gofmt -l .); \
 	if [ -n "$$bad" ]; then echo "Not gofmt-clean:"; echo "$$bad"; exit 1; fi
 	$(PRETTIER) --check --log-level warn .
 
-lint: install ## go vet + golangci-lint + eslint
+lint: lint-go lint-frontend ## go vet + golangci-lint + eslint
+
+lint-go: install-go ## go vet + golangci-lint (the golangci-lint binary must be installed)
 	cd backend && go vet ./...
 	cd backend && golangci-lint run
+
+lint-frontend: install-frontend ## ESLint
 	cd frontend && npx eslint --max-warnings=0 src
 
-typecheck: install ## TypeScript type check
+typecheck: install-frontend ## TypeScript type check
 	cd frontend && npx tsc --noEmit
 
-i18n-check: install ## Locale files: missing/extra keys fail, unused/duplicate keys warn (scripts/i18n-check.mjs)
+i18n-check: ## Locale files: missing/extra keys fail, unused/duplicate keys warn (scripts/i18n-check.mjs)
 	node --test scripts/*.test.mjs
 	node scripts/i18n-check.mjs
 
-test: install ## Backend and frontend unit tests
-	cd backend && go test ./...
+GO_TEST_FLAGS ?=
+
+test: test-go test-frontend ## Backend and frontend unit tests
+
+test-go: install-go ## Go tests (GO_TEST_FLAGS="-race" adds flags)
+	cd backend && go test $(GO_TEST_FLAGS) ./...
+
+test-frontend: install-frontend ## Vitest
 	cd frontend && $(YARN) test
 
-test-coverage: install ## Tests with coverage (backend coverage.out, frontend coverage/)
-	cd backend && go test -coverprofile=coverage.out ./...
+test-coverage: test-coverage-go test-coverage-frontend ## Tests with coverage (backend coverage.out, frontend coverage/)
+
+test-coverage-go: install-go ## Go tests with coverage (backend/coverage.out)
+	cd backend && go test $(GO_TEST_FLAGS) -coverprofile=coverage.out ./...
+
+test-coverage-frontend: install-frontend ## Vitest with coverage (frontend/coverage/)
 	cd frontend && $(YARN) test:coverage
+
+test-carddav: install-go ## Sync tests against a running Radicale (see docs/development/testing.md)
+	cd backend && MEERKAT_CARDDAV_IT=1 go test ./services/ -v
 
 test-e2e: install ## Playwright E2E against a local stack (no Docker; see scripts/e2e-stack.mjs)
 	node scripts/e2e-stack.mjs -- npx playwright test $(ARGS)
+
+test-e2e-docker: install-frontend ## Playwright against an already running stack on :7300 (CI: all-in-one image)
+	cd frontend && npx playwright test $(ARGS)
+
+vuln-go: install-go ## govulncheck: fail on reachable Go vulnerabilities
+	cd backend && go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./...
+
+audit-frontend: ## yarn audit of production dependencies, high and above
+	cd frontend && $(YARN) audit --groups dependencies --level high
+
+FUZZ_PACKAGE ?= ./services
+FUZZ_TARGET ?= FuzzCSVImport
+FUZZ_TIME ?= 30s
+
+fuzz: install-go ## Fuzz one target: make fuzz FUZZ_PACKAGE=./services FUZZ_TARGET=FuzzCSVImport FUZZ_TIME=30s
+	cd backend && go test "$(FUZZ_PACKAGE)" -run '^$$' -fuzz "^$(FUZZ_TARGET)\$$" -fuzztime "$(FUZZ_TIME)"
 
 arch: install ## Architecture rules (module-graph checks; placeholder until they exist)
 	@echo "arch: no rules yet"

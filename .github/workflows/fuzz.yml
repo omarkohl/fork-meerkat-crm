@@ -42,17 +42,16 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
         with:
-          go-version: "1.26"
+          go-version: "1.27"
           check-latest: true
           cache-dependency-path: backend/go.sum
 
       - name: Fuzz
-        working-directory: backend
         env:
-          PACKAGE: ${{ matrix.package }}
-          TARGET: ${{ matrix.target }}
-          FUZZTIME: ${{ inputs.fuzztime || '30s' }}
-        run: go test "$PACKAGE" -run '^$' -fuzz "^${TARGET}\$" -fuzztime "$FUZZTIME"
+          FUZZ_PACKAGE: ${{ matrix.package }}
+          FUZZ_TARGET: ${{ matrix.target }}
+          FUZZ_TIME: ${{ inputs.fuzztime || '30s' }}
+        run: make fuzz
 
       # Go writes a failing input to testdata/fuzz/<Target>/ next to the committed seeds;
       # only the files that are not tracked are new.

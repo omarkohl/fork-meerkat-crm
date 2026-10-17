@@ -9,6 +9,10 @@ on:
     # New advisories appear without code changes; re-check weekly.
     - cron: "17 5 * * 1"
 
+# The runners ship yarn; the Makefile default (corepack yarn) needs a packageManager field.
+env:
+  YARN: yarn
+
 jobs:
   govulncheck:
     permissions:
@@ -30,8 +34,7 @@ jobs:
 
       # Fails when a vulnerable function is actually reachable from our code.
       - name: Run govulncheck
-        working-directory: backend
-        run: go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./...
+        run: make vuln-go
 
   frontend-audit:
     permissions:
@@ -52,5 +55,4 @@ jobs:
       # Only runtime dependencies at high or critical severity fail the job;
       # dev tooling and lower severities are left to Dependabot.
       - name: Audit production dependencies
-        working-directory: frontend
-        run: yarn audit --groups dependencies --level high
+        run: make audit-frontend
