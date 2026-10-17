@@ -3,3 +3,6 @@
 
 # style: format all files with gofmt and Prettier
 04bed7d65abdee001e4d83e7dd3c896d3c0f18d7
+
+# style: wrap all Markdown files at 100 characters
+33e9b95230a4e353c5d8a33a8a6a5dff39883bb7
