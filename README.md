@@ -12,7 +12,7 @@
 
 Meerkat CRM (Contact Relationship Management) is a self-hosted solution to keep track of your important contacts. As your digital rolodex it reminds you of birthdays, helps you to keep in mind dietary habits as well as names of spouses of contacts - and much more.
 
-You can find the detailed documentation here: [fbuchner.github.io/meerkat-crm/](https://fbuchner.github.io/meerkat-crm/)
+You can find the detailed documentation here: [fbuchner.github.io/meerkat-crm/](https://fbuchner.github.io/meerkat-crm/). That site is published by upstream. Documentation of things specific to this fork is in [`docs/`](docs/) and [`FORK.md`](FORK.md) on GitHub and is not published as a site.
 
 > [!TIP]
 > **[Click here to try the Demo!](https://meerkat-crm-demo.fly.dev/login?username=demo&password=test_12345)** (user: demo, password: test_12345)
@@ -56,15 +56,15 @@ You can find the detailed documentation here: [fbuchner.github.io/meerkat-crm/](
 
 ### Docker (Recommended)
 
-Meerkat CRM ships as a single all-in-one image (`ghcr.io/fbuchner/meerkat-crm`)
+Meerkat CRM ships as a single all-in-one image (`ghcr.io/omarkohl/meerkat-crm`)
 that bundles the frontend and backend into one container. The easiest way to run
 it is with Docker Compose:
 
 1. **Download the Docker Compose file:**
 
    ```sh
-   curl -O https://raw.githubusercontent.com/fbuchner/meerkat-crm/main/docker-compose.yml
-   curl -O https://raw.githubusercontent.com/fbuchner/meerkat-crm/main/.env.example
+   curl -O https://raw.githubusercontent.com/omarkohl/meerkat-crm/omk/docker-compose.yml
+   curl -O https://raw.githubusercontent.com/omarkohl/meerkat-crm/omk/.env.example
    ```
 
 2. **Configure environment:**
@@ -94,7 +94,7 @@ docker run -d --name meerkat --restart unless-stopped \
   -e JWT_SECRET_KEY='<paste a secret here, changing it will invalidate logins>' \
   -v "$(pwd)/data:/app/data" \
   -v "$(pwd)/photos:/app/static/photos" \
-  ghcr.io/fbuchner/meerkat-crm:latest
+  ghcr.io/omarkohl/meerkat-crm:1.7.0-omk.1
 ```
 
 All other settings are optional, see [`.env.example`](.env.example) for e-mail notifications, CardDAV, and SSO. Pass them with additional `-e` flags, or use `--env-file .env`.
@@ -103,7 +103,7 @@ All other settings are optional, see [`.env.example`](.env.example) for e-mail n
 
 ### Bugs and feature requests
 
-This application is under development. You can [open an issue](https://github.com/fbuchner/meerkat-crm/issues/new/choose) to report a bug or request a new feature.
+This application is under development. You can [open an issue](https://github.com/omarkohl/meerkat-crm/issues/new/choose) to report a bug or request a new feature.
 
 You can also participate and open up a pull request.
 
@@ -116,7 +116,7 @@ To set up this repository for development, follow these steps:
 1. **Clone the repository:**
 
    ```sh
-   git clone https://github.com/fbuchner/meerkat-crm.git
+   git clone https://github.com/omarkohl/meerkat-crm.git
    cd meerkat-crm
    ```
 
