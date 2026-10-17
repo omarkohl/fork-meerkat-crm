@@ -8,26 +8,23 @@ nav_order: 3
 
 ## Setup
 
-Requires the Node.js version in `.node-version` and Yarn 1.22.22. fnm reads that file; mise
-reads it after `mise settings add idiomatic_version_file_enable_tools node`. Node 25 and
-later do not include Corepack, so install Yarn globally:
-
-```sh
-npm install -g yarn@1.22.22
-```
-
-Then:
+Requires the Node.js version in `.node-version` (it includes npm). fnm reads that file; mise
+reads it after `mise settings add idiomatic_version_file_enable_tools node`. npm refuses to
+install on an older Node (`engine-strict` in `frontend/.npmrc`).
 
 ```sh
 cd frontend
 cp .env.example .env  # set VITE_API_URL if backend isn't on localhost:8080
-yarn install
+npm ci
 ```
+
+Dependency install scripts are blocked unless `allowScripts` in `package.json` allows them
+(manage it with `npm install-scripts`).
 
 ## Running Locally
 
 ```sh
-yarn start  # dev server on port 7300
+npm start  # dev server on port 7300
 ```
 
 Hot reload is enabled. The dev server proxies nothing so requests go directly to `VITE_API_URL`.

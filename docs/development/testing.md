@@ -12,11 +12,11 @@ nav_order: 4
 
 ## Running one test
 
-| Suite      | By file                                     | By name                                                 | By line                                           |
-| ---------- | ------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------- |
-| Go         | `cd backend && go test ./controllers/`      | `cd backend && go test ./controllers/ -run TestName -v` | no line syntax; use `-run` with the test function |
-| Vitest     | `cd frontend && yarn test src/auth.test.ts` | `yarn test src/auth.test.ts -t "part of the name"`      | no line syntax; use `-t`                          |
-| Playwright | `make test-e2e ARGS=e2e/contacts.spec.ts`   | `make test-e2e ARGS='-g "part of the title"'`           | `make test-e2e ARGS=e2e/contacts.spec.ts:42`      |
+| Suite      | By file                                    | By name                                                 | By line                                           |
+| ---------- | ------------------------------------------ | ------------------------------------------------------- | ------------------------------------------------- |
+| Go         | `cd backend && go test ./controllers/`     | `cd backend && go test ./controllers/ -run TestName -v` | no line syntax; use `-run` with the test function |
+| Vitest     | `cd frontend && npm test src/auth.test.ts` | `npm test src/auth.test.ts -- -t "part of the name"`    | no line syntax; use `-t`                          |
+| Playwright | `make test-e2e ARGS=e2e/contacts.spec.ts`  | `make test-e2e ARGS='-g "part of the title"'`           | `make test-e2e ARGS=e2e/contacts.spec.ts:42`      |
 
 `E2E_SKIP_BUILD=1 make test-e2e ARGS=...` reuses the previous builds.
 
@@ -118,13 +118,13 @@ Use the test helpers in the `_test` files alongside each package. Set up a test 
 
 ## Frontend Tests
 
-Component and hook tests run with Vitest (`cd frontend && yarn test`, or `make test` for everything). Playwright runs the integrated E2E tests.
+Component and hook tests run with Vitest (`cd frontend && npm test`, or `make test` for everything). Playwright runs the integrated E2E tests.
 
 ### Setup
 
 ```sh
 cd frontend
-yarn playwright install  # install browsers (first time only)
+npx playwright install  # install browsers (first time only)
 ```
 
 The E2E tests expect the full application running on `http://localhost:7300`. `global-setup.ts` seeds a test user before the suite runs.
@@ -134,10 +134,10 @@ The E2E tests expect the full application running on `http://localhost:7300`. `g
 Without Docker, `make test-e2e` builds both apps and runs Playwright against a local stack ([scripts/e2e-stack.mjs](../../scripts/e2e-stack.mjs)). `E2E_SKIP_BUILD=1` reuses builds; `ARGS=e2e/contacts.spec.ts` narrows the run. Against a stack you started yourself:
 
 ```sh
-yarn test:e2e           # headless
-yarn test:e2e:headed    # with browser visible
-yarn test:e2e:ui        # Playwright UI mode
-yarn test:e2e:debug     # debug mode
+npm run test:e2e           # headless
+npm run test:e2e:headed    # with browser visible
+npm run test:e2e:ui        # Playwright UI mode
+npm run test:e2e:debug     # debug mode
 ```
 
 ### Writing E2E Tests

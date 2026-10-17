@@ -32,7 +32,7 @@ Pull requests run these GitHub Actions workflows, and all must pass:
 
 - **Lint** (`lint.yml`): golangci-lint, ESLint, `tsc`, and a gofmt/Prettier check of all files.
 - **Unit tests** and **E2E tests** (`unit-tests.yml`, `e2e-tests.yml`).
-- **Security** (`security.yml`): `govulncheck` and `yarn audit` for production dependencies; also runs weekly.
+- **Security** (`security.yml`): `govulncheck` and `npm audit` for production dependencies; also runs weekly.
 - **Docker build and scan** (`docker-build.yml`): builds the three images (all-in-one, backend, frontend) without pushing them when a PR touches a Dockerfile, `backend/`, `frontend/` or `docker/`, and scans each with Trivy. It fails on fixable HIGH and CRITICAL vulnerabilities; unfixed ones are ignored. If a finding cannot be fixed by updating the base image or the dependency, add it to `.trivyignore` with a reason and an expiry date. Also runs on `main` and weekly.
 - **Docs** (`docs.yml`): builds the Jekyll site on PRs that touch `docs/**` (deploys only from `main`). To build locally: `cd docs && bundle install && bundle exec jekyll build`.
 

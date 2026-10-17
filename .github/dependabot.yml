@@ -8,7 +8,6 @@ updates:
       go:
         patterns: ["*"]
 
-  # Covers yarn.lock too (Yarn classic is handled by the npm ecosystem).
   - package-ecosystem: "npm"
     directory: "/frontend"
     schedule:

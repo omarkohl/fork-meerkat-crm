@@ -23,5 +23,6 @@ One file per significant decision, see [0001](0001-record-decisions.md). Never d
 | [0011](0011-api-contract-with-huma.md)      | API contract with huma                     | Accepted |
 | [0012](0012-module-layout.md)               | Module layout (hexagonal)                  | Accepted |
 | [0013](0013-vite.md)                        | Vite builds the frontend                   | Accepted |
+| [0014](0014-npm.md)                         | npm manages frontend dependencies          | Accepted |
 
 New ADR: copy a recent one, take the next number, add a row here.

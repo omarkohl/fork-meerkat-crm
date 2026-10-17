@@ -1,7 +1,5 @@
 .PHONY: help install install-go install-frontend dev seed format format-check lint lint-go lint-frontend typecheck i18n-check test test-scripts test-go test-frontend test-coverage test-coverage-go test-coverage-frontend test-carddav test-e2e test-e2e-docker arch openapi openapi-check vuln-go audit-frontend fuzz precommit build
 
-YARN ?= yarn
-
 help: ## Show this help message
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  %-24s %s\n", $$1, $$2}'
 
@@ -10,11 +8,14 @@ install: install-go install-frontend ## Install backend and frontend dependencie
 install-go: ## Download Go modules
 	cd backend && go mod download
 
-install-frontend: ## Install frontend dependencies from the lockfile
-	cd frontend && $(YARN) install --frozen-lockfile
+install-frontend: frontend/node_modules/.package-lock.json ## Install frontend dependencies from the lockfile
+
+# npm ci always reinstalls from scratch; npm writes this file, so it runs only after a lockfile change
+frontend/node_modules/.package-lock.json: frontend/package.json frontend/package-lock.json
+	cd frontend && npm ci
 
 dev: install ## Run backend and frontend dev servers (no setup; optional overrides in dev.env)
-	YARN="$(YARN)" ./scripts/dev.sh
+	./scripts/dev.sh
 
 seed: ## Add a demo user (demo / DemoPassword123!) and contacts to the running "make dev" backend
 	set -a; [ ! -f dev.env ] || . ./dev.env; set +a; node scripts/seed.mjs
@@ -59,7 +60,7 @@ test-go: install-go ## Go tests (GO_TEST_FLAGS="-race" adds flags)
 	cd backend && go test $(GO_TEST_FLAGS) ./...
 
 test-frontend: install-frontend ## Vitest
-	cd frontend && $(YARN) test
+	cd frontend && npm test
 
 test-coverage: test-coverage-go test-coverage-frontend ## Tests with coverage (backend coverage.out, frontend coverage/)
 
@@ -68,7 +69,7 @@ test-coverage-go: install-go ## Go tests with coverage (backend/coverage.out), f
 	cd backend && node ../scripts/check-go-coverage.mjs $(GO_COVERAGE_MIN)
 
 test-coverage-frontend: install-frontend ## Vitest with coverage (frontend/coverage/), fail below the thresholds in vite.config.ts
-	cd frontend && $(YARN) test:coverage
+	cd frontend && npm run test:coverage
 
 test-carddav: install-go ## Sync tests against a running Radicale (see docs/development/testing.md)
 	cd backend && MEERKAT_CARDDAV_IT=1 go test ./services/ -v
@@ -93,8 +94,8 @@ openapi-check: install ## Fail when docs/openapi.json or the generated TypeScrip
 vuln-go: install-go ## govulncheck: fail on reachable Go vulnerabilities
 	cd backend && go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./...
 
-audit-frontend: ## yarn audit of production dependencies, high and above
-	cd frontend && $(YARN) audit --groups dependencies --level high
+audit-frontend: ## npm audit of production dependencies, high and above
+	cd frontend && npm audit --omit=dev --audit-level=high
 
 FUZZ_PACKAGE ?= ./services
 FUZZ_TARGET ?= FuzzCSVImport
@@ -111,4 +112,4 @@ precommit: format-check lint typecheck i18n-check arch openapi-check test-script
 
 build: install ## Build backend binary and frontend bundle
 	cd backend && go build -o meerkat .
-	cd frontend && VITE_API_URL= $(YARN) build
+	cd frontend && VITE_API_URL= npm run build

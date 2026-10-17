@@ -143,8 +143,8 @@ To set up this repository for development, follow these steps:
    ```sh
    cd frontend
 
-   yarn install
-   yarn start
+   npm ci
+   npm start
    ```
 
 You can find a more comprehensive overview for developers in the [CONTRIBUTING.md](CONTRIBUTING.md).

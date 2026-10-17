@@ -1,5 +1,5 @@
 # Lockfiles and generated output
-yarn.lock
+frontend/package-lock.json
 frontend/build
 frontend/public
 docs/Gemfile.lock

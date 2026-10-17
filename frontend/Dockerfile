@@ -1,17 +1,13 @@
 # Build stage
 FROM --platform=$BUILDPLATFORM node:26-alpine AS builder
 
-RUN npm install -g yarn@1.22.22
-
 WORKDIR /app
 
 # Copy package files first for better caching
-COPY package.json yarn.lock* package-lock.json* ./
+COPY package.json package-lock.json ./
 
 # Install dependencies
-RUN if [ -f yarn.lock ]; then yarn install --frozen-lockfile; \
-    elif [ -f package-lock.json ]; then npm ci; \
-    else npm install; fi
+RUN npm ci
 
 # Copy source code
 COPY . .
@@ -20,7 +16,7 @@ COPY . .
 ARG VITE_API_URL
 ENV VITE_API_URL=${VITE_API_URL}
 
-RUN if [ -f yarn.lock ]; then yarn build; else npm run build; fi
+RUN npm run build
 
 # Production stage - serve with unprivileged nginx
 FROM nginxinc/nginx-unprivileged:1.30-alpine

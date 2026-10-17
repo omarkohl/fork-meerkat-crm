@@ -19,7 +19,7 @@ Versions `X.Y.Z` are upstream releases of
 
 - **`FAKE_NOW`** sets the app's clock, to test and preview time-dependent behaviour.
 - **Vite** replaces Create React App to build and serve the frontend.
-- **Development needs a global Yarn 1.22.22**: Node 26 has no Corepack, so the build no longer uses it.
+- **npm replaces Yarn**: development and builds need only Node.js.
 
 ## [1.7.0-omk.1] - 2026-10-16
 

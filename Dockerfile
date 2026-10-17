@@ -30,17 +30,13 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -o meerkat .
 # =============================================================================
 FROM --platform=$BUILDPLATFORM node:26-alpine AS frontend-builder
 
-RUN npm install -g yarn@1.22.22
-
 WORKDIR /app
 
 # Copy package files first for better caching
-COPY frontend/package.json frontend/yarn.lock* frontend/package-lock.json* ./
+COPY frontend/package.json frontend/package-lock.json ./
 
 # Install dependencies
-RUN if [ -f yarn.lock ]; then yarn install --frozen-lockfile; \
-    elif [ -f package-lock.json ]; then npm ci; \
-    else npm install; fi
+RUN npm ci
 
 # Copy frontend source code
 COPY frontend/ .
@@ -49,7 +45,7 @@ COPY frontend/ .
 # Must stay empty so the bundle uses relative URLs
 ENV VITE_API_URL=""
 
-RUN if [ -f yarn.lock ]; then yarn build; else npm run build; fi
+RUN npm run build
 
 # =============================================================================
 # Stage 3: Runtime - nginx + Go backend under supervisord
