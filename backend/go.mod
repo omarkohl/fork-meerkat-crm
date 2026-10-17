@@ -3,27 +3,27 @@ module meerkat
 go 1.27.0
 
 require (
-	github.com/coreos/go-oidc/v3 v3.20.0
+	github.com/coreos/go-oidc/v3 v3.21.0
 	github.com/emersion/go-ical v0.0.0-20250609112844-439c63cef608
 	github.com/emersion/go-vcard v0.1.0
 	github.com/emersion/go-webdav v0.7.0
-	github.com/gen2brain/heic v0.7.1
-	github.com/gin-contrib/cors v1.7.7
+	github.com/gen2brain/heic v0.7.2
+	github.com/gin-contrib/cors v1.7.9
 	github.com/gin-gonic/gin v1.12.0
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-co-op/gocron/v2 v2.22.0
-	github.com/go-playground/validator/v10 v10.30.3
+	github.com/go-playground/validator/v10 v10.30.5
 	github.com/golang-jwt/jwt/v5 v5.3.1
-	github.com/golang-migrate/migrate/v4 v4.19.1
+	github.com/golang-migrate/migrate/v4 v4.20.1
 	github.com/google/uuid v1.6.0
 	github.com/resend/resend-go/v2 v2.28.0
 	github.com/rs/zerolog v1.35.1
 	github.com/stretchr/testify v1.12.1
-	golang.org/x/crypto v0.57.0
-	golang.org/x/image v0.45.0
-	golang.org/x/oauth2 v0.36.0
-	golang.org/x/text v0.42.0
-	golang.org/x/time v0.15.0
+	golang.org/x/crypto v0.58.0
+	golang.org/x/image v0.47.0
+	golang.org/x/oauth2 v0.37.0
+	golang.org/x/text v0.43.0
+	golang.org/x/time v0.16.0
 	gorm.io/gorm v1.31.2
 )
 
@@ -66,7 +66,7 @@ require (
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/arch v0.30.0 // indirect
 	golang.org/x/net v0.60.0 // indirect
-	golang.org/x/sys v0.48.0 // indirect
+	golang.org/x/sys v0.49.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	modernc.org/libc v1.75.3 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
