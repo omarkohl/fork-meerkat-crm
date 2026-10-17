@@ -50,7 +50,11 @@ export default function RelationshipList({
     return translated === translationKey ? type : translated;
   };
 
-  const hasNoRelationships = relationships.length === 0 && incomingRelationships.length === 0;
+  const shownIncoming = incomingRelationships.filter(
+    (incoming): incoming is IncomingRelationship & Required<Pick<IncomingRelationship, 'source_contact'>> =>
+      incoming.source_contact !== undefined,
+  );
+  const hasNoRelationships = relationships.length === 0 && shownIncoming.length === 0;
 
   if (hasNoRelationships) {
     return (
@@ -142,13 +146,13 @@ export default function RelationshipList({
       })}
 
       {/* Incoming Relationships Section */}
-      {incomingRelationships.length > 0 && (
+      {shownIncoming.length > 0 && (
         <>
           {relationships.length > 0 && <Divider sx={{ my: 2 }} />}
           <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
             {t('relationships.incomingRelationships')}
           </Typography>
-          {incomingRelationships.map((incoming) => {
+          {shownIncoming.map((incoming) => {
             const sourceContact = incoming.source_contact;
             const sourceName = `${sourceContact.firstname} ${sourceContact.lastname}`;
 

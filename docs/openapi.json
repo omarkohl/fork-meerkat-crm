@@ -710,7 +710,7 @@
           },
           "relationships": {
             "items": {
-              "$ref": "#/components/schemas/RelationshipResponse"
+              "$ref": "#/components/schemas/ContactRelationship"
             },
             "type": [
               "array",
@@ -909,6 +909,69 @@
           "firstname",
           "lastname",
           "circles"
+        ],
+        "type": "object"
+      },
+      "ContactRelationship": {
+        "additionalProperties": false,
+        "properties": {
+          "CreatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "DeletedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ID": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "UpdatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "birthday": {
+            "type": "string"
+          },
+          "contact_id": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "related_contact_id": {
+            "format": "int64",
+            "minimum": 0,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ID",
+          "CreatedAt",
+          "UpdatedAt",
+          "DeletedAt",
+          "contact_id",
+          "related_contact_id",
+          "name",
+          "type",
+          "birthday",
+          "gender"
         ],
         "type": "object"
       },
@@ -1153,7 +1216,7 @@
           },
           "relationships": {
             "items": {
-              "$ref": "#/components/schemas/RelationshipResponse"
+              "$ref": "#/components/schemas/ContactRelationship"
             },
             "type": [
               "array",
@@ -1293,6 +1356,104 @@
         "required": [
           "code",
           "message"
+        ],
+        "type": "object"
+      },
+      "GraphEdgeResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "description": "The relationship type or the activity title",
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "relationship",
+              "activity"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "source",
+          "target",
+          "type",
+          "label"
+        ],
+        "type": "object"
+      },
+      "GraphNodeResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "circles": {
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "id": {
+            "description": "c-{contact ID} or a-{activity ID}",
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "photo_thumbnail": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "contact",
+              "activity"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "label"
+        ],
+        "type": "object"
+      },
+      "GraphOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/GraphEdgeResponse"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/GraphNodeResponse"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "nodes",
+          "edges"
         ],
         "type": "object"
       },
@@ -1510,6 +1671,122 @@
         ],
         "type": "object"
       },
+      "RelatedContactResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "ID": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "birthday": {
+            "type": "string"
+          },
+          "firstname": {
+            "type": "string"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "lastname": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ID",
+          "firstname",
+          "lastname",
+          "gender",
+          "birthday"
+        ],
+        "type": "object"
+      },
+      "RelationshipBody": {
+        "properties": {
+          "birthday": {
+            "type": "string"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "related_contact_id": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type"
+        ],
+        "type": "object"
+      },
+      "RelationshipCreatedOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "relationship": {
+            "$ref": "#/components/schemas/RelationshipResponse"
+          }
+        },
+        "required": [
+          "relationship"
+        ],
+        "type": "object"
+      },
+      "RelationshipIncomingOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "incoming_relationships": {
+            "items": {
+              "$ref": "#/components/schemas/RelationshipResponse"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "incoming_relationships"
+        ],
+        "type": "object"
+      },
+      "RelationshipListOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "relationships": {
+            "items": {
+              "$ref": "#/components/schemas/RelationshipResponse"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "relationships"
+        ],
+        "type": "object"
+      },
+      "RelationshipMessageOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "type": "object"
+      },
       "RelationshipResponse": {
         "additionalProperties": false,
         "properties": {
@@ -1547,6 +1824,9 @@
           "name": {
             "type": "string"
           },
+          "related_contact": {
+            "$ref": "#/components/schemas/RelatedContactResponse"
+          },
           "related_contact_id": {
             "format": "int64",
             "minimum": 0,
@@ -1554,6 +1834,9 @@
               "integer",
               "null"
             ]
+          },
+          "source_contact": {
+            "$ref": "#/components/schemas/SourceContactResponse"
           },
           "type": {
             "type": "string"
@@ -1564,12 +1847,12 @@
           "CreatedAt",
           "UpdatedAt",
           "DeletedAt",
-          "contact_id",
-          "related_contact_id",
           "name",
           "type",
+          "gender",
           "birthday",
-          "gender"
+          "contact_id",
+          "related_contact_id"
         ],
         "type": "object"
       },
@@ -1771,6 +2054,28 @@
         "required": [
           "message",
           "reminder"
+        ],
+        "type": "object"
+      },
+      "SourceContactResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "ID": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "firstname": {
+            "type": "string"
+          },
+          "lastname": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ID",
+          "firstname",
+          "lastname"
         ],
         "type": "object"
       },
@@ -2613,6 +2918,51 @@
         ]
       }
     },
+    "/contacts/{id}/incoming-relationships": {
+      "get": {
+        "operationId": "list-incoming-relationships",
+        "parameters": [
+          {
+            "description": "The contact's ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The contact's ID",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RelationshipIncomingOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "The relationships that point at a contact",
+        "tags": [
+          "relationships"
+        ]
+      }
+    },
     "/contacts/{id}/notes": {
       "get": {
         "operationId": "list-contact-notes",
@@ -2708,6 +3058,226 @@
         "summary": "Add a note about a contact",
         "tags": [
           "notes"
+        ]
+      }
+    },
+    "/contacts/{id}/relationships": {
+      "get": {
+        "operationId": "list-relationships",
+        "parameters": [
+          {
+            "description": "The contact's ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The contact's ID",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RelationshipListOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "The relationships that start at a contact",
+        "tags": [
+          "relationships"
+        ]
+      },
+      "post": {
+        "operationId": "create-relationship",
+        "parameters": [
+          {
+            "description": "The contact's ID",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The contact's ID",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RelationshipBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RelationshipCreatedOutputBody"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Add a relationship to a contact",
+        "tags": [
+          "relationships"
+        ]
+      }
+    },
+    "/contacts/{id}/relationships/{rid}": {
+      "delete": {
+        "operationId": "delete-relationship",
+        "parameters": [
+          {
+            "description": "The contact's ID; not checked against the relationship",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The contact's ID; not checked against the relationship",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "The relationship's ID",
+            "in": "path",
+            "name": "rid",
+            "required": true,
+            "schema": {
+              "description": "The relationship's ID",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RelationshipMessageOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Delete a relationship",
+        "tags": [
+          "relationships"
+        ]
+      },
+      "put": {
+        "operationId": "update-relationship",
+        "parameters": [
+          {
+            "description": "The contact's ID; not checked against the relationship",
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "description": "The contact's ID; not checked against the relationship",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "The relationship's ID",
+            "in": "path",
+            "name": "rid",
+            "required": true,
+            "schema": {
+              "description": "The relationship's ID",
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RelationshipBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RelationshipResponse"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Replace the fields of a relationship; related_contact_id left out unlinks it",
+        "tags": [
+          "relationships"
         ]
       }
     },
@@ -2896,6 +3466,37 @@
         "summary": "Restore an archived contact",
         "tags": [
           "contacts"
+        ]
+      }
+    },
+    "/graph": {
+      "get": {
+        "operationId": "network-graph",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "The network of contacts, relationships and shared activities",
+        "tags": [
+          "graph"
         ]
       }
     },

@@ -18,15 +18,3 @@ export interface User {
   // null means the user has never configured it; apply DEFAULT_ENABLED_CONTACT_FIELDS.
   enabled_contact_fields?: string[] | null;
 }
-
-/**
- * Relationship between contacts
- */
-export interface Relationship {
-  ID: number;
-  contact_id: number;
-  related_contact_id: number;
-  relationship_type: string;
-  CreatedAt: string;
-  UpdatedAt: string;
-}

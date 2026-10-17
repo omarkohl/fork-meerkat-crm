@@ -9,5 +9,5 @@ export async function getGraph(): Promise<GraphResponse> {
     throw await parseErrorResponse(response);
   }
 
-  return response.json();
+  return (await response.json()) as GraphResponse;
 }

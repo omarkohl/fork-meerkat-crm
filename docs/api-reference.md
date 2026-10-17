@@ -137,13 +137,13 @@ everywhere else (lists, search, circles, birthdays, graph, ICS feed, reminders, 
 
 ### Relationships
 
-| Method   | Path                                   | Description                 |
-| -------- | -------------------------------------- | --------------------------- |
-| `GET`    | `/contacts/:id/relationships`          | List outgoing relationships |
-| `GET`    | `/contacts/:id/incoming-relationships` | List incoming relationships |
-| `POST`   | `/contacts/:id/relationships`          | Create a relationship       |
-| `PUT`    | `/contacts/:id/relationships/:rid`     | Update a relationship       |
-| `DELETE` | `/contacts/:id/relationships/:rid`     | Delete a relationship       |
+| Method   | Path                                   | Description                                                                                  |
+| -------- | -------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `GET`    | `/contacts/:id/relationships`          | List outgoing relationships                                                                  |
+| `GET`    | `/contacts/:id/incoming-relationships` | List incoming relationships                                                                  |
+| `POST`   | `/contacts/:id/relationships`          | Create a relationship                                                                        |
+| `PUT`    | `/contacts/:id/relationships/:rid`     | Update a relationship. Only `:rid` is looked up; leaving out `related_contact_id` unlinks it |
+| `DELETE` | `/contacts/:id/relationships/:rid`     | Delete a relationship                                                                        |
 
 ### Notes
 

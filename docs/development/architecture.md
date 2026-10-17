@@ -30,6 +30,7 @@ backend/
   contacts/            # first hexagonal module (all contact endpoints): domain, app, adapters (ADR 0012)
   notes/               # hexagonal module for notes, same layout
   activities/          # hexagonal module for activities, same layout
+  relationships/       # hexagonal module for relationships and the network graph, same layout
   reminders/           # hexagonal module for reminders, same layout (the e-mail job is still in services)
   models/              # GORM models and input DTOs
   services/            # Business logic (reminders, import, birthdays, password reset)

@@ -120,16 +120,6 @@ type ChangePasswordInput struct {
 	NewPassword     string `json:"new_password" validate:"required,min=8,strong_password"`
 }
 
-// RelationshipInput represents the DTO for creating/updating relationships
-// ContactID is not included as it comes from the URL parameter
-type RelationshipInput struct {
-	Name             string `json:"name" validate:"required,min=1,max=100"`
-	Type             string `json:"type" validate:"required,min=1,max=50"`
-	Gender           string `json:"gender" validate:"omitempty,oneof=male female other prefer_not_to_say"`
-	Birthday         string `json:"birthday" validate:"omitempty,birthday"`
-	RelatedContactID *uint  `json:"related_contact_id"`
-}
-
 // Birthday represents a unified birthday entry for contacts and relationships
 type Birthday struct {
 	Type                  string `json:"type"`                              // "contact" or "relationship"
@@ -139,30 +129,6 @@ type Birthday struct {
 	ContactID             uint   `json:"contact_id"`                        // Contact ID (the person or parent contact for relationships)
 	RelationshipType      string `json:"relationship_type,omitempty"`       // Relationship type (empty for contacts)
 	AssociatedContactName string `json:"associated_contact_name,omitempty"` // Parent contact name (for relationships)
-}
-
-// GraphNode represents a node in the network visualization (contact or activity)
-type GraphNode struct {
-	ID             string   `json:"id"`                        // "c-{contactID}" or "a-{activityID}"
-	Type           string   `json:"type"`                      // "contact" or "activity"
-	Label          string   `json:"label"`                     // Display name or activity title
-	PhotoThumbnail string   `json:"photo_thumbnail,omitempty"` // Profile picture for contacts (base64)
-	Circles        []string `json:"circles,omitempty"`         // Circles for contacts
-}
-
-// GraphEdge represents an edge in the network visualization
-type GraphEdge struct {
-	ID     string `json:"id"`     // Unique edge ID
-	Source string `json:"source"` // Source node ID
-	Target string `json:"target"` // Target node ID
-	Type   string `json:"type"`   // "relationship" or "activity"
-	Label  string `json:"label"`  // Relationship type or activity title
-}
-
-// GraphResponse is the API response for the network graph
-type GraphResponse struct {
-	Nodes []GraphNode `json:"nodes"`
-	Edges []GraphEdge `json:"edges"`
 }
 
 // AdminUserResponse - user data returned to admin (no password)

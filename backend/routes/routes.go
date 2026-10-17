@@ -11,6 +11,7 @@ import (
 	"meerkat/middleware"
 	"meerkat/models"
 	"meerkat/notes"
+	"meerkat/relationships"
 	"meerkat/reminders"
 	"meerkat/services"
 
@@ -21,20 +22,22 @@ import (
 
 // Modules are the converted modules (docs/adr/0012-module-layout.md), built by main.go.
 type Modules struct {
-	Contacts   *contacts.Module
-	Notes      *notes.Module
-	Activities *activities.Module
-	Reminders  *reminders.Module
+	Contacts      *contacts.Module
+	Notes         *notes.Module
+	Activities    *activities.Module
+	Reminders     *reminders.Module
+	Relationships *relationships.Module
 }
 
 // NewModules builds every converted module on db. db may be nil when only the operations'
 // descriptions are needed.
 func NewModules(db *gorm.DB, cfg *config.Config) Modules {
 	return Modules{
-		Contacts:   contacts.New(contacts.Deps{DB: db, Config: cfg}),
-		Notes:      notes.New(notes.Deps{DB: db, Config: cfg}),
-		Activities: activities.New(activities.Deps{DB: db, Config: cfg}),
-		Reminders:  reminders.New(reminders.Deps{DB: db, Config: cfg}),
+		Contacts:      contacts.New(contacts.Deps{DB: db, Config: cfg}),
+		Notes:         notes.New(notes.Deps{DB: db, Config: cfg}),
+		Activities:    activities.New(activities.Deps{DB: db, Config: cfg}),
+		Reminders:     reminders.New(reminders.Deps{DB: db, Config: cfg}),
+		Relationships: relationships.New(relationships.Deps{DB: db, Config: cfg}),
 	}
 }
 
@@ -56,6 +59,7 @@ func RegisterAPI(a huma.API, cfg *config.Config, m Modules, g Groups) {
 	m.Notes.Register(a, g.Protected)
 	m.Activities.Register(a, g.Protected)
 	m.Reminders.Register(a, g.Protected)
+	m.Relationships.Register(a, g.Protected)
 }
 
 func RegisterRoutes(router *gin.Engine, cfg *config.Config, db *gorm.DB, oidcProvider *services.OIDCProvider, modules Modules) {
@@ -160,13 +164,6 @@ func RegisterRoutes(router *gin.Engine, cfg *config.Config, db *gorm.DB, oidcPro
 			})
 			protected.DELETE("/contacts/import/monica/session", controllers.CancelMonicaImport)
 
-			// Relationship routes
-			protected.GET("/contacts/:id/relationships", controllers.GetRelationships)
-			protected.GET("/contacts/:id/incoming-relationships", controllers.GetIncomingRelationships)
-			protected.POST("/contacts/:id/relationships", middleware.ValidateJSONMiddleware(&models.RelationshipInput{}), controllers.CreateRelationship)
-			protected.PUT("/contacts/:id/relationships/:rid", middleware.ValidateJSONMiddleware(&models.RelationshipInput{}), controllers.UpdateRelationship)
-			protected.DELETE("/contacts/:id/relationships/:rid", controllers.DeleteRelationship)
-
 			// Profile picture routes
 			protected.POST("/contacts/:id/profile_picture", func(c *gin.Context) {
 				controllers.AddPhotoToContact(c, cfg)
@@ -183,9 +180,6 @@ func RegisterRoutes(router *gin.Engine, cfg *config.Config, db *gorm.DB, oidcPro
 			protected.GET("/export/vcf", func(c *gin.Context) {
 				controllers.ExportContactsAsVCF(c, cfg.ProfilePhotoDir)
 			})
-
-			// Graph/Network visualization route
-			protected.GET("/graph", controllers.GetGraph)
 
 			// API token routes
 			protected.GET("/api-tokens", controllers.ListApiTokens)

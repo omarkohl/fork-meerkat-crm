@@ -1,45 +1,31 @@
 // Relationship-related API calls
 import { apiFetch, API_BASE_URL, getAuthHeaders, parseErrorResponse } from './client';
-import { Contact } from './contacts';
+import type { components, operations } from '../types/generated/api';
+import type { WithoutNull } from '../types/utils';
 
-export interface Relationship {
-  ID: number;
-  CreatedAt: string;
-  UpdatedAt: string;
-  name: string;
-  type: string;
-  gender?: string;
-  birthday?: string;
-  contact_id: number;
-  related_contact_id?: number;
-  related_contact?: Pick<Contact, 'ID' | 'firstname' | 'lastname' | 'gender' | 'birthday'>;
-}
-
-export interface RelationshipFormData {
-  name: string;
-  type: string;
-  gender?: string;
-  birthday?: string;
+type RelatedContact = components['schemas']['RelatedContactResponse'];
+export type Relationship = WithoutNull<
+  Omit<components['schemas']['RelationshipResponse'], 'related_contact' | 'source_contact' | 'related_contact_id'>
+> & {
+  related_contact_id: number | null;
+  related_contact?: RelatedContact;
+};
+// The source contact is absent when it is no longer there (in the trash)
+export type IncomingRelationship = Omit<Relationship, 'related_contact'> & {
+  source_contact?: components['schemas']['SourceContactResponse'];
+};
+export type RelationshipFormData = Omit<components['schemas']['RelationshipBody'], 'related_contact_id'> & {
   related_contact_id?: number | null;
-}
+};
 
-export interface RelationshipsResponse {
+type RelationshipsListBody = operations['list-relationships']['responses']['200']['content']['application/json'];
+type IncomingListBody = operations['list-incoming-relationships']['responses']['200']['content']['application/json'];
+
+export interface RelationshipsResponse extends Omit<RelationshipsListBody, 'relationships'> {
   relationships: Relationship[];
 }
 
-export interface IncomingRelationship {
-  ID: number;
-  CreatedAt: string;
-  UpdatedAt: string;
-  name: string;
-  type: string;
-  gender?: string;
-  birthday?: string;
-  contact_id: number;
-  source_contact: Pick<Contact, 'ID' | 'firstname' | 'lastname'>;
-}
-
-export interface IncomingRelationshipsResponse {
+export interface IncomingRelationshipsResponse extends Omit<IncomingListBody, 'incoming_relationships'> {
   incoming_relationships: IncomingRelationship[];
 }
 
@@ -51,7 +37,7 @@ export async function getRelationships(contactId: number | string): Promise<Rela
     throw await parseErrorResponse(response);
   }
 
-  return response.json();
+  return (await response.json()) as RelationshipsResponse;
 }
 
 // Get all incoming relationships for a contact (relationships pointing to this contact)
@@ -64,7 +50,7 @@ export async function getIncomingRelationships(contactId: number | string): Prom
     throw await parseErrorResponse(response);
   }
 
-  return response.json();
+  return (await response.json()) as IncomingRelationshipsResponse;
 }
 
 // Create a new relationship
@@ -82,8 +68,8 @@ export async function createRelationship(
     throw await parseErrorResponse(response);
   }
 
-  const result = await response.json();
-  return result.relationship || result;
+  const result = (await response.json()) as { relationship: Relationship };
+  return result.relationship;
 }
 
 // Update an existing relationship
@@ -102,8 +88,7 @@ export async function updateRelationship(
     throw await parseErrorResponse(response);
   }
 
-  const result = await response.json();
-  return result.relationship || result;
+  return (await response.json()) as Relationship;
 }
 
 // Delete a relationship

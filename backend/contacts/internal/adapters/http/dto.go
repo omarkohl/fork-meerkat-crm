@@ -40,10 +40,10 @@ type ContactResponse struct {
 	Photo     string `json:"photo"`
 
 	// Relationships is null unless the endpoint loads them.
-	Relationships []RelationshipResponse `json:"relationships" nullable:"true"`
-	Notes         []ContactNote          `json:"notes,omitempty"`
-	Activities    []ContactActivity      `json:"activities,omitempty"`
-	Reminders     []ContactReminder      `json:"reminders,omitempty"`
+	Relationships []ContactRelationship `json:"relationships" nullable:"true"`
+	Notes         []ContactNote         `json:"notes,omitempty"`
+	Activities    []ContactActivity     `json:"activities,omitempty"`
+	Reminders     []ContactReminder     `json:"reminders,omitempty"`
 
 	Address            string   `json:"address"`
 	HowWeMet           string   `json:"how_we_met"`
@@ -75,9 +75,9 @@ type ContactResponse struct {
 	Archived bool `json:"archived"`
 }
 
-// RelationshipResponse is a relationship between contacts, as embedded in a contact when
+// ContactRelationship is a relationship between contacts, as embedded in a contact when
 // the endpoint loads them.
-type RelationshipResponse struct {
+type ContactRelationship struct {
 	ID               uint       `json:"ID"`
 	CreatedAt        time.Time  `json:"CreatedAt"`
 	UpdatedAt        time.Time  `json:"UpdatedAt"`
@@ -143,7 +143,7 @@ func NewContactResponse(c domain.Contact) ContactResponse {
 		CustomFields: c.CustomFields, Archived: c.Archived,
 	}
 	if c.Relationships != nil {
-		r.Relationships = []RelationshipResponse{}
+		r.Relationships = []ContactRelationship{}
 	}
 	for _, n := range c.Notes {
 		r.Notes = append(r.Notes, ContactNote{ID: n.ID, CreatedAt: n.CreatedAt, UpdatedAt: n.UpdatedAt, DeletedAt: n.DeletedAt,
@@ -165,7 +165,7 @@ func NewContactResponse(c domain.Contact) ContactResponse {
 			v := uint(*rel.RelatedContactID)
 			related = &v
 		}
-		r.Relationships = append(r.Relationships, RelationshipResponse{
+		r.Relationships = append(r.Relationships, ContactRelationship{
 			ID: rel.ID, CreatedAt: rel.CreatedAt, UpdatedAt: rel.UpdatedAt, DeletedAt: rel.DeletedAt,
 			ContactID: uint(rel.ContactID), RelatedContactID: related,
 			Name: rel.Name, Type: rel.Type, Birthday: rel.Birthday, Gender: rel.Gender,

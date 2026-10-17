@@ -22,7 +22,7 @@ export type {
 
 // Entities that other type modules need (kept in their own file so types/api.ts and
 // types/forms.ts need not import this index, which re-exports them)
-export type { User, Relationship } from './entities';
+export type { User } from './entities';
 import type { User } from './entities';
 
 // Additional shared types
@@ -158,9 +158,6 @@ export type {
   CreateContactResponse,
   UpdateContactResponse,
   DeleteContactResponse,
-  GetRelationshipsResponse,
-  CreateRelationshipResponse,
-  DeleteRelationshipResponse,
   UploadPhotoResponse,
   HealthCheckResponse,
   SearchResponse,

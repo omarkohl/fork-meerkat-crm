@@ -180,6 +180,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/contacts/{id}/incoming-relationships": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The relationships that point at a contact */
+        get: operations["list-incoming-relationships"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/contacts/{id}/notes": {
         parameters: {
             query?: never;
@@ -193,6 +210,42 @@ export interface paths {
         /** Add a note about a contact */
         post: operations["create-contact-note"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/contacts/{id}/relationships": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The relationships that start at a contact */
+        get: operations["list-relationships"];
+        put?: never;
+        /** Add a relationship to a contact */
+        post: operations["create-relationship"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/contacts/{id}/relationships/{rid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replace the fields of a relationship; related_contact_id left out unlinks it */
+        put: operations["update-relationship"];
+        post?: never;
+        /** Delete a relationship */
+        delete: operations["delete-relationship"];
         options?: never;
         head?: never;
         patch?: never;
@@ -244,6 +297,23 @@ export interface paths {
         put?: never;
         /** Restore an archived contact */
         post: operations["unarchive-contact"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/graph": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The network of contacts, relationships and shared activities */
+        get: operations["network-graph"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -563,7 +633,7 @@ export interface components {
             photo: string;
             photo_thumbnail: string;
             prefix: string;
-            relationships: components["schemas"]["RelationshipResponse"][] | null;
+            relationships: components["schemas"]["ContactRelationship"][] | null;
             reminders?: components["schemas"]["ContactReminder"][] | null;
             role: string;
             suffix: string;
@@ -603,6 +673,24 @@ export interface components {
             circles: string[] | null;
             firstname: string;
             lastname: string;
+        };
+        ContactRelationship: {
+            /** Format: date-time */
+            CreatedAt: string;
+            /** Format: date-time */
+            DeletedAt: string | null;
+            /** Format: int64 */
+            ID: number;
+            /** Format: date-time */
+            UpdatedAt: string;
+            birthday: string;
+            /** Format: int64 */
+            contact_id: number;
+            gender: string;
+            name: string;
+            /** Format: int64 */
+            related_contact_id: number | null;
+            type: string;
         };
         ContactReminder: {
             /** Format: date-time */
@@ -665,7 +753,7 @@ export interface components {
             phones: components["schemas"]["ContactValue"][] | null;
             photo: string;
             prefix: string;
-            relationships: components["schemas"]["RelationshipResponse"][] | null;
+            relationships: components["schemas"]["ContactRelationship"][] | null;
             reminders?: components["schemas"]["ContactReminder"][] | null;
             role: string;
             suffix: string;
@@ -691,6 +779,28 @@ export interface components {
                 [key: string]: unknown;
             };
             message: string;
+        };
+        GraphEdgeResponse: {
+            id: string;
+            /** @description The relationship type or the activity title */
+            label: string;
+            source: string;
+            target: string;
+            /** @enum {string} */
+            type: "relationship" | "activity";
+        };
+        GraphNodeResponse: {
+            circles?: string[] | null;
+            /** @description c-{contact ID} or a-{activity ID} */
+            id: string;
+            label: string;
+            photo_thumbnail?: string;
+            /** @enum {string} */
+            type: "contact" | "activity";
+        };
+        GraphOutputBody: {
+            edges: components["schemas"]["GraphEdgeResponse"][] | null;
+            nodes: components["schemas"]["GraphNodeResponse"][] | null;
         };
         IMPPInput: {
             type?: string;
@@ -753,6 +863,34 @@ export interface components {
         RandomOutputBody: {
             contacts: components["schemas"]["ContactListItem"][] | null;
         };
+        RelatedContactResponse: {
+            /** Format: int64 */
+            ID: number;
+            birthday: string;
+            firstname: string;
+            gender: string;
+            lastname: string;
+        };
+        RelationshipBody: {
+            birthday?: string;
+            gender?: string;
+            name: string;
+            /** Format: int64 */
+            related_contact_id?: number;
+            type: string;
+        };
+        RelationshipCreatedOutputBody: {
+            relationship: components["schemas"]["RelationshipResponse"];
+        };
+        RelationshipIncomingOutputBody: {
+            incoming_relationships: components["schemas"]["RelationshipResponse"][] | null;
+        };
+        RelationshipListOutputBody: {
+            relationships: components["schemas"]["RelationshipResponse"][] | null;
+        };
+        RelationshipMessageOutputBody: {
+            message: string;
+        };
         RelationshipResponse: {
             /** Format: date-time */
             CreatedAt: string;
@@ -767,8 +905,10 @@ export interface components {
             contact_id: number;
             gender: string;
             name: string;
+            related_contact?: components["schemas"]["RelatedContactResponse"];
             /** Format: int64 */
             related_contact_id: number | null;
+            source_contact?: components["schemas"]["SourceContactResponse"];
             type: string;
         };
         ReminderBody: {
@@ -827,6 +967,12 @@ export interface components {
         ReminderSavedOutputBody: {
             message: string;
             reminder: components["schemas"]["ReminderResponse"];
+        };
+        SourceContactResponse: {
+            /** Format: int64 */
+            ID: number;
+            firstname: string;
+            lastname: string;
         };
         URLInput: {
             type?: string;
@@ -1382,6 +1528,38 @@ export interface operations {
             };
         };
     };
+    "list-incoming-relationships": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The contact's ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RelationshipIncomingOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     "list-contact-notes": {
         parameters: {
             query?: never;
@@ -1437,6 +1615,146 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NoteSavedOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "list-relationships": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The contact's ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RelationshipListOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "create-relationship": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The contact's ID */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RelationshipBody"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RelationshipCreatedOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "update-relationship": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The contact's ID; not checked against the relationship */
+                id: number;
+                /** @description The relationship's ID */
+                rid: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RelationshipBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RelationshipResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "delete-relationship": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The contact's ID; not checked against the relationship */
+                id: number;
+                /** @description The relationship's ID */
+                rid: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RelationshipMessageOutputBody"];
                 };
             };
             /** @description Error */
@@ -1569,6 +1887,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ContactResponse"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "network-graph": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GraphOutputBody"];
                 };
             };
             /** @description Error */

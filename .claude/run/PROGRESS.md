@@ -2,7 +2,7 @@
 
 ## Next step
 
-13d (relationships and graph, same pattern).
+13e (photos and thumbnails, same pattern).
 
 ## Stack
 
@@ -146,6 +146,15 @@
   complete/upcoming. Frontend `Reminder`, `ReminderFormData`, `ReminderCompletion` from the
   generated types; shared `WithoutNull` moved to `src/types/utils.ts`; dead `*ReminderResponse`
   types removed. `make precommit` green.
+- Step 13d: `backend/relationships` (domain `Relationship.Edit`, `BuildGraph` with the visibility
+  rules; use cases; ports `Relationships`/`GraphSource`/`Store`; persistence/http adapters) with
+  huma operations for the five relationship endpoints and `GET /graph`; depguard rules
+  `relationships-*` (shown to fail); `routes.NewModules` extended. Old relationship and graph
+  controllers, their tests and `models.RelationshipInput`/`GraphNode`/`GraphEdge`/`GraphResponse`
+  removed; 10 module tests on real SQLite incl. isolation and the graph rules, plus domain tests.
+  The contacts module's embedded relationship type is now `ContactRelationship` (schema name clash).
+  Frontend `Relationship`, `IncomingRelationship`, form data, graph types derive from the generated
+  types; dead hand-written relationship types removed. `make precommit` green.
 
 ## Decisions
 
@@ -220,6 +229,16 @@
   and answers `[]` for none. Deleting a completion distinguishes "retrieve" and "delete" failures as
   before. `services.addMonths/ addYears` stay for the Monica import, duplicated in the domain:
   remove with step 13j.
+- 13d: `PUT`/`DELETE /contacts/{id}/relationships/{rid}` still look up only `rid` (the contact in
+  the URL is not compared), as before: a relationship of the user can be changed through any contact
+  URL. Left as is on purpose in a refactor; worth tightening later. Review item.
+- 13d: `GET /graph` errors now use the AppError format
+  (`Failed to fetch contacts/relationships/ activities` as `DATABASE_ERROR`); they were
+  `{"error": "..."}` with status 500. Relationship lists are ordered by ID and answer `[]` for none;
+  `related_contact`/`source_contact` carry only the fields that were selected before (the rest of
+  the zero-valued contact object is gone); an update failure now surfaces ("Failed to update
+  relationship"; `db.Save`'s error was ignored). JSON strings no longer escape `&` as `\u0026` (the
+  huma encoder), so the thumbnail test compares `&`; the data is the same.
 - 12a keeps behaviour: `GET /contacts/circles` still answers `null` when there are no circles;
   non-numeric `{id}` now answers `400` (a Gin string param used to reach the database); a missing
   user answers `401`.
@@ -273,6 +292,12 @@
   `YARN: yarn`, `make fuzz` env vars.
 
 ## Questions
+
+- `PUT`/`DELETE /contacts/{id}/relationships/{rid}` look up only `rid`; the contact in the URL is
+  not compared with the relationship's contact (unchanged by step 13d). Tightening it would answer
+  404 for a mismatch; decide whether clients rely on the loose behaviour.
+- The frontend used to crash on an incoming relationship without `source_contact` (guarded in 13d by
+  leaving such rows out; the API may omit it when the source contact is in the trash).
 
 - Vitest timeouts (5000ms) recur under load when `make precommit` runs everything at once: step 13c
   first run, `ImportContactsDialog.test.tsx` ("a summary chip filters the rows...", "a filtered row

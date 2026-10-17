@@ -42,7 +42,7 @@ func newThumbEnv(t *testing.T) *thumbEnv {
 	mountContacts(r, db, cfg)
 	r.GET("/contacts/:id/picture", func(c *gin.Context) { GetProfilePicture(c, cfg) })
 	r.POST("/contacts/:id/picture", func(c *gin.Context) { AddPhotoToContact(c, cfg) })
-	r.GET("/graph", GetGraph)
+	mountRelationships(r, db, cfg)
 	return e
 }
 
@@ -137,7 +137,7 @@ func TestListsCarryAThumbnailURLNotTheImage(t *testing.T) {
 	w := e.get("/graph")
 	require.Equal(t, http.StatusOK, w.Code)
 	assert.NotContains(t, w.Body.String(), "data:image")
-	assert.Contains(t, w.Body.String(), `profile_picture?thumbnail=true\u0026v=11111111`)
+	assert.Contains(t, w.Body.String(), `profile_picture?thumbnail=true&v=11111111`)
 }
 
 func TestUploadWritesAThumbnailFileAndReplacingRemovesTheOldOnes(t *testing.T) {

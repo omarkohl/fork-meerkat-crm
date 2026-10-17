@@ -8,7 +8,7 @@
 import type { Contact } from '../api/contacts';
 import type { Activity } from '../api/activities';
 import type { Note } from '../api/notes';
-import type { User, Relationship } from './entities';
+import type { User } from './entities';
 
 /**
  * Generic API error response
@@ -67,22 +67,6 @@ export interface UpdateContactResponse {
 }
 
 export interface DeleteContactResponse {
-  message: string;
-}
-
-/**
- * Relationship API responses
- */
-export interface GetRelationshipsResponse {
-  relationships: Relationship[];
-}
-
-export interface CreateRelationshipResponse {
-  message: string;
-  relationship: Relationship;
-}
-
-export interface DeleteRelationshipResponse {
   message: string;
 }
 

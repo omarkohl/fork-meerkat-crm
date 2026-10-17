@@ -292,11 +292,6 @@
       "count": 2
     }
   },
-  "src/api/graph.ts": {
-    "@typescript-eslint/no-unsafe-return": {
-      "count": 1
-    }
-  },
   "src/api/icsFeed.ts": {
     "@typescript-eslint/no-unnecessary-condition": {
       "count": 3
@@ -321,15 +316,6 @@
     }
   },
   "src/api/relationships.ts": {
-    "@typescript-eslint/no-unsafe-assignment": {
-      "count": 2
-    },
-    "@typescript-eslint/no-unsafe-member-access": {
-      "count": 2
-    },
-    "@typescript-eslint/no-unsafe-return": {
-      "count": 4
-    },
     "@typescript-eslint/restrict-template-expressions": {
       "count": 7
     }

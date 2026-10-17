@@ -132,7 +132,7 @@ Read first: `.claude/plans/engineering-principles-reference.md`, `.claude/AUTONO
   - [x] 13a. notes
   - [x] 13b. activities
   - [x] 13c. reminders (scheduler job deferred to 13i, see PROGRESS)
-  - [ ] 13d. relationships and graph
+  - [x] 13d. relationships and graph
   - [ ] 13e. photos and thumbnails
   - [ ] 13f. trash
   - [ ] 13g. users, sessions, TOTP, OIDC, password reset
