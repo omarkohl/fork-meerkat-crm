@@ -190,3 +190,7 @@ CSS/test-id locators (7x) with user navigation and role/label locators.
       its destination. Summary and "For review" list in PROGRESS.md. Then delete
       `.claude/run/` and `.claude/plans/engineering-principles*.md` in their own
       commit.
+
+## Next steps
+
+After this run, pick further work from `IMPROVEMENTS.md` (open items only).
