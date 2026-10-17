@@ -5,7 +5,7 @@
  * validation, and form-related operations.
  */
 
-import type { Contact } from './index';
+import type { Contact } from '../api/contacts';
 
 /**
  * Form data for creating a new contact

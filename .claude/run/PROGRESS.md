@@ -2,7 +2,7 @@
 
 ## Next step
 
-10.
+11.
 
 ## Stack
 
@@ -20,8 +20,13 @@
 - Step 7: ESLint 9 flat config `frontend/eslint.config.mjs` (`typescript-eslint` strictTypeChecked, `jsx-a11y` recommended, `eslint-comments` recommended + `require-description`/`no-unlimited-disable`, `react-hooks` rules-of-hooks/exhaustive-deps, `reportUnusedDisableDirectives: error`; all errors); `--fix` applied (mostly braces for `no-confusing-void-expression`); 4 unused catch/param variables, 2 undescribed disables fixed by hand; stale file-wide disable in `service-worker.ts` removed (rule was not active). 529 findings remain, bulk-suppressed (counts per file and rule) in `frontend/eslint-suppressions.json`, reasons per rule class in `docs/development/frontend.md`. Only `src/**/*.{ts,tsx}` is linted (e2e comes with step 16). Checked: a new floating promise in `src/ContactsPage.tsx` fails; fixing one makes `make lint-frontend` fail until `--prune-suppressions` (exit 2). Each rule shown to fail on a violation file (rules-of-hooks, exhaustive-deps, no-floating-promises, no-non-null-assertion, eslint-comments, jsx-a11y/alt-text, restrict-template-expressions). Build and tests green.
 - Step 8: Vitest `coverage.thresholds` (statements 28, branches 80, functions 33, lines 28; current 28.09/80.51/33.76/28.09) and `scripts/check-go-coverage.mjs` (test first, red then green) with `GO_COVERAGE_MIN=62` (current 62.9) called by `make test-coverage-go`. `precommit` runs `test-coverage` instead of `test`; CI already calls the coverage targets, so thresholds apply there. Shown to fail with a too-high threshold for both. Script tests moved from `i18n-check` to `make test-scripts` (in `test`, `precommit` and the lint workflow's locales job); the script checks its main-module test with `pathToFileURL` and rejects a blank threshold (exit 2). `make precommit` green.
 - Step 9: ADR 0009; `backend/clock` (Clock, Real, Fake, `FAKE_NOW` clock; tests first); `middleware.ClockMiddleware` + `RequestNow`; scheduler tasks take `clk.Now()` once per job; all 84 `time.Now()` outside main/middleware/clock/metrics replaced (services take `now time.Time`, import session managers hold a clock set by `controllers.SetImportClock`, GORM `NowFunc`, JWT time func); `forbidigo` bans `time.Now` with the ADR link (shown to fail on a violation file; two reasoned `nolint`: SMTP deadline, health duration); `FAKE_NOW` config + validation + warning; frontend `src/utils/now.ts` and an ESLint ban on `new Date()`/`Date.now()` elsewhere in `src` (shown to fail). Docs: backend.md, getting-started.md. One commit. Review fixes: job-like work (outbox, webhooks, reminders, calendar and contact sync) takes the `clock.Clock` and reads it where it stamps something (after slow I/O, lock release at the end); TOTP always uses the real time; purge jobs are skipped while `FAKE_NOW` is set; `forbidigo` runs with `analyze-types` (an aliased `time` import is caught; without it the alias passed); Monica import reads the clock once per import; `Date()` without `new` is banned too; tests for the manager clocks and for retry scheduling after a slow send; `FAKE_NOW` in deployment.md and `.env.example` (test only). `make precommit` green.
+- Step 10: ADR 0010; Go `depguard` rules (models, services, controllers) in `.golangci.yml` with no exemptions (one unused gin router in a services test removed); frontend `dependency-cruiser` rules (no-circular, no-unresolvable, pages-use-api-through-hooks, api-client-is-private-to-api) with the 30 existing pairs in `.dependency-cruiser-known-violations.json` and `scripts/arch-frontend.mjs` (new violations fail, fixed-but-still-listed ones fail too; test first). Two cycles fixed (`types/entities.ts`). Every rule shown to fail on a violation; the `src/api/index.ts` barrel no longer re-exports `client.ts` and a rule keeps it so. `make arch` runs both (already in `precommit`), new `arch` job in lint.yml. `make precommit` green.
 
 ## Decisions
+
+- Deviation in step 10: `backend/main.go` (the composition root) may import `controllers` in addition to `routes`; the depguard exemption names that exact path, not every `main.go`.
+
+- Frontend baseline uses dependency-cruiser's known-violations file (exact from/to pairs) rather than `pathNot` globs, so an exemption names one import, not a whole file or folder.
 
 - Clock injection: request-scoped services take a trailing `now time.Time`; long-running jobs take the `clock.Clock`; the two import session managers hold a `clock.Clock` (set once by `controllers.SetImportClock`) because their methods are many and long-lived. The gocron scheduler still uses the wall clock for when jobs start (documented in ADR 0009). The browser does not follow `FAKE_NOW`.
 
@@ -43,6 +48,8 @@
 - Step 4: CI cannot run locally. Check the first PR run: `install-only` of golangci-lint-action v8, `YARN: yarn`, `make fuzz` env vars.
 
 ## Questions
+
+- E2E flake seen twice (step 8 and step 10, first run only, rerun green): `relationships.spec.ts` "Relationship ..." failed once in step 10. Cause not investigated; watch for it.
 
 - One full `make precommit` run during step 8 had 2 E2E failures (52 passed); a rerun and a second full run passed 54/54. Names not captured. Possible flake; watch for it.
 

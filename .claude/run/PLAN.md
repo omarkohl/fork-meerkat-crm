@@ -111,7 +111,7 @@ Read first: `.claude/plans/engineering-principles-reference.md`, `.claude/AUTONO
       message that links the ADR. Fake clock behind an explicit flag
       (`FAKE_NOW=...`, not the build mode). Frontend: ESLint ban on `Date.now()` and
       `new Date()` without arguments outside one `now` helper.
-- [ ] 10. **Module-graph checks, baseline (§3)**: ADR for the target layering. Go
+- [x] 10. **Module-graph checks, baseline (§3)**: ADR for the target layering. Go
       `depguard` rules: `models` imports no `controllers`/`services`/`gin`;
       `services` imports no `controllers`/`gin`; nothing imports `controllers`
       except `routes`. Frontend `dependency-cruiser`: no-circular,

@@ -79,6 +79,10 @@ Why each rule class is suppressed today (fix the cause, not the count):
 | `no-empty-object-type`, `no-explicit-any`, `prefer-promise-reject-errors`, `use-unknown-in-catch-callback-variable`, `no-unused-expressions`, `no-confusing-void-expression`, `no-unnecessary-type-assertion` | Single leftovers in a few files. Fix when touching the file.                                     |
 | `jsx-a11y/no-autofocus`                                                                                                                                                                                       | Dialog fields use `autoFocus` to start typing at once. Decide per dialog.                        |
 
+## Architecture rules
+
+`make arch` runs `dependency-cruiser` on `src` (`frontend/.dependency-cruiser.cjs`): no circular imports, no unresolvable imports, pages (`src/*Page.tsx`) call `src/api` only through hooks, and nothing outside `src/api` imports `src/api/client.ts`. Existing violations are recorded per pair in `frontend/.dependency-cruiser-known-violations.json`, with the reason per rule in [ADR 0010](../adr/0010-target-layering.md). A new violation fails; when you fix a recorded one, run `node scripts/arch-frontend.mjs --update` to drop it. Never add to the file.
+
 ## Testing
 
 The frontend is tested via Playwright E2E tests against a running application. See [Testing](testing.md).

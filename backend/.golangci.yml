@@ -17,6 +17,7 @@ linters:
     - bodyclose
     - sqlclosecheck
     - forbidigo
+    - depguard
   settings:
     errcheck:
       exclude-functions:
@@ -55,6 +56,38 @@ linters:
         - G104 # unhandled errors are errcheck's job (with its exclusions)
         # G115, G201, G202, G301, G304 are not excluded: the known hits carry a
         # line-level //nolint:gosec with the reason, so new code is still checked.
+    depguard:
+      # Layering (docs/adr/0010-target-layering.md). Direct imports only; test files are
+      # included so a test cannot drag the wrong layer in either.
+      rules:
+        models-stay-at-the-bottom:
+          files:
+            - "**/models/**"
+          deny:
+            - pkg: meerkat/controllers
+              desc: models is the lowest layer; it must not know controllers (ADR 0010)
+            - pkg: meerkat/services
+              desc: models is the lowest layer; it must not know services (ADR 0010)
+            - pkg: github.com/gin-gonic/gin
+              desc: models must not depend on the HTTP framework (ADR 0010)
+        services-do-not-know-http:
+          files:
+            - "**/services/**"
+          deny:
+            - pkg: meerkat/controllers
+              desc: services sit below controllers (ADR 0010)
+            - pkg: github.com/gin-gonic/gin
+              desc: services take plain values, not *gin.Context (ADR 0010)
+        only-routes-import-controllers:
+          # main.go is the composition root and may call into controllers; routes registers them.
+          files:
+            - "$all"
+            - "!**/routes/**"
+            - "!**/controllers/**"
+            - "!**/backend/main.go"
+          deny:
+            - pkg: meerkat/controllers
+              desc: only routes (and main.go) may import controllers (ADR 0010)
     forbidigo:
       # Resolve names through types, so an aliased import (tm "time") is caught too
       analyze-types: true

@@ -5,7 +5,11 @@
  * ensuring type safety when communicating with the backend.
  */
 
-import type { Contact, Activity, Note, Reminder, User, Relationship } from './index';
+import type { Contact } from '../api/contacts';
+import type { Activity } from '../api/activities';
+import type { Note } from '../api/notes';
+import type { Reminder } from '../api/reminders';
+import type { User, Relationship } from './entities';
 
 /**
  * Generic API error response

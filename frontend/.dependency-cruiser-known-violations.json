@@ -1,0 +1,422 @@
+[
+  {
+    "type": "dependency",
+    "from": "src/components/CalendarSyncSettings.tsx",
+    "to": "src/api/client.ts",
+    "unresolvedTo": "../api/client",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "api-client-is-private-to-api"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/components/ContactSyncSettings.tsx",
+    "to": "src/api/client.ts",
+    "unresolvedTo": "../api/client",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "api-client-is-private-to-api"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/components/ProfilePictureUploadDialog.tsx",
+    "to": "src/api/client.ts",
+    "unresolvedTo": "../api/client",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "api-client-is-private-to-api"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/components/TwoFactorSettings.tsx",
+    "to": "src/api/client.ts",
+    "unresolvedTo": "../api/client",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "api-client-is-private-to-api"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/ContactDetailPage.tsx",
+    "to": "src/api/client.ts",
+    "unresolvedTo": "./api/client",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "api-client-is-private-to-api"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/utils/errorHandler.ts",
+    "to": "src/api/client.ts",
+    "unresolvedTo": "../api/client",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "api-client-is-private-to-api"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/ActivitiesPage.tsx",
+    "to": "src/api/activities.ts",
+    "unresolvedTo": "./api/activities",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "pages-use-api-through-hooks"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/ActivitiesPage.tsx",
+    "to": "src/api/contacts.ts",
+    "unresolvedTo": "./api/contacts",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "pages-use-api-through-hooks"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/ApiTokensPage.tsx",
+    "to": "src/api/apiTokens.ts",
+    "unresolvedTo": "./api/apiTokens",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "pages-use-api-through-hooks"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/AuditLogPage.tsx",
+    "to": "src/api/admin.ts",
+    "unresolvedTo": "./api/admin",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "pages-use-api-through-hooks"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/BackupsPage.tsx",
+    "to": "src/api/backups.ts",
+    "unresolvedTo": "./api/backups",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "pages-use-api-through-hooks"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/ContactDetailPage.tsx",
+    "to": "src/api/activities.ts",
+    "unresolvedTo": "./api/activities",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "pages-use-api-through-hooks"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/ContactDetailPage.tsx",
+    "to": "src/api/admin.ts",
+    "unresolvedTo": "./api/admin",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "pages-use-api-through-hooks"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/ContactDetailPage.tsx",
+    "to": "src/api/client.ts",
+    "unresolvedTo": "./api/client",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "pages-use-api-through-hooks"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/ContactDetailPage.tsx",
+    "to": "src/api/contacts.ts",
+    "unresolvedTo": "./api/contacts",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "pages-use-api-through-hooks"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/ContactDetailPage.tsx",
+    "to": "src/api/notes.ts",
+    "unresolvedTo": "./api/notes",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "pages-use-api-through-hooks"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/ContactDetailPage.tsx",
+    "to": "src/api/reminders.ts",
+    "unresolvedTo": "./api/reminders",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "pages-use-api-through-hooks"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/ContactsPage.tsx",
+    "to": "src/api/admin.ts",
+    "unresolvedTo": "./api/admin",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "pages-use-api-through-hooks"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/ContactsPage.tsx",
+    "to": "src/api/contacts.ts",
+    "unresolvedTo": "./api/contacts",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "pages-use-api-through-hooks"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/DashboardPage.tsx",
+    "to": "src/api/contacts.ts",
+    "unresolvedTo": "./api/contacts",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "pages-use-api-through-hooks"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/DashboardPage.tsx",
+    "to": "src/api/reminders.ts",
+    "unresolvedTo": "./api/reminders",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "pages-use-api-through-hooks"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/DataSettingsPage.tsx",
+    "to": "src/api/export.ts",
+    "unresolvedTo": "./api/export",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "pages-use-api-through-hooks"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/NetworkPage.tsx",
+    "to": "src/api/activities.ts",
+    "unresolvedTo": "./api/activities",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "pages-use-api-through-hooks"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/NetworkPage.tsx",
+    "to": "src/api/contacts.ts",
+    "unresolvedTo": "./api/contacts",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "pages-use-api-through-hooks"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/NotesPage.tsx",
+    "to": "src/api/notes.ts",
+    "unresolvedTo": "./api/notes",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "pages-use-api-through-hooks"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/SettingsPage.tsx",
+    "to": "src/api/auth.ts",
+    "unresolvedTo": "./api/auth",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "pages-use-api-through-hooks"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/SettingsPage.tsx",
+    "to": "src/api/users.ts",
+    "unresolvedTo": "./api/users",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "pages-use-api-through-hooks"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/TrashPage.tsx",
+    "to": "src/api/trash.ts",
+    "unresolvedTo": "./api/trash",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "pages-use-api-through-hooks"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/UsersPage.tsx",
+    "to": "src/api/admin.ts",
+    "unresolvedTo": "./api/admin",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "pages-use-api-through-hooks"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "src/UsersPage.tsx",
+    "to": "src/api/twoFactor.ts",
+    "unresolvedTo": "./api/twoFactor",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "pages-use-api-through-hooks"
+    }
+  }
+]

@@ -7,15 +7,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/glebarez/sqlite"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/gorm"
 )
 
-func setupRouter() (*gorm.DB, *gin.Engine) {
-	gin.SetMode(gin.ReleaseMode)
-
+func setupTestDB() *gorm.DB {
 	db, err := gorm.Open(sqlite.Open(":memory:?_pragma=foreign_keys(1)"), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
@@ -26,13 +23,7 @@ func setupRouter() (*gorm.DB, *gin.Engine) {
 
 	db.AutoMigrate(&models.Contact{}, &models.Activity{}, &models.Note{}, models.Relationship{}, models.Reminder{}, models.User{}, models.JobExecution{}, models.Webhook{}, models.WebhookDelivery{})
 
-	router := gin.Default()
-	router.Use(func(c *gin.Context) {
-		c.Set("db", db)
-		c.Next()
-	})
-
-	return db, router
+	return db
 }
 
 // TestAddMonths tests the month addition helper for edge cases
@@ -235,7 +226,7 @@ func TestCalculateNextReminderTimeUTCConsistency(t *testing.T) {
 }
 
 func TestSendReminders(t *testing.T) {
-	db, _ := setupRouter()
+	db := setupTestDB()
 
 	user := models.User{Username: "reminder-user", Password: "password123", Email: "owner@example.com"}
 	if err := db.Create(&user).Error; err != nil {
@@ -306,7 +297,7 @@ func TestSendReminders(t *testing.T) {
 }
 
 func TestSendRemindersWithRateLimit_FirstRun(t *testing.T) {
-	db, _ := setupRouter()
+	db := setupTestDB()
 
 	// Set a short interval for testing
 	originalInterval := ReminderMinInterval
@@ -362,7 +353,7 @@ func TestSendRemindersWithRateLimit_FirstRun(t *testing.T) {
 }
 
 func TestSendRemindersWithRateLimit_RateLimited(t *testing.T) {
-	db, _ := setupRouter()
+	db := setupTestDB()
 
 	// Set a long interval to ensure rate limiting
 	originalInterval := ReminderMinInterval
@@ -417,7 +408,7 @@ func TestSendRemindersWithRateLimit_RateLimited(t *testing.T) {
 }
 
 func TestSendRemindersWithRateLimit_AllowsAfterInterval(t *testing.T) {
-	db, _ := setupRouter()
+	db := setupTestDB()
 
 	// Set a very short interval
 	originalInterval := ReminderMinInterval

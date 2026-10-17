@@ -92,8 +92,9 @@ FUZZ_TIME ?= 30s
 fuzz: install-go ## Fuzz one target: make fuzz FUZZ_PACKAGE=./services FUZZ_TARGET=FuzzCSVImport FUZZ_TIME=30s
 	cd backend && go test "$(FUZZ_PACKAGE)" -run '^$$' -fuzz "^$(FUZZ_TARGET)\$$" -fuzztime "$(FUZZ_TIME)"
 
-arch: install ## Architecture rules (module-graph checks; placeholder until they exist)
-	@echo "arch: no rules yet"
+arch: install ## Architecture rules: Go depguard layering, frontend dependency-cruiser (docs/adr/0010-target-layering.md)
+	cd backend && golangci-lint run --enable-only depguard
+	node scripts/arch-frontend.mjs
 
 precommit: format-check lint typecheck i18n-check arch test-scripts test-coverage test-e2e ## All checks, including E2E
 

@@ -20,6 +20,11 @@ export type {
   CompletionsResponse,
 } from '../api/reminders';
 
+// Entities that other type modules need (kept in their own file so types/api.ts and
+// types/forms.ts need not import this index, which re-exports them)
+export type { User, Relationship } from './entities';
+import type { User } from './entities';
+
 // Additional shared types
 
 /**
@@ -45,25 +50,6 @@ export interface ApiResponse<T> {
 export interface AuthResponse {
   token: string;
   user: User;
-}
-
-/**
- * User profile information
- */
-export interface User {
-  id: number;
-  email: string;
-  username: string;
-  language: string;
-  is_admin: boolean;
-  created_at: string;
-  updated_at: string;
-  // Whether the account has two-factor authentication on (never the secret).
-  two_factor_enabled?: boolean;
-  // Present only on the /users/me response (CurrentUserResponse), not in admin lists.
-  custom_field_names?: string[];
-  // null means the user has never configured it; apply DEFAULT_ENABLED_CONTACT_FIELDS.
-  enabled_contact_fields?: string[] | null;
 }
 
 /**
@@ -96,18 +82,6 @@ export interface ValidationError {
 }
 
 // Reminder type is re-exported from '../api/reminders' above
-
-/**
- * Relationship between contacts
- */
-export interface Relationship {
-  ID: number;
-  contact_id: number;
-  related_contact_id: number;
-  relationship_type: string;
-  CreatedAt: string;
-  UpdatedAt: string;
-}
 
 /**
  * Photo metadata

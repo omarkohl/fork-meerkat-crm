@@ -77,6 +77,10 @@ All models include `UserID uint` for tenant isolation.
 
 Complex business logic lives in `services/`. Controllers call services; services own multi-step operations (e.g. sending emails). Services receive a `*gorm.DB` and any needed config, they do not access `*gin.Context`. They never read the wall clock: take `now time.Time` as a parameter (controllers pass `middleware.RequestNow(c)`, jobs the time taken by the scheduler). `forbidigo` fails the build on `time.Now`; see [ADR 0009](../adr/0009-injected-clock.md). In tests pass a fixed time or a `clock.Fake`.
 
+## Layering
+
+`controllers` call `services`, `services` use `models`; never the other way round. `make arch` (depguard) fails when `models` imports `controllers`, `services` or `gin`, when `services` imports `controllers` or `gin`, or when anything but `routes` (and `main.go`) imports `controllers`. See [ADR 0010](../adr/0010-target-layering.md).
+
 ## Testing
 
 ```sh
