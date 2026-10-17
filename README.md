@@ -10,6 +10,9 @@
 
 ## About the project
 
+> [!NOTE]
+> This is a fork of [fbuchner/meerkat-crm](https://github.com/fbuchner/meerkat-crm) and deviates from upstream. The Docker images under `ghcr.io/omarkohl` are built from this fork, not from upstream. The aim is to merge all changes upstream. If that does not work out, the fork may continue under a new name. For now it is only a fork with images in a different namespace. See [`FORK.md`](FORK.md) for branches and versions.
+
 Meerkat CRM (Contact Relationship Management) is a self-hosted solution to keep track of your important contacts. As your digital rolodex it reminds you of birthdays, helps you to keep in mind dietary habits as well as names of spouses of contacts - and much more.
 
 You can find the detailed documentation here: [fbuchner.github.io/meerkat-crm/](https://fbuchner.github.io/meerkat-crm/). That site is published by upstream. Documentation of things specific to this fork is in [`docs/`](docs/) and [`FORK.md`](FORK.md) on GitHub and is not published as a site.
