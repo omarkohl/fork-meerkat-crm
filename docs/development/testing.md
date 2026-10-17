@@ -95,7 +95,8 @@ third-party service is involved. Locally: `make test-coverage` (part of `make pr
 `frontend/vite.config.ts`, and `scripts/check-go-coverage.mjs` fails when the total Go coverage is
 below `GO_COVERAGE_MIN` in the `Makefile`. Both sit at the value of the day they were introduced,
 rounded down. When coverage rises, raise them in the same commit; never lower them to make a change
-pass, add tests instead.
+pass, add tests instead. The one exception is a tool change that measures differently: Vitest 4
+counts v8 coverage per source statement, so the Vitest thresholds were set again on that day.
 
 ### Migrations
 
