@@ -15,7 +15,7 @@ nav_order: 5
 ## Development Workflow
 
 1. Make your changes with tests.
-2. Run `make precommit` from the repository root: checks gofmt and Prettier formatting of all files, Markdown and docs included (`make format` fixes it), `go vet`, `golangci-lint` (the binary must be installed), ESLint, `tsc`, the locale check (`make i18n-check`: a key missing in any of en/de/it/es/fr, or not in `en`, fails; unused and duplicate keys only warn) and the Go and Vitest unit tests. Run `make test-e2e` (Playwright, no Docker needed) when you change the UI or API behaviour. `make help` lists all targets.
+2. Run `make precommit` from the repository root: checks gofmt and Prettier formatting of all files, Markdown and docs included (`make format` fixes it), `go vet`, `golangci-lint` (the binary must be installed), ESLint, `tsc`, the locale check (`make i18n-check`: a key missing in any of en/de/it/es/fr, or not in `en`, fails; unused and duplicate keys only warn) the architecture rules (`make arch`), the Go and Vitest unit tests and the Playwright E2E tests (`make test-e2e`, no Docker needed; narrow it with `ARGS=`, see [testing](testing.md)). `make help` lists all targets.
 3. Open a pull request against `main`.
 
 Optional: [lefthook](https://lefthook.dev) can run gofmt, Prettier, ESLint and the locale check on the staged files before each commit. Install lefthook and run `lefthook install` once; the configuration is `lefthook.yml`. Nothing installs the hooks automatically, and CI runs the same checks.

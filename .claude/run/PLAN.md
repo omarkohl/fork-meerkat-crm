@@ -82,7 +82,7 @@ Read first: `.claude/plans/engineering-principles-reference.md`, `.claude/AUTONO
       jj non-interactive commands, push policy, issue footers (`fixes #N`/`issue #N`).
       Remove `CLAUDE.md` from `.gitignore` and commit a `CLAUDE.md` that only
       contains `@AGENTS.md`, so Claude Code loads it.
-- [ ] 3. **One command (§1)**: targets declare prerequisites (`test: install` etc.);
+- [x] 3. **One command (§1)**: targets declare prerequisites (`test: install` etc.);
       add `test-coverage`, `arch` (empty placeholder until step 10), `seed` (demo user
       and contacts for `make dev`); add `test-e2e` to `precommit` and update the
       "Checks" section of `AUTONOMOUS-RUNS.md`.

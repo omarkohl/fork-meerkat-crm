@@ -6,6 +6,20 @@ nav_order: 4
 
 # Testing
 
+## Make targets
+
+`make test` (unit and integration), `make test-coverage` (same, with coverage), `make test-e2e` (Playwright against a local stack), `make precommit` (all checks including E2E). Every target that needs dependencies depends on `install` (all but `help`, `seed` and `install` itself).
+
+## Running one test
+
+| Suite      | By file                                     | By name                                                 | By line                                           |
+| ---------- | ------------------------------------------- | ------------------------------------------------------- | ------------------------------------------------- |
+| Go         | `cd backend && go test ./controllers/`      | `cd backend && go test ./controllers/ -run TestName -v` | no line syntax; use `-run` with the test function |
+| Vitest     | `cd frontend && yarn test src/auth.test.ts` | `yarn test src/auth.test.ts -t "part of the name"`      | no line syntax; use `-t`                          |
+| Playwright | `make test-e2e ARGS=e2e/contacts.spec.ts`   | `make test-e2e ARGS='-g "part of the title"'`           | `make test-e2e ARGS=e2e/contacts.spec.ts:42`      |
+
+`E2E_SKIP_BUILD=1 make test-e2e ARGS=...` reuses the previous builds.
+
 ## Strategy
 
 Decision: [ADR 0003](../adr/0003-testing-strategy.md). Test behaviour, not implementation: a test fails when a user's outcome changes, and ideally only then.

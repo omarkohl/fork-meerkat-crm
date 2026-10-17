@@ -35,11 +35,11 @@ The main session is the orchestrator. Per step:
 
 Run from the repository root. All must pass before a commit:
 
-- `make precommit`: gofmt on changed Go files, Prettier on changed frontend files,
-  `go vet`, ESLint, `tsc`, Go tests, Vitest.
-- `make test-e2e` when the step changes UI or API behaviour. It runs Playwright
-  against a local stack without Docker (`scripts/e2e-stack.mjs`). Use
-  `E2E_SKIP_BUILD=1` to reuse builds; `ARGS=e2e/contacts.spec.ts` to narrow.
+- `make precommit`: gofmt and Prettier check on all files, `go vet`, golangci-lint,
+  ESLint, `tsc`, i18n check, Go tests, Vitest and `make test-e2e` (Playwright against
+  a local stack without Docker, `scripts/e2e-stack.mjs`). Use `E2E_SKIP_BUILD=1` to
+  reuse builds and `ARGS=e2e/contacts.spec.ts` to narrow, when you run
+  `make test-e2e` alone.
 - If `npx playwright install chromium` is blocked, look for preinstalled browsers
   (e.g. `/opt/pw-browsers`) and point a throwaway, **uncommitted** Playwright config
   at them via `launchOptions.executablePath`. Record the workaround in PROGRESS.md.

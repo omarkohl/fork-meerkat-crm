@@ -54,8 +54,7 @@ minimum, run it green, refactor without touching the test. Exceptions: pure styl
 and fully covered refactors. See [ADR 0003](docs/adr/0003-testing-strategy.md) and
 [testing](docs/development/testing.md).
 
-Before a commit run `make precommit`. Run `make test-e2e` when UI or API behaviour
-changes.
+Before a commit run `make precommit` (it includes the E2E tests).
 
 ## Changelog
 
