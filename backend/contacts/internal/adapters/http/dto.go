@@ -91,7 +91,6 @@ type RelationshipResponse struct {
 }
 
 // NewContactResponse maps a contact to the JSON shape of the API, also used for webhooks.
-// NoteResponse is a note of a contact, embedded when the contact is loaded in full.
 type NoteResponse struct {
 	ID        uint       `json:"ID"`
 	CreatedAt time.Time  `json:"CreatedAt"`
@@ -114,7 +113,6 @@ type ActivityResponse struct {
 	Date        time.Time  `json:"date"`
 }
 
-// ReminderResponse is a reminder of a contact, embedded when the contact is loaded in full.
 type ReminderResponse struct {
 	ID                    uint       `json:"ID"`
 	CreatedAt             time.Time  `json:"CreatedAt"`

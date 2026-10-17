@@ -109,9 +109,6 @@ func RegisterRoutes(router *gin.Engine, cfg *config.Config, db *gorm.DB, oidcPro
 
 			// Contact routes
 			RegisterAPI(humaAPI, cfg, modules, Groups{Protected: protected})
-			protected.GET("/contacts", controllers.GetContacts)
-			protected.GET("/contacts/random", controllers.GetContactsRandom)
-			protected.GET("/contacts/birthdays", controllers.GetUpcomingBirthdays)
 			// Trash: soft-deleted contacts (restore, purge, empty)
 			protected.GET("/trash/contacts", controllers.GetTrash)
 			protected.DELETE("/trash/contacts", controllers.EmptyTrash)

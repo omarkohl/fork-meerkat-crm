@@ -99,6 +99,17 @@ type Reminder struct {
 	ContactID             *ContactID
 }
 
+// Birthday is an upcoming birthday of a contact or of a person in a relationship.
+type Birthday struct {
+	Type                  string
+	Name                  string
+	Birthday              string
+	PhotoThumbnail        string
+	ContactID             ContactID
+	RelationshipType      string
+	AssociatedContactName string
+}
+
 // Contact is a person in a user's address book.
 type Contact struct {
 	ID        ContactID
@@ -115,6 +126,8 @@ type Contact struct {
 	Phone     string
 	Birthday  string
 	Photo     string
+	// PhotoThumbnailFile names the thumbnail file; "" means none.
+	PhotoThumbnailFile string
 
 	Address            string
 	HowWeMet           string
@@ -177,7 +190,7 @@ func (c *Contact) SyncPrimary() {
 // state and relationships stay.
 func (c *Contact) Replace(in Contact) {
 	in.ID, in.UserID, in.CreatedAt, in.UpdatedAt, in.DeletedAt = c.ID, c.UserID, c.CreatedAt, c.UpdatedAt, c.DeletedAt
-	in.Photo, in.Archived, in.Relationships = c.Photo, c.Archived, c.Relationships
+	in.Photo, in.PhotoThumbnailFile, in.Archived, in.Relationships = c.Photo, c.PhotoThumbnailFile, c.Archived, c.Relationships
 	in.Notes, in.Activities, in.Reminders = c.Notes, c.Activities, c.Reminders
 	*c = in
 	c.SyncPrimary()

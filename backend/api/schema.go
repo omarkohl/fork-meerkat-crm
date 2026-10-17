@@ -68,7 +68,9 @@ func relax(reg huma.Registry, s *huma.Schema, t reflect.Type, seen map[*huma.Sch
 	if s.Type != huma.TypeObject {
 		return
 	}
-	s.AdditionalProperties = nil
+	if allowed, isBool := s.AdditionalProperties.(bool); isBool && !allowed {
+		s.AdditionalProperties = nil
+	}
 	if t == nil || t.Kind() != reflect.Struct {
 		return
 	}

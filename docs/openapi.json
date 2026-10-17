@@ -73,6 +73,63 @@
         },
         "type": "object"
       },
+      "BirthdayResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "associated_contact_name": {
+            "type": "string"
+          },
+          "birthday": {
+            "type": "string"
+          },
+          "contact_id": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "photo_thumbnail": {
+            "type": "string"
+          },
+          "relationship_type": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "contact",
+              "relationship"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "name",
+          "birthday",
+          "contact_id"
+        ],
+        "type": "object"
+      },
+      "BirthdaysOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "birthdays": {
+            "items": {
+              "$ref": "#/components/schemas/BirthdayResponse"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "birthdays"
+        ],
+        "type": "object"
+      },
       "ContactAddress": {
         "additionalProperties": false,
         "properties": {
@@ -138,6 +195,9 @@
             "type": "string"
           },
           "custom_fields": {
+            "additionalProperties": {
+              "type": "string"
+            },
             "type": "object"
           },
           "department": {
@@ -230,6 +290,241 @@
         },
         "required": [
           "firstname"
+        ],
+        "type": "object"
+      },
+      "ContactListItem": {
+        "additionalProperties": false,
+        "properties": {
+          "CreatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "DeletedAt": {
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ID": {
+            "format": "int64",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "UpdatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "activities": {
+            "items": {
+              "$ref": "#/components/schemas/ActivityResponse"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "address": {
+            "type": "string"
+          },
+          "addresses": {
+            "items": {
+              "$ref": "#/components/schemas/ContactAddress"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "anniversary": {
+            "type": "string"
+          },
+          "archived": {
+            "type": "boolean"
+          },
+          "birthday": {
+            "type": "string"
+          },
+          "circles": {
+            "items": {
+              "type": "string"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "contact_information": {
+            "type": "string"
+          },
+          "custom_fields": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "department": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "emails": {
+            "items": {
+              "$ref": "#/components/schemas/ContactValue"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "firstname": {
+            "type": "string"
+          },
+          "food_preference": {
+            "type": "string"
+          },
+          "gender": {
+            "type": "string"
+          },
+          "how_we_met": {
+            "type": "string"
+          },
+          "impps": {
+            "items": {
+              "$ref": "#/components/schemas/ContactValue"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "job_title": {
+            "type": "string"
+          },
+          "lastname": {
+            "type": "string"
+          },
+          "middle_name": {
+            "type": "string"
+          },
+          "nickname": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "$ref": "#/components/schemas/NoteResponse"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "organization": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "phones": {
+            "items": {
+              "$ref": "#/components/schemas/ContactValue"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "photo": {
+            "type": "string"
+          },
+          "photo_thumbnail": {
+            "type": "string"
+          },
+          "prefix": {
+            "type": "string"
+          },
+          "relationships": {
+            "items": {
+              "$ref": "#/components/schemas/RelationshipResponse"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "reminders": {
+            "items": {
+              "$ref": "#/components/schemas/ReminderResponse"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "role": {
+            "type": "string"
+          },
+          "suffix": {
+            "type": "string"
+          },
+          "urls": {
+            "items": {
+              "$ref": "#/components/schemas/ContactValue"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "work_information": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "photo_thumbnail",
+          "ID",
+          "CreatedAt",
+          "UpdatedAt",
+          "DeletedAt",
+          "firstname",
+          "lastname",
+          "nickname",
+          "gender",
+          "email",
+          "phone",
+          "birthday",
+          "photo",
+          "relationships",
+          "address",
+          "how_we_met",
+          "food_preference",
+          "work_information",
+          "contact_information",
+          "circles",
+          "emails",
+          "phones",
+          "addresses",
+          "urls",
+          "impps",
+          "prefix",
+          "middle_name",
+          "suffix",
+          "organization",
+          "department",
+          "job_title",
+          "role",
+          "anniversary",
+          "note",
+          "custom_fields",
+          "archived"
         ],
         "type": "object"
       },
@@ -563,6 +858,39 @@
         ],
         "type": "object"
       },
+      "ListOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "contacts": {
+            "items": {
+              "$ref": "#/components/schemas/ContactListItem"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "limit": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "page": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "total": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "contacts",
+          "total",
+          "page",
+          "limit"
+        ],
+        "type": "object"
+      },
       "MessageOutputBody": {
         "additionalProperties": false,
         "properties": {
@@ -653,6 +981,24 @@
         },
         "required": [
           "value"
+        ],
+        "type": "object"
+      },
+      "RandomOutputBody": {
+        "additionalProperties": false,
+        "properties": {
+          "contacts": {
+            "items": {
+              "$ref": "#/components/schemas/ContactListItem"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "contacts"
         ],
         "type": "object"
       },
@@ -858,6 +1204,137 @@
       }
     },
     "/contacts": {
+      "get": {
+        "operationId": "list-contacts",
+        "parameters": [
+          {
+            "description": "Page number, from 1",
+            "explode": false,
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "description": "Page number, from 1",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Page size, 1 to 100, default 25",
+            "explode": false,
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "description": "Page size, 1 to 100, default 25",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Full-text search over names, nicknames, e-mail addresses and phone numbers",
+            "explode": false,
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "description": "Full-text search over names, nicknames, e-mail addresses and phone numbers",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only contacts in this circle",
+            "explode": false,
+            "in": "query",
+            "name": "circle",
+            "schema": {
+              "description": "Only contacts in this circle",
+              "type": "string"
+            }
+          },
+          {
+            "description": "firstname, lastname, id or random; with search and no sort the best match comes first",
+            "explode": false,
+            "in": "query",
+            "name": "sort",
+            "schema": {
+              "description": "firstname, lastname, id or random; with search and no sort the best match comes first",
+              "type": "string"
+            }
+          },
+          {
+            "description": "asc or desc, default desc",
+            "explode": false,
+            "in": "query",
+            "name": "order",
+            "schema": {
+              "description": "asc or desc, default desc",
+              "type": "string"
+            }
+          },
+          {
+            "description": "true: archived contacts too, after the others when searching",
+            "explode": false,
+            "in": "query",
+            "name": "include_archived",
+            "schema": {
+              "description": "true: archived contacts too, after the others when searching",
+              "type": "string"
+            }
+          },
+          {
+            "description": "true: only archived contacts",
+            "explode": false,
+            "in": "query",
+            "name": "archived",
+            "schema": {
+              "description": "true: only archived contacts",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Comma-separated field names; only these are filled. photo_thumbnail adds the thumbnail URL",
+            "explode": false,
+            "in": "query",
+            "name": "fields",
+            "schema": {
+              "description": "Comma-separated field names; only these are filled. photo_thumbnail adds the thumbnail URL",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Comma-separated: notes, activities, relationships, reminders",
+            "explode": false,
+            "in": "query",
+            "name": "includes",
+            "schema": {
+              "description": "Comma-separated: notes, activities, relationships, reminders",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "List contacts with search, circle filter, sorting and paging",
+        "tags": [
+          "contacts"
+        ]
+      },
       "post": {
         "operationId": "create-contact",
         "requestBody": {
@@ -898,6 +1375,37 @@
         ]
       }
     },
+    "/contacts/birthdays": {
+      "get": {
+        "operationId": "upcoming-birthdays",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BirthdaysOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Upcoming birthdays of contacts and relatives",
+        "tags": [
+          "contacts"
+        ]
+      }
+    },
     "/contacts/circles": {
       "get": {
         "operationId": "list-circles",
@@ -930,6 +1438,37 @@
           }
         },
         "summary": "The distinct circle names of all contacts",
+        "tags": [
+          "contacts"
+        ]
+      }
+    },
+    "/contacts/random": {
+      "get": {
+        "operationId": "random-contacts",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RandomOutputBody"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "description": "Error"
+          }
+        },
+        "summary": "Five random contacts",
         "tags": [
           "contacts"
         ]

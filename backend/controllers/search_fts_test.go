@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"meerkat/config"
 	"meerkat/models"
 
 	"github.com/gin-gonic/gin"
@@ -30,7 +31,7 @@ func ftsRouter(t *testing.T) (*gorm.DB, *gin.Engine, models.User) {
 	require.NoError(t, err)
 	var user models.User
 	require.NoError(t, db.First(&user).Error)
-	router.GET("/contacts", GetContacts)
+	mountContacts(router, db, &config.Config{})
 	router.GET("/notes", GetUnassignedNotes)
 	router.GET("/activities", GetActivities)
 	return db, router, user
@@ -237,10 +238,4 @@ func TestSearchOn20kContactsIsFast(t *testing.T) {
 	d, out = timeIt("family49")
 	assert.EqualValues(t, 440, out["total"], "Family49 and Family490..499, 40 contacts each")
 	t.Logf("FTS prefix search: %v", d)
-
-	// the LIKE search it replaces, for comparison
-	start := time.Now()
-	var count int64
-	require.NoError(t, applyContactSearch(db.Model(&models.Contact{}).Where("user_id = ?", u.ID), "needle", "").Count(&count).Error)
-	t.Logf("LIKE search over %d contacts: %v (count %d)", n, time.Since(start), count)
 }

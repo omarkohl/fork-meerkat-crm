@@ -80,7 +80,7 @@ moved:
    `ContactResponse`, which later parts reuse.
 2. **12b: read and write one contact.** `GET /contacts/{id}` (with `fields`), `POST /contacts`,
    `PUT /contacts/{id}`, the domain rules behind the denormalised columns, and the contact webhooks.
-3. **12c: lists.** `GET /contacts` (search, FTS, circles, sort, paging, `fields`),
+3. **12c: lists (done).** `GET /contacts` (search, FTS, circles, sort, paging, `fields`),
    `/contacts/random`, `/contacts/birthdays`; then delete the hand-written frontend contact types in
    favour of the generated ones, and delete the Gin handlers and `ValidateJSONMiddleware` use for
    contacts.
@@ -88,5 +88,6 @@ moved:
 ## Consequences
 
 Business rules are testable with a real SQLite database through the use case, and through HTTP as
-before. A new module costs a directory and a few ports, not a rewrite. Until all of contacts is
-converted two styles coexist in one resource; the route table in `routes` shows which is which.
+before. A new module costs a directory and a few ports, not a rewrite. Contacts is fully converted.
+Until the other modules are, two styles coexist in the codebase; the route table in `routes` shows
+which is which.

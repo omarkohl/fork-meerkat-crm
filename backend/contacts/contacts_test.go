@@ -428,3 +428,130 @@ func TestGetUpdateAndCreateRefuseOtherUsersAndAnonymous(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, send(e.anon, http.MethodPost, "/contacts", map[string]any{"firstname": "X"}).Code)
 	assert.Equal(t, http.StatusUnauthorized, send(e.anon, http.MethodPut, idPath(victim, ""), map[string]any{"firstname": "X"}).Code)
 }
+
+func names(body map[string]any) []string {
+	var out []string
+	for _, c := range body["contacts"].([]any) {
+		out = append(out, c.(map[string]any)["firstname"].(string))
+	}
+	return out
+}
+
+func TestListIsPagedSortedAndScopedToTheActor(t *testing.T) {
+	e := newEnv(t)
+	for _, n := range []string{"Carol", "Alice", "Bob"} {
+		e.contact(t, e.a.ID, n)
+	}
+	e.contact(t, e.b.ID, "Mallory")
+
+	body := decode(t, do(e.asA, http.MethodGet, "/contacts?sort=firstname&order=asc&limit=2&page=2"))
+	assert.Equal(t, []string{"Carol"}, names(body))
+	assert.EqualValues(t, 3, body["total"])
+	assert.EqualValues(t, 2, body["page"])
+	assert.EqualValues(t, 2, body["limit"])
+
+	body = decode(t, do(e.asA, http.MethodGet, "/contacts"))
+	assert.Equal(t, []string{"Bob", "Alice", "Carol"}, names(body), "newest first by default")
+	assert.EqualValues(t, 25, body["limit"])
+
+	body = decode(t, do(e.asA, http.MethodGet, "/contacts?page=5&limit=2"))
+	assert.Empty(t, names(body), "a page past the end is empty")
+	assert.EqualValues(t, 3, body["total"])
+	assert.EqualValues(t, 5, body["page"])
+
+	body = decode(t, do(e.asA, http.MethodGet, "/contacts?page=abc&limit=1000&sort=bogus&order=sideways"))
+	assert.EqualValues(t, 1, body["page"], "bad values fall back to the defaults")
+	assert.EqualValues(t, 100, body["limit"], "the limit is capped")
+	assert.Len(t, names(body), 3)
+}
+
+func TestListFiltersArchivedAndCircles(t *testing.T) {
+	e := newEnv(t)
+	e.contact(t, e.a.ID, "Alice", "Friends")
+	e.contact(t, e.a.ID, "Bob", "Work")
+	old := e.contact(t, e.a.ID, "Old", "Friends")
+	require.NoError(t, e.db.Model(&old).Update("archived", true).Error)
+
+	assert.ElementsMatch(t, []string{"Alice", "Bob"}, names(decode(t, do(e.asA, http.MethodGet, "/contacts"))))
+	assert.Equal(t, []string{"Old"}, names(decode(t, do(e.asA, http.MethodGet, "/contacts?archived=true"))))
+	assert.Len(t, names(decode(t, do(e.asA, http.MethodGet, "/contacts?include_archived=true"))), 3)
+	assert.Equal(t, []string{"Alice"}, names(decode(t, do(e.asA, http.MethodGet, "/contacts?circle=Friends"))))
+}
+
+func TestListSearchesNamesEmailsAndPhones(t *testing.T) {
+	e := newEnv(t)
+	c := models.Contact{
+		UserID: e.a.ID, Firstname: "Alice", Lastname: "Johnson", Nickname: "Ali",
+		Emails: []models.ContactEmail{{Value: "a@one.example"}, {Value: "second@two.example"}},
+		Phones: []models.ContactPhone{{Value: "+15551112222"}},
+	}
+	require.NoError(t, e.db.Create(&c).Error)
+	require.NoError(t, e.db.Create(&models.Contact{UserID: e.a.ID, Firstname: "Bob", Lastname: "Smith", Nickname: "Bobby"}).Error)
+	for term, want := range map[string]string{"Johnson": "Alice", "Ali": "Alice", "a@one": "Alice", "5551112": "Alice", "Bobby": "Bob", "Smith": "Bob"} {
+		assert.Equal(t, []string{want}, names(decode(t, do(e.asA, http.MethodGet, "/contacts?search="+term))), term)
+	}
+
+	assert.Equal(t, []string{"Alice"}, names(decode(t, do(e.asA, http.MethodGet, "/contacts?search=ali"))))
+	assert.Equal(t, []string{"Alice"}, names(decode(t, do(e.asA, http.MethodGet, "/contacts?search=two.example"))))
+	assert.Empty(t, names(decode(t, do(e.asA, http.MethodGet, "/contacts?search=nobody"))))
+}
+
+func TestListFieldsAndIncludes(t *testing.T) {
+	e := newEnv(t)
+	c := models.Contact{UserID: e.a.ID, Firstname: "Alice", Lastname: "Smith", PhotoThumbnailFile: "t_thumb.jpg"}
+	require.NoError(t, e.db.Create(&c).Error)
+	require.NoError(t, e.db.Create(&models.Note{UserID: e.a.ID, ContactID: &c.ID, Content: "n", Date: time.Now()}).Error)
+
+	body := decode(t, do(e.asA, http.MethodGet, "/contacts?fields=firstname,photo_thumbnail&includes=notes"))
+	first := body["contacts"].([]any)[0].(map[string]any)
+	assert.Equal(t, "Alice", first["firstname"])
+	assert.Equal(t, "", first["lastname"])
+	assert.Contains(t, first["photo_thumbnail"], "/profile_picture?thumbnail=true&v=t")
+	assert.Equal(t, float64(c.ID), first["ID"], "ID is added for the thumbnail URL")
+	assert.Len(t, first["notes"], 1)
+
+	require.NoError(t, e.db.Create(&models.Reminder{UserID: e.a.ID, ContactID: &c.ID, Message: "call", RemindAt: time.Now(), Recurrence: "once"}).Error)
+	first = decode(t, do(e.asA, http.MethodGet, "/contacts?includes=notes,reminders"))["contacts"].([]any)[0].(map[string]any)
+	assert.Len(t, first["notes"], 1)
+	assert.Len(t, first["reminders"], 1)
+	assert.Equal(t, []any{}, decode(t, do(e.asA, http.MethodGet, "/contacts?includes=relationships"))["contacts"].([]any)[0].(map[string]any)["relationships"])
+
+	first = decode(t, do(e.asA, http.MethodGet, "/contacts"))["contacts"].([]any)[0].(map[string]any)
+	assert.Equal(t, "Smith", first["lastname"], "all fields without fields=")
+	assert.NotContains(t, first, "notes")
+}
+
+func TestRandomReturnsAtMostFiveLiveContactsOfTheActor(t *testing.T) {
+	e := newEnv(t)
+	for _, n := range []string{"a", "b", "c", "d", "e", "f", "g"} {
+		e.contact(t, e.a.ID, n)
+	}
+	e.contact(t, e.b.ID, "Mallory")
+	old := e.contact(t, e.a.ID, "Old")
+	require.NoError(t, e.db.Model(&old).Update("archived", true).Error)
+
+	got := names(decode(t, do(e.asA, http.MethodGet, "/contacts/random")))
+	assert.Len(t, got, 5)
+	assert.NotContains(t, got, "Mallory")
+	assert.NotContains(t, got, "Old")
+}
+
+func TestBirthdaysListTheActorsUpcomingOnes(t *testing.T) {
+	e := newEnv(t)
+	today := "--" + time.Now().Format("01-02")
+	require.NoError(t, e.db.Create(&models.Contact{UserID: e.a.ID, Firstname: "Alice", Birthday: today}).Error)
+	require.NoError(t, e.db.Create(&models.Contact{UserID: e.b.ID, Firstname: "Mallory", Birthday: today}).Error)
+
+	body := decode(t, do(e.asA, http.MethodGet, "/contacts/birthdays"))
+	list := body["birthdays"].([]any)
+	require.Len(t, list, 1)
+	assert.Equal(t, "Alice", list[0].(map[string]any)["name"])
+	assert.Equal(t, "contact", list[0].(map[string]any)["type"])
+}
+
+func TestListsRefuseWithoutAUser(t *testing.T) {
+	e := newEnv(t)
+	for _, p := range []string{"/contacts", "/contacts/random", "/contacts/birthdays"} {
+		assert.Equal(t, http.StatusUnauthorized, do(e.anon, http.MethodGet, p).Code, p)
+	}
+}

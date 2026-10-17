@@ -2,79 +2,27 @@
 import { apiFetch, API_BASE_URL, getAuthHeaders, parseErrorResponse } from './client';
 import type { components, operations } from '../types/generated/api';
 
-// Responses of the operations served by the contacts module, generated from the OpenAPI
-// document (docs/openapi.json). The hand-written Contact below goes when the lists move too.
+// Types of the contacts module's operations, generated from the OpenAPI document (docs/openapi.json).
 export type ContactResponse = components['schemas']['ContactResponse'];
 type CirclesResponse = operations['list-circles']['responses']['200']['content']['application/json'];
 
-export interface ContactValue {
-  type: string;
-  value: string;
-}
+export type ContactValue = components['schemas']['ContactValue'];
+export type ContactAddress = components['schemas']['ContactAddress'];
+export type Birthday = components['schemas']['BirthdayResponse'];
+type ContactListItem = components['schemas']['ContactListItem'];
+type RandomResponse = operations['random-contacts']['responses']['200']['content']['application/json'];
+type BirthdaysResponse = operations['upcoming-birthdays']['responses']['200']['content']['application/json'];
+type ContactsListResponse = operations['list-contacts']['responses']['200']['content']['application/json'];
 
-export interface ContactAddress {
-  type: string;
-  street: string;
-  city: string;
-  region: string;
-  postal: string;
-  country: string;
-}
+// A contact as the list and detail endpoints return it: with `fields` only some values are filled.
+// The API sends null for an empty list or map; the UI treats that as absent, as it always did.
+type WithoutNull<T> = { [K in keyof T]: K extends 'DeletedAt' ? T[K] : Exclude<T[K], null> };
+type ContactValues = WithoutNull<Omit<ContactListItem, 'notes' | 'activities' | 'reminders' | 'relationships'>>;
+export type Contact = Partial<ContactValues> & Pick<ContactValues, 'ID' | 'firstname' | 'lastname'>;
+export type ContactInput = Partial<components['schemas']['ContactBody']>;
 
-export interface Contact {
-  ID: number;
-  firstname: string;
-  lastname: string;
-  nickname?: string;
-  gender?: string;
-  email?: string;
-  phone?: string;
-  birthday?: string;
-  photo?: string;
-  address?: string;
-  how_we_met?: string;
-  food_preference?: string;
-  work_information?: string;
-  contact_information?: string;
-  circles?: string[];
-  photo_thumbnail?: string;
-  custom_fields?: Record<string, string>;
-  archived?: boolean;
-  // Multi-valued vCard fields
-  emails?: ContactValue[];
-  phones?: ContactValue[];
-  addresses?: ContactAddress[];
-  urls?: ContactValue[];
-  impps?: ContactValue[];
-  // Structured name parts
-  prefix?: string;
-  middle_name?: string;
-  suffix?: string;
-  // Organizational fields
-  organization?: string;
-  department?: string;
-  job_title?: string;
-  role?: string;
-  anniversary?: string;
-  // Free-text note (vCard NOTE)
-  note?: string;
-}
-
-export interface Birthday {
-  type: 'contact' | 'relationship';
-  name: string;
-  birthday: string;
-  photo_thumbnail?: string;
-  contact_id: number;
-  relationship_type?: string;
-  associated_contact_name?: string;
-}
-
-export interface ContactsResponse {
+export interface ContactsResponse extends Omit<ContactsListResponse, 'contacts'> {
   contacts: Contact[];
-  total: number;
-  page: number;
-  limit: number;
 }
 
 export interface GetContactsParams {
@@ -112,7 +60,7 @@ export async function getContacts(params: GetContactsParams): Promise<ContactsRe
     throw await parseErrorResponse(response);
   }
 
-  return response.json();
+  return (await response.json()) as ContactsResponse;
 }
 
 // Get single contact
@@ -132,7 +80,7 @@ export async function getContact(id: string | number, fields?: string[]): Promis
 }
 
 // Create contact
-export async function createContact(data: Partial<Contact>): Promise<Contact> {
+export async function createContact(data: ContactInput): Promise<Contact> {
   const response = await apiFetch(`${API_BASE_URL}/contacts`, {
     method: 'POST',
     headers: getAuthHeaders(),
@@ -148,7 +96,7 @@ export async function createContact(data: Partial<Contact>): Promise<Contact> {
 }
 
 // Update contact
-export async function updateContact(id: string | number, data: Partial<Contact>): Promise<Contact> {
+export async function updateContact(id: string | number, data: ContactInput): Promise<Contact> {
   const response = await apiFetch(`${API_BASE_URL}/contacts/${id}`, {
     method: 'PUT',
     headers: getAuthHeaders(),
@@ -224,8 +172,8 @@ export async function getRandomContacts(): Promise<Contact[]> {
     throw await parseErrorResponse(response);
   }
 
-  const data = await response.json();
-  return data.contacts || [];
+  const data = (await response.json()) as RandomResponse;
+  return data.contacts as Contact[];
 }
 
 // Get upcoming birthdays (returns up to 10 birthdays for contacts and relationships)
@@ -236,8 +184,8 @@ export async function getUpcomingBirthdays(): Promise<Birthday[]> {
     throw await parseErrorResponse(response);
   }
 
-  const data = await response.json();
-  return data.birthdays || [];
+  const data = (await response.json()) as BirthdaysResponse;
+  return data.birthdays ?? [];
 }
 
 // Archive a contact (deletes all reminders)

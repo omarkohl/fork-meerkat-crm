@@ -28,10 +28,28 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** List contacts with search, circle filter, sorting and paging */
+        get: operations["list-contacts"];
         put?: never;
         /** Create a contact */
         post: operations["create-contact"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/contacts/birthdays": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Upcoming birthdays of contacts and relatives */
+        get: operations["upcoming-birthdays"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -47,6 +65,23 @@ export interface paths {
         };
         /** The distinct circle names of all contacts */
         get: operations["list-circles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/contacts/random": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Five random contacts */
+        get: operations["random-contacts"];
         put?: never;
         post?: never;
         delete?: never;
@@ -135,6 +170,20 @@ export interface components {
             street?: string;
             type?: string;
         };
+        BirthdayResponse: {
+            associated_contact_name?: string;
+            birthday: string;
+            /** Format: int64 */
+            contact_id: number;
+            name: string;
+            photo_thumbnail?: string;
+            relationship_type?: string;
+            /** @enum {string} */
+            type: "contact" | "relationship";
+        };
+        BirthdaysOutputBody: {
+            birthdays: components["schemas"]["BirthdayResponse"][] | null;
+        };
         ContactAddress: {
             city: string;
             country: string;
@@ -150,7 +199,9 @@ export interface components {
             birthday?: string;
             circles?: string[] | null;
             contact_information?: string;
-            custom_fields?: Record<string, never>;
+            custom_fields?: {
+                [key: string]: string;
+            };
             department?: string;
             email?: string;
             emails?: components["schemas"]["EmailInput"][] | null;
@@ -172,6 +223,53 @@ export interface components {
             suffix?: string;
             urls?: components["schemas"]["URLInput"][] | null;
             work_information?: string;
+        };
+        ContactListItem: {
+            /** Format: date-time */
+            CreatedAt: string;
+            /** Format: date-time */
+            DeletedAt: string | null;
+            /** Format: int64 */
+            ID: number;
+            /** Format: date-time */
+            UpdatedAt: string;
+            activities?: components["schemas"]["ActivityResponse"][] | null;
+            address: string;
+            addresses: components["schemas"]["ContactAddress"][] | null;
+            anniversary: string;
+            archived: boolean;
+            birthday: string;
+            circles: string[] | null;
+            contact_information: string;
+            custom_fields: {
+                [key: string]: string;
+            } | null;
+            department: string;
+            email: string;
+            emails: components["schemas"]["ContactValue"][] | null;
+            firstname: string;
+            food_preference: string;
+            gender: string;
+            how_we_met: string;
+            impps: components["schemas"]["ContactValue"][] | null;
+            job_title: string;
+            lastname: string;
+            middle_name: string;
+            nickname: string;
+            note: string;
+            notes?: components["schemas"]["NoteResponse"][] | null;
+            organization: string;
+            phone: string;
+            phones: components["schemas"]["ContactValue"][] | null;
+            photo: string;
+            photo_thumbnail: string;
+            prefix: string;
+            relationships: components["schemas"]["RelationshipResponse"][] | null;
+            reminders?: components["schemas"]["ReminderResponse"][] | null;
+            role: string;
+            suffix: string;
+            urls: components["schemas"]["ContactValue"][] | null;
+            work_information: string;
         };
         ContactResponse: {
             /** Format: date-time */
@@ -247,6 +345,15 @@ export interface components {
             type?: string;
             value: string;
         };
+        ListOutputBody: {
+            contacts: components["schemas"]["ContactListItem"][] | null;
+            /** Format: int64 */
+            limit: number;
+            /** Format: int64 */
+            page: number;
+            /** Format: int64 */
+            total: number;
+        };
         MessageOutputBody: {
             message: string;
         };
@@ -274,6 +381,9 @@ export interface components {
         PhoneInput: {
             type?: string;
             value: string;
+        };
+        RandomOutputBody: {
+            contacts: components["schemas"]["ContactListItem"][] | null;
         };
         RelationshipResponse: {
             /** Format: date-time */
@@ -357,6 +467,56 @@ export interface operations {
             };
         };
     };
+    "list-contacts": {
+        parameters: {
+            query?: {
+                /** @description Page number, from 1 */
+                page?: string;
+                /** @description Page size, 1 to 100, default 25 */
+                limit?: string;
+                /** @description Full-text search over names, nicknames, e-mail addresses and phone numbers */
+                search?: string;
+                /** @description Only contacts in this circle */
+                circle?: string;
+                /** @description firstname, lastname, id or random; with search and no sort the best match comes first */
+                sort?: string;
+                /** @description asc or desc, default desc */
+                order?: string;
+                /** @description true: archived contacts too, after the others when searching */
+                include_archived?: string;
+                /** @description true: only archived contacts */
+                archived?: string;
+                /** @description Comma-separated field names; only these are filled. photo_thumbnail adds the thumbnail URL */
+                fields?: string;
+                /** @description Comma-separated: notes, activities, relationships, reminders */
+                includes?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     "create-contact": {
         parameters: {
             query?: never;
@@ -390,6 +550,35 @@ export interface operations {
             };
         };
     };
+    "upcoming-birthdays": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BirthdaysOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     "list-circles": {
         parameters: {
             query?: never;
@@ -406,6 +595,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": string[] | null;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    "random-contacts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RandomOutputBody"];
                 };
             };
             /** @description Error */

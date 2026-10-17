@@ -146,12 +146,6 @@ type RelationshipInput struct {
 	RelatedContactID *uint  `json:"related_contact_id"`
 }
 
-// ContactResponse represents the DTO returned from GET /contacts with photo thumbnail
-type ContactResponse struct {
-	Contact
-	PhotoThumbnail string `json:"photo_thumbnail"`
-}
-
 // Birthday represents a unified birthday entry for contacts and relationships
 type Birthday struct {
 	Type                  string `json:"type"`                              // "contact" or "relationship"

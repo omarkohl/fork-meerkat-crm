@@ -278,13 +278,13 @@
   },
   "src/api/contacts.ts": {
     "@typescript-eslint/no-unsafe-assignment": {
-      "count": 3
+      "count": 1
     },
     "@typescript-eslint/no-unsafe-member-access": {
-      "count": 3
+      "count": 1
     },
     "@typescript-eslint/no-unsafe-return": {
-      "count": 8
+      "count": 5
     },
     "@typescript-eslint/restrict-template-expressions": {
       "count": 8
@@ -773,30 +773,6 @@
   "src/networkFilters.ts": {
     "@typescript-eslint/no-unsafe-return": {
       "count": 1
-    }
-  },
-  "src/reportWebVitals.ts": {
-    "@typescript-eslint/no-floating-promises": {
-      "count": 1
-    }
-  },
-  "src/service-worker.ts": {
-    "@typescript-eslint/no-floating-promises": {
-      "count": 1
-    },
-    "@typescript-eslint/no-unsafe-member-access": {
-      "count": 1
-    }
-  },
-  "src/serviceWorkerRegistration.ts": {
-    "@typescript-eslint/no-floating-promises": {
-      "count": 4
-    },
-    "@typescript-eslint/no-unsafe-member-access": {
-      "count": 1
-    },
-    "@typescript-eslint/use-unknown-in-catch-callback-variable": {
-      "count": 2
     }
   },
   "src/types/api.ts": {

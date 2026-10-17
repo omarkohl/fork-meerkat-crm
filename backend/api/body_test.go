@@ -131,3 +131,24 @@ func TestResponseBytesDifferFromGinInKnownWays(t *testing.T) {
 	assert.Equal(t, "{\"name\":\"a<b&c\"}\n", w.Body.String())
 	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
 }
+
+func TestMapPropertiesKeepTheirValueSchema(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	r := gin.New()
+	a := api.New(r.Group("/api/v1"), r)
+	type in struct {
+		Body struct {
+			Fields map[string]string `json:"fields"`
+		}
+	}
+	api.Register(a, huma.Operation{OperationID: "map-body", Method: http.MethodPost, Path: "/map"},
+		func(context.Context, *in) (*struct{}, error) { return nil, nil })
+
+	schema := a.OpenAPI().Components.Schemas.Map()["InBody"]
+	require.NotNil(t, schema)
+	fields := schema.Properties["fields"]
+	require.NotNil(t, fields)
+	valueSchema, ok := fields.AdditionalProperties.(*huma.Schema)
+	require.True(t, ok, "a map keeps its value type, only objects lose additionalProperties:false")
+	assert.Equal(t, "string", valueSchema.Type)
+}

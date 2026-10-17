@@ -51,7 +51,6 @@ func newTrashEnv(t *testing.T) *trashEnv {
 	})
 	for _, r := range []*gin.Engine{routerA, routerB} {
 		mountContacts(r, db, &config.Config{ProfilePhotoDir: photos, TrashRetentionDays: 30, WebhookBlockPrivateURLs: true})
-		r.GET("/contacts", GetContacts)
 		r.GET("/trash/contacts", GetTrash)
 		r.POST("/trash/contacts/:id/restore", RestoreTrashedContact)
 		r.DELETE("/trash/contacts/:id", PurgeTrashedContact)

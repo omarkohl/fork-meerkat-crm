@@ -114,10 +114,10 @@ Read first: `.claude/plans/engineering-principles-reference.md`, `.claude/AUTONO
       `strong_password`, `unique_circles`, `no_at_sign`, `safeurl`). Convert one small endpoint to
       prove the chain. `make openapi` writes the committed spec (OpenAPI 3.1); `openapi-typescript`
       generates `frontend/src/types/generated/api.ts`. CI regenerates both and fails on a diff.
-- [ ] 12. **Hexagonal pilot: contacts (§3)** (split in three parts, see PROGRESS.md, ADR 0012):
+- [x] 12. **Hexagonal pilot: contacts (§3)** (split in three parts, see PROGRESS.md, ADR 0012):
   - [x] 12a. Layout, ADR, depguard rules, composition root; archive, unarchive, delete, circles
   - [x] 12b. Get, create and update one contact
-  - [ ] 12c. Lists (search, random, birthdays); delete hand-written frontend contact types and the
+  - [x] 12c. Lists (search, random, birthdays); delete hand-written frontend contact types and the
         Gin handlers Full scope: ADR with folder layout (`domain/`, `app/` use cases with ports,
         `adapters/http`, `adapters/persistence`) and a composition root in `main.go`. Move contact
         logic: entity and rules to domain, use cases take actor + `now` and run writes in one

@@ -39,7 +39,7 @@ func newThumbEnv(t *testing.T) *thumbEnv {
 	e.other = models.User{Username: "other", Email: "o@example.com", Password: "x"}
 	require.NoError(t, db.Create(&e.other).Error)
 	cfg := &config.Config{ProfilePhotoDir: e.dir}
-	r.GET("/contacts", GetContacts)
+	mountContacts(r, db, cfg)
 	r.GET("/contacts/:id/picture", func(c *gin.Context) { GetProfilePicture(c, cfg) })
 	r.POST("/contacts/:id/picture", func(c *gin.Context) { AddPhotoToContact(c, cfg) })
 	r.GET("/graph", GetGraph)

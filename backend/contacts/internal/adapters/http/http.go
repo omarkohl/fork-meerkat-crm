@@ -6,7 +6,9 @@ package httpadapter
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -22,6 +24,18 @@ import (
 // Register adds the contact operations to a, on group (the authenticated group).
 func Register(a huma.API, group gin.IRoutes, uc *app.UseCases) {
 	h := &handlers{uc: uc}
+	api.RegisterOn(a, group, huma.Operation{
+		OperationID: "list-contacts", Method: http.MethodGet, Path: "/contacts",
+		Summary: "List contacts with search, circle filter, sorting and paging", Tags: []string{"contacts"},
+	}, h.list)
+	api.RegisterOn(a, group, huma.Operation{
+		OperationID: "random-contacts", Method: http.MethodGet, Path: "/contacts/random",
+		Summary: "Five random contacts", Tags: []string{"contacts"},
+	}, h.random)
+	api.RegisterOn(a, group, huma.Operation{
+		OperationID: "upcoming-birthdays", Method: http.MethodGet, Path: "/contacts/birthdays",
+		Summary: "Upcoming birthdays of contacts and relatives", Tags: []string{"contacts"},
+	}, h.birthdays)
 	api.RegisterOn(a, group, huma.Operation{
 		OperationID: "get-contact", Method: http.MethodGet, Path: "/contacts/{id}",
 		Summary: "Get a contact, optionally only some fields", Tags: []string{"contacts"},
@@ -70,6 +84,56 @@ type GetInput struct {
 	Fields string `query:"fields" doc:"Comma-separated field names; only these are filled. Unknown names are ignored."`
 }
 
+// Values are strings on purpose: one that does not parse falls back to its default, as before.
+type ListInput struct {
+	Page            string `query:"page" doc:"Page number, from 1"`
+	Limit           string `query:"limit" doc:"Page size, 1 to 100, default 25"`
+	Search          string `query:"search" doc:"Full-text search over names, nicknames, e-mail addresses and phone numbers"`
+	Circle          string `query:"circle" doc:"Only contacts in this circle"`
+	Sort            string `query:"sort" doc:"firstname, lastname, id or random; with search and no sort the best match comes first"`
+	Order           string `query:"order" doc:"asc or desc, default desc"`
+	IncludeArchived string `query:"include_archived" doc:"true: archived contacts too, after the others when searching"`
+	Archived        string `query:"archived" doc:"true: only archived contacts"`
+	Fields          string `query:"fields" doc:"Comma-separated field names; only these are filled. photo_thumbnail adds the thumbnail URL"`
+	Includes        string `query:"includes" doc:"Comma-separated: notes, activities, relationships, reminders"`
+}
+
+type ContactListItem struct {
+	ContactResponse
+	PhotoThumbnail string `json:"photo_thumbnail"`
+}
+
+type ListOutput struct {
+	Body struct {
+		Contacts []ContactListItem `json:"contacts"`
+		Total    int64             `json:"total"`
+		Page     int               `json:"page"`
+		Limit    int               `json:"limit"`
+	}
+}
+
+type RandomOutput struct {
+	Body struct {
+		Contacts []ContactListItem `json:"contacts"`
+	}
+}
+
+type BirthdayResponse struct {
+	Type                  string `json:"type" enum:"contact,relationship"`
+	Name                  string `json:"name"`
+	Birthday              string `json:"birthday"`
+	PhotoThumbnail        string `json:"photo_thumbnail,omitempty"`
+	ContactID             uint   `json:"contact_id"`
+	RelationshipType      string `json:"relationship_type,omitempty"`
+	AssociatedContactName string `json:"associated_contact_name,omitempty"`
+}
+
+type BirthdaysOutput struct {
+	Body struct {
+		Birthdays []BirthdayResponse `json:"birthdays" nullable:"true"`
+	}
+}
+
 // CreatedOutput is the response of POST /contacts.
 type CreatedOutput struct {
 	Body struct {
@@ -90,16 +154,97 @@ type CirclesOutput struct {
 	Body []string
 }
 
+func (h *handlers) list(ctx context.Context, in *ListInput) (*ListOutput, error) {
+	actor, err := actorOf(ctx)
+	if err != nil {
+		return nil, err
+	}
+	page, err := h.uc.ListContacts(ctx, actor, app.ListQuery{
+		Search: in.Search, Circle: in.Circle, Sort: in.Sort, Order: in.Order,
+		IncludeArchived: in.IncludeArchived == "true", ArchivedOnly: in.Archived == "true",
+		Page: atoiOr0(in.Page), Limit: atoiOr0(in.Limit),
+		Fields: splitList(in.Fields), Includes: splitList(in.Includes),
+	})
+	if err != nil {
+		return nil, toAppError(err, 0)
+	}
+	out := &ListOutput{}
+	out.Body.Contacts = listItems(page.Contacts)
+	out.Body.Total, out.Body.Page, out.Body.Limit = page.Total, page.Page, page.Limit
+	return out, nil
+}
+
+func (h *handlers) random(ctx context.Context, _ *struct{}) (*RandomOutput, error) {
+	actor, err := actorOf(ctx)
+	if err != nil {
+		return nil, err
+	}
+	contacts, err := h.uc.RandomContacts(ctx, actor)
+	if err != nil {
+		return nil, toAppError(err, 0)
+	}
+	out := &RandomOutput{}
+	out.Body.Contacts = listItems(contacts)
+	return out, nil
+}
+
+func (h *handlers) birthdays(ctx context.Context, _ *struct{}) (*BirthdaysOutput, error) {
+	actor, err := actorOf(ctx)
+	if err != nil {
+		return nil, err
+	}
+	found, err := h.uc.UpcomingBirthdays(ctx, actor, api.Now(ctx))
+	if err != nil {
+		return nil, toAppError(err, 0)
+	}
+	out := &BirthdaysOutput{}
+	for _, b := range found {
+		out.Body.Birthdays = append(out.Body.Birthdays, BirthdayResponse{
+			Type: b.Type, Name: b.Name, Birthday: b.Birthday, PhotoThumbnail: b.PhotoThumbnail,
+			ContactID: uint(b.ContactID), RelationshipType: b.RelationshipType,
+			AssociatedContactName: b.AssociatedContactName,
+		})
+	}
+	return out, nil
+}
+
+func listItems(contacts []domain.Contact) []ContactListItem {
+	items := make([]ContactListItem, len(contacts))
+	for i, c := range contacts {
+		items[i] = ContactListItem{ContactResponse: NewContactResponse(c), PhotoThumbnail: thumbnailURL(c)}
+	}
+	return items
+}
+
+func thumbnailURL(c domain.Contact) string {
+	if c.PhotoThumbnailFile == "" {
+		return ""
+	}
+	version := strings.TrimSuffix(c.PhotoThumbnailFile, "_thumb.jpg")
+	return fmt.Sprintf("/api/v1/contacts/%d/profile_picture?thumbnail=true&v=%s", c.ID, url.QueryEscape(version))
+}
+
+func atoiOr0(s string) int {
+	n, err := strconv.Atoi(s)
+	if err != nil {
+		return 0
+	}
+	return n
+}
+
+func splitList(s string) []string {
+	if s == "" {
+		return nil
+	}
+	return strings.Split(s, ",")
+}
+
 func (h *handlers) get(ctx context.Context, in *GetInput) (*ContactOutput, error) {
 	actor, err := actorOf(ctx)
 	if err != nil {
 		return nil, err
 	}
-	var fields []string
-	if in.Fields != "" {
-		fields = strings.Split(in.Fields, ",")
-	}
-	c, err := h.uc.ShowContact(ctx, actor, domain.ContactID(in.ID), fields)
+	c, err := h.uc.ShowContact(ctx, actor, domain.ContactID(in.ID), splitList(in.Fields))
 	if err != nil {
 		return nil, toAppError(err, in.ID)
 	}
@@ -210,6 +355,10 @@ func toAppError(err error, id uint) error {
 			return apperrors.ErrDatabase("Failed to unarchive contact").WithError(f.Err)
 		case app.StageDelete:
 			return apperrors.ErrDatabase("Failed to delete contact and associated data").WithError(f.Err)
+		case app.StageList:
+			return apperrors.ErrDatabase("Failed to retrieve contacts").WithError(f.Err)
+		case app.StageBirthdays:
+			return apperrors.ErrDatabase("Failed to retrieve upcoming birthdays").WithError(f.Err)
 		case app.StageCircles:
 			return apperrors.ErrDatabase("Failed to retrieve circles").WithError(f.Err)
 		}

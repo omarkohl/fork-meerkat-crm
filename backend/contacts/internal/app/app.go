@@ -18,8 +18,44 @@ type Contacts interface {
 	// Show loads a contact for display. Without fields it is complete, with its
 	// relationships; with fields only those are filled and unknown names are ignored.
 	Show(ctx context.Context, actor domain.UserID, id domain.ContactID, fields []string) (domain.Contact, error)
+	// List returns one page of the actor's contacts and the number of all matches.
+	List(ctx context.Context, actor domain.UserID, q ListQuery) ([]domain.Contact, int64, error)
+	// Random returns up to n of the actor's live contacts in random order.
+	Random(ctx context.Context, actor domain.UserID, n int) ([]domain.Contact, error)
+	// UpcomingBirthdays returns the actor's upcoming birthdays as of now.
+	UpcomingBirthdays(ctx context.Context, actor domain.UserID, now time.Time) ([]domain.Birthday, error)
 	// Circles returns the distinct circle names of the actor's live contacts.
 	Circles(ctx context.Context, actor domain.UserID) ([]string, error)
+}
+
+const (
+	DefaultLimit = 25
+	MaxLimit     = 100
+)
+
+// ListQuery is a request for a page of contacts. Zero values mean the default; unknown
+// sort fields and orders fall back to the default too.
+type ListQuery struct {
+	Search          string
+	Circle          string
+	Sort            string
+	Order           string
+	IncludeArchived bool
+	ArchivedOnly    bool
+	Page            int
+	Limit           int
+	// Fields limits the columns; empty means all. Includes names the related data to load:
+	// notes, activities, relationships, reminders.
+	Fields   []string
+	Includes []string
+}
+
+// ContactPage is a page of contacts with the paging that produced it.
+type ContactPage struct {
+	Contacts []domain.Contact
+	Total    int64
+	Page     int
+	Limit    int
 }
 
 // Tx is the set of writes a use case can do inside one transaction. Like Contacts it is
@@ -61,6 +97,8 @@ const (
 	StageUnarchive Stage = "unarchive"
 	StageDelete    Stage = "delete"
 	StageCircles   Stage = "circles"
+	StageList      Stage = "list"
+	StageBirthdays Stage = "birthdays"
 )
 
 // Failure wraps an infrastructure error with the stage it happened in. A missing contact
@@ -197,4 +235,40 @@ func (u *UseCases) ListCircles(ctx context.Context, actor domain.UserID) ([]stri
 		return nil, &Failure{Stage: StageCircles, Err: err}
 	}
 	return circles, nil
+}
+
+// ListContacts returns a page of the actor's contacts. Paging and sorting are normalised
+// here, so every caller gets the same bounds.
+func (u *UseCases) ListContacts(ctx context.Context, actor domain.UserID, q ListQuery) (ContactPage, error) {
+	if q.Page < 1 {
+		q.Page = 1
+	}
+	if q.Limit < 1 {
+		q.Limit = DefaultLimit
+	}
+	q.Limit = min(q.Limit, MaxLimit)
+	if q.Order != "asc" && q.Order != "desc" {
+		q.Order = "desc"
+	}
+	contacts, total, err := u.contacts.List(ctx, actor, q)
+	if err != nil {
+		return ContactPage{}, &Failure{Stage: StageList, Err: err}
+	}
+	return ContactPage{Contacts: contacts, Total: total, Page: q.Page, Limit: q.Limit}, nil
+}
+
+func (u *UseCases) RandomContacts(ctx context.Context, actor domain.UserID) ([]domain.Contact, error) {
+	contacts, err := u.contacts.Random(ctx, actor, 5)
+	if err != nil {
+		return nil, &Failure{Stage: StageList, Err: err}
+	}
+	return contacts, nil
+}
+
+func (u *UseCases) UpcomingBirthdays(ctx context.Context, actor domain.UserID, now time.Time) ([]domain.Birthday, error) {
+	b, err := u.contacts.UpcomingBirthdays(ctx, actor, now)
+	if err != nil {
+		return nil, &Failure{Stage: StageBirthdays, Err: err}
+	}
+	return b, nil
 }

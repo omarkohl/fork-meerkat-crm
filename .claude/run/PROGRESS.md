@@ -2,7 +2,7 @@
 
 ## Next step
 
-12c (lists: search, random, birthdays; delete hand-written frontend contact types, see Decisions).
+13a (notes, same pattern as contacts).
 
 ## Stack
 
@@ -110,6 +110,17 @@
   (sync, validation, webhooks, isolation, fields). `make openapi` regenerated. Go coverage now uses
   `-coverpkg=./...` (module tests in `contacts/` did not count for `internal/`, total fell to 61.6%
   < 62); 71.2% now, `GO_COVERAGE_MIN` 62 -> 71. `make precommit` green.
+- Step 12c: huma operations `GET /contacts` (search/FTS, circle, sort, order, paging, archived
+  filters, `fields`, `includes`), `/contacts/random`, `/contacts/birthdays`; use cases
+  `ListContacts` (normalises paging, order), `RandomContacts`, `UpcomingBirthdays`; persistence
+  ports `List`, `Random`, `UpcomingBirthdays` (calls `services.GetUpcomingBirthdays`, which
+  reminders still use). `controllers/contact_controller.go` and `models.ContactResponse` deleted;
+  the controller tests of the list now mount the module (`mountContacts`). Query values are strings
+  parsed leniently, so bad `page`/`limit` still fall back to defaults. Frontend: `Contact`,
+  `ContactValue`, `ContactAddress`, `Birthday`, `ContactsResponse` and the create/update input are
+  derived from the generated types. Fixed `api.relaxRequestBody`, which dropped the value type of
+  map properties (`custom_fields` became `Record<string, never>`); test first. depguard rules were
+  already in place from 12a. `make precommit` green.
 
 ## Decisions
 
@@ -137,6 +148,12 @@
 - The webhooks adapter imports the HTTP adapter's `NewContactResponse` on purpose: one JSON shape
   for responses and payloads, and a shared presenter package would be a new layer for one function.
   Revisit when a second module publishes events.
+- 12c: `models.ThumbnailURL` is duplicated in the HTTP adapter (`thumbnailURL`) until trash and
+  birthdays stop using the model; remove then. The frontend `Contact` maps the API's `null` lists to
+  absent (`WithoutNull`) as the old hand-written type did.
+- 12c: the page size bounds (default 25, max 100) live in `app.DefaultLimit/MaxLimit` and are
+  repeated in the `ListInput` docs of the HTTP adapter and in `controllers.GetPaginationParams`
+  (still used by other lists); unify when the last list moves into a module.
 - 12a keeps behaviour: `GET /contacts/circles` still answers `null` when there are no circles;
   non-numeric `{id}` now answers `400` (a Gin string param used to reach the database); a missing
   user answers `401`.

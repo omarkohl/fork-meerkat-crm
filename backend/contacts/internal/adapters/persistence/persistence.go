@@ -12,6 +12,8 @@ import (
 	"meerkat/contacts/internal/app"
 	"meerkat/contacts/internal/domain"
 	"meerkat/models"
+	"meerkat/search"
+	"meerkat/services"
 
 	"gorm.io/gorm"
 )
@@ -76,6 +78,159 @@ func (r *Repository) Show(ctx context.Context, actor domain.UserID, id domain.Co
 		c.Relationships = []domain.Relationship{}
 	}
 	return c, nil
+}
+
+var listable = append(slices.Clone(showable), "photo_thumbnail")
+
+func (r *Repository) List(ctx context.Context, actor domain.UserID, q app.ListQuery) ([]domain.Contact, int64, error) {
+	db := r.db.WithContext(ctx)
+	columns := listColumns(q.Fields)
+
+	scope := func(tx *gorm.DB) *gorm.DB {
+		tx = tx.Model(&models.Contact{}).Where("user_id = ?", uint(actor))
+		if !q.IncludeArchived {
+			tx = tx.Where("archived = ?", q.ArchivedOnly)
+		}
+		return tx
+	}
+	match := ""
+	if q.Search != "" {
+		if m, ok := search.MatchQuery(q.Search); ok && search.Available(db, "contacts_fts") {
+			match = m
+		}
+	}
+	filter := func(tx *gorm.DB) *gorm.DB {
+		if q.Search != "" {
+			tx = searchFilter(tx, q.Search, match)
+		}
+		if q.Circle != "" {
+			tx = tx.Where("EXISTS (SELECT 1 FROM json_each(contacts.circles) WHERE json_each.value = ?)", q.Circle)
+		}
+		return tx
+	}
+
+	query := filter(scope(db)).Limit(q.Limit).Offset((q.Page - 1) * q.Limit)
+	if q.IncludeArchived && q.Search != "" {
+		query = query.Order("archived ASC")
+	}
+	switch {
+	case match != "" && q.Sort == "":
+		query = query.Order("hits.hit_rank").Order("contacts.id DESC")
+	case q.Sort == "random":
+		query = query.Order("RANDOM()")
+	default:
+		query = query.Order(sortColumn(q.Sort) + " " + q.Order)
+	}
+	if len(columns) > 0 {
+		query = query.Select(columns)
+	}
+	for _, inc := range q.Includes {
+		switch inc {
+		case "notes":
+			query = query.Preload("Notes", "notes.user_id = ?", uint(actor))
+		case "activities":
+			query = query.Preload("Activities", "activities.user_id = ?", uint(actor))
+		case "relationships":
+			query = query.Preload("Relationships", "relationships.user_id = ?", uint(actor))
+		case "reminders":
+			query = query.Preload("Reminders", "reminders.user_id = ?", uint(actor))
+		}
+	}
+
+	var found []models.Contact
+	if err := query.Find(&found).Error; err != nil {
+		return nil, 0, err
+	}
+	var total int64
+	if err := filter(scope(db)).Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+	out := make([]domain.Contact, len(found))
+	for i, m := range found {
+		out[i] = toDomain(m)
+		if slices.Contains(q.Includes, "relationships") && out[i].Relationships == nil {
+			out[i].Relationships = []domain.Relationship{}
+		}
+	}
+	return out, total, nil
+}
+
+// listColumns maps API fields to columns. photo_thumbnail is the file name column and brings
+// the ID along, because the thumbnail URL needs it.
+func listColumns(fields []string) []string {
+	if len(fields) == 0 {
+		fields = listable
+	}
+	var columns []string
+	for _, f := range fields {
+		if !slices.Contains(listable, f) {
+			continue
+		}
+		if f == "photo_thumbnail" {
+			f = "photo_thumbnail_file"
+			if !slices.Contains(fields, "ID") && !slices.Contains(columns, "ID") {
+				columns = append(columns, "ID")
+			}
+		}
+		columns = append(columns, f)
+	}
+	return columns
+}
+
+func sortColumn(sort string) string {
+	switch sort {
+	case "firstname", "lastname":
+		return sort
+	}
+	return "id"
+}
+
+// searchFilter uses the FTS index when there is a match expression, else a LIKE search.
+func searchFilter(query *gorm.DB, term, match string) *gorm.DB {
+	if match != "" {
+		return query.Joins("JOIN "+search.Hits("contacts_fts")+" AS hits ON hits.hit_id = contacts.id", match)
+	}
+	like := "%" + term + "%"
+	return query.Where(
+		"firstname LIKE ? OR lastname LIKE ? OR nickname LIKE ? "+
+			"OR (firstname || ' ' || lastname) LIKE ? OR (nickname || ' ' || lastname) LIKE ? "+
+			"OR email LIKE ? OR phone LIKE ? "+
+			"OR (json_valid(emails) AND EXISTS (SELECT 1 FROM json_each(contacts.emails) WHERE json_extract(json_each.value, '$.value') LIKE ?)) "+
+			"OR (json_valid(phones) AND EXISTS (SELECT 1 FROM json_each(contacts.phones) WHERE json_extract(json_each.value, '$.value') LIKE ?))",
+		like, like, like, like, like, like, like, like, like,
+	)
+}
+
+func (r *Repository) Random(ctx context.Context, actor domain.UserID, n int) ([]domain.Contact, error) {
+	var found []models.Contact
+	err := r.db.WithContext(ctx).Model(&models.Contact{}).
+		Where("user_id = ?", uint(actor)).Where("archived = ?", false).
+		Select("ID", "firstname", "lastname", "nickname", "circles", "photo_thumbnail_file").
+		Order("RANDOM()").Limit(n).Find(&found).Error
+	if err != nil {
+		return nil, err
+	}
+	out := make([]domain.Contact, len(found))
+	for i, m := range found {
+		out[i] = toDomain(m)
+	}
+	return out, nil
+}
+
+func (r *Repository) UpcomingBirthdays(ctx context.Context, actor domain.UserID, now time.Time) ([]domain.Birthday, error) {
+	found, err := services.GetUpcomingBirthdays(r.db.WithContext(ctx), uint(actor), now)
+	if err != nil {
+		return nil, err
+	}
+	var out []domain.Birthday
+	for _, b := range found {
+		out = append(out, domain.Birthday{
+			Type: b.Type, Name: b.Name, Birthday: b.Birthday, PhotoThumbnail: b.PhotoThumbnail,
+			ContactID: domain.ContactID(b.ContactID), RelationshipType: b.RelationshipType,
+			AssociatedContactName: b.AssociatedContactName,
+		})
+	}
+	return out, nil
 }
 
 // Circles implements app.Contacts.
@@ -175,7 +330,7 @@ func toDomain(m models.Contact) domain.Contact {
 		UpdatedAt: m.UpdatedAt,
 
 		Firstname: m.Firstname, Lastname: m.Lastname, Nickname: m.Nickname, Gender: m.Gender,
-		Email: m.Email, Phone: m.Phone, Birthday: m.Birthday, Photo: m.Photo,
+		Email: m.Email, Phone: m.Phone, Birthday: m.Birthday, Photo: m.Photo, PhotoThumbnailFile: m.PhotoThumbnailFile,
 
 		Address: m.Address, HowWeMet: m.HowWeMet, FoodPreference: m.FoodPreference,
 		WorkInformation: m.WorkInformation, ContactInformation: m.ContactInformation,
