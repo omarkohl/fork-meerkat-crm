@@ -1,6 +1,8 @@
 # Build stage
 FROM --platform=$BUILDPLATFORM node:26-alpine AS builder
 
+RUN npm install -g yarn@1.22.22
+
 WORKDIR /app
 
 # Copy package files first for better caching
