@@ -85,7 +85,6 @@ test-results/
 *.bak
 *.backup
 *~
-CLAUDE.md
 BACKLOG.md
 fly.demo.toml
 fly.test.toml

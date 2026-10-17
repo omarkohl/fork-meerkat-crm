@@ -74,7 +74,7 @@ Read first: `.claude/plans/engineering-principles-reference.md`, `.claude/AUTONO
       already in place: SQLite + WAL and few moving parts (§5), `user_id`
       isolation, never edit a migration, `AppError`, five locales. Link from
       `docs/development/architecture.md`.
-- [ ] 2. **`AGENTS.md` as index (§8, §9)**: committed file with the rules agents
+- [x] 2. **`AGENTS.md` as index (§8, §9)**: committed file with the rules agents
       break most, links to `AUTONOMOUS-RUNS.md`, testing, architecture, ADRs, release
       docs. Hard limits (comments: at most one per ~50 new lines, two lines each;
       "zero is a normal outcome"), named failure modes, two or three bad/good examples

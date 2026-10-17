@@ -5,7 +5,7 @@ in cloud sessions (`CLAUDE_CODE_REMOTE=true`). A run is active while
 `.claude/run/PLAN.md` exists. Hooks in `.claude/hooks/` enforce the push rules and
 keep the run going; this file is the reference they point to.
 
-(`CLAUDE.md` is gitignored in this repository, so these rules live here. The
+(`AGENTS.md` holds the everyday agent rules; this file adds the run rules. The
 SessionStart hook prints this file in cloud sessions.)
 
 ## Starting a run
