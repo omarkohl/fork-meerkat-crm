@@ -10,6 +10,7 @@ import (
 	apperrors "meerkat/errors"
 	"meerkat/models"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/google/uuid"
@@ -36,16 +37,20 @@ type importSessionData struct {
 type ImportSessionManager struct {
 	mu       sync.RWMutex
 	sessions map[string]*importSessionData
-	clock    clock.Clock
+	clock    atomic.Pointer[clock.Clock]
 }
 
 // NewImportSessionManager creates an empty session manager.
 func NewImportSessionManager() *ImportSessionManager {
-	return &ImportSessionManager{sessions: make(map[string]*importSessionData), clock: clock.Real()}
+	m := &ImportSessionManager{sessions: make(map[string]*importSessionData)}
+	m.SetClock(clock.Real())
+	return m
 }
 
 // SetClock replaces the clock the manager reads for session expiry (set once at startup).
-func (m *ImportSessionManager) SetClock(c clock.Clock) { m.clock = c }
+func (m *ImportSessionManager) SetClock(c clock.Clock) { m.clock.Store(&c) }
+
+func (m *ImportSessionManager) now() time.Time { return (*m.clock.Load()).Now() }
 
 // generateSessionID creates a random session ID.
 func generateSessionID() string {
@@ -83,7 +88,7 @@ func (m *ImportSessionManager) CleanupExpired() {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	now := m.clock.Now()
+	now := m.now()
 	for id, data := range m.sessions {
 		if now.After(data.session.ExpiresAt) {
 			delete(m.sessions, id)
@@ -105,7 +110,7 @@ func (m *ImportSessionManager) get(sessionID string, userID uint) (*importSessio
 		return nil, apperrors.ErrNotFound("Import session expired or not found")
 	}
 
-	if m.clock.Now().After(sessionData.session.ExpiresAt) {
+	if m.now().After(sessionData.session.ExpiresAt) {
 		m.mu.Lock()
 		delete(m.sessions, sessionID)
 		m.mu.Unlock()
@@ -125,7 +130,7 @@ func (m *ImportSessionManager) Delete(sessionID string) {
 // CreateCSVSession stores a freshly parsed CSV upload and returns its session ID.
 func (m *ImportSessionManager) CreateCSVSession(userID uint, headers []string, rows [][]string) string {
 	sessionID := generateSessionID()
-	now := m.clock.Now()
+	now := m.now()
 
 	m.mu.Lock()
 	m.sessions[sessionID] = &importSessionData{
@@ -149,7 +154,7 @@ func (m *ImportSessionManager) CreateCSVSession(userID uint, headers []string, r
 // upload time) and returns its session ID.
 func (m *ImportSessionManager) CreateVCFSession(userID uint, vcfContacts []VCFContactData, previews []models.ImportRowPreview) string {
 	sessionID := generateSessionID()
-	now := m.clock.Now()
+	now := m.now()
 
 	m.mu.Lock()
 	m.sessions[sessionID] = &importSessionData{
