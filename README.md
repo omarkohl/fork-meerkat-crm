@@ -144,7 +144,7 @@ To set up this repository for development, follow these steps:
    yarn start
    ```
 
-You can find a more comprehensive overview for developers in the [developer README](README-developer.md).
+You can find a more comprehensive overview for developers in the [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Alternative software
 

@@ -11,7 +11,7 @@ steps later in the same conversation; treat each as its own commit. Follow
 rules, the commit conventions.
 
 Read the PLAN.md step, its "Settled" sections, and the docs the step cites. Read
-`README-developer.md` for the backend and frontend patterns. Read only the files the
+`docs/development/backend.md` and `docs/development/frontend.md` for the patterns. Read only the files the
 step needs; use the `Explore` agent for broad searches. Mirror an existing feature
 end-to-end (e.g. reminders or webhooks: migration, model, controller, route, API
 client, hook, component, i18n, tests).

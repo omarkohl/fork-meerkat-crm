@@ -7,7 +7,7 @@ reference can be deleted at the end. Every step leaves `omk` deployable. To star
 `first-sprint` run is finished) and copy `.claude/run-template/PROGRESS.md` next to it.
 
 Read first: `.claude/plans/engineering-principles-reference.md`, `.claude/AUTONOMOUS-RUNS.md`,
-`README-developer.md`, `docs/development/*.md`, `Makefile`, `.github/workflows/`,
+`docs/development/*.md`, `Makefile`, `.github/workflows/`,
 `backend/.golangci.yml`, `FORK.md`.
 
 ## Evaluation (2026-10-16)

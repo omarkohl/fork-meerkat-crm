@@ -3,7 +3,7 @@
 Goal: <one paragraph; link the issue or requirements doc>. Every step leaves `main`
 deployable.
 
-Read first: `.claude/AUTONOMOUS-RUNS.md`, `README-developer.md`, <docs and files>.
+Read first: `.claude/AUTONOMOUS-RUNS.md`, `docs/development/*.md`, <docs and files>.
 
 ## Settled before the run (the user, <date>)
 
