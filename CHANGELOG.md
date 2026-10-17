@@ -11,6 +11,11 @@ of this fork (see [FORK.md](FORK.md)).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Saving no longer fails while other changes are saved**: concurrent saves sometimes failed with a
+  "database is locked" error.
+
 ### Changed
 
 - **Frontend build variable renamed**: images built from source take `VITE_API_URL` instead of

@@ -4,7 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"path/filepath"
+	"sync"
 	"testing"
+
+	"gorm.io/gorm"
 )
 
 func TestInitDBSetsPragmasOnEveryConnection(t *testing.T) {
@@ -45,11 +48,50 @@ func TestInitDBSetsPragmasOnEveryConnection(t *testing.T) {
 	}
 }
 
+func TestConcurrentReadThenWriteTransactionsAllCommit(t *testing.T) {
+	db, err := InitDB(filepath.Join(t.TempDir(), "test.db"))
+	if err != nil {
+		t.Fatalf("InitDB: %v", err)
+	}
+	sqlDB, err := db.DB()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer sqlDB.Close()
+	if err := db.Exec("CREATE TABLE counter (n INTEGER)").Error; err != nil {
+		t.Fatal(err)
+	}
+
+	const workers = 20
+	var wg sync.WaitGroup
+	errs := make(chan error, workers)
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			errs <- db.Transaction(func(tx *gorm.DB) error {
+				var n int64
+				if err := tx.Raw("SELECT COUNT(*) FROM counter").Scan(&n).Error; err != nil {
+					return err
+				}
+				return tx.Exec("INSERT INTO counter (n) VALUES (?)", n).Error
+			})
+		}()
+	}
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		if err != nil {
+			t.Errorf("transaction failed: %v", err)
+		}
+	}
+}
+
 func TestSQLiteDSN(t *testing.T) {
-	if got, want := sqliteDSN("a.db", true), "a.db?_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)&_pragma=synchronous(NORMAL)&_pragma=foreign_keys(1)"; got != want {
+	if got, want := sqliteDSN("a.db", true), "a.db?_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)&_pragma=synchronous(NORMAL)&_pragma=foreign_keys(1)&_txlock=immediate"; got != want {
 		t.Errorf("got %q, want %q", got, want)
 	}
-	if got, want := sqliteDSN("file:a.db?mode=rw", false), "file:a.db?mode=rw&_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)&_pragma=synchronous(NORMAL)"; got != want {
+	if got, want := sqliteDSN("file:a.db?mode=rw", false), "file:a.db?mode=rw&_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)&_pragma=synchronous(NORMAL)&_txlock=immediate"; got != want {
 		t.Errorf("got %q, want %q", got, want)
 	}
 }

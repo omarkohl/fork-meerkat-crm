@@ -56,10 +56,12 @@ removes `LegacyThumbnail`, `serveLegacyThumbnail` and the fallback in `ContactTo
 
 ### SQLite settings
 
-The database is opened in WAL mode with `busy_timeout`, `synchronous=NORMAL` and foreign keys on
-(see `sqliteDSN` in `database/migrate.go`). Migrations run on a separate connection without foreign
-key enforcement because they may recreate tables. Never copy `meerkat.db` while the app runs; use
-the built-in [backups](../deployment.html#backups) (`VACUUM INTO`).
+The database is opened in WAL mode with `busy_timeout`, `synchronous=NORMAL`, foreign keys on and
+`_txlock=immediate` (see `sqliteDSN` in `database/migrate.go`). Immediate transactions wait for the
+write lock instead of failing with `SQLITE_BUSY` when they read before they write. Migrations run on
+a separate connection without foreign key enforcement because they may recreate tables. Never copy
+`meerkat.db` while the app runs; use the built-in [backups](../deployment.html#backups)
+(`VACUUM INTO`).
 
 ### Search index (FTS5)
 

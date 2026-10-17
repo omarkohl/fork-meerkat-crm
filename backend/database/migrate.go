@@ -23,20 +23,19 @@ var migrationsFS embed.FS
 // sqliteDSN appends the connection pragmas. They are set per connection (via
 // the driver's _pragma parameter) because busy_timeout, foreign_keys and
 // synchronous do not persist; journal_mode=WAL persists in the file.
+// _txlock=immediate takes the write lock at BEGIN, where busy_timeout waits for it: a
+// deferred transaction that reads and then writes fails at once with SQLITE_BUSY.
 func sqliteDSN(path string, foreignKeys bool) string {
-	pragmas := []string{"journal_mode(WAL)", "busy_timeout(5000)", "synchronous(NORMAL)"}
+	params := []string{"_pragma=journal_mode(WAL)", "_pragma=busy_timeout(5000)", "_pragma=synchronous(NORMAL)"}
 	if foreignKeys {
-		pragmas = append(pragmas, "foreign_keys(1)")
+		params = append(params, "_pragma=foreign_keys(1)")
 	}
+	params = append(params, "_txlock=immediate")
 	sep := "?"
 	if strings.Contains(path, "?") {
 		sep = "&"
 	}
-	for _, p := range pragmas {
-		path += sep + "_pragma=" + p
-		sep = "&"
-	}
-	return path
+	return path + sep + strings.Join(params, "&")
 }
 
 // foreignKeyViolations runs PRAGMA foreign_key_check and returns the number of
