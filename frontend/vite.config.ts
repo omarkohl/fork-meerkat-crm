@@ -1,8 +1,10 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
+  // A local .env (copied from .env.example) sets VITE_API_URL; unit tests must not see it
+  envDir: mode === 'test' ? false : undefined,
   server: { port: Number(process.env['PORT'] ?? 7300), strictPort: true },
   build: { outDir: 'build' },
   test: {
@@ -28,4 +30,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));
