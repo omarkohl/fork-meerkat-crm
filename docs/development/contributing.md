@@ -15,16 +15,36 @@ nav_order: 5
 ## Development Workflow
 
 1. Make your changes with tests.
-2. Run `make precommit` from the repository root: checks gofmt and Prettier formatting of all files, Markdown and docs included (`make format` fixes it), `go vet`, `golangci-lint` (the binary must be installed), ESLint, `tsc`, the locale check (`make i18n-check`: a key missing in any of en/de/it/es/fr, or not in `en`, fails; unused and duplicate keys only warn) the architecture rules (`make arch`), the unit tests with coverage thresholds (Go, Vitest and the helper scripts) and the Playwright E2E tests (`make test-e2e`, no Docker needed; narrow it with `ARGS=`, see [testing](testing.md)). `make help` lists all targets.
+2. Run `make precommit` from the repository root: checks gofmt and Prettier formatting of all files,
+   Markdown and docs included (`make format` fixes it), `go vet`, `golangci-lint` (the binary must
+   be installed), ESLint, `tsc`, the locale check (`make i18n-check`: a key missing in any of
+   en/de/it/es/fr, or not in `en`, fails; unused and duplicate keys only warn) the architecture
+   rules (`make arch`), the unit tests with coverage thresholds (Go, Vitest and the helper scripts)
+   and the Playwright E2E tests (`make test-e2e`, no Docker needed; narrow it with `ARGS=`, see
+   [testing](testing.md)). `make help` lists all targets.
 3. Open a pull request against `main`.
 
-Optional: [lefthook](https://lefthook.dev) can run gofmt, Prettier, ESLint and the locale check on the staged files before each commit. Install lefthook and run `lefthook install` once; the configuration is `lefthook.yml`. Nothing installs the hooks automatically, and CI runs the same checks.
+Optional: [lefthook](https://lefthook.dev) can run gofmt, Prettier, ESLint and the locale check on
+the staged files before each commit. Install lefthook and run `lefthook install` once; the
+configuration is `lefthook.yml`. Nothing installs the hooks automatically, and CI runs the same
+checks.
 
 ## Code Style
 
-**Backend:** Standard Go formatting (`gofmt`), checked together with `golangci-lint` (config in `backend/.golangci.yml`: errcheck, staticcheck, gosec, revive, bodyclose, sqlclosecheck). `make precommit` runs it; the `golangci-lint` binary must be installed (or run `cd backend && golangci-lint run`). Follow existing controller and service patterns with thin controllers, logic in services, always scope queries by `user_id`.
+**Backend:** Standard Go formatting (`gofmt`), checked together with `golangci-lint` (config in
+`backend/.golangci.yml`: errcheck, staticcheck, gosec, revive, bodyclose, sqlclosecheck).
+`make precommit` runs it; the `golangci-lint` binary must be installed (or run
+`cd backend && golangci-lint run`). Follow existing controller and service patterns with thin
+controllers, logic in services, always scope queries by `user_id`.
 
-**Frontend:** Prettier formatting (`make format` fixes all files), `tsc --noEmit` and ESLint 9 on `src` (`frontend/eslint.config.mjs`: `typescript-eslint` strict-type-checked, `react-hooks`, `jsx-a11y`, `eslint-comments`; every rule is an error). Findings that exist today are bulk-suppressed in `frontend/eslint-suppressions.json`; new violations fail, and fixed ones must be pruned (details and the reason per rule: [frontend](frontend.md#linting)). An `eslint-disable` needs a rule name and a description (`// eslint-disable-next-line rule -- why`). `make lint-frontend` is the check. TypeScript strict mode and MUI for all UI components. All user-facing strings through `i18next`. Custom hooks for data fetching, not inline `useEffect` + `fetch`.
+**Frontend:** Prettier formatting (`make format` fixes all files), `tsc --noEmit` and ESLint 9 on
+`src` (`frontend/eslint.config.mjs`: `typescript-eslint` strict-type-checked, `react-hooks`,
+`jsx-a11y`, `eslint-comments`; every rule is an error). Findings that exist today are
+bulk-suppressed in `frontend/eslint-suppressions.json`; new violations fail, and fixed ones must be
+pruned (details and the reason per rule: [frontend](frontend.md#linting)). An `eslint-disable` needs
+a rule name and a description (`// eslint-disable-next-line rule -- why`). `make lint-frontend` is
+the check. TypeScript strict mode and MUI for all UI components. All user-facing strings through
+`i18next`. Custom hooks for data fetching, not inline `useEffect` + `fetch`.
 
 ## Continuous integration
 
@@ -32,26 +52,49 @@ Pull requests run these GitHub Actions workflows, and all must pass:
 
 - **Lint** (`lint.yml`): golangci-lint, ESLint, `tsc`, and a gofmt/Prettier check of all files.
 - **Unit tests** and **E2E tests** (`unit-tests.yml`, `e2e-tests.yml`).
-- **Security** (`security.yml`): `govulncheck` and `npm audit` for production dependencies; also runs weekly.
-- **Docker build and scan** (`docker-build.yml`): builds the three images (all-in-one, backend, frontend) without pushing them when a PR touches a Dockerfile, `backend/`, `frontend/` or `docker/`, and scans each with Trivy. It fails on fixable HIGH and CRITICAL vulnerabilities; unfixed ones are ignored. If a finding cannot be fixed by updating the base image or the dependency, add it to `.trivyignore` with a reason and an expiry date. Also runs on `main` and weekly.
-- **Docs** (`docs.yml`): builds the Jekyll site on PRs that touch `docs/**` (deploys only from `main`). To build locally: `cd docs && bundle install && bundle exec jekyll build`.
+- **Security** (`security.yml`): `govulncheck` and `npm audit` for production dependencies; also
+  runs weekly.
+- **Docker build and scan** (`docker-build.yml`): builds the three images (all-in-one, backend,
+  frontend) without pushing them when a PR touches a Dockerfile, `backend/`, `frontend/` or
+  `docker/`, and scans each with Trivy. It fails on fixable HIGH and CRITICAL vulnerabilities;
+  unfixed ones are ignored. If a finding cannot be fixed by updating the base image or the
+  dependency, add it to `.trivyignore` with a reason and an expiry date. Also runs on `main` and
+  weekly.
+- **Docs** (`docs.yml`): builds the Jekyll site on PRs that touch `docs/**` (deploys only from
+  `main`). To build locally: `cd docs && bundle install && bundle exec jekyll build`.
 
-Reformat-only commits are listed in `.git-blame-ignore-revs` (GitHub honours it; locally run `git config blame.ignoreRevsFile .git-blame-ignore-revs`). List a new one there in a follow-up commit, and only after the reformat commit is pushed (a rebase changes its SHA).
+Reformat-only commits are listed in `.git-blame-ignore-revs` (GitHub honours it; locally run
+`git config blame.ignoreRevsFile .git-blame-ignore-revs`). List a new one there in a follow-up
+commit, and only after the reformat commit is pushed (a rebase changes its SHA).
 
-Every CI job runs one `make` target (`lint-go`, `lint-frontend`, `typecheck`, `format-check`, `test-coverage-go`, `test-e2e-docker`, ...), so a failure reproduces locally with the same command. Only setup steps (toolchains, Docker image, Radicale) are not in `make`.
+Every CI job runs one `make` target (`lint-go`, `lint-frontend`, `typecheck`, `format-check`,
+`test-coverage-go`, `test-e2e-docker`, ...), so a failure reproduces locally with the same command.
+Only setup steps (toolchains, Docker image, Radicale) are not in `make`.
 
-Release images (`docker-publish.yml`) are pushed for `linux/amd64` and `linux/arm64` with an SBOM and SLSA provenance attestation attached (`docker buildx imagetools inspect <image> --format '{{ json .SBOM }}'`).
+Release images (`docker-publish.yml`) are pushed for `linux/amd64` and `linux/arm64` with an SBOM
+and SLSA provenance attestation attached
+(`docker buildx imagetools inspect <image> --format '{{ json .SBOM }}'`).
 
-**Pinning.** Every GitHub Action is pinned to a full commit SHA with the version in a trailing comment (`uses: actions/checkout@<sha> # v4.4.0`), and Docker base images to a version tag (`golang:1.27-alpine`, `node:26-alpine`, `alpine:3.22`, `nginx-unprivileged:1.30-alpine`). Do not use `@v4`-style or `latest` references. Dependabot updates the SHAs and tags (and the comment) in its weekly PRs. To pin a new action, look up the commit of its release tag, for a tag that is annotated the commit it points to: `git ls-remote https://github.com/<owner>/<repo> 'refs/tags/<tag>*'` and use the `^{}` line if there is one. Check workflows with [actionlint](https://github.com/rhysd/actionlint).
+**Pinning.** Every GitHub Action is pinned to a full commit SHA with the version in a trailing
+comment (`uses: actions/checkout@<sha> # v4.4.0`), and Docker base images to a version tag
+(`golang:1.27-alpine`, `node:26-alpine`, `alpine:3.22`, `nginx-unprivileged:1.30-alpine`). Do not
+use `@v4`-style or `latest` references. Dependabot updates the SHAs and tags (and the comment) in
+its weekly PRs. To pin a new action, look up the commit of its release tag, for a tag that is
+annotated the commit it points to:
+`git ls-remote https://github.com/<owner>/<repo> 'refs/tags/<tag>*'` and use the `^{}` line if there
+is one. Check workflows with [actionlint](https://github.com/rhysd/actionlint).
 
-Dependabot (`.github/dependabot.yml`) opens weekly update PRs for Go modules, npm, GitHub Actions, Docker and the docs' Ruby gems, with minor and patch updates grouped.
+Dependabot (`.github/dependabot.yml`) opens weekly update PRs for Go modules, npm, GitHub Actions,
+Docker and the docs' Ruby gems, with minor and patch updates grouped.
 
 ## Pull Requests
 
 - Keep PRs focused with one feature or fix per PR.
-- AI tools may assist coding but you are responsible for the code quality. Do not open hands-off vibe-coded PRs. In those cases rather open a feature request instead.
+- AI tools may assist coding but you are responsible for the code quality. Do not open hands-off
+  vibe-coded PRs. In those cases rather open a feature request instead.
 - Describe what changed and why, not how.
 
 ## Reporting Issues
 
-Open an issue on [GitHub](https://github.com/fbuchner/meerkat-crm/issues/new/choose). Try to include steps to reproduce for bugs. Use the feature request template for new ideas.
+Open an issue on [GitHub](https://github.com/fbuchner/meerkat-crm/issues/new/choose). Try to include
+steps to reproduce for bugs. Use the feature request template for new ideas.

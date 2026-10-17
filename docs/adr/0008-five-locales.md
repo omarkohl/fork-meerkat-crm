@@ -15,7 +15,8 @@ Users read the app in several languages. A string in one language only is a bug.
 
 ## Decision
 
-Every new UI string exists in all five locales: en, de, it, es, fr, in `frontend/src/i18n/locales/`. Backend strings (for example email notifications) go in `backend/i18n/locales/` in the same five.
+Every new UI string exists in all five locales: en, de, it, es, fr, in `frontend/src/i18n/locales/`.
+Backend strings (for example email notifications) go in `backend/i18n/locales/` in the same five.
 
 ## Consequences
 

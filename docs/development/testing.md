@@ -8,7 +8,11 @@ nav_order: 4
 
 ## Make targets
 
-`make test` (unit and integration), `make test-coverage` (same, with coverage), `make test-e2e` (Playwright against a local stack), `make precommit` (all checks including E2E). Targets that need dependencies depend on `install-go` and/or `install-frontend` (`install` runs both), so a fresh clone works. CI runs the same targets (`test-coverage-go GO_TEST_FLAGS=-race`, `test-coverage-frontend`, `test-carddav`, `test-e2e-docker`).
+`make test` (unit and integration), `make test-coverage` (same, with coverage), `make test-e2e`
+(Playwright against a local stack), `make precommit` (all checks including E2E). Targets that need
+dependencies depend on `install-go` and/or `install-frontend` (`install` runs both), so a fresh
+clone works. CI runs the same targets (`test-coverage-go GO_TEST_FLAGS=-race`,
+`test-coverage-frontend`, `test-carddav`, `test-e2e-docker`).
 
 ## Running one test
 
@@ -22,7 +26,8 @@ nav_order: 4
 
 ## Strategy
 
-Decision: [ADR 0003](../adr/0003-testing-strategy.md). Test behaviour, not implementation: a test fails when a user's outcome changes, and ideally only then.
+Decision: [ADR 0003](../adr/0003-testing-strategy.md). Test behaviour, not implementation: a test
+fails when a user's outcome changes, and ideally only then.
 
 ### Tiers
 
@@ -35,20 +40,24 @@ Decision: [ADR 0003](../adr/0003-testing-strategy.md). Test behaviour, not imple
 Integration tests:
 
 - Keep the real database cheap: migrate a template database once, copy it per test.
-- Verify results through a read surface, in this order: the matching read endpoint, then repository reads, then raw rows as a last resort.
+- Verify results through a read surface, in this order: the matching read endpoint, then repository
+  reads, then raw rows as a last resort.
 - Scheduler jobs do not run implicitly in tests; tests trigger them, then assert.
 
 E2E tests:
 
-- Act like a user: click visible elements, follow links, type into labelled fields. Use role, label and visible text locators, not CSS or test IDs.
+- Act like a user: click visible elements, follow links, type into labelled fields. Use role, label
+  and visible text locators, not CSS or test IDs.
 - Never construct URLs with internal IDs (`/contacts/${id}`) and never replay raw API payloads.
 - Tests that change global settings run separately (serial, after the parallel bulk).
 
 ### Quality guardrails
 
-- A test that breaks on an internal rename with no user-visible change is a bad test: rewrite or delete it.
+- A test that breaks on an internal rename with no user-visible change is a bad test: rewrite or
+  delete it.
 - No assertions on call counts of internal helpers; no reaching into unexported state.
-- Factories build minimal valid entities; tests override only the fields they care about. If a test sets 12 fields, fix the factory.
+- Factories build minimal valid entities; tests override only the fields they care about. If a test
+  sets 12 fields, fix the factory.
 - No shared state between tests.
 
 ### TDD (mandatory for agents)
@@ -59,7 +68,8 @@ E2E tests:
 4. Run again; confirm green.
 5. Refactor without touching the test.
 
-Exceptions: pure styling changes, and refactors that tests already cover fully. Write no test for those (no tests that assert layout or spacing).
+Exceptions: pure styling changes, and refactors that tests already cover fully. Write no test for
+those (no tests that assert layout or spacing).
 
 ## Backend Tests
 
@@ -70,21 +80,41 @@ cd backend
 go test ./...
 ```
 
-CI runs `make test-coverage-go GO_TEST_FLAGS=-race` (the race detector needs cgo and a C compiler; the SQLite driver itself is pure Go). Run the same locally to reproduce a race, and `go tool cover -func=coverage.out | tail -1` for the total.
+CI runs `make test-coverage-go GO_TEST_FLAGS=-race` (the race detector needs cgo and a C compiler;
+the SQLite driver itself is pure Go). Run the same locally to reproduce a race, and
+`go tool cover -func=coverage.out | tail -1` for the total.
 
 ### Coverage
 
-The Unit Tests workflow prints the total coverage of the Go and Vitest suites in the job summary and uploads the full reports (`go-coverage`, `frontend-coverage`) as workflow artifacts for 14 days. No third-party service is involved. Locally: `make test-coverage` (part of `make precommit`) writes `backend/coverage.out` and `frontend/coverage/`.
+The Unit Tests workflow prints the total coverage of the Go and Vitest suites in the job summary and
+uploads the full reports (`go-coverage`, `frontend-coverage`) as workflow artifacts for 14 days. No
+third-party service is involved. Locally: `make test-coverage` (part of `make precommit`) writes
+`backend/coverage.out` and `frontend/coverage/`.
 
-**Thresholds.** Coverage may not fall: Vitest fails below `coverage.thresholds` in `frontend/vite.config.ts`, and `scripts/check-go-coverage.mjs` fails when the total Go coverage is below `GO_COVERAGE_MIN` in the `Makefile`. Both sit at the value of the day they were introduced, rounded down. When coverage rises, raise them in the same commit; never lower them to make a change pass, add tests instead.
+**Thresholds.** Coverage may not fall: Vitest fails below `coverage.thresholds` in
+`frontend/vite.config.ts`, and `scripts/check-go-coverage.mjs` fails when the total Go coverage is
+below `GO_COVERAGE_MIN` in the `Makefile`. Both sit at the value of the day they were introduced,
+rounded down. When coverage rises, raise them in the same commit; never lower them to make a change
+pass, add tests instead.
 
 ### Migrations
 
-`TestMigrationsRoundTripStepByStepOnSeededDatabase` applies all migrations, fills the main tables, then rolls back one migration at a time (no table may lose rows, the schema of every version is recorded), checks the database is empty, and applies the migrations one at a time again, comparing each version's schema with the recorded one. `TestMigrationsUpKeepsRowsSeededAtOlderVersions` seeds databases at older versions and checks that the rows survive the migrations up to the newest. Every new migration needs a working `down`, or these tests fail. Add a statement for a new table to `seedStatements`. The one known exception is the down migration of 000008, which leaves three `contacts` columns behind (SQLite limitation); the test ignores them below version 8.
+`TestMigrationsRoundTripStepByStepOnSeededDatabase` applies all migrations, fills the main tables,
+then rolls back one migration at a time (no table may lose rows, the schema of every version is
+recorded), checks the database is empty, and applies the migrations one at a time again, comparing
+each version's schema with the recorded one. `TestMigrationsUpKeepsRowsSeededAtOlderVersions` seeds
+databases at older versions and checks that the rows survive the migrations up to the newest. Every
+new migration needs a working `down`, or these tests fail. Add a statement for a new table to
+`seedStatements`. The one known exception is the down migration of 000008, which leaves three
+`contacts` columns behind (SQLite limitation); the test ignores them below version 8.
 
 ### CardDAV integration (Radicale)
 
-The contact sync tests (and the other tests of `./services/` that use the same harness) also run against a real Radicale server when `MEERKAT_CARDDAV_IT=1` is set; CI does this in the `CardDAV sync (Radicale)` job. Locally: `docker compose -f docker-compose.carddav-test.yml up -d --wait radicale`, then `make test-carddav`. The Radicale image tag is pinned in the compose file and in `unit-tests.yml`; change both together.
+The contact sync tests (and the other tests of `./services/` that use the same harness) also run
+against a real Radicale server when `MEERKAT_CARDDAV_IT=1` is set; CI does this in the
+`CardDAV sync (Radicale)` job. Locally:
+`docker compose -f docker-compose.carddav-test.yml up -d --wait radicale`, then `make test-carddav`.
+The Radicale image tag is pinned in the compose file and in `unit-tests.yml`; change both together.
 
 ### Fuzzing
 
@@ -100,25 +130,35 @@ Go native fuzz targets cover the parsers that read untrusted input:
 | `FuzzICSText`            | `services` | ICS text escaping and line folding                                                                                                           |
 | `FuzzBuildICSFeed`       | `services` | stored names, birthdays and reminder texts through `BuildICSFeed`; the feed must stay well formed                                            |
 
-`go test ./...` runs every target once over its seeds (the `f.Add` values and the files in `testdata/fuzz/<Target>/`), so they double as ordinary regression tests. To fuzz one for real:
+`go test ./...` runs every target once over its seeds (the `f.Add` values and the files in
+`testdata/fuzz/<Target>/`), so they double as ordinary regression tests. To fuzz one for real:
 
 ```sh
 make fuzz FUZZ_PACKAGE=./services FUZZ_TARGET=FuzzCSVImport FUZZ_TIME=60s
 ```
 
-The `Fuzz` workflow does this for every target (30 s each by default) nightly and on demand (Actions, Fuzz, Run workflow; the time per target is an input). It is not part of pull request checks. When a target fails, the failing input is uploaded as the artifact `fuzz-failing-input-<Target>`. Copy the file into `backend/<package>/testdata/fuzz/<Target>/`, fix the bug, and commit the file with the fix: from then on `go test` replays it. Add a plain unit test as well when the bug has a name.
+The `Fuzz` workflow does this for every target (30 s each by default) nightly and on demand
+(Actions, Fuzz, Run workflow; the time per target is an input). It is not part of pull request
+checks. When a target fails, the failing input is uploaded as the artifact
+`fuzz-failing-input-<Target>`. Copy the file into `backend/<package>/testdata/fuzz/<Target>/`, fix
+the bug, and commit the file with the fix: from then on `go test` replays it. Add a plain unit test
+as well when the bug has a name.
 
 ### Test Database
 
-Tests use an in-memory SQLite database that is auto-migrated before each test. No external dependencies required.
+Tests use an in-memory SQLite database that is auto-migrated before each test. No external
+dependencies required.
 
 ### Writing Tests
 
-Use the test helpers in the `_test` files alongside each package. Set up a test DB with `database.NewTestDB()` (or equivalent), create a Gin test context, and call controller functions directly. Assert on the `httptest.ResponseRecorder`.
+Use the test helpers in the `_test` files alongside each package. Set up a test DB with
+`database.NewTestDB()` (or equivalent), create a Gin test context, and call controller functions
+directly. Assert on the `httptest.ResponseRecorder`.
 
 ## Frontend Tests
 
-Component and hook tests run with Vitest (`cd frontend && npm test`, or `make test` for everything). Playwright runs the integrated E2E tests.
+Component and hook tests run with Vitest (`cd frontend && npm test`, or `make test` for everything).
+Playwright runs the integrated E2E tests.
 
 ### Setup
 
@@ -127,11 +167,14 @@ cd frontend
 npx playwright install  # install browsers (first time only)
 ```
 
-The E2E tests expect the full application running on `http://localhost:7300`. `global-setup.ts` seeds a test user before the suite runs.
+The E2E tests expect the full application running on `http://localhost:7300`. `global-setup.ts`
+seeds a test user before the suite runs.
 
 ### Running E2E Tests
 
-Without Docker, `make test-e2e` builds both apps and runs Playwright against a local stack ([scripts/e2e-stack.mjs](../../scripts/e2e-stack.mjs)). `E2E_SKIP_BUILD=1` reuses builds; `ARGS=e2e/contacts.spec.ts` narrows the run. Against a stack you started yourself:
+Without Docker, `make test-e2e` builds both apps and runs Playwright against a local stack
+([scripts/e2e-stack.mjs](../../scripts/e2e-stack.mjs)). `E2E_SKIP_BUILD=1` reuses builds;
+`ARGS=e2e/contacts.spec.ts` narrows the run. Against a stack you started yourself:
 
 ```sh
 npm run test:e2e           # headless
@@ -142,4 +185,6 @@ npm run test:e2e:debug     # debug mode
 
 ### Writing E2E Tests
 
-Tests live in `frontend/e2e/`. Use the shared fixtures from `fixtures.ts` for login/logout helpers and the `TEST_USER` credentials from `global-setup.ts`. Group tests with `test.describe` and keep each test independent.
+Tests live in `frontend/e2e/`. Use the shared fixtures from `fixtures.ts` for login/logout helpers
+and the `TEST_USER` credentials from `global-setup.ts`. Group tests with `test.describe` and keep
+each test independent.

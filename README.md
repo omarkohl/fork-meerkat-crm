@@ -10,17 +10,27 @@
 
 ## About the project
 
-> [!NOTE]
-> This is a fork of [fbuchner/meerkat-crm](https://github.com/fbuchner/meerkat-crm) and deviates from upstream. The Docker images under `ghcr.io/omarkohl` are built from this fork, not from upstream. The aim is to merge all changes upstream. If that does not work out, the fork may continue under a new name. For now it is only a fork with images in a different namespace. See [`FORK.md`](FORK.md) for branches and versions.
+> [!NOTE] This is a fork of [fbuchner/meerkat-crm](https://github.com/fbuchner/meerkat-crm) and
+> deviates from upstream. The Docker images under `ghcr.io/omarkohl` are built from this fork, not
+> from upstream. The aim is to merge all changes upstream. If that does not work out, the fork may
+> continue under a new name. For now it is only a fork with images in a different namespace. See
+> [`FORK.md`](FORK.md) for branches and versions.
 
-Meerkat CRM (Contact Relationship Management) is a self-hosted solution to keep track of your important contacts. As your digital rolodex it reminds you of birthdays, helps you to keep in mind dietary habits as well as names of spouses of contacts - and much more.
+Meerkat CRM (Contact Relationship Management) is a self-hosted solution to keep track of your
+important contacts. As your digital rolodex it reminds you of birthdays, helps you to keep in mind
+dietary habits as well as names of spouses of contacts - and much more.
 
-You can find the detailed documentation here: [fbuchner.github.io/meerkat-crm/](https://fbuchner.github.io/meerkat-crm/). That site is published by upstream. Documentation of things specific to this fork is in [`docs/`](docs/) and [`FORK.md`](FORK.md) on GitHub and is not published as a site.
+You can find the detailed documentation here:
+[fbuchner.github.io/meerkat-crm/](https://fbuchner.github.io/meerkat-crm/). That site is published
+by upstream. Documentation of things specific to this fork is in [`docs/`](docs/) and
+[`FORK.md`](FORK.md) on GitHub and is not published as a site.
 
 > [!TIP]
-> **[Click here to try the Demo!](https://meerkat-crm-demo.fly.dev/login?username=demo&password=test_12345)** (user: demo, password: test_12345)
+> **[Click here to try the Demo!](https://meerkat-crm-demo.fly.dev/login?username=demo&password=test_12345)**
+> (user: demo, password: test_12345)
 >
-> Demo instance will be started on demand, expect some seconds delay. Demo data is reset periodically. Photo upload is disabled.
+> Demo instance will be started on demand, expect some seconds delay. Demo data is reset
+> periodically. Photo upload is disabled.
 
 <p align="center">
   <img src="docs/assets/screengrab.gif" alt="Meerkat CRM Demo" />
@@ -33,7 +43,8 @@ You can find the detailed documentation here: [fbuchner.github.io/meerkat-crm/](
   - deleted contacts go to a trash and can be restored
   - group contacts by circles (e.g. friends, family, work)
   - store relationships of contacts (e.g. spouses, children)
-  - CardDAV server for two-way synchronization with your phone's contact list and CardDAV client to use with your own external server
+  - CardDAV server for two-way synchronization with your phone's contact list and CardDAV client to
+    use with your own external server
   - Network graph to visualize your contacts and relationships
 - Notes and activities
   - social network style timeline for contacts
@@ -59,9 +70,8 @@ You can find the detailed documentation here: [fbuchner.github.io/meerkat-crm/](
 
 ### Docker (Recommended)
 
-Meerkat CRM ships as a single all-in-one image (`ghcr.io/omarkohl/meerkat-crm`)
-that bundles the frontend and backend into one container. The easiest way to run
-it is with Docker Compose:
+Meerkat CRM ships as a single all-in-one image (`ghcr.io/omarkohl/meerkat-crm`) that bundles the
+frontend and backend into one container. The easiest way to run it is with Docker Compose:
 
 1. **Download the Docker Compose file:**
 
@@ -86,8 +96,7 @@ it is with Docker Compose:
    docker compose up -d
    ```
 
-4. **Access the application:**
-   Open http://localhost:7300 in your browser.
+4. **Access the application:** Open http://localhost:7300 in your browser.
 
 Prefer to skip Compose? You can run the image directly.
 
@@ -100,17 +109,22 @@ docker run -d --name meerkat --restart unless-stopped \
   ghcr.io/omarkohl/meerkat-crm:1.7.0-omk.1
 ```
 
-All other settings are optional, see [`.env.example`](.env.example) for e-mail notifications, CardDAV, and SSO. Pass them with additional `-e` flags, or use `--env-file .env`.
+All other settings are optional, see [`.env.example`](.env.example) for e-mail notifications,
+CardDAV, and SSO. Pass them with additional `-e` flags, or use `--env-file .env`.
 
 ## Contributing
 
 ### Bugs and feature requests
 
-This application is under development. You can [open an issue](https://github.com/omarkohl/meerkat-crm/issues/new/choose) to report a bug or request a new feature.
+This application is under development. You can
+[open an issue](https://github.com/omarkohl/meerkat-crm/issues/new/choose) to report a bug or
+request a new feature.
 
 You can also participate and open up a pull request.
 
-While AI-assistants can be used to support coding, please note that you are ultimately responsible for code quality. Do not open pull requests for hands-off "vibe-coding" developments, rather stick to feature requests in these cases.
+While AI-assistants can be used to support coding, please note that you are ultimately responsible
+for code quality. Do not open pull requests for hands-off "vibe-coding" developments, rather stick
+to feature requests in these cases.
 
 ### Development
 
@@ -123,8 +137,8 @@ To set up this repository for development, follow these steps:
    cd meerkat-crm
    ```
 
-1. **Run the backend:**
-   Ensure you have [Go](https://golang.org/doc/install) installed. Then, set up your environment configuration:
+1. **Run the backend:** Ensure you have [Go](https://golang.org/doc/install) installed. Then, set up
+   your environment configuration:
 
    ```sh
     cd backend
@@ -137,7 +151,8 @@ To set up this repository for development, follow these steps:
     go run main.go
    ```
 
-   The project uses an SQLite database for storage. Database migrations run automatically on startup.
+   The project uses an SQLite database for storage. Database migrations run automatically on
+   startup.
 
 1. **Run the frontend (in a second terminal):**
    ```sh
@@ -153,7 +168,8 @@ You can find a more comprehensive overview for developers in the [CONTRIBUTING.m
 
 Notable other personal CRM systems are
 
-- [MonicaHQ](https://www.monicahq.com/) (Open Source, development seems to have stalled; the new version chandler is available at beta.monicahq.com)
+- [MonicaHQ](https://www.monicahq.com/) (Open Source, development seems to have stalled; the new
+  version chandler is available at beta.monicahq.com)
 - [Dex](https://getdex.com/) (paid offering with social media integration)
 - [Clay](https://clay.earth/) (paid offering with focus on automation)
 

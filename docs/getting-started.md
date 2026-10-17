@@ -9,15 +9,18 @@ nav_order: 2
 
 ### Docker compose
 
-Meerkat CRM ships as a single all-in-one image that bundles the frontend and backend into one container, published in the github registry as `ghcr.io/fbuchner/meerkat-crm`.
-Images are available for linux/amd64 and linux/arm64.
+Meerkat CRM ships as a single all-in-one image that bundles the frontend and backend into one
+container, published in the github registry as `ghcr.io/fbuchner/meerkat-crm`. Images are available
+for linux/amd64 and linux/arm64.
 
 You can use either the `:latest` tag or a specific version (e.g. `:0.9` or `:0.9.1`).
 
-Copy the [sample docker compose file](https://github.com/fbuchner/meerkat-crm/blob/main/docker-compose.yml) as well as [sample env file](https://github.com/fbuchner/meerkat-crm/blob/main/.env.example) and rename the env file to `.env`.
+Copy the
+[sample docker compose file](https://github.com/fbuchner/meerkat-crm/blob/main/docker-compose.yml)
+as well as [sample env file](https://github.com/fbuchner/meerkat-crm/blob/main/.env.example) and
+rename the env file to `.env`.
 
-After adjusting the environment variables as needed you can run:
-`docker compose up -d`
+After adjusting the environment variables as needed you can run: `docker compose up -d`
 
 ### Environment variables
 
@@ -56,19 +59,28 @@ After adjusting the environment variables as needed you can run:
 | `METRICS_ADDR`             | Optional separate listen address for the metrics (for example `127.0.0.1:9090`); then `/metrics` is not served on the main port                                                                                                      |
 | `TRASH_RETENTION_DAYS`     | Number of days a deleted contact stays in the Trash before it is deleted permanently (checked daily). Values below 1 fall back to the default, `30`                                                                                  |
 
-SSO is disabled unless all three of `OIDC_PROVIDER_URL`, `OIDC_CLIENT_ID`, and `OIDC_CLIENT_SECRET` are set.
+SSO is disabled unless all three of `OIDC_PROVIDER_URL`, `OIDC_CLIENT_ID`, and `OIDC_CLIENT_SECRET`
+are set.
 
-Other variables are found in the [sample env file](https://github.com/fbuchner/meerkat-crm/blob/main/.env.example).
+Other variables are found in the
+[sample env file](https://github.com/fbuchner/meerkat-crm/blob/main/.env.example).
 
-The backend process runs as a non-root user (default UID/GID 1001), and a startup script chowns the data and photo directories to that user. Run `id` on your host to find your UID and GID and set them as `PUID`/`PGID` in your `.env` file if you prefer folders to be owned by your host user (optional).
+The backend process runs as a non-root user (default UID/GID 1001), and a startup script chowns the
+data and photo directories to that user. Run `id` on your host to find your UID and GID and set them
+as `PUID`/`PGID` in your `.env` file if you prefer folders to be owned by your host user (optional).
 
-New photo directories are created with mode `0750` and photo files with `0640`, so other users on the host cannot read them. Directories that already exist keep their mode (earlier versions created them with `0777`); run `chmod 750 photos` on the host if you want to tighten them.
+New photo directories are created with mode `0750` and photo files with `0640`, so other users on
+the host cannot read them. Directories that already exist keep their mode (earlier versions created
+them with `0777`); run `chmod 750 photos` on the host if you want to tighten them.
 
 ## Post-Installation Setup
 
-When running Meerkat-CRM you can access the application under the specified port (default is `7300`).
-To get started you need to register a user. The first user will automatically receive administrator rights and therefore be able to access the admin panel in the settings menu.
+When running Meerkat-CRM you can access the application under the specified port (default is
+`7300`). To get started you need to register a user. The first user will automatically receive
+administrator rights and therefore be able to access the admin panel in the settings menu.
 
 ## Backup
 
-Meerkat makes a backup of the database and the photos every day and keeps the last 7 (see [Backups](deployment.md#backups)). Copy them to a separate device regularly: they are stored on the same disk as your data.
+Meerkat makes a backup of the database and the photos every day and keeps the last 7 (see
+[Backups](deployment.md#backups)). Copy them to a separate device regularly: they are stored on the
+same disk as your data.

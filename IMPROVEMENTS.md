@@ -1,6 +1,7 @@
 # Meerkat CRM – High-Value Improvements
 
-Open items only; finished items were removed (numbers stay stable). Ordered by value within each section. Effort: **S** (< 1 day), **M** (days), **L** (week+).
+Open items only; finished items were removed (numbers stay stable). Ordered by value within each
+section. Effort: **S** (< 1 day), **M** (days), **L** (week+).
 
 ## 2. Testing
 
@@ -49,7 +50,9 @@ Open items only; finished items were removed (numbers stay stable). Ordered by v
 
 ### Relationship intelligence
 
-- **Keep-in-touch cadence per contact/circle** ("every 30 days") with an auto-computed _"overdue"_ list on the dashboard, based on last activity. Turns the CRM from passive storage into an active nudge. **M**
+- **Keep-in-touch cadence per contact/circle** ("every 30 days") with an auto-computed _"overdue"_
+  list on the dashboard, based on last activity. Turns the CRM from passive storage into an active
+  nudge. **M**
 - **Relationship health score**: frequency + recency of activities; sparkline on contact card. **M**
 - **"On this day"** dashboard widget: activities and notes from 1/5/10 years ago. **S**
 - **Gift ideas & wishlist** per contact, surfaced N days before birthday reminder. **S**
@@ -57,15 +60,20 @@ Open items only; finished items were removed (numbers stay stable). Ordered by v
 
 ### Capture & input
 
-- **Quick-capture command palette** (`Ctrl+K`): search contacts, "log call with Anna", jump to pages. **M**
-- **Markdown in notes** (safe renderer like `react-markdown` + `rehype-sanitize`) and `@mentions` of contacts that create links. **M**
-- **PWA share target**: share text/URL/photo from phone into a note for a contact. Service worker already exists. **S**
-- **Email/Telegram/Matrix bot ingestion**: forward a message → becomes a note on the matching contact. **L**
+- **Quick-capture command palette** (`Ctrl+K`): search contacts, "log call with Anna", jump to
+  pages. **M**
+- **Markdown in notes** (safe renderer like `react-markdown` + `rehype-sanitize`) and `@mentions` of
+  contacts that create links. **M**
+- **PWA share target**: share text/URL/photo from phone into a note for a contact. Service worker
+  already exists. **S**
+- **Email/Telegram/Matrix bot ingestion**: forward a message → becomes a note on the matching
+  contact. **L**
 - **Attachments** on notes/activities (files, not only profile photos). **M**
 
 ### Notifications & integrations
 
-- **ntfy / Gotify / Apprise / Web Push** notifications in addition to email. Apprise covers ~100 services in one integration. **S–M**
+- **ntfy / Gotify / Apprise / Web Push** notifications in addition to email. Apprise covers ~100
+  services in one integration. **S–M**
 - **Google Contacts / Outlook import** via CSV presets or OAuth. **M**
 - **Home Assistant / n8n** friendly: document webhooks + API tokens with examples. **S**
 
@@ -73,13 +81,16 @@ Open items only; finished items were removed (numbers stay stable). Ordered by v
 
 - **Saved filters / smart circles** (e.g. "Berlin + no contact in 90 days"). **M**
 - **Map view** of contacts by address (Leaflet + OSM, optional geocoding). **M**
-- **Duplicate detection & merge** (name/email/phone similarity) — high value after CSV/VCF/Monica imports. **M**
+- **Duplicate detection & merge** (name/email/phone similarity) — high value after CSV/VCF/Monica
+  imports. **M**
 - **Timeline filters and export** (PDF/Markdown of a contact's history). **S**
 - **Keyboard shortcuts** throughout (`n` new note, `a` activity, `/` search). **S**
 
 ### Optional AI (opt-in, self-host friendly)
 
-- Pluggable LLM provider (Claude API or local Ollama) for: summarizing a contact's history before a meeting, extracting dates/facts from free-text notes into structured fields, suggesting follow-ups. Off by default; never sends data without explicit config. **M**
+- Pluggable LLM provider (Claude API or local Ollama) for: summarizing a contact's history before a
+  meeting, extracting dates/facts from free-text notes into structured fields, suggesting
+  follow-ups. Off by default; never sends data without explicit config. **M**
 
 ### Multi-user
 
@@ -87,8 +98,10 @@ Open items only; finished items were removed (numbers stay stable). Ordered by v
 
 ## 9. Documentation & Community
 
-- Architecture diagram (request flow nginx → Gin → GORM/SQLite, scheduler, DAV sync) in `docs/development/architecture.md`. **S**
-- `CONTRIBUTING.md` at root (GitHub surfaces it), `SECURITY.md` with disclosure process, `CODE_OF_CONDUCT.md`. **S**
+- Architecture diagram (request flow nginx → Gin → GORM/SQLite, scheduler, DAV sync) in
+  `docs/development/architecture.md`. **S**
+- `CONTRIBUTING.md` at root (GitHub surfaces it), `SECURITY.md` with disclosure process,
+  `CODE_OF_CONDUCT.md`. **S**
 - PR template with checklist (tests, i18n keys for all 5 locales, migration up/down). **S**
 - Helm chart / Unraid / TrueNAS / Umbrel app templates for discoverability. **M**
 - Translation platform (Weblate free for OSS) to grow beyond 5 languages. **S**

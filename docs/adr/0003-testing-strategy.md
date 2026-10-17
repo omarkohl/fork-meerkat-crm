@@ -11,20 +11,37 @@ nav_order: 3
 
 ## Context
 
-A test must fail when a user's outcome changes, and ideally only then. Tests that mirror the implementation break on every refactor and catch few real bugs.
+A test must fail when a user's outcome changes, and ideally only then. Tests that mirror the
+implementation break on every refactor and catch few real bugs.
 
 ## Decision
 
 Tests have three tiers.
 
-- **Integration** (the bulk): business logic through its real entry points (HTTP handlers, use cases) against a real SQLite database. Mock only what cannot run locally (Resend, remote OIDC). Check results through a read surface: the matching read endpoint first, then repository reads, raw rows last. Scheduler jobs do not run implicitly in tests; tests trigger them.
-- **E2E** (few): important user workflows in Playwright. Act like a user: role, label and visible-text locators, no CSS or test IDs, no URLs built from internal IDs. Tests that change global settings run serially after the parallel ones. CI runs the suite against the all-in-one Docker image.
-- **Unit** (rare): complex isolated functions only (parsers, ICS folding). Never repeat integration coverage.
+- **Integration** (the bulk): business logic through its real entry points (HTTP handlers, use
+  cases) against a real SQLite database. Mock only what cannot run locally (Resend, remote OIDC).
+  Check results through a read surface: the matching read endpoint first, then repository reads, raw
+  rows last. Scheduler jobs do not run implicitly in tests; tests trigger them.
+- **E2E** (few): important user workflows in Playwright. Act like a user: role, label and
+  visible-text locators, no CSS or test IDs, no URLs built from internal IDs. Tests that change
+  global settings run serially after the parallel ones. CI runs the suite against the all-in-one
+  Docker image.
+- **Unit** (rare): complex isolated functions only (parsers, ICS folding). Never repeat integration
+  coverage.
 
-Guardrails: a test that breaks on an internal rename without a visible change is rewritten or deleted. No assertions on call counts of internal helpers. No shared state between tests. Factories build minimal valid entities. Coverage thresholds (Vitest and Go) stop slow erosion; `make test-coverage` is part of `make precommit` and CI. Planned (see `.claude/run/PLAN.md`): invariant tests that enumerate, for example every model with `user_id` has an isolation test (step 15), upgrade tests that migrate stored databases of released versions (step 18), and failing instead of skipping in CI when an optional service is not configured (step 18).
+Guardrails: a test that breaks on an internal rename without a visible change is rewritten or
+deleted. No assertions on call counts of internal helpers. No shared state between tests. Factories
+build minimal valid entities. Coverage thresholds (Vitest and Go) stop slow erosion;
+`make test-coverage` is part of `make precommit` and CI. Planned (see `.claude/run/PLAN.md`):
+invariant tests that enumerate, for example every model with `user_id` has an isolation test (step
+15), upgrade tests that migrate stored databases of released versions (step 18), and failing instead
+of skipping in CI when an optional service is not configured (step 18).
 
-TDD is mandatory for agents: write the failing test, run it and confirm the failure, implement the minimum, confirm green, refactor without touching the test. Exceptions: pure styling changes, and refactors that tests already cover fully.
+TDD is mandatory for agents: write the failing test, run it and confirm the failure, implement the
+minimum, confirm green, refactor without touching the test. Exceptions: pure styling changes, and
+refactors that tests already cover fully.
 
 ## Consequences
 
-Refactors stay cheap and the suite stays fast. Details and commands live in [`docs/development/testing.md`](../development/testing.md).
+Refactors stay cheap and the suite stays fast. Details and commands live in
+[`docs/development/testing.md`](../development/testing.md).

@@ -8,9 +8,9 @@ nav_order: 3
 
 ## Setup
 
-Requires the Node.js version in `.node-version` (it includes npm). fnm reads that file; mise
-reads it after `mise settings add idiomatic_version_file_enable_tools node`. npm refuses to
-install on an older Node (`engine-strict` in `frontend/.npmrc`).
+Requires the Node.js version in `.node-version` (it includes npm). fnm reads that file; mise reads
+it after `mise settings add idiomatic_version_file_enable_tools node`. npm refuses to install on an
+older Node (`engine-strict` in `frontend/.npmrc`).
 
 ```sh
 cd frontend
@@ -18,8 +18,8 @@ cp .env.example .env  # set VITE_API_URL if backend isn't on localhost:8080
 npm ci
 ```
 
-Dependency install scripts are blocked unless `allowScripts` in `package.json` allows them
-(manage it with `npm install-scripts`).
+Dependency install scripts are blocked unless `allowScripts` in `package.json` allows them (manage
+it with `npm install-scripts`).
 
 ## Running Locally
 
@@ -49,24 +49,36 @@ Call the client from API modules, not directly from components.
 
 ## Custom Hooks
 
-Hooks in `src/hooks/` encapsulate data fetching.
-Hooks own their loading/error state. Components call `refetch()` after mutations.
+Hooks in `src/hooks/` encapsulate data fetching. Hooks own their loading/error state. Components
+call `refetch()` after mutations.
 
 ## Components
 
-Reusable components live in `src/components/`. They are MUI-based and receive data via props and do not fetch data themselves. Dialog components manage their own open/close state when passed an `open` prop and `onClose` callback.
+Reusable components live in `src/components/`. They are MUI-based and receive data via props and do
+not fetch data themselves. Dialog components manage their own open/close state when passed an `open`
+prop and `onClose` callback.
 
 ## Translations
 
-All user-facing strings must be translated. Add keys to both `src/i18n/locales/en.json` and `de.json`. Do not hardcode English strings in components.
+All user-facing strings must be translated. Add keys to both `src/i18n/locales/en.json` and
+`de.json`. Do not hardcode English strings in components.
 
 ## Linting
 
-`make lint-frontend` runs ESLint 9 (`frontend/eslint.config.mjs`) on `src/**/*.{ts,tsx}`: `typescript-eslint` strict-type-checked, `react-hooks`, `jsx-a11y`, `eslint-comments`. Every rule is an error. E2E specs and config files are not linted yet (step 16 of the engineering-principles run adds `eslint-plugin-playwright` and them).
+`make lint-frontend` runs ESLint 9 (`frontend/eslint.config.mjs`) on `src/**/*.{ts,tsx}`:
+`typescript-eslint` strict-type-checked, `react-hooks`, `jsx-a11y`, `eslint-comments`. Every rule is
+an error. E2E specs and config files are not linted yet (step 16 of the engineering-principles run
+adds `eslint-plugin-playwright` and them).
 
 ### Suppressions (existing findings)
 
-Findings that existed when the rules were introduced are recorded as ESLint bulk suppressions in `frontend/eslint-suppressions.json`: a count per file and rule. A file with a suppression for a rule may not get more violations of it (ESLint then reports all of that rule's violations in the file). Fixing violations makes the suppression stale and `make lint-frontend` fails with "There are suppressions left that do not occur anymore": run `cd frontend && npx eslint --prune-suppressions` and commit the smaller file. Never run `--suppress-all` to silence new code. For one justified exception use a line comment with a description: `// eslint-disable-next-line rule -- why`.
+Findings that existed when the rules were introduced are recorded as ESLint bulk suppressions in
+`frontend/eslint-suppressions.json`: a count per file and rule. A file with a suppression for a rule
+may not get more violations of it (ESLint then reports all of that rule's violations in the file).
+Fixing violations makes the suppression stale and `make lint-frontend` fails with "There are
+suppressions left that do not occur anymore": run `cd frontend && npx eslint --prune-suppressions`
+and commit the smaller file. Never run `--suppress-all` to silence new code. For one justified
+exception use a line comment with a description: `// eslint-disable-next-line rule -- why`.
 
 Why each rule class is suppressed today (fix the cause, not the count):
 
@@ -84,8 +96,14 @@ Why each rule class is suppressed today (fix the cause, not the count):
 
 ## Architecture rules
 
-`make arch` runs `dependency-cruiser` on `src` (`frontend/.dependency-cruiser.cjs`): no circular imports, no unresolvable imports, pages (`src/*Page.tsx`) call `src/api` only through hooks, and nothing outside `src/api` imports `src/api/client.ts`. Existing violations are recorded per pair in `frontend/.dependency-cruiser-known-violations.json`, with the reason per rule in [ADR 0010](../adr/0010-target-layering.md). A new violation fails; when you fix a recorded one, run `node scripts/arch-frontend.mjs --update` to drop it. Never add to the file.
+`make arch` runs `dependency-cruiser` on `src` (`frontend/.dependency-cruiser.cjs`): no circular
+imports, no unresolvable imports, pages (`src/*Page.tsx`) call `src/api` only through hooks, and
+nothing outside `src/api` imports `src/api/client.ts`. Existing violations are recorded per pair in
+`frontend/.dependency-cruiser-known-violations.json`, with the reason per rule in
+[ADR 0010](../adr/0010-target-layering.md). A new violation fails; when you fix a recorded one, run
+`node scripts/arch-frontend.mjs --update` to drop it. Never add to the file.
 
 ## Testing
 
-The frontend is tested via Playwright E2E tests against a running application. See [Testing](testing.md).
+The frontend is tested via Playwright E2E tests against a running application. See
+[Testing](testing.md).

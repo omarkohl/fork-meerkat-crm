@@ -2,18 +2,19 @@
 
 All notable changes to this project are documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
+adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 Versions `X.Y.Z` are upstream releases of
-[fbuchner/meerkat-crm](https://github.com/fbuchner/meerkat-crm). Versions
-`X.Y.Z-omk.N` are releases of this fork (see [FORK.md](FORK.md)).
+[fbuchner/meerkat-crm](https://github.com/fbuchner/meerkat-crm). Versions `X.Y.Z-omk.N` are releases
+of this fork (see [FORK.md](FORK.md)).
 
 ## [Unreleased]
 
 ### Changed
 
-- **Frontend build variable renamed**: images built from source take `VITE_API_URL` instead of `REACT_APP_API_URL`.
+- **Frontend build variable renamed**: images built from source take `VITE_API_URL` instead of
+  `REACT_APP_API_URL`.
 
 ### Internal
 
@@ -33,7 +34,8 @@ First fork release. Based on upstream 1.7.0 plus later upstream changes.
 - **Calendar feed**: subscribe to birthdays and reminders, and see when the feed was last fetched.
 - **Scheduled backups**: built-in backups that an admin can download.
 - **Faster search**: full-text search.
-- **Import preview**: filter, sort and set values for many rows at once, and see which rows were skipped and why.
+- **Import preview**: filter, sort and set values for many rows at once, and see which rows were
+  skipped and why.
 - **vCard notes**: the vCard NOTE field is imported and synced.
 - **Collapsible sidebar**: collapse the sidebar to icons.
 - **Restore prompt on import**: re-importing a deleted contact asks whether to restore it.
@@ -41,8 +43,10 @@ First fork release. Based on upstream 1.7.0 plus later upstream changes.
 
 ### Changed
 
-- **Dates follow the configured format**: all date inputs and filters now use it, not the browser locale.
-- **One placeholder for empty values**: contact fields, lists and the audit log all show the same mark.
+- **Dates follow the configured format**: all date inputs and filters now use it, not the browser
+  locale.
+- **One placeholder for empty values**: contact fields, lists and the audit log all show the same
+  mark.
 - **Contact photos** are stored as files, not in the database.
 
 ### Fixed

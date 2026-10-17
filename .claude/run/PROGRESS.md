@@ -11,61 +11,180 @@
 ## Log
 
 - Step 0: `make precommit` green. `make test-e2e` runs (54 passed, no workaround needed).
-- Step 1: `docs/adr/` with README index and ADRs 0001-0008 (record decisions, machine checks, testing strategy, SQLite/WAL, user_id isolation, migrations, AppError, five locales); linked from `architecture.md`.
-- Step 2: committed `AGENTS.md` (index, hard limits, failure modes, bad/good examples, jj and push rules, issue footers); `CLAUDE.md` is only `@AGENTS.md` and no longer ignored. `make precommit` green.
-- Step 3: targets declare `install` as prerequisite; added `test-coverage`, `arch` (placeholder), `seed` (`scripts/seed.mjs`, needs `make dev` running; tested against a temp backend); `test-e2e` is in `precommit`; Checks in AUTONOMOUS-RUNS.md and run-one-test table in testing.md updated. `make precommit` green incl. E2E (54 passed).
-- Step 4: Makefile split into `install-go`/`install-frontend`, `lint-go`/`lint-frontend`, `test-go`/`test-frontend`, `test-coverage-go`/`-frontend`, `test-carddav`, `test-e2e-docker`, `vuln-go`, `audit-frontend`, `fuzz`. Lint, unit, e2e, security and fuzz workflows call them (docs, docker-build, docker-publish unchanged: Jekyll and image build, not make). actionlint v1.7.7 clean; Go version in fuzz.yml and the CardDAV job of unit-tests.yml raised 1.26 -> 1.27 (needed: `backend/go.mod` requires 1.27.0); CI itself not run locally. `make precommit` green.
-- Step 5: the full reformat (`04bed7d6` "style: format all files with gofmt and Prettier") and `format-check` on all files (no `BASE` logic) were already in the history below this run (`4eb6e3b1`); `make format` changes nothing. So no new reformat commit; this commit only adds `.git-blame-ignore-revs` for `04bed7d6` and a note in contributing.md. `make precommit` green.
-- Step 6: enabled `noUncheckedIndexedAccess`, `noImplicitOverride`, `noPropertyAccessFromIndexSignature` in `frontend/tsconfig.json`; fixed 86 errors (bracket access for index signatures incl. `process.env['REACT_APP_...']`, `override` on class members, destructuring with defaults for regex/split parts, `.slice(0, 10)` instead of `.split('T')[0]` in four dialogs, `?.` in tests). No non-null assertions. The three flags are also in `tsconfig.node.json` (E2E and Playwright config) and `make typecheck` now checks that project too. `make precommit` green incl. E2E.
-- Step 7: ESLint 9 flat config `frontend/eslint.config.mjs` (`typescript-eslint` strictTypeChecked, `jsx-a11y` recommended, `eslint-comments` recommended + `require-description`/`no-unlimited-disable`, `react-hooks` rules-of-hooks/exhaustive-deps, `reportUnusedDisableDirectives: error`; all errors); `--fix` applied (mostly braces for `no-confusing-void-expression`); 4 unused catch/param variables, 2 undescribed disables fixed by hand; stale file-wide disable in `service-worker.ts` removed (rule was not active). 529 findings remain, bulk-suppressed (counts per file and rule) in `frontend/eslint-suppressions.json`, reasons per rule class in `docs/development/frontend.md`. Only `src/**/*.{ts,tsx}` is linted (e2e comes with step 16). Checked: a new floating promise in `src/ContactsPage.tsx` fails; fixing one makes `make lint-frontend` fail until `--prune-suppressions` (exit 2). Each rule shown to fail on a violation file (rules-of-hooks, exhaustive-deps, no-floating-promises, no-non-null-assertion, eslint-comments, jsx-a11y/alt-text, restrict-template-expressions). Build and tests green.
-- Step 8: Vitest `coverage.thresholds` (statements 28, branches 80, functions 33, lines 28; current 28.09/80.51/33.76/28.09) and `scripts/check-go-coverage.mjs` (test first, red then green) with `GO_COVERAGE_MIN=62` (current 62.9) called by `make test-coverage-go`. `precommit` runs `test-coverage` instead of `test`; CI already calls the coverage targets, so thresholds apply there. Shown to fail with a too-high threshold for both. Script tests moved from `i18n-check` to `make test-scripts` (in `test`, `precommit` and the lint workflow's locales job); the script checks its main-module test with `pathToFileURL` and rejects a blank threshold (exit 2). `make precommit` green.
-- Step 9: ADR 0009; `backend/clock` (Clock, Real, Fake, `FAKE_NOW` clock; tests first); `middleware.ClockMiddleware` + `RequestNow`; scheduler tasks take `clk.Now()` once per job; all 84 `time.Now()` outside main/middleware/clock/metrics replaced (services take `now time.Time`, import session managers hold a clock set by `controllers.SetImportClock`, GORM `NowFunc`, JWT time func); `forbidigo` bans `time.Now` with the ADR link (shown to fail on a violation file; two reasoned `nolint`: SMTP deadline, health duration); `FAKE_NOW` config + validation + warning; frontend `src/utils/now.ts` and an ESLint ban on `new Date()`/`Date.now()` elsewhere in `src` (shown to fail). Docs: backend.md, getting-started.md. One commit. Review fixes: job-like work (outbox, webhooks, reminders, calendar and contact sync) takes the `clock.Clock` and reads it where it stamps something (after slow I/O, lock release at the end); TOTP always uses the real time; purge jobs are skipped while `FAKE_NOW` is set; `forbidigo` runs with `analyze-types` (an aliased `time` import is caught; without it the alias passed); Monica import reads the clock once per import; `Date()` without `new` is banned too; tests for the manager clocks and for retry scheduling after a slow send; `FAKE_NOW` in deployment.md and `.env.example` (test only). `make precommit` green.
-- Step 10: ADR 0010; Go `depguard` rules (models, services, controllers) in `.golangci.yml` with no exemptions (one unused gin router in a services test removed); frontend `dependency-cruiser` rules (no-circular, no-unresolvable, pages-use-api-through-hooks, api-client-is-private-to-api) with the 30 existing pairs in `.dependency-cruiser-known-violations.json` and `scripts/arch-frontend.mjs` (new violations fail, fixed-but-still-listed ones fail too; test first). Two cycles fixed (`types/entities.ts`). Every rule shown to fail on a violation; the `src/api/index.ts` barrel no longer re-exports `client.ts` and a rule keeps it so. `make arch` runs both (already in `precommit`), new `arch` job in lint.yml. `make precommit` green.
-- Step 11: spike passed all checks, no blocker. ADR 0011; `backend/api` (huma v2.39.1 mounted on Gin groups via an own adapter with per-operation Gin middleware; AppError error format incl. 422 -> 400; `ValidateBody` for the six validators, tested on all six; request clock timestamp); `cmd/openapi`; `make openapi` / `openapi-check` (in precommit and a CI job); `openapi-typescript` types in `frontend/src/types/generated/api.ts`; `GET /auth/oidc/config` converted and `useOIDCConfig` uses the generated type. `make precommit` green.
-- Step 11 follow-ups (squashed into step 11): error logging, request bodies as with `ShouldBindJSON` (unknown fields ignored, required from `validate` tags, JSON detail keys), 413/415, `MaxBodyBytes`, byte differences documented, `go mod tidy`, goimports, unconditional registration documented.
-- Step 12a: ADR 0012 (module layout); `backend/contacts` with `internal/domain`, `internal/app` (use cases `ArchiveContact`, `UnarchiveContact`, `DeleteContact`, `ListCircles`; ports `Contacts`, `Store`/`Tx`, `Events`), `internal/adapters/{persistence,http,webhooks}`; huma operations for `POST /contacts/{id}/archive`, `/unarchive`, `DELETE /contacts/{id}`, `GET /contacts/circles` with a typed `ContactResponse` (same JSON names as the GORM model); `api.RegisterOn` puts operations on the authenticated Gin group, `api.UserID/Now/Clock` read the request; composition in `main.go` (`routes.Modules`); depguard rules `contacts-domain-stays-pure`, `contacts-use-cases-depend-on-ports`, `contacts-repositories-stay-in-persistence` (each shown to fail); old Gin handlers and their tests removed, replaced by module tests on real SQLite (response keys, reminders deleted, trash, photos kept, isolation 404 for every operation, 401 without a user); frontend uses the generated `ContactResponse` for archive/unarchive. `make precommit` green.
+- Step 1: `docs/adr/` with README index and ADRs 0001-0008 (record decisions, machine checks,
+  testing strategy, SQLite/WAL, user_id isolation, migrations, AppError, five locales); linked from
+  `architecture.md`.
+- Step 2: committed `AGENTS.md` (index, hard limits, failure modes, bad/good examples, jj and push
+  rules, issue footers); `CLAUDE.md` is only `@AGENTS.md` and no longer ignored. `make precommit`
+  green.
+- Step 3: targets declare `install` as prerequisite; added `test-coverage`, `arch` (placeholder),
+  `seed` (`scripts/seed.mjs`, needs `make dev` running; tested against a temp backend); `test-e2e`
+  is in `precommit`; Checks in AUTONOMOUS-RUNS.md and run-one-test table in testing.md updated.
+  `make precommit` green incl. E2E (54 passed).
+- Step 4: Makefile split into `install-go`/`install-frontend`, `lint-go`/`lint-frontend`,
+  `test-go`/`test-frontend`, `test-coverage-go`/`-frontend`, `test-carddav`, `test-e2e-docker`,
+  `vuln-go`, `audit-frontend`, `fuzz`. Lint, unit, e2e, security and fuzz workflows call them (docs,
+  docker-build, docker-publish unchanged: Jekyll and image build, not make). actionlint v1.7.7
+  clean; Go version in fuzz.yml and the CardDAV job of unit-tests.yml raised 1.26 -> 1.27 (needed:
+  `backend/go.mod` requires 1.27.0); CI itself not run locally. `make precommit` green.
+- Step 5: the full reformat (`04bed7d6` "style: format all files with gofmt and Prettier") and
+  `format-check` on all files (no `BASE` logic) were already in the history below this run
+  (`4eb6e3b1`); `make format` changes nothing. So no new reformat commit; this commit only adds
+  `.git-blame-ignore-revs` for `04bed7d6` and a note in contributing.md. `make precommit` green.
+- Step 6: enabled `noUncheckedIndexedAccess`, `noImplicitOverride`,
+  `noPropertyAccessFromIndexSignature` in `frontend/tsconfig.json`; fixed 86 errors (bracket access
+  for index signatures incl. `process.env['REACT_APP_...']`, `override` on class members,
+  destructuring with defaults for regex/split parts, `.slice(0, 10)` instead of `.split('T')[0]` in
+  four dialogs, `?.` in tests). No non-null assertions. The three flags are also in
+  `tsconfig.node.json` (E2E and Playwright config) and `make typecheck` now checks that project too.
+  `make precommit` green incl. E2E.
+- Step 7: ESLint 9 flat config `frontend/eslint.config.mjs` (`typescript-eslint` strictTypeChecked,
+  `jsx-a11y` recommended, `eslint-comments` recommended +
+  `require-description`/`no-unlimited-disable`, `react-hooks` rules-of-hooks/exhaustive-deps,
+  `reportUnusedDisableDirectives: error`; all errors); `--fix` applied (mostly braces for
+  `no-confusing-void-expression`); 4 unused catch/param variables, 2 undescribed disables fixed by
+  hand; stale file-wide disable in `service-worker.ts` removed (rule was not active). 529 findings
+  remain, bulk-suppressed (counts per file and rule) in `frontend/eslint-suppressions.json`, reasons
+  per rule class in `docs/development/frontend.md`. Only `src/**/*.{ts,tsx}` is linted (e2e comes
+  with step 16). Checked: a new floating promise in `src/ContactsPage.tsx` fails; fixing one makes
+  `make lint-frontend` fail until `--prune-suppressions` (exit 2). Each rule shown to fail on a
+  violation file (rules-of-hooks, exhaustive-deps, no-floating-promises, no-non-null-assertion,
+  eslint-comments, jsx-a11y/alt-text, restrict-template-expressions). Build and tests green.
+- Step 8: Vitest `coverage.thresholds` (statements 28, branches 80, functions 33, lines 28; current
+  28.09/80.51/33.76/28.09) and `scripts/check-go-coverage.mjs` (test first, red then green) with
+  `GO_COVERAGE_MIN=62` (current 62.9) called by `make test-coverage-go`. `precommit` runs
+  `test-coverage` instead of `test`; CI already calls the coverage targets, so thresholds apply
+  there. Shown to fail with a too-high threshold for both. Script tests moved from `i18n-check` to
+  `make test-scripts` (in `test`, `precommit` and the lint workflow's locales job); the script
+  checks its main-module test with `pathToFileURL` and rejects a blank threshold (exit 2).
+  `make precommit` green.
+- Step 9: ADR 0009; `backend/clock` (Clock, Real, Fake, `FAKE_NOW` clock; tests first);
+  `middleware.ClockMiddleware` + `RequestNow`; scheduler tasks take `clk.Now()` once per job; all 84
+  `time.Now()` outside main/middleware/clock/metrics replaced (services take `now time.Time`, import
+  session managers hold a clock set by `controllers.SetImportClock`, GORM `NowFunc`, JWT time func);
+  `forbidigo` bans `time.Now` with the ADR link (shown to fail on a violation file; two reasoned
+  `nolint`: SMTP deadline, health duration); `FAKE_NOW` config + validation + warning; frontend
+  `src/utils/now.ts` and an ESLint ban on `new Date()`/`Date.now()` elsewhere in `src` (shown to
+  fail). Docs: backend.md, getting-started.md. One commit. Review fixes: job-like work (outbox,
+  webhooks, reminders, calendar and contact sync) takes the `clock.Clock` and reads it where it
+  stamps something (after slow I/O, lock release at the end); TOTP always uses the real time; purge
+  jobs are skipped while `FAKE_NOW` is set; `forbidigo` runs with `analyze-types` (an aliased `time`
+  import is caught; without it the alias passed); Monica import reads the clock once per import;
+  `Date()` without `new` is banned too; tests for the manager clocks and for retry scheduling after
+  a slow send; `FAKE_NOW` in deployment.md and `.env.example` (test only). `make precommit` green.
+- Step 10: ADR 0010; Go `depguard` rules (models, services, controllers) in `.golangci.yml` with no
+  exemptions (one unused gin router in a services test removed); frontend `dependency-cruiser` rules
+  (no-circular, no-unresolvable, pages-use-api-through-hooks, api-client-is-private-to-api) with the
+  30 existing pairs in `.dependency-cruiser-known-violations.json` and `scripts/arch-frontend.mjs`
+  (new violations fail, fixed-but-still-listed ones fail too; test first). Two cycles fixed
+  (`types/entities.ts`). Every rule shown to fail on a violation; the `src/api/index.ts` barrel no
+  longer re-exports `client.ts` and a rule keeps it so. `make arch` runs both (already in
+  `precommit`), new `arch` job in lint.yml. `make precommit` green.
+- Step 11: spike passed all checks, no blocker. ADR 0011; `backend/api` (huma v2.39.1 mounted on Gin
+  groups via an own adapter with per-operation Gin middleware; AppError error format incl. 422 ->
+  400; `ValidateBody` for the six validators, tested on all six; request clock timestamp);
+  `cmd/openapi`; `make openapi` / `openapi-check` (in precommit and a CI job); `openapi-typescript`
+  types in `frontend/src/types/generated/api.ts`; `GET /auth/oidc/config` converted and
+  `useOIDCConfig` uses the generated type. `make precommit` green.
+- Step 11 follow-ups (squashed into step 11): error logging, request bodies as with `ShouldBindJSON`
+  (unknown fields ignored, required from `validate` tags, JSON detail keys), 413/415,
+  `MaxBodyBytes`, byte differences documented, `go mod tidy`, goimports, unconditional registration
+  documented.
+- Step 12a: ADR 0012 (module layout); `backend/contacts` with `internal/domain`, `internal/app` (use
+  cases `ArchiveContact`, `UnarchiveContact`, `DeleteContact`, `ListCircles`; ports `Contacts`,
+  `Store`/`Tx`, `Events`), `internal/adapters/{persistence,http,webhooks}`; huma operations for
+  `POST /contacts/{id}/archive`, `/unarchive`, `DELETE /contacts/{id}`, `GET /contacts/circles` with
+  a typed `ContactResponse` (same JSON names as the GORM model); `api.RegisterOn` puts operations on
+  the authenticated Gin group, `api.UserID/Now/Clock` read the request; composition in `main.go`
+  (`routes.Modules`); depguard rules `contacts-domain-stays-pure`,
+  `contacts-use-cases-depend-on-ports`, `contacts-repositories-stay-in-persistence` (each shown to
+  fail); old Gin handlers and their tests removed, replaced by module tests on real SQLite (response
+  keys, reminders deleted, trash, photos kept, isolation 404 for every operation, 401 without a
+  user); frontend uses the generated `ContactResponse` for archive/unarchive. `make precommit`
+  green.
 
 ## Decisions
 
-- Step 12 is too large for one reviewable commit (10 endpoints, a 40-field entity, search/FTS/`fields` handling, and the whole frontend contact type). Split: **12a** (done) layout and lifecycle endpoints with the typed `ContactResponse`; **12b** `GET /contacts/{id}` (with `fields`), `POST /contacts`, `PUT /contacts/{id}`: domain rules for the denormalised primary email/phone/address, the `ContactInput` validation through `api.ValidateBody`, webhooks `contact.created/updated`; **12c** `GET /contacts` (search, FTS, circles, sort, paging, `fields`), `/contacts/random`, `/contacts/birthdays`, then delete the hand-written frontend `Contact` types and the remaining Gin handlers.
-- 12a keeps behaviour: `GET /contacts/circles` still answers `null` when there are no circles; non-numeric `{id}` now answers `400` (a Gin string param used to reach the database); a missing user answers `401`.
+- Step 12 is too large for one reviewable commit (10 endpoints, a 40-field entity,
+  search/FTS/`fields` handling, and the whole frontend contact type). Split: **12a** (done) layout
+  and lifecycle endpoints with the typed `ContactResponse`; **12b** `GET /contacts/{id}` (with
+  `fields`), `POST /contacts`, `PUT /contacts/{id}`: domain rules for the denormalised primary
+  email/phone/address, the `ContactInput` validation through `api.ValidateBody`, webhooks
+  `contact.created/updated`; **12c** `GET /contacts` (search, FTS, circles, sort, paging, `fields`),
+  `/contacts/random`, `/contacts/birthdays`, then delete the hand-written frontend `Contact` types
+  and the remaining Gin handlers.
+- 12a keeps behaviour: `GET /contacts/circles` still answers `null` when there are no circles;
+  non-numeric `{id}` now answers `400` (a Gin string param used to reach the database); a missing
+  user answers `401`.
 
-- First converted endpoint is `GET /auth/oidc/config` (public, no database, used by the frontend), not `check-password-strength` (not used by the frontend). Error behaviour, per-route Gin middleware and the validators are covered by tests in `backend/api` instead.
+- First converted endpoint is `GET /auth/oidc/config` (public, no database, used by the frontend),
+  not `check-password-strength` (not used by the frontend). Error behaviour, per-route Gin
+  middleware and the validators are covered by tests in `backend/api` instead.
 - huma's `DefaultConfig` is not used: it adds `$schema` fields to responses and serves docs routes.
 
-- Deviation in step 10: `backend/main.go` (the composition root) may import `controllers` in addition to `routes`; the depguard exemption names that exact path, not every `main.go`.
+- Deviation in step 10: `backend/main.go` (the composition root) may import `controllers` in
+  addition to `routes`; the depguard exemption names that exact path, not every `main.go`.
 
-- Frontend baseline uses dependency-cruiser's known-violations file (exact from/to pairs) rather than `pathNot` globs, so an exemption names one import, not a whole file or folder.
+- Frontend baseline uses dependency-cruiser's known-violations file (exact from/to pairs) rather
+  than `pathNot` globs, so an exemption names one import, not a whole file or folder.
 
-- Clock injection: request-scoped services take a trailing `now time.Time`; long-running jobs take the `clock.Clock`; the two import session managers hold a `clock.Clock` (set once by `controllers.SetImportClock`) because their methods are many and long-lived. The gocron scheduler still uses the wall clock for when jobs start (documented in ADR 0009). The browser does not follow `FAKE_NOW`.
+- Clock injection: request-scoped services take a trailing `now time.Time`; long-running jobs take
+  the `clock.Clock`; the two import session managers hold a `clock.Clock` (set once by
+  `controllers.SetImportClock`) because their methods are many and long-lived. The gocron scheduler
+  still uses the wall clock for when jobs start (documented in ADR 0009). The browser does not
+  follow `FAKE_NOW`.
 
-- Baseline via ESLint bulk suppressions, not per-file `off` entries: a file's existing violations are counted, so new ones in the same file fail. `eslint-suppressions.json` is in `.prettierignore` (the tool writes it).
+- Baseline via ESLint bulk suppressions, not per-file `off` entries: a file's existing violations
+  are counted, so new ones in the same file fail. `eslint-suppressions.json` is in `.prettierignore`
+  (the tool writes it).
 
-- ESLint 9 vs `react-scripts` 5 (bundles ESLint 8): yarn nests ESLint 8 under react-scripts, but its `eslint-webpack-plugin` would pick the hoisted ESLint 9, so `start` and `build` set `DISABLE_ESLINT_PLUGIN=true` and the `eslintConfig` block in package.json is removed. Lint runs only through `make lint-frontend`. The build itself is unchanged.
-- `react-hooks` v7 `recommended` adds React Compiler rules; only `rules-of-hooks` and `exhaustive-deps` (what `react-app` had) are enabled.
-- `no-confusing-void-expression` auto-fix changed ~250 arrow handlers to block bodies (behaviour unchanged).
+- ESLint 9 vs `react-scripts` 5 (bundles ESLint 8): yarn nests ESLint 8 under react-scripts, but its
+  `eslint-webpack-plugin` would pick the hoisted ESLint 9, so `start` and `build` set
+  `DISABLE_ESLINT_PLUGIN=true` and the `eslintConfig` block in package.json is removed. Lint runs
+  only through `make lint-frontend`. The build itself is unchanged.
+- `react-hooks` v7 `recommended` adds React Compiler rules; only `rules-of-hooks` and
+  `exhaustive-deps` (what `react-app` had) are enabled.
+- `no-confusing-void-expression` auto-fix changed ~250 arrow handlers to block bodies (behaviour
+  unchanged).
 
-- CI sets `YARN: yarn` (runner yarn) because the Makefile default `corepack yarn` needs a `packageManager` field.
-- golangci-lint job uses the action with `install-only: true`, then `make lint-go` (adds `go vet`); loses the action's lint cache.
+- CI sets `YARN: yarn` (runner yarn) because the Makefile default `corepack yarn` needs a
+  `packageManager` field.
+- golangci-lint job uses the action with `install-only: true`, then `make lint-go` (adds `go vet`);
+  loses the action's lint cache.
 
 - `test-coverage` is not in `precommit` yet (step 8 adds thresholds first).
 
 ## For review
 
-- Step 7: `frontend/eslint-suppressions.json` hides 529 findings (mostly `no-confusing-void-expression` fixed; remaining: restrict-template-expressions 91, no-misused-promises 90, no-floating-promises 65, no-unsafe-* ~140, no-unnecessary-condition 61, no-deprecated 34). Later steps should shrink it. `no-autofocus` is exempted as a design choice to confirm.
+- Step 7: `frontend/eslint-suppressions.json` hides 529 findings (mostly
+  `no-confusing-void-expression` fixed; remaining: restrict-template-expressions 91,
+  no-misused-promises 90, no-floating-promises 65, no-unsafe-* ~140, no-unnecessary-condition 61,
+  no-deprecated 34). Later steps should shrink it. `no-autofocus` is exempted as a design choice to
+  confirm.
 
-- Step 4: CI cannot run locally. Check the first PR run: `install-only` of golangci-lint-action v8, `YARN: yarn`, `make fuzz` env vars.
+- Step 4: CI cannot run locally. Check the first PR run: `install-only` of golangci-lint-action v8,
+  `YARN: yarn`, `make fuzz` env vars.
 
 ## Questions
 
-- E2E flake seen twice (step 8 and step 10, first run only, rerun green): `relationships.spec.ts` "Relationship ..." failed once in step 10. Cause not investigated; watch for it. Seen again in step 12a: `relationships.spec.ts` beforeEach got `failed to create test contact: 500` from `POST /contacts` (about one full precommit in three, reruns green). Likely SQLite contention right after the heavy checks; the 500 itself was not captured.
+- E2E flake seen twice (step 8 and step 10, first run only, rerun green): `relationships.spec.ts`
+  "Relationship ..." failed once in step 10. Cause not investigated; watch for it. Seen again in
+  step 12a: `relationships.spec.ts` beforeEach got `failed to create test contact: 500` from
+  `POST /contacts` (about one full precommit in three, reruns green). Likely SQLite contention right
+  after the heavy checks; the 500 itself was not captured.
 
-- One full `make precommit` run during step 8 had 2 E2E failures (52 passed); a rerun and a second full run passed 54/54. Names not captured. Possible flake; watch for it.
+- One full `make precommit` run during step 8 had 2 E2E failures (52 passed); a rerun and a second
+  full run passed 54/54. Names not captured. Possible flake; watch for it.
 
-- `new Date().toISOString().slice(0, 10)` (and the older `.split('T')[0]`) gives the UTC date, so default dates in AddNote/AddActivity and the reminder `min` can show the wrong day near midnight. Pre-existing; not fixed.
+- `new Date().toISOString().slice(0, 10)` (and the older `.split('T')[0]`) gives the UTC date, so
+  default dates in AddNote/AddActivity and the reminder `min` can show the wrong day near midnight.
+  Pre-existing; not fixed.
 
-- `frontend/package.json` has no `packageManager` field, so `corepack yarn` (Makefile default) needs CI to set `YARN=yarn`. Adding the field would remove that workaround; not done (out of scope).
+- `frontend/package.json` has no `packageManager` field, so `corepack yarn` (Makefile default) needs
+  CI to set `YARN=yarn`. Adding the field would remove that workaround; not done (out of scope).
 
-- `apperrors.ErrNotFound(resource)` appends " not found", so `backend/services/import_session.go:96,100,107` and `monica_import_session.go:132,135,149` produce "Import session expired or not found not found". Not fixed (out of scope).
+- `apperrors.ErrNotFound(resource)` appends " not found", so
+  `backend/services/import_session.go:96,100,107` and `monica_import_session.go:132,135,149` produce
+  "Import session expired or not found not found". Not fixed (out of scope).
 
 ## Blocked

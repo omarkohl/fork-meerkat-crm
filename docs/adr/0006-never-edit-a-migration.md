@@ -11,11 +11,14 @@ nav_order: 6
 
 ## Context
 
-Migrations run automatically on startup on installs of every version. Changing an applied migration makes databases differ.
+Migrations run automatically on startup on installs of every version. Changing an applied migration
+makes databases differ.
 
 ## Decision
 
-A schema change is a new numbered pair in `backend/database/migrations` (`up` and a working `down`), made with `make migrate-create NAME=xxx`. An existing migration is never edited. Tests round-trip all migrations and migrate databases seeded at older versions.
+A schema change is a new numbered pair in `backend/database/migrations` (`up` and a working `down`),
+made with `make migrate-create NAME=xxx`. An existing migration is never edited. Tests round-trip
+all migrations and migrate databases seeded at older versions.
 
 ## Consequences
 

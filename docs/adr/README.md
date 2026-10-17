@@ -6,7 +6,8 @@ has_children: true
 
 # Architecture decision records
 
-One file per significant decision, see [0001](0001-record-decisions.md). Never delete an ADR: supersede it.
+One file per significant decision, see [0001](0001-record-decisions.md). Never delete an ADR:
+supersede it.
 
 | ADR                                         | Title                                      | Status   |
 | ------------------------------------------- | ------------------------------------------ | -------- |

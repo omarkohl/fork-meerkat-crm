@@ -14,11 +14,16 @@ has_children: false
 
 ## Authentication
 
-Auth endpoints (`/login`, `/register`, `/logout`, `/password-reset/*`, `/auth/oidc/*`) and the calendar feed (`/ics/<token>.ics`, authenticated by the token in its URL) are public. All other endpoints require authentication.
+Auth endpoints (`/login`, `/register`, `/logout`, `/password-reset/*`, `/auth/oidc/*`) and the
+calendar feed (`/ics/<token>.ics`, authenticated by the token in its URL) are public. All other
+endpoints require authentication.
 
-Admin endpoints (`/admin/*`) additionally require the user to have the admin flag set. API tokens are refused there, even for admins.
+Admin endpoints (`/admin/*`) additionally require the user to have the admin flag set. API tokens
+are refused there, even for admins.
 
-Login sets an httpOnly JWT cookie. Subsequent requests must include it (i.e. send with `credentials: 'include'`). The cookie name and domain are configured via `COOKIE_DOMAIN` and `COOKIE_SECURE`.
+Login sets an httpOnly JWT cookie. Subsequent requests must include it (i.e. send with
+`credentials: 'include'`). The cookie name and domain are configured via `COOKIE_DOMAIN` and
+`COOKIE_SECURE`.
 
 Alternatively, API tokens can be used in the `Authorization` header:
 
@@ -26,7 +31,9 @@ Alternatively, API tokens can be used in the `Authorization` header:
 Authorization: Bearer meerkat_<token>
 ```
 
-API tokens are created and managed via the `/api-tokens` endpoints (see [API Tokens](#api-tokens)). Tokens always have normal user rights: they are refused on `/admin/*` endpoints. The plaintext token is only returned once at creation time.
+API tokens are created and managed via the `/api-tokens` endpoints (see [API Tokens](#api-tokens)).
+Tokens always have normal user rights: they are refused on `/admin/*` endpoints. The plaintext token
+is only returned once at creation time.
 
 ## Error Responses
 
@@ -108,11 +115,18 @@ Every request and response carries an `X-Request-ID` header created by the middl
 | `GET`    | `/contacts/:id/profile_picture` | Get a contact's profile picture. With `?thumbnail=true`: the 48px thumbnail (JPEG) with an `ETag`, `Cache-Control: private, max-age=31536000, immutable` and `304` support                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `GET`    | `/proxy/image`                  | Proxy an external image URL for upload preview                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
-The `photo_thumbnail` field of contact lists, the trash, birthdays and the graph is the URL of that thumbnail (`/api/v1/contacts/:id/profile_picture?thumbnail=true&v=<name>`, empty when the contact has none), not the image itself; `v` changes whenever the picture does, so browsers can cache it for good. It needs the same login as the API.
+The `photo_thumbnail` field of contact lists, the trash, birthdays and the graph is the URL of that
+thumbnail (`/api/v1/contacts/:id/profile_picture?thumbnail=true&v=<name>`, empty when the contact
+has none), not the image itself; `v` changes whenever the picture does, so browsers can cache it for
+good. It needs the same login as the API.
 
 ### Trash
 
-Deleting a contact moves it to the trash: the contact and its notes, reminders and relationships are soft-deleted, while its activity links and photo files are kept. The trash is private to each user. Contacts that have been in the trash longer than `TRASH_RETENTION_DAYS` (default 30) are purged automatically by a daily job (03:30 in `REMINDER_TIMEZONE`). Contacts in the trash are hidden everywhere else (lists, search, circles, birthdays, graph, ICS feed, reminders, CardDAV).
+Deleting a contact moves it to the trash: the contact and its notes, reminders and relationships are
+soft-deleted, while its activity links and photo files are kept. The trash is private to each user.
+Contacts that have been in the trash longer than `TRASH_RETENTION_DAYS` (default 30) are purged
+automatically by a daily job (03:30 in `REMINDER_TIMEZONE`). Contacts in the trash are hidden
+everywhere else (lists, search, circles, birthdays, graph, ICS feed, reminders, CardDAV).
 
 | Method   | Path                          | Description                                                                                                                                                                                                                                                                                                                                                                                                           |
 | -------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -181,7 +195,8 @@ Deleting a contact moves it to the trash: the contact and its notes, reminders a
 
 #### Monica CRM import
 
-Imports contacts from a [Monica](https://www.monicahq.com/) instance through its REST API. The steps share a server-side session (`session_id`) that belongs to one user and expires after a while.
+Imports contacts from a [Monica](https://www.monicahq.com/) instance through its REST API. The steps
+share a server-side session (`session_id`) that belongs to one user and expires after a while.
 
 | Method   | Path                              | Description                                                                                                                                                                         |
 | -------- | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -207,7 +222,8 @@ Imports contacts from a [Monica](https://www.monicahq.com/) instance through its
 
 ### Webhooks
 
-Webhooks send a signed HTTP `POST` to your URL when something happens. The `secret` used to sign deliveries is generated by the server and returned only when the webhook is created.
+Webhooks send a signed HTTP `POST` to your URL when something happens. The `secret` used to sign
+deliveries is generated by the server and returned only when the webhook is created.
 
 | Method   | Path                       | Description                                                                                                                                                                                                                                                                                                                      |
 | -------- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -219,13 +235,19 @@ Webhooks send a signed HTTP `POST` to your URL when something happens. The `secr
 | `POST`   | `/webhooks/:id/test`       | Send a test event now: `{"delivery": {...}}`                                                                                                                                                                                                                                                                                     |
 | `GET`    | `/webhooks/:id/deliveries` | Last 50 deliveries, newest first: `{"deliveries": [{"id", "webhook_id", "event_type", "status_code", "error", "attempts", "status", "next_retry_at", "created_at"}]}`. `status` is `pending` (waiting for a try or retry, `next_retry_at` says when), `delivered` or `dead` (gave up). One entry per event, updated on every try |
 
-Deliveries are queued in the database first and retried with backoff (see [Delivery queue](deployment.md#delivery-queue-webhooks-and-email)). A user can have at most 20 webhooks (`409` beyond that). URLs pointing at private addresses are refused when `BLOCK_PRIVATE_URLS` (or `WEBHOOK_BLOCK_PRIVATE_URLS`) is set.
+Deliveries are queued in the database first and retried with backoff (see
+[Delivery queue](deployment.md#delivery-queue-webhooks-and-email)). A user can have at most 20
+webhooks (`409` beyond that). URLs pointing at private addresses are refused when
+`BLOCK_PRIVATE_URLS` (or `WEBHOOK_BLOCK_PRIVATE_URLS`) is set.
 
-Events: `contact.created`, `contact.updated`, `contact.deleted`, `contact.restored`, `note.created`, `note.updated`, `note.deleted`, `activity.created`, `activity.updated`, `activity.deleted`, `reminder.triggered`, `birthday.occurred`.
+Events: `contact.created`, `contact.updated`, `contact.deleted`, `contact.restored`, `note.created`,
+`note.updated`, `note.deleted`, `activity.created`, `activity.updated`, `activity.deleted`,
+`reminder.triggered`, `birthday.occurred`.
 
 ### Calendar Subscriptions
 
-Import events of a CalDAV or iCalendar URL as activities. Stored passwords are encrypted and never returned.
+Import events of a CalDAV or iCalendar URL as activities. Stored passwords are encrypted and never
+returned.
 
 | Method   | Path                  | Description                                                                                                                                                                                                                                                            |
 | -------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -235,11 +257,17 @@ Import events of a CalDAV or iCalendar URL as activities. Stored passwords are e
 | `DELETE` | `/calendars/:id`      | Delete a subscription                                                                                                                                                                                                                                                  |
 | `POST`   | `/calendars/:id/sync` | Sync now: `{"message", "created", "updated", "skipped"}`                                                                                                                                                                                                               |
 
-A user can have at most 10 subscriptions (`409` beyond that). `PUT` replaces the subscription, so the body needs at least `name` and `url`. URLs pointing at private addresses are refused when `BLOCK_PRIVATE_URLS` (or `CALDAV_BLOCK_PRIVATE_URLS`) is set.
+A user can have at most 10 subscriptions (`409` beyond that). `PUT` replaces the subscription, so
+the body needs at least `name` and `url`. URLs pointing at private addresses are refused when
+`BLOCK_PRIVATE_URLS` (or `CALDAV_BLOCK_PRIVATE_URLS`) is set.
 
 ### CardDAV Connection
 
-Syncs contacts with an external CardDAV server (Nextcloud, Radicale, ...). Each user has at most one connection. This is the client side; Meerkat's own CardDAV server is described in [CardDAV](carddav.md). Stored passwords are encrypted and never returned. Private addresses are refused when `BLOCK_PRIVATE_URLS` (or `CARDDAV_BLOCK_PRIVATE_URLS`, default: `CALDAV_BLOCK_PRIVATE_URLS`) is set.
+Syncs contacts with an external CardDAV server (Nextcloud, Radicale, ...). Each user has at most one
+connection. This is the client side; Meerkat's own CardDAV server is described in
+[CardDAV](carddav.md). Stored passwords are encrypted and never returned. Private addresses are
+refused when `BLOCK_PRIVATE_URLS` (or `CARDDAV_BLOCK_PRIVATE_URLS`, default:
+`CALDAV_BLOCK_PRIVATE_URLS`) is set.
 
 | Method   | Path                       | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | -------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -251,7 +279,8 @@ Syncs contacts with an external CardDAV server (Nextcloud, Radicale, ...). Each 
 
 ### Sessions
 
-Every browser login is a session; a revoked or expired session is refused even though its token has not expired yet. These endpoints are refused for API tokens (`403`).
+Every browser login is a session; a revoked or expired session is refused even though its token has
+not expired yet. These endpoints are refused for API tokens (`403`).
 
 | Method   | Path                   | Description                                                                                                                                                                                  |
 | -------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -259,11 +288,15 @@ Every browser login is a session; a revoked or expired session is refused even t
 | `DELETE` | `/sessions/:id`        | Sign one session out (`404` for an unknown, foreign or ended id). Revoking the current session is a logout                                                                                   |
 | `POST`   | `/sessions/revoke-all` | Sign out everywhere: revokes all sessions, this one included, and invalidates older tokens (token version). API tokens and the calendar feed stay valid                                      |
 
-Changing the password through `/users/change-password` signs out all other browsers (the current one gets a new session); resetting it by e-mail or an admin setting a new password signs out everywhere.
+Changing the password through `/users/change-password` signs out all other browsers (the current one
+gets a new session); resetting it by e-mail or an admin setting a new password signs out everywhere.
 
 ### Two-factor authentication (TOTP)
 
-Optional per user. Enrolment is two steps so a broken app cannot lock you out: `setup` creates a pending secret, `enable` proves the app shows the right code and returns ten one-time recovery codes (shown only once). These endpoints are refused for API tokens (`403`). OIDC logins are not asked for a code (the identity provider is the second factor); API tokens are not affected.
+Optional per user. Enrolment is two steps so a broken app cannot lock you out: `setup` creates a
+pending secret, `enable` proves the app shows the right code and returns ten one-time recovery codes
+(shown only once). These endpoints are refused for API tokens (`403`). OIDC logins are not asked for
+a code (the identity provider is the second factor); API tokens are not affected.
 
 | Method | Path                           | Description                                                                                                                                                                                               |
 | ------ | ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -273,7 +306,12 @@ Optional per user. Enrolment is two steps so a broken app cannot lock you out: `
 | `POST` | `/users/me/2fa/disable`        | Body `{"password", "code"}` or `{"password", "recovery_code"}`. Removes the secret and the recovery codes and signs out the other sessions                                                                |
 | `POST` | `/users/me/2fa/recovery-codes` | Same body as disable. Replaces the recovery codes and returns the new ones                                                                                                                                |
 
-Login (`POST /login`) for an account with two-factor: the password alone answers `200 {"totp_required": true}` and sets no cookie; repeat the request with `totp_code` (6 digits, one use per 30-second step) or `recovery_code` (one use). A wrong code is `401` with code `INVALID_TOTP_CODE`. Failed codes, and wrong passwords on the endpoints above, count toward the account lockout (`429`); the counter is per account, not per identifier, and asking for the code does not reset it.
+Login (`POST /login`) for an account with two-factor: the password alone answers
+`200 {"totp_required": true}` and sets no cookie; repeat the request with `totp_code` (6 digits, one
+use per 30-second step) or `recovery_code` (one use). A wrong code is `401` with code
+`INVALID_TOTP_CODE`. Failed codes, and wrong passwords on the endpoints above, count toward the
+account lockout (`429`); the counter is per account, not per identifier, and asking for the code
+does not reset it.
 
 ### API Tokens
 
@@ -289,11 +327,14 @@ Login (`POST /login`) for an account with two-factor: the password alone answers
 { "name": "my token" }
 ```
 
-Response includes `token` (the `meerkat_…` plaintext value) only on creation. Subsequent list responses omit it.
+Response includes `token` (the `meerkat_…` plaintext value) only on creation. Subsequent list
+responses omit it.
 
 ### Calendar Feed (ICS)
 
-Exports birthdays and reminders as a subscribable iCalendar feed. Each user has at most one feed, protected by a random token that is part of the URL. Only a hash of the token is stored, so the URL is shown once when it is created or regenerated.
+Exports birthdays and reminders as a subscribable iCalendar feed. Each user has at most one feed,
+protected by a random token that is part of the URL. Only a hash of the token is stored, so the URL
+is shown once when it is created or regenerated.
 
 | Method   | Path               | Auth                  | Description                                                                                                                                                                                        |
 | -------- | ------------------ | --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -302,13 +343,24 @@ Exports birthdays and reminders as a subscribable iCalendar feed. Each user has 
 | `DELETE` | `/ics-feed`        | session or API token  | Revoke the feed (idempotent)                                                                                                                                                                       |
 | `GET`    | `/ics/<token>.ics` | token in the URL only | The calendar (`text/calendar; charset=utf-8`)                                                                                                                                                      |
 
-The feed URL is `<base>/api/v1/ics/<token>.ics`, where `<token>` is the 43 character `token` from `POST /ics-feed`. `GET /ics/<token>.ics` takes no cookie or `Authorization` header, so calendar apps can subscribe to it; it only ever returns the data of the token's owner. An unknown, malformed, regenerated or revoked token answers `404`. The response carries `ETag` and `Cache-Control: private, max-age=900` (conditional requests answer `304`), is rate limited per IP like the other endpoints and is marked `noindex`.
+The feed URL is `<base>/api/v1/ics/<token>.ics`, where `<token>` is the 43 character `token` from
+`POST /ics-feed`. `GET /ics/<token>.ics` takes no cookie or `Authorization` header, so calendar apps
+can subscribe to it; it only ever returns the data of the token's owner. An unknown, malformed,
+regenerated or revoked token answers `404`. The response carries `ETag` and
+`Cache-Control: private, max-age=900` (conditional requests answer `304`), is rate limited per IP
+like the other endpoints and is marked `noindex`.
 
 Content:
 
-- **Birthdays** of non-archived contacts as yearly all-day events (`RRULE:FREQ=YEARLY`). A birthday without a year (`--MM-DD`) starts in 1972; 29 February uses `BYMONTH=2;BYMONTHDAY=-1`.
-- **Open reminders** as all-day events on their next date. `weekly`, `monthly`, `quarterly`, `six-months` and `yearly` recurrences become an `RRULE`; `once` reminders have none. Monthly-based rules for dates on the 29th to 31st use `BYMONTHDAY=28,..;BYSETPOS=-1` so short months get their last day instead of being skipped. Dates are UTC dates of `remind_at`. Completed reminders are left out.
-- Event UIDs are stable (`contact-birthday-<id>@meerkat-crm`, `reminder-<id>@meerkat-crm`), and `DTSTAMP` is the last update time of the record.
+- **Birthdays** of non-archived contacts as yearly all-day events (`RRULE:FREQ=YEARLY`). A birthday
+  without a year (`--MM-DD`) starts in 1972; 29 February uses `BYMONTH=2;BYMONTHDAY=-1`.
+- **Open reminders** as all-day events on their next date. `weekly`, `monthly`, `quarterly`,
+  `six-months` and `yearly` recurrences become an `RRULE`; `once` reminders have none. Monthly-based
+  rules for dates on the 29th to 31st use `BYMONTHDAY=28,..;BYSETPOS=-1` so short months get their
+  last day instead of being skipped. Dates are UTC dates of `remind_at`. Completed reminders are
+  left out.
+- Event UIDs are stable (`contact-birthday-<id>@meerkat-crm`, `reminder-<id>@meerkat-crm`), and
+  `DTSTAMP` is the last update time of the record.
 - Event titles are in the language of the feed owner.
 
 ### Admin
@@ -328,7 +380,10 @@ Content:
 | `DELETE` | `/admin/backups/:name`       | Delete a backup                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `POST`   | `/admin/trigger-reminders`   | Send due reminder emails for all users now                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 
-A backup contains the data of **all users** (every table, including password hashes) and all profile photos, so these endpoints are for admins only and are refused for API tokens. `:name` must be exactly a name returned by the list (`meerkat-backup-YYYYMMDD-HHMMSS.tar.gz`, optionally with a `-N` suffix); anything else answers `404`. See [Backups](deployment.md#backups).
+A backup contains the data of **all users** (every table, including password hashes) and all profile
+photos, so these endpoints are for admins only and are refused for API tokens. `:name` must be
+exactly a name returned by the list (`meerkat-backup-YYYYMMDD-HHMMSS.tar.gz`, optionally with a `-N`
+suffix); anything else answers `404`. See [Backups](deployment.md#backups).
 
 ### Health
 
